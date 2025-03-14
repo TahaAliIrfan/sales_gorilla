@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-100">
+  <head>
+    <title>Tecaudex CRM - Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  </head>
+
+  <body class="h-full">
+    <div class="min-h-full">
+      <!-- Sidebar - hidden by default on mobile -->
+      <div class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out -translate-x-full lg:translate-x-0">
+        <!-- Logo section -->
+        <div class="flex h-16 items-center justify-start px-6 bg-gray-800">
+          <span class="text-xl font-bold text-white">Tecaudex CRM</span>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="mt-5 px-3">
+          <div class="space-y-1">
+            <%= link_to dashboard_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_page?(dashboard_path) ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              Dashboard
+            <% end %>
+
+            <%= link_to customers_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'customers' ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+              Customers
+            <% end %>
+
+            <%= link_to deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deals' ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Deals
+            <% end %>
+
+            <%= link_to my_deals_deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'deals' && action_name == 'my_deals' ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              My Deals
+            <% end %>
+
+            <% if current_user&.admin? %>
+              <%= link_to deal_stages_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deal_stages' ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Deal Stages
+              <% end %>
+            <% end %>
+
+            <%= link_to calling_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_page?(calling_path) ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              Calling
+            <% end %>
+          </div>
+        </nav>
+      </div>
+
+      <!-- Main content - responsive padding for sidebar -->
+      <div class="lg:pl-64">
+        <!-- Top navigation -->
+        <div class="bg-white shadow">
+          <div class="flex h-16 items-center justify-between px-4 sm:px-6">
+            <div class="flex items-center">
+              <% if current_page?(dashboard_path) %>
+                <h1 class="text-2xl font-semibold text-gray-900">Dashboard</h1>
+              <% elsif current_page?(calling_path) %>
+                <h1 class="text-2xl font-semibold text-gray-900">Calling</h1>
+              <% elsif controller_name == 'customers' %>
+                <h1 class="text-2xl font-semibold text-gray-900">Customers</h1>
+              <% elsif controller_name == 'deals' %>
+                <h1 class="text-2xl font-semibold text-gray-900">
+                  <%= action_name == 'my_deals' ? 'My Deals' : 'Deals' %>
+                </h1>
+              <% elsif controller_name == 'deal_stages' %>
+                <h1 class="text-2xl font-semibold text-gray-900">Deal Stages</h1>
+              <% else %>
+                <h1 class="text-2xl font-semibold text-gray-900">Tecaudex CRM</h1>
+              <% end %>
+            </div>
+            <div class="flex items-center">
+              <div class="relative ml-3">
+                <div class="flex items-center">
+                  <span class="text-gray-700 mr-4 hidden sm:inline"><%= session[:user_email] %></span>
+                  <%= button_to signout_path, method: :get, class: "rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600" do %>
+                    Sign out
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main content area -->
+        <main class="py-6 px-4 sm:px-6">
+          <% if flash[:error] %>
+            <div class="mb-4 px-4 py-2 bg-red-100 border border-red-400 text-red-700 rounded">
+              <%= flash[:error] %>
+            </div>
+          <% end %>
+          
+          <% if flash[:notice] %>
+            <div class="mb-4 px-4 py-2 bg-green-100 border border-green-400 text-green-700 rounded">
+              <%= flash[:notice] %>
+            </div>
+          <% end %>
+
+          <%= yield %>
+        </main>
+      </div>
+    </div>
+  </body>
+</html> 

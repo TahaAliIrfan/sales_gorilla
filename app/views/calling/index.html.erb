@@ -1,0 +1,184 @@
+<!-- Main container with Stimulus controller -->
+<div data-controller="calling">
+  <!-- Mobile menu button for sidebar (visible only on mobile) -->
+  <div class="lg:hidden mb-4">
+    <button type="button" class="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-red-500" id="mobile-menu-button">
+      <span class="sr-only">Open sidebar</span>
+      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+    </button>
+  </div>
+
+  <h1 class="text-2xl font-semibold text-gray-900 mb-6">Calling Interface</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Phone Interface -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <h3 class="text-xl font-bold m-0">Browser Phone</h3>
+      </div>
+      <div class="p-4">
+        <!-- Deal Selection -->
+        <div class="mb-4">
+          <label for="deal-select" class="block mb-1 font-medium text-gray-700">Select Deal:</label>
+          <select data-calling-target="dealSelect" data-action="calling#onDealSelect" class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+            <option value="">Select a deal...</option>
+            <% @deals.each do |deal| %>
+              <% customer = deal.customer %>
+              <option value="<%= deal.id %>" 
+                      data-phone="<%= customer&.phone %>" 
+                      <%= 'selected' if @selected_deal&.id == deal.id %>>
+                <%= deal.title %> - <%= customer ? "#{customer.name} #{customer.phone ? "(#{customer.phone})" : '(No phone)'}" : 'No customer' %>
+              </option>
+            <% end %>
+          </select>
+        </div>
+
+        <div class="mb-4">
+          <label for="caller-id" class="block mb-1 font-medium text-gray-700">Call From:</label>
+          <select data-calling-target="callerId" class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+            <% if @twilio_numbers.present? %>
+              <% @twilio_numbers.each do |number| %>
+                <option value="<%= number[:phone_number] %>"><%= number[:friendly_name] %> (<%= number[:phone_number] %>)</option>
+              <% end %>
+            <% else %>
+              <option value="+447897021964">Default Number (+447897021964)</option>
+            <% end %>
+          </select>
+          
+          <label for="phone-number" class="block mb-1 font-medium text-gray-700">Call To:</label>
+          <div class="flex">
+            <input type="tel" 
+                   data-calling-target="phoneNumber" 
+                   class="flex-grow border border-gray-300 rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50" 
+                   placeholder="Select a deal to load phone number" 
+                   value="<%= @phone_to_call %>" 
+                   readonly>
+            <button data-calling-target="callButton" 
+                    data-action="calling#makeCall" 
+                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-r opacity-50 cursor-not-allowed" 
+                    disabled>
+              <i class="fas fa-phone"></i> <span class="hidden sm:inline">Call</span>
+            </button>
+          </div>
+        </div>
+        
+        <div data-calling-target="callStatus" class="bg-gray-100 text-gray-800 p-3 rounded mb-4 hidden">
+          <span data-calling-target="statusMessage">Initializing...</span>
+        </div>
+        
+        <div data-calling-target="callControls" class="hidden">
+          <button data-calling-target="hangupButton" data-action="calling#hangUp" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+            <i class="fas fa-phone-slash"></i> Hang Up
+          </button>
+          
+          <div class="mt-4">
+            <div class="mb-2">
+              <label class="block mb-1 font-medium text-gray-700">Keypad</label>
+              <div class="keypad">
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="1">1</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="2">2</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="3">3</button></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="4">4</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="5">5</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="6">6</button></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-2">
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="7">7</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="8">8</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="9">9</button></div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="*">*</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="0">0</button></div>
+                  <div><button class="w-full bg-gray-200 hover:bg-gray-300 py-3 rounded shadow-sm" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="#">#</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Call Recordings Section -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+      <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
+        <h3 class="text-xl font-bold m-0">Call Recordings</h3>
+        <button data-calling-target="refreshRecordings" data-action="calling#fetchRecordings" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+          <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+      <div class="p-4">
+        <div data-calling-target="recordingsLoading" class="text-center py-4">
+          <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
+          <p class="mt-2 text-gray-600">Loading recordings...</p>
+        </div>
+        
+        <div data-calling-target="noRecordings" class="hidden text-center py-4">
+          <i class="fas fa-exclamation-circle text-gray-500 text-2xl"></i>
+          <p class="mt-2 text-gray-600">No recordings found.</p>
+        </div>
+        
+        <div data-calling-target="recordingsList" class="hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full bg-white">
+              <thead>
+                <tr class="bg-gray-900 text-white uppercase text-sm leading-normal">
+                  <th class="py-3 px-4 text-left">Date</th>
+                  <th class="py-3 px-4 text-left">Duration</th>
+                  <th class="py-3 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody data-calling-target="recordingsTableBody" class="text-gray-600 text-sm">
+                <!-- Recordings will be inserted here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div data-calling-target="recordingPlayer" class="hidden mt-4 p-4 bg-gray-100 rounded">
+          <h4 class="font-bold mb-2">Playing Recording</h4>
+          <audio data-calling-target="audioPlayer" controls class="w-full"></audio>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<%= javascript_include_tag "https://sdk.twilio.com/js/client/releases/1.14.0/twilio.js", "data-turbo-track": "reload" %>
+
+<!-- JavaScript for mobile sidebar toggle -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    if (mobileMenuButton) {
+      mobileMenuButton.addEventListener('click', function() {
+        const sidebar = document.querySelector('.fixed.inset-y-0.left-0');
+        if (sidebar) {
+          sidebar.classList.toggle('-translate-x-full');
+        }
+      });
+    }
+  });
+</script>
+
+<!-- JavaScript for auto-dialing -->
+<% if @auto_dial %>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      const callButton = document.querySelector('[data-calling-target="callButton"]');
+      if (callButton) {
+        callButton.click();
+      }
+    }, 1500); // Delay to ensure Twilio device is initialized
+  });
+</script>
+<% end %> 

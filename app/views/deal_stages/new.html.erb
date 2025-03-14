@@ -1,0 +1,16 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-6">
+    <%= link_to "← Back to Deal Stages", deal_stages_path, class: "text-blue-600 hover:text-blue-800" %>
+  </div>
+
+  <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="p-6 border-b border-gray-200">
+      <h1 class="text-2xl font-bold text-gray-900">New Deal Stage</h1>
+      <p class="text-gray-600 mt-1">Create a new stage in your sales pipeline</p>
+    </div>
+
+    <div class="p-6">
+      <%= render 'form', deal_stage: @deal_stage %>
+    </div>
+  </div>
+</div>

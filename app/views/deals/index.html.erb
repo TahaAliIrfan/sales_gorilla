@@ -1,0 +1,144 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold"><%= action_name == 'my_deals' ? 'My Deals' : 'All Deals' %></h1>
+      <p class="text-gray-600 mt-1">Manage your sales pipeline</p>
+    </div>
+    <div class="flex space-x-4">
+      <% if action_name != 'my_deals' %>
+        <%= link_to "My Deals", my_deals_deals_path, class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
+      <% else %>
+        <%= link_to "All Deals", deals_path, class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
+      <% end %>
+      <%= link_to "New Deal", new_deal_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    </div>
+  </div>
+
+  <% if @deals.any? %>
+    <div class="flex overflow-x-auto pb-4 space-x-4" data-controller="drag">
+      <% @deal_stages.each do |stage| %>
+        <div class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow">
+          <div class="p-4 border-b border-gray-200 bg-gray-200 rounded-t-lg" data-stage-id="<%= stage.id %>">
+            <h3 class="font-semibold text-gray-700"><%= stage.name %></h3>
+            <% stage_deals = @deals.by_stage(stage).active %>
+            <p class="text-sm text-gray-500"><span class="deal-count"><%= stage_deals.count %></span> deals - <%= number_to_currency(stage_deals.sum(:amount)) %></p>
+          </div>
+          <div class="p-2 min-h-[300px]" data-drag-target="stage" data-stage-id="<%= stage.id %>">
+            <% if stage_deals.any? %>
+              <% stage_deals.each do |deal| %>
+                <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow" data-drag-target="deal" data-deal-id="<%= deal.id %>">
+                  <div class="flex justify-between items-start">
+                    <h4 class="font-medium text-blue-600 flex items-center">
+                      <span class="drag-handle cursor-move mr-2 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                      </span>
+                      <%= link_to deal.title, deal_path(deal) %>
+                    </h4>
+                    <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
+                  </div>
+                  <p class="text-sm text-gray-600 mt-1 truncate">
+                    <% if deal.customer.present? %>
+                      <%= deal.customer.name %>
+                    <% else %>
+                      <span class="text-gray-500">No customer</span>
+                    <% end %>
+                  </p>
+                  <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
+                    <span>Assigned to: <%= deal.user.name %></span>
+                    <% if deal.expected_close_date %>
+                      <span>Close: <%= deal.expected_close_date.strftime("%b %d") %></span>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% else %>
+              <div class="text-center py-8 text-gray-500 text-sm">
+                No deals in this stage
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+      
+      <!-- Won Deals Column -->
+      <div class="flex-shrink-0 w-80 bg-green-50 rounded-lg shadow">
+        <div class="p-4 border-b border-green-200 bg-green-100 rounded-t-lg">
+          <h3 class="font-semibold text-green-700">Won Deals</h3>
+          <% won_deals = @deals.won %>
+          <p class="text-sm text-green-600"><%= won_deals.count %> deals - <%= number_to_currency(won_deals.sum(:amount)) %></p>
+        </div>
+        <div class="p-2 min-h-[300px]">
+          <% if won_deals.any? %>
+            <% won_deals.each do |deal| %>
+              <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-green-500">
+                <div class="flex justify-between items-start">
+                  <h4 class="font-medium text-green-600">
+                    <%= link_to deal.title, deal_path(deal) %>
+                  </h4>
+                  <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1 truncate">
+                  <% if deal.customer.present? %>
+                    <%= deal.customer.name %>
+                  <% else %>
+                    <span class="text-gray-500">No customer</span>
+                  <% end %>
+                </p>
+                <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
+                  <span>Assigned to: <%= deal.user.name %></span>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8 text-gray-500 text-sm">
+              No won deals yet
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Lost Deals Column -->
+      <div class="flex-shrink-0 w-80 bg-red-50 rounded-lg shadow">
+        <div class="p-4 border-b border-red-200 bg-red-100 rounded-t-lg">
+          <h3 class="font-semibold text-red-700">Lost Deals</h3>
+          <% lost_deals = @deals.lost %>
+          <p class="text-sm text-red-600"><%= lost_deals.count %> deals - <%= number_to_currency(lost_deals.sum(:amount)) %></p>
+        </div>
+        <div class="p-2 min-h-[300px]">
+          <% if lost_deals.any? %>
+            <% lost_deals.each do |deal| %>
+              <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-red-500">
+                <div class="flex justify-between items-start">
+                  <h4 class="font-medium text-red-600">
+                    <%= link_to deal.title, deal_path(deal) %>
+                  </h4>
+                  <span class="text-sm font-semibold text-red-600"><%= number_to_currency(deal.amount) %></span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1 truncate">
+                  <% if deal.customer.present? %>
+                    <%= deal.customer.name %>
+                  <% else %>
+                    <span class="text-gray-500">No customer</span>
+                  <% end %>
+                </p>
+                <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
+                  <span>Assigned to: <%= deal.user.name %></span>
+                </div>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8 text-gray-500 text-sm">
+              No lost deals
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-white shadow-md rounded p-8 my-6">
+      <p class="text-gray-600">No deals found. <%= link_to "Create your first deal", new_deal_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+    </div>
+  <% end %>
+</div>

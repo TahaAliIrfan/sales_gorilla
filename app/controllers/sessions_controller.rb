@@ -1,0 +1,38 @@
+class SessionsController < ApplicationController
+  def new
+    redirect_to '/auth/google_oauth2'
+  end
+
+  def create
+    auth = request.env['omniauth.auth']
+    user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
+      u.name = auth.info.name
+      u.email = auth.info.email
+    end
+
+    if user.email.ends_with?('@tecaudex.com')
+      session[:user_id] = user.id
+      session[:user_email] = user.email
+      flash[:success] = 'Successfully signed in!'
+      redirect_to dashboard_path
+    else
+      flash[:error] = 'Access restricted to @tecaudex.com domain'
+      redirect_to root_path
+    end
+  rescue => e
+    flash[:error] = "Authentication error: #{e.message}"
+    redirect_to root_path
+  end
+
+  def destroy
+    session[:user_id] = nil
+    session[:user_email] = nil
+    flash[:success] = 'Signed out successfully'
+    redirect_to root_path
+  end
+
+  def failure
+    flash[:error] = "Authentication failed: #{params[:message]}"
+    redirect_to root_path
+  end
+end
