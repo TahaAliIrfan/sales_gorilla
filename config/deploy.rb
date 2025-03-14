@@ -18,7 +18,7 @@ set :puma_state,      "/home/#{fetch(:user)}/#{fetch(:application)}/shared/tmp/p
 set :puma_pid,        "/home/#{fetch(:user)}/#{fetch(:application)}/shared/tmp/pids/puma.pid"
 set :puma_access_log, "/home/#{fetch(:user)}/#{fetch(:application)}/shared/log/puma.error.log"
 set :puma_error_log,  "/home/#{fetch(:user)}/#{fetch(:application)}/shared/log/puma.access.log"
-set :ssh_options,     { forward_agent: true, user: fetch(:user), keys: %w(~/.ssh/id_rsa.pub) }
+set :ssh_options,     { forward_agent: true, user: fetch(:user), keys: %w(~/.ssh/id_ed25519.pub) }
 set :puma_preload_app, true
 set :puma_worker_timeout, nil
 set :puma_init_active_record, true  # Change to true if using ActiveRecord
