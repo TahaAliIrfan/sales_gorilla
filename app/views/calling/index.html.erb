@@ -130,6 +130,7 @@
                   <th class="py-3 px-4 text-left">Date</th>
                   <th class="py-3 px-4 text-left">Customer</th>
                   <th class="py-3 px-4 text-left">Duration</th>
+                  <th class="py-3 px-4 text-left">Agent</th>
                   <th class="py-3 px-4 text-left">Actions</th>
                 </tr>
               </thead>
@@ -181,4 +182,30 @@
     }, 1500); // Delay to ensure Twilio device is initialized
   });
 </script>
-<% end %> 
+<% end %>
+
+<!-- Recording player -->
+<div id="recording-player" class="mt-4 hidden">
+  <h3 class="text-lg font-semibold mb-2">Playing Recording</h3>
+  <audio id="audio-player" controls class="w-full"></audio>
+</div>
+
+<!-- Recording details modal -->
+<div id="recording-details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 max-w-md w-full">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold">Recording Details</h3>
+      <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div id="recording-details-content" class="space-y-2">
+      <!-- Content will be populated dynamically -->
+    </div>
+    <div class="mt-6 flex justify-end">
+      <button id="close-modal-button" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">
+        Close
+      </button>
+    </div>
+  </div>
+</div> 

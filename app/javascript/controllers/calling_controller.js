@@ -275,6 +275,7 @@ export default class extends Controller {
         <td class="py-3 px-4">${formattedDate}</td>
         <td class="py-3 px-4">${recording.customer_name || 'Unknown'}</td>
         <td class="py-3 px-4">${formattedDuration}</td>
+        <td class="py-3 px-4">${recording.user_name || 'Unknown'}</td>
         <td class="py-3 px-4">
           <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs play-recording" data-sid="${recording.sid}">
             <i class="fas fa-play"></i> Play

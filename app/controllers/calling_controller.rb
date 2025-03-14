@@ -30,7 +30,17 @@ class CallingController < ApplicationController
     caller_id = params[:caller_id]
 
     if params[:controller] == 'calling' && params[:customer_id].present?
-      response = twilio_service.generate_voice_response(phone_number, caller_id)
+
+      customer = Customer.find_by(id: params[:customer_id])
+
+      if customer.user_id.nil?
+        user_id = User.find_by(admin: true).id
+      else
+        user_id = customer.user_id
+      end
+
+
+      response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
       render xml: response.to_s
     else
       response = twilio_service.call_sales_rep('+923237399596')
@@ -44,33 +54,28 @@ class CallingController < ApplicationController
     call_sid = params[:CallSid]
     duration = params[:RecordingDuration].to_i
     url = params[:RecordingUrl]
-    
+
     # Find the customer associated with this call
-    customer_id = session[:current_call_customer_id]
-    
-    if customer_id.present?
-      customer = Customer.find_by(id: customer_id)
-      if customer.present?
-        # Create a recording record
-        recording = Recording.create(
-          sid: recording_sid,
-          call_sid: call_sid,
-          duration: duration,
-          url: url,
-          date: Time.current,
-          user: current_user,
-          customer: customer
-        )
-    
-        # Create a customer activity for the call
-        customer.customer_activities.create(
-          action: 'Call Recording',
-          details: "Call recording saved (#{duration} seconds)",
-          user: current_user || User.first
-        )
-      end
+    customer = Customer.find_by(id: params[:customer_id])
+    user = User.find_by(id: params[:user_id])
+    if customer.present? && user.present?
+      Recording.create(
+        sid: recording_sid,
+        call_sid: call_sid,
+        url: url,
+        duration: duration,
+        date: Time.current,
+        user: user,
+        customer: customer
+      )
+
+      customer.customer_activities.create(
+        action: 'Call Recording',
+        details: "Call recording saved (#{duration} seconds)",
+        user: user
+      )
     end
-    
+
     head :ok
   end
 
@@ -84,7 +89,7 @@ class CallingController < ApplicationController
     else
       # Get all recordings from Twilio and match with our database
       twilio_recordings = twilio_service.fetch_recordings
-      
+
       # Convert to JSON format for the frontend
       render json: twilio_recordings
     end
@@ -96,7 +101,7 @@ class CallingController < ApplicationController
 
     begin
       recording = Recording.find_by(sid: recording_sid)
-      
+
       if recording
         # Use the URL stored in our database
         media_url = recording.url
@@ -139,7 +144,7 @@ class CallingController < ApplicationController
   def twilio_service
     @twilio_service ||= TwilioService.new
   end
-  
+
   def recordings_to_json(recordings)
     recordings.map do |recording|
       {
