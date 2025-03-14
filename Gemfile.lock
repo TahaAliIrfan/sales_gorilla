@@ -212,10 +212,6 @@ GEM
       actionpack (>= 4.2)
       omniauth (~> 2.0)
     ostruct (0.6.1)
-    passenger (6.0.26)
-      rack (>= 1.6.13)
-      rackup (>= 2.0.0)
-      rake (>= 12.3.3)
     pg (1.5.9)
     pp (0.6.2)
       prettyprint
@@ -223,6 +219,8 @@ GEM
     psych (5.2.3)
       date
       stringio
+    puma (6.6.0)
+      nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.1.12)
     rack-protection (4.0.0)
@@ -349,8 +347,8 @@ DEPENDENCIES
   omniauth
   omniauth-google-oauth2
   omniauth-rails_csrf_protection
-  passenger
   pg (~> 1.1)
+  puma (>= 5.0)
   rails (~> 7.1.5, >= 7.1.5.1)
   sprockets-rails
   stimulus-rails
