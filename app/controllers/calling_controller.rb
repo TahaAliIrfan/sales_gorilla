@@ -102,25 +102,28 @@ class CallingController < ApplicationController
     begin
       recording = Recording.find_by(sid: recording_sid)
 
-      if recording
+      if recording.present?
+        # Set cache headers for better performance
+        expires_in 1.week, public: true
+        
         # Use the URL stored in our database
         media_url = recording.url
+        
+        # Fetch the recording using Twilio credentials
+        response = HTTParty.get(
+          media_url,
+          basic_auth: {
+            username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
+            password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+          }
+        )
+
+        # Send the audio data directly to the browser
+        send_data response.body, type: 'audio/mpeg', disposition: 'inline'
       else
-        # Fallback to fetching from Twilio
-        twilio_recording = twilio_service.fetch_recording(recording_sid)
-        media_url = twilio_recording[:media_url]
+        # Recording not found
+        render plain: "Recording not found", status: :not_found
       end
-
-      response = HTTParty.get(
-        media_url,
-        basic_auth: {
-          username: Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
-          password: Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-        }
-      )
-
-      content_type = response.headers['content-type']
-      send_data response.body, type: content_type, disposition: 'inline'
     rescue => e
       Rails.logger.error "Error fetching recording: #{e.message}"
       render plain: "Error fetching recording: #{e.message}", status: :internal_server_error

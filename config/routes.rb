@@ -59,7 +59,7 @@ Rails.application.routes.draw do
   # Call recording routes
   get 'calling/recordings', to: 'calling#recordings'
   get 'calling/recording/:sid', to: 'calling#recording', as: :get_recording
-  get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :play_recording
+  get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :calling_play_recording
   post 'calling/recording_status', to: 'calling#recording_status'
 
   # Health check
