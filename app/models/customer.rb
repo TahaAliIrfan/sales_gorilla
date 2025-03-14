@@ -22,6 +22,11 @@ class Customer < ApplicationRecord
     end
   }
   
+  # Returns the count of active deals for this customer
+  def active_deals_count
+    deals.active.count
+  end
+  
   private
   
   def normalize_email

@@ -4,6 +4,24 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
 
   def index
+    # Get all users for the filter dropdown
+    @users = User.all
+    
+    # Check if this is an AJAX request for client-side filtering
+    if request.xhr?
+      # For AJAX requests, return all customers for client-side filtering
+      @customers = Customer.all.includes(:user, :deals)
+      render json: @customers.as_json(
+        include: { 
+          user: { only: [:id, :name] },
+          deals: { only: [:id, :status] }
+        },
+        methods: [:active_deals_count]
+      )
+      return
+    end
+    
+    # For regular requests, apply server-side filtering
     @customers = Customer.all
     
     # Apply filters using scopes
@@ -14,9 +32,6 @@ class CustomersController < ApplicationController
     sort_column = %w[name email company].include?(params[:sort]) ? params[:sort] : 'name'
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'asc'
     @customers = @customers.order("#{sort_column} #{sort_direction}")
-    
-    # Get all users for the filter dropdown
-    @users = User.all
     
     # Track filter state for the view
     @filter_applied = params[:search].present? || params[:user_id].present?

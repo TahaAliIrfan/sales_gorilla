@@ -6,3 +6,6 @@ eagerLoadControllersFrom("controllers", application)
 // Import and register custom controllers
 import DragController from "./drag_controller"
 application.register("drag", DragController)
+
+import CustomerFilterController from "./customer_filter_controller"
+application.register("customer-filter", CustomerFilterController)
