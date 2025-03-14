@@ -92,6 +92,43 @@
         <%= form.label :address, class: "block text-sm font-medium text-gray-700" %>
         <%= form.text_area :address, rows: 2, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
+      
+      <div class="md:col-span-2">
+        <%= form.label :file, "Attachment (PDF, DOC, or Image)", class: "block text-sm font-medium text-gray-700" %>
+        <div class="mt-1 flex items-center">
+          <% if form.object.file.attached? %>
+            <div class="mr-3">
+              <% if form.object.file.content_type.start_with?('image/') %>
+                <%= image_tag form.object.file.variant(resize_to_limit: [100, 100]), class: "h-16 w-auto object-cover rounded border border-gray-200" %>
+              <% else %>
+                <div class="flex items-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
+                  <svg class="mr-1.5 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
+                  </svg>
+                  <%= form.object.file.filename %>
+                </div>
+              <% end %>
+            </div>
+            <div>
+              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Change
+                <%= form.file_field :file, class: "hidden", accept: "image/*,.pdf,.doc,.docx" %>
+              </label>
+            </div>
+          <% else %>
+            <div>
+              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg class="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+                Choose File
+                <%= form.file_field :file, class: "hidden", accept: "image/*,.pdf,.doc,.docx" %>
+              </label>
+            </div>
+          <% end %>
+        </div>
+        <p class="mt-1 text-xs text-gray-500">Accepted file types: PDF, DOC, DOCX, JPG, PNG, GIF (max 10MB)</p>
+      </div>
     </div>
   </div>
 

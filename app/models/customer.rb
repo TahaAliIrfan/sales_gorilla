@@ -4,10 +4,16 @@ class Customer < ApplicationRecord
   has_many :recordings, dependent: :nullify
   has_many :customer_activities, dependent: :destroy
   
+  # Add file attachment capability
+  has_one_attached :file
+  
   validates :name, presence: { message: "is required" }
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
             format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
   validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
+  
+  # Validate file type
+  validate :acceptable_file
   
   before_validation :normalize_email
   before_validation :normalize_phone
@@ -121,6 +127,23 @@ class Customer < ApplicationRecord
   end
   
   private
+  
+  def acceptable_file
+    return unless file.attached?
+    
+    unless file.blob.content_type.in?(%w[
+      image/jpeg image/jpg image/png image/gif
+      application/pdf
+      application/msword
+      application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    ])
+      errors.add(:file, 'must be a JPEG, PNG, GIF, PDF, DOC or DOCX file')
+    end
+    
+    if file.blob.byte_size > 10.megabytes
+      errors.add(:file, 'size cannot exceed 10MB')
+    end
+  end
   
   def normalize_email
     self.email = email.downcase.strip if email.present?

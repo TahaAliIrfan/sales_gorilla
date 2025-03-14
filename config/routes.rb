@@ -65,6 +65,16 @@ Rails.application.routes.draw do
   get 'calling/recording/:sid', to: 'calling#recording', as: :get_recording
   get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :calling_play_recording
   post 'calling/recording_status', to: 'calling#recording_status'
+  
+  # API routes
+  namespace :api do
+    namespace :v1 do
+      post 'cost_calculator', to: 'cost_calculator#cost_calculator'
+    end
+  end
+  
+  # Test routes
+  get 'test/cost_calculator', to: redirect('/test_cost_calculator_api.html')
 
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
