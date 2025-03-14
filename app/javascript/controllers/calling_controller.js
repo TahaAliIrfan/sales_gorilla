@@ -170,6 +170,18 @@ export default class extends Controller {
     
     this.showStatus(`Calling ${phoneNumber} from ${callerId}...`, 'info')
     
+    // Store the deal ID in the session for recording association
+    fetch('/calling/store_deal_id', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({ deal_id: dealId })
+    }).catch(error => {
+      console.error('Error storing deal ID:', error)
+    })
+    
     const params = {
       To: phoneNumber,
       caller_id: callerId,

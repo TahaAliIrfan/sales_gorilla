@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_14_104550) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_14_150904) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_104550) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "notes"
+    t.bigint "user_id"
+    t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
   create_table "deal_activities", force: :cascade do |t|
@@ -73,6 +75,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_104550) do
     t.index ["user_id"], name: "index_deals_on_user_id"
   end
 
+  create_table "recordings", force: :cascade do |t|
+    t.string "sid"
+    t.integer "duration"
+    t.datetime "date"
+    t.string "url"
+    t.string "call_sid"
+    t.bigint "user_id", null: false
+    t.bigint "customer_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_recordings_on_customer_id"
+    t.index ["user_id"], name: "index_recordings_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "provider"
     t.string "uid"
@@ -83,6 +99,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_104550) do
     t.boolean "is_admin", default: false
   end
 
+  add_foreign_key "customers", "users"
   add_foreign_key "deal_activities", "deals"
   add_foreign_key "deal_activities", "users"
   add_foreign_key "deal_recordings", "deal_stages"
@@ -91,4 +108,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_104550) do
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
+  add_foreign_key "recordings", "customers"
+  add_foreign_key "recordings", "users"
 end

@@ -53,14 +53,54 @@ class CallingController < ApplicationController
 
   # Handle recording status callbacks from Twilio
   def recording_status
-    # We no longer store calls in the database
+    recording_sid = params[:RecordingSid]
+    call_sid = params[:CallSid]
+    duration = params[:RecordingDuration].to_i
+    url = params[:RecordingUrl]
+    
+    # Find the deal associated with this call
+    deal_id = session[:current_call_deal_id]
+    
+    if deal_id.present?
+      deal = Deal.find_by(id: deal_id)
+      if deal && deal.customer.present?
+        # Create a recording record
+        recording = Recording.create(
+          sid: recording_sid,
+          call_sid: call_sid,
+          duration: duration,
+          url: url,
+          date: Time.current,
+          user: current_user,
+          customer: deal.customer
+        )
+        
+        # Log the recording in deal activities
+        deal.deal_activities.create(
+          action: 'recording',
+          details: "Call recording saved (#{duration} seconds)",
+          user: current_user
+        )
+      end
+    end
+    
     head :ok
   end
 
   # Fetch list of recordings
   def recordings
-    recordings = twilio_service.fetch_recordings
-    render json: recordings
+    if params[:customer_id].present?
+      # Get recordings for a specific customer
+      customer = Customer.find_by(id: params[:customer_id])
+      recordings = customer ? customer.recordings.recent.limit(20) : []
+      render json: recordings_to_json(recordings)
+    else
+      # Get all recordings from Twilio and match with our database
+      twilio_recordings = twilio_service.fetch_recordings
+      
+      # Convert to JSON format for the frontend
+      render json: twilio_recordings
+    end
   end
 
   # Play a specific recording
@@ -68,8 +108,16 @@ class CallingController < ApplicationController
     recording_sid = params[:sid]
 
     begin
-      recording = twilio_service.fetch_recording(recording_sid)
-      media_url = recording.media_url
+      recording = Recording.find_by(sid: recording_sid)
+      
+      if recording
+        # Use the URL stored in our database
+        media_url = recording.url
+      else
+        # Fallback to fetching from Twilio
+        twilio_recording = twilio_service.fetch_recording(recording_sid)
+        media_url = twilio_recording[:media_url]
+      end
 
       response = HTTParty.get(
         media_url,
@@ -93,9 +141,29 @@ class CallingController < ApplicationController
     render json: twilio_numbers
   end
 
+  # Store the current deal ID in the session
+  def store_deal_id
+    session[:current_call_deal_id] = params[:deal_id]
+    head :ok
+  end
+
   private
 
   def twilio_service
     @twilio_service ||= TwilioService.new
+  end
+  
+  def recordings_to_json(recordings)
+    recordings.map do |recording|
+      {
+        sid: recording.sid,
+        duration: recording.duration,
+        date: recording.date,
+        url: "#{request.base_url}/calling/play_recording/#{recording.sid}",
+        call_sid: recording.call_sid,
+        customer_name: recording.customer&.name,
+        user_name: recording.user&.name
+      }
+    end
   end
 end 

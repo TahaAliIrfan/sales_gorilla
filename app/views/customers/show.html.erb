@@ -34,6 +34,12 @@
             <h3 class="text-sm font-medium text-gray-500">Phone</h3>
             <p class="mt-1 text-lg text-gray-900"><%= @customer.phone.present? ? @customer.phone : "N/A" %></p>
           </div>
+          <% if current_user&.admin? || @customer.user == current_user %>
+            <div>
+              <h3 class="text-sm font-medium text-gray-500">Assigned To</h3>
+              <p class="mt-1 text-lg text-gray-900"><%= @customer.user ? @customer.user.name : "Unassigned" %></p>
+            </div>
+          <% end %>
           <% if @customer.notes.present? %>
             <div>
               <h3 class="text-sm font-medium text-gray-500">Notes</h3>
@@ -46,17 +52,14 @@
 
     <!-- Customer Deals -->
     <div class="lg:col-span-2">
-      <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex justify-between items-center">
-            <h2 class="text-xl font-bold text-gray-900">Deals</h2>
-            <%= link_to new_deal_path(customer_id: @customer.id), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" do %>
-              New Deal
-            <% end %>
-          </div>
+      <div class="mt-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-900">Deals</h2>
+          <%= link_to "New Deal", new_deal_path(customer_id: @customer.id), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
         </div>
-        <div class="p-6">
-          <% if @customer.deals.any? %>
+        
+        <% if @customer.deals.any? %>
+          <div class="bg-white shadow-md rounded-lg overflow-hidden">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
@@ -72,9 +75,7 @@
                   <% @customer.deals.each do |deal| %>
                     <tr>
                       <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-blue-600">
-                          <%= link_to deal.title, deal_path(deal) %>
-                        </div>
+                        <div class="text-sm font-medium text-gray-900"><%= deal.title %></div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
                         <div class="text-sm text-gray-900"><%= number_to_currency(deal.amount) %></div>
@@ -83,33 +84,150 @@
                         <div class="text-sm text-gray-900"><%= deal.deal_stage.name %></div>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap">
-                        <% case deal.status %>
-                        <% when 'active' %>
-                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">Active</span>
-                        <% when 'won' %>
-                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Won</span>
-                        <% when 'lost' %>
-                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Lost</span>
-                        <% end %>
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          <%= deal.status == 'active' ? 'bg-blue-100 text-blue-800' : 
+                              deal.status == 'won' ? 'bg-green-100 text-green-800' : 
+                              'bg-red-100 text-red-800' %>">
+                          <%= deal.status.capitalize %>
+                        </span>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div class="flex space-x-2">
-                          <%= link_to "View", deal_path(deal), class: "text-blue-600 hover:text-blue-900" %>
-                          <%= link_to "Edit", edit_deal_path(deal), class: "text-indigo-600 hover:text-indigo-900" %>
-                        </div>
+                        <%= link_to "View", deal_path(deal), class: "text-blue-600 hover:text-blue-900 mr-3" %>
+                        <%= link_to "Edit", edit_deal_path(deal), class: "text-indigo-600 hover:text-indigo-900" %>
                       </td>
                     </tr>
                   <% end %>
                 </tbody>
               </table>
             </div>
-          <% else %>
-            <div class="text-center py-8 text-gray-500">
-              <p>No deals found for this customer. <%= link_to "Create a new deal", new_deal_path(customer_id: @customer.id), class: "text-blue-600 hover:text-blue-900" %>.</p>
+          </div>
+        <% else %>
+          <div class="bg-white shadow-md rounded-lg p-6 text-center">
+            <p class="text-gray-500">No deals found for this customer.</p>
+            <p class="mt-2">
+              <%= link_to "Create a new deal", new_deal_path(customer_id: @customer.id), class: "text-blue-600 hover:text-blue-800" %>
+            </p>
+          </div>
+        <% end %>
+      </div>
+      
+      <!-- Customer Call Recordings -->
+      <div class="mt-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold text-gray-900">Call Recordings</h2>
+          <%= link_to "Make a Call", calling_path(deal_id: @customer.deals.first&.id), class: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" if @customer.deals.any? %>
+        </div>
+        
+        <div id="recordings-container" class="bg-white shadow-md rounded-lg overflow-hidden">
+          <div id="recordings-loading" class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-red-500 text-2xl"></i>
+            <p class="mt-2 text-gray-600">Loading recordings...</p>
+          </div>
+          
+          <div id="no-recordings" class="hidden text-center py-8">
+            <p class="text-gray-500">No call recordings found for this customer.</p>
+          </div>
+          
+          <div id="recordings-list" class="hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recordings-table-body" class="bg-white divide-y divide-gray-200">
+                  <!-- Recordings will be inserted here -->
+                </tbody>
+              </table>
             </div>
-          <% end %>
+          </div>
+          
+          <div id="recording-player" class="hidden p-4 bg-gray-100">
+            <h4 class="font-bold mb-2">Playing Recording</h4>
+            <audio id="audio-player" controls class="w-full"></audio>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<!-- JavaScript to load recordings -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    fetchRecordings();
+  });
+  
+  function fetchRecordings() {
+    const recordingsLoading = document.getElementById('recordings-loading');
+    const noRecordings = document.getElementById('no-recordings');
+    const recordingsList = document.getElementById('recordings-list');
+    const recordingsTableBody = document.getElementById('recordings-table-body');
+    
+    recordingsLoading.classList.remove('hidden');
+    noRecordings.classList.add('hidden');
+    recordingsList.classList.add('hidden');
+    
+    fetch('/calling/recordings?customer_id=<%= @customer.id %>')
+      .then(response => response.json())
+      .then(recordings => {
+        recordingsLoading.classList.add('hidden');
+        
+        if (recordings.length === 0) {
+          noRecordings.classList.remove('hidden');
+        } else {
+          recordingsList.classList.remove('hidden');
+          recordingsTableBody.innerHTML = '';
+          
+          recordings.forEach(recording => {
+            const date = new Date(recording.date);
+            const formattedDate = date.toLocaleString();
+            const minutes = Math.floor(recording.duration / 60);
+            const seconds = recording.duration % 60;
+            const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formattedDate}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${formattedDuration}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${recording.user_name || 'Unknown'}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <button onclick="playRecording('${recording.url}')" class="text-blue-600 hover:text-blue-900 mr-3">
+                  <i class="fas fa-play"></i> Play
+                </button>
+                <a href="${recording.url}" download class="text-gray-600 hover:text-gray-900">
+                  <i class="fas fa-download"></i> Download
+                </a>
+              </td>
+            `;
+            
+            recordingsTableBody.appendChild(row);
+          });
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching recordings:', error);
+        recordingsLoading.classList.add('hidden');
+        noRecordings.classList.remove('hidden');
+        noRecordings.querySelector('p').textContent = `Error loading recordings: ${error.message}`;
+      });
+  }
+  
+  function playRecording(url) {
+    const recordingPlayer = document.getElementById('recording-player');
+    const audioPlayer = document.getElementById('audio-player');
+    
+    recordingPlayer.classList.remove('hidden');
+    audioPlayer.src = url;
+    audioPlayer.play().catch(error => {
+      console.error('Error playing audio:', error);
+    });
+  }
+</script>
