@@ -6,11 +6,11 @@ class CallingController < ApplicationController
   # Display the browser-based phone interface
   def index
     @twilio_numbers = twilio_service.fetch_available_numbers
-    @deals = Deal.includes(:customer).order(created_at: :desc)
+    @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
 
-    if params[:deal_id].present?
-      @selected_deal = Deal.find_by(id: params[:deal_id])
-      @phone_to_call = @selected_deal&.customer&.phone
+    if params[:customer_id].present?
+      @selected_customer = Customer.find_by(id: params[:customer_id])
+      @phone_to_call = @selected_customer&.phone
     elsif params[:phone].present?
       @phone_to_call = params[:phone]
     end
@@ -29,7 +29,7 @@ class CallingController < ApplicationController
     phone_number = params[:To]
     caller_id = params[:caller_id]
 
-    if params[:controller] == 'calling' && params[:deal_id].present?
+    if params[:controller] == 'calling' && params[:customer_id].present?
       response = twilio_service.generate_voice_response(phone_number, caller_id)
       render xml: response.to_s
     else
@@ -45,12 +45,12 @@ class CallingController < ApplicationController
     duration = params[:RecordingDuration].to_i
     url = params[:RecordingUrl]
     
-    # Find the deal associated with this call
-    deal_id = session[:current_call_deal_id]
+    # Find the customer associated with this call
+    customer_id = session[:current_call_customer_id]
     
-    if deal_id.present?
-      deal = Deal.find_by(id: deal_id)
-      if deal && deal.customer.present?
+    if customer_id.present?
+      customer = Customer.find_by(id: customer_id)
+      if customer.present?
         # Create a recording record
         recording = Recording.create(
           sid: recording_sid,
@@ -59,14 +59,14 @@ class CallingController < ApplicationController
           url: url,
           date: Time.current,
           user: current_user,
-          customer: deal.customer
+          customer: customer
         )
     
-        # Log the recording in deal activities
-        deal.deal_activities.create(
-          action: 'recording',
+        # Create a customer activity for the call
+        customer.customer_activities.create(
+          action: 'Call Recording',
           details: "Call recording saved (#{duration} seconds)",
-          user: current_user
+          user: current_user || User.first
         )
       end
     end
@@ -128,9 +128,9 @@ class CallingController < ApplicationController
     render json: twilio_numbers
   end
 
-  # Store the current deal ID in the session
-  def store_deal_id
-    session[:current_call_deal_id] = params[:deal_id]
+  # Store the current customer ID in the session
+  def store_customer_id
+    session[:current_call_customer_id] = params[:customer_id]
     head :ok
   end
 

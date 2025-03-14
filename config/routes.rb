@@ -54,11 +54,11 @@ Rails.application.routes.draw do
   get 'calling/token', to: 'calling#token'
   match 'calling/voice', to: 'calling#voice', via: [:get, :post]
   get 'calling/available_numbers', to: 'calling#available_numbers'
-  post 'calling/store_deal_id', to: 'calling#store_deal_id'
+  post 'calling/store_customer_id', to: 'calling#store_customer_id'
   
   # Call recording routes
   get 'calling/recordings', to: 'calling#recordings'
-  get 'calling/recordings/:sid', to: 'calling#play_recording'
+  get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :play_recording
   post 'calling/recording_status', to: 'calling#recording_status'
 
   # Health check

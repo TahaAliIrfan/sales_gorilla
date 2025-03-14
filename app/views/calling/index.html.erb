@@ -19,17 +19,16 @@
         <h3 class="text-xl font-bold m-0">Browser Phone</h3>
       </div>
       <div class="p-4">
-        <!-- Deal Selection -->
+        <!-- Customer Selection -->
         <div class="mb-4">
-          <label for="deal-select" class="block mb-1 font-medium text-gray-700">Select Deal:</label>
-          <select data-calling-target="dealSelect" data-action="calling#onDealSelect" class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
-            <option value="">Select a deal...</option>
-            <% @deals.each do |deal| %>
-              <% customer = deal.customer %>
-              <option value="<%= deal.id %>" 
-                      data-phone="<%= customer&.phone %>" 
-                      <%= 'selected' if @selected_deal&.id == deal.id %>>
-                <%= deal.title %> - <%= customer ? "#{customer.name} #{customer.phone ? "(#{customer.phone})" : '(No phone)'}" : 'No customer' %>
+          <label for="customer-select" class="block mb-1 font-medium text-gray-700">Select Customer:</label>
+          <select data-calling-target="customerSelect" data-action="calling#onCustomerSelect" class="w-full border border-gray-300 rounded px-3 py-2 mb-3 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent">
+            <option value="">Select a customer...</option>
+            <% @customers.each do |customer| %>
+              <option value="<%= customer.id %>" 
+                      data-phone="<%= customer.phone %>" 
+                      <%= 'selected' if @selected_customer&.id == customer.id %>>
+                <%= customer.name %> (<%= customer.phone %>)
               </option>
             <% end %>
           </select>
@@ -52,7 +51,7 @@
             <input type="tel" 
                    data-calling-target="phoneNumber" 
                    class="flex-grow border border-gray-300 rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50" 
-                   placeholder="Select a deal to load phone number" 
+                   placeholder="Select a customer to load phone number" 
                    value="<%= @phone_to_call %>" 
                    readonly>
             <button data-calling-target="callButton" 
@@ -129,6 +128,7 @@
               <thead>
                 <tr class="bg-gray-900 text-white uppercase text-sm leading-normal">
                   <th class="py-3 px-4 text-left">Date</th>
+                  <th class="py-3 px-4 text-left">Customer</th>
                   <th class="py-3 px-4 text-left">Duration</th>
                   <th class="py-3 px-4 text-left">Actions</th>
                 </tr>

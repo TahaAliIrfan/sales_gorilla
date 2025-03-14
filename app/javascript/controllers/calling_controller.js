@@ -6,7 +6,7 @@ export default class extends Controller {
     "hangupButton", 
     "phoneNumber", 
     "callerId",
-    "dealSelect",
+    "customerSelect",
     "callStatus", 
     "statusMessage", 
     "callControls",
@@ -28,8 +28,8 @@ export default class extends Controller {
     this.updateCallButtonState()
   }
 
-  // Handle deal selection
-  onDealSelect(event) {
+  // Handle customer selection
+  onCustomerSelect(event) {
     const selectedOption = event.target.selectedOptions[0]
     const phone = selectedOption.dataset.phone || ''
     
@@ -37,7 +37,7 @@ export default class extends Controller {
     this.phoneNumberTarget.readOnly = true
     
     if (!phone) {
-      this.showStatus('Unable to call lead as it has no phone number. Please add a number to the customer profile.', 'warning')
+      this.showStatus('Unable to call customer as it has no phone number. Please add a number to the customer profile.', 'warning')
       this.callButtonTarget.disabled = true
       this.callButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
     } else {
@@ -50,17 +50,17 @@ export default class extends Controller {
   // Update call button state based on phone number
   updateCallButtonState() {
     const phoneNumber = this.phoneNumberTarget.value.trim()
-    const dealSelected = this.dealSelectTarget.value !== ''
+    const customerSelected = this.customerSelectTarget.value !== ''
     
-    if (phoneNumber && dealSelected) {
+    if (phoneNumber && customerSelected) {
       this.callButtonTarget.disabled = false
       this.callButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
     } else {
       this.callButtonTarget.disabled = true
       this.callButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
       
-      if (dealSelected && !phoneNumber) {
-        this.showStatus('Unable to call lead as it has no phone number. Please add a number to the customer profile.', 'warning')
+      if (customerSelected && !phoneNumber) {
+        this.showStatus('Unable to call customer as it has no phone number. Please add a number to the customer profile.', 'warning')
       }
     }
   }
@@ -161,31 +161,31 @@ export default class extends Controller {
     event.preventDefault()
     const phoneNumber = this.phoneNumberTarget.value.trim()
     const callerId = this.callerIdTarget.value
-    const dealId = this.dealSelectTarget.value
+    const customerId = this.customerSelectTarget.value
     
-    if (!phoneNumber || !dealId) {
-      this.showStatus('Please select a deal and ensure phone number is entered', 'warning')
+    if (!phoneNumber || !customerId) {
+      this.showStatus('Please select a customer and ensure phone number is entered', 'warning')
       return
     }
     
     this.showStatus(`Calling ${phoneNumber} from ${callerId}...`, 'info')
     
-    // Store the deal ID in the session for recording association
-    fetch('/calling/store_deal_id', {
+    // Store the customer ID in the session for recording association
+    fetch('/calling/store_customer_id', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
       },
-      body: JSON.stringify({ deal_id: dealId })
+      body: JSON.stringify({ customer_id: customerId })
     }).catch(error => {
-      console.error('Error storing deal ID:', error)
+      console.error('Error storing customer ID:', error)
     })
     
     const params = {
       To: phoneNumber,
       caller_id: callerId,
-      deal_id: dealId
+      customer_id: customerId
     }
     
     console.log('Making call with params:', params)
@@ -252,36 +252,41 @@ export default class extends Controller {
     } catch (error) {
       console.error('Error fetching recordings:', error)
       this.recordingsLoadingTarget.classList.add('hidden')
-      this.noRecordingsTarget.classList.remove('hidden')
-      this.noRecordingsTarget.querySelector('p').textContent = `Error loading recordings: ${error.message}`
+      this.showError('Error fetching recordings: ' + error.message)
     }
   }
 
   // Render recordings in the table
   renderRecordings(recordings) {
     recordings.forEach(recording => {
-      const date = new Date(recording.date)
-      const formattedDate = date.toLocaleString()
-      const minutes = Math.floor(recording.duration / 60)
-      const seconds = recording.duration % 60
-      const formattedDuration = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-      
       const row = document.createElement('tr')
       row.className = 'border-b border-gray-200 hover:bg-gray-100'
+      
+      // Format date
+      const date = new Date(recording.date)
+      const formattedDate = date.toLocaleString()
+      
+      // Format duration
+      const minutes = Math.floor(recording.duration / 60)
+      const seconds = recording.duration % 60
+      const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
+      
       row.innerHTML = `
         <td class="py-3 px-4">${formattedDate}</td>
+        <td class="py-3 px-4">${recording.customer_name || 'Unknown'}</td>
         <td class="py-3 px-4">${formattedDuration}</td>
         <td class="py-3 px-4">
-          <button class="play-recording bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mr-2" 
-                  data-action="click->calling#playRecording"
-                  data-url="${recording.url}">
+          <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs play-recording" data-sid="${recording.sid}">
             <i class="fas fa-play"></i> Play
           </button>
-          <a href="${recording.url}" download class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">
-            <i class="fas fa-download"></i> Download
-          </a>
         </td>
       `
+      
+      // Add event listener to play button
+      const playButton = row.querySelector('.play-recording')
+      playButton.addEventListener('click', (event) => {
+        this.playRecording(event)
+      })
       
       this.recordingsTableBodyTarget.appendChild(row)
     })
@@ -289,44 +294,35 @@ export default class extends Controller {
 
   // Play a recording
   playRecording(event) {
-    const url = event.currentTarget.dataset.url
+    const sid = event.currentTarget.dataset.sid
     this.recordingPlayerTarget.classList.remove('hidden')
-    this.audioPlayerTarget.src = url
-    this.audioPlayerTarget.play().catch(error => {
-      console.error('Error playing audio:', error)
-    })
+    this.audioPlayerTarget.src = `/calling/play_recording/${sid}`
+    this.audioPlayerTarget.play()
   }
 
-  // Helper method to show status messages
+  // Show status message
   showStatus(message, type = 'info') {
+    this.callStatusTarget.classList.remove('hidden', 'bg-gray-100', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100')
     this.statusMessageTarget.textContent = message
-    this.callStatusTarget.classList.remove('hidden')
     
-    // Remove all status classes
-    this.callStatusTarget.classList.remove(
-      'bg-blue-100', 'text-blue-800',
-      'bg-green-100', 'text-green-800',
-      'bg-red-100', 'text-red-800',
-      'bg-yellow-100', 'text-yellow-800'
-    )
-    
-    // Add appropriate status class
-    switch(type) {
-      case 'success':
-        this.callStatusTarget.classList.add('bg-green-100', 'text-green-800')
-        break
+    switch (type) {
       case 'error':
         this.callStatusTarget.classList.add('bg-red-100', 'text-red-800')
+        break
+      case 'success':
+        this.callStatusTarget.classList.add('bg-green-100', 'text-green-800')
         break
       case 'warning':
         this.callStatusTarget.classList.add('bg-yellow-100', 'text-yellow-800')
         break
+      case 'info':
       default:
         this.callStatusTarget.classList.add('bg-blue-100', 'text-blue-800')
+        break
     }
   }
 
-  // Helper method to show errors
+  // Show error message
   showError(message) {
     this.showStatus(message, 'error')
   }
