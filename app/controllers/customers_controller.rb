@@ -5,6 +5,21 @@ class CustomersController < ApplicationController
 
   def index
     @customers = Customer.all
+    
+    # Apply filters using scopes
+    @customers = @customers.assigned_to(params[:user_id])
+    @customers = @customers.search(params[:search])
+    
+    # Apply sorting
+    sort_column = %w[name email company].include?(params[:sort]) ? params[:sort] : 'name'
+    sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'asc'
+    @customers = @customers.order("#{sort_column} #{sort_direction}")
+    
+    # Get all users for the filter dropdown
+    @users = User.all
+    
+    # Track filter state for the view
+    @filter_applied = params[:search].present? || params[:user_id].present?
   end
 
   def show

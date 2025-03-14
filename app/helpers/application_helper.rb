@@ -24,4 +24,14 @@ module ApplicationHelper
     else 'bg-gray-400'
     end
   end
+
+  def sortable(column, title = nil)
+    title ||= column.titleize
+    direction = (column == params[:sort] && params[:direction] == "asc") ? "desc" : "asc"
+    icon = column == params[:sort] ? (params[:direction] == "asc" ? "↑" : "↓") : ""
+    
+    link_to "#{title} #{icon}".html_safe, 
+            { sort: column, direction: direction, search: params[:search], user_id: params[:user_id] },
+            class: "hover:text-gray-900"
+  end
 end

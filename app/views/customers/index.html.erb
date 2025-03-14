@@ -9,16 +9,56 @@
     </div>
   </div>
 
+  <!-- Search and Filter Section -->
+  <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+    <%= form_with url: customers_path, method: :get, class: "space-y-4 md:space-y-0 md:flex md:items-end md:space-x-4" do |form| %>
+      <div class="flex-grow">
+        <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+        <div class="relative rounded-md shadow-sm">
+          <%= form.text_field :search, value: params[:search], placeholder: "Search by name, email, phone, or company", class: "focus:ring-blue-500 focus:border-blue-500 block w-full pl-3 pr-10 py-2 border-gray-300 rounded-md" %>
+          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+        <%= form.select :user_id, 
+          options_for_select([["All Users", ""]] + @users.map { |u| [u.name, u.id] }, params[:user_id]), 
+          {}, 
+          { class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" } 
+        %>
+      </div>
+
+      <div>
+        <%= form.submit "Filter", class: "w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+        <% if params[:search].present? || params[:user_id].present? %>
+          <%= link_to "Clear", customers_path, class: "mt-2 md:mt-0 md:ml-2 inline-block text-blue-600 hover:text-blue-800" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
     <% if @customers.any? %>
       <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
             <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= sortable "name" %>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= sortable "company" %>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= sortable "email" %>
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -40,6 +80,17 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900"><%= customer.phone %></div>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">
+                    <% if customer.user %>
+                      <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <%= customer.user.name %>
+                      </span>
+                    <% else %>
+                      <span class="text-gray-500">Unassigned</span>
+                    <% end %>
+                  </div>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <%= customer.deals.active.count %>
                 </td>
@@ -57,8 +108,28 @@
       </div>
     <% else %>
       <div class="text-center py-8 text-gray-500">
-        <p>No customers found. <%= link_to "Add your first customer", new_customer_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <% if params[:search].present? || params[:user_id].present? %>
+          <p>No customers found matching your filters. <%= link_to "Clear filters", customers_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <% else %>
+          <p>No customers found. <%= link_to "Add your first customer", new_customer_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <% end %>
       </div>
     <% end %>
   </div>
+  
+  <!-- Results Summary -->
+  <% if @customers.any? %>
+    <div class="mt-4 text-sm text-gray-600">
+      Showing <%= @customers.count %> customer<%= @customers.count != 1 ? 's' : '' %>
+      <% if params[:search].present? %>
+        matching "<%= params[:search] %>"
+      <% end %>
+      <% if params[:user_id].present? %>
+        assigned to <%= User.find(params[:user_id]).name %>
+      <% end %>
+      <% if params[:sort].present? %>
+        sorted by <%= params[:sort].humanize %> <%= params[:direction] == "asc" ? "ascending" : "descending" %>
+      <% end %>
+    </div>
+  <% end %>
 </div>

@@ -10,6 +10,18 @@ class Customer < ApplicationRecord
   
   before_validation :normalize_email
   
+  # Scopes
+  scope :assigned_to, ->(user_id) { where(user_id: user_id) if user_id.present? }
+  scope :search, ->(term) {
+    if term.present?
+      term = "%#{term.downcase}%"
+      where(
+        "LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(company) LIKE ?",
+        term, term, term, term
+      )
+    end
+  }
+  
   private
   
   def normalize_email
