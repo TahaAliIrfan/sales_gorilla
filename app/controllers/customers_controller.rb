@@ -112,7 +112,7 @@ class CustomersController < ApplicationController
     ]
     
     # Only admins can assign customers to users
-    if current_user&.admin? || current_user&.sales_manager?
+    if current_user&.admin?
       permitted_params << :user_id
     end
     

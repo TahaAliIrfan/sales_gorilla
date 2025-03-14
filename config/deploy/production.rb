@@ -9,12 +9,12 @@
 
 set :stage, :production
 set :rails_env, :production
-set :branch, "deploy"
+set :branch, "master"
 set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
   user: 'ubuntu',
-  keys: %w[./Desktop/aws_ssh/tec_crm.pem]
+  keys: %w[./Desktop/tec_crm.pem]
 }
 server '3.89.21.108', port: 22, roles: [:web, :app, :db], primary: true
 

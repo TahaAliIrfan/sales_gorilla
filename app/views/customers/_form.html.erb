@@ -188,7 +188,7 @@
         <%= form.select :status, Customer::STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
 
-      <% if current_user&.admin? || current_user&.sales_manager? %>
+      <% if current_user&.admin? %>
         <div>
           <%= form.label :user_id, "Assigned To", class: "block text-sm font-medium text-gray-700" %>
           <%= form.collection_select :user_id, User.all, :id, :name, { include_blank: "Unassigned" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
