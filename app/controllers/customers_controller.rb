@@ -77,6 +77,7 @@ class CustomersController < ApplicationController
     
     # Log the customer object before saving
     Rails.logger.debug("Customer before save: #{@customer.attributes.inspect}")
+    Rails.logger.debug("Phone number before normalization: #{@customer.phone}")
 
     # Validate required fields
     if @customer.name.blank?
@@ -127,9 +128,16 @@ class CustomersController < ApplicationController
       return
     end
     
+    # Log the original phone number
+    Rails.logger.debug("Original phone number: #{@customer.phone}")
+    Rails.logger.debug("New phone number from params: #{customer_params[:phone]}")
+    
     # Assign attributes but don't save yet
     @customer.assign_attributes(customer_params)
     
+    # Log the phone number after assignment
+    Rails.logger.debug("Phone number after assignment: #{@customer.phone}")
+
     # Validate required fields
     if @customer.name.blank?
       @customer.errors.add(:name, "can't be blank")
@@ -184,7 +192,7 @@ class CustomersController < ApplicationController
     # Only permit parameters that are actually in the form
     permitted_params = [
       :name, :email, :phone, :address, :company, :notes,
-      :lead_source, :country_code, :linkedin_url, :ccr_link, :project_estimated_cost,
+      :lead_source, :linkedin_url, :ccr_link, :project_estimated_cost,
       :project_type, :idea_description, :country, :status, :call_status,
       :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status
     ]

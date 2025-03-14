@@ -7,11 +7,10 @@ class Customer < ApplicationRecord
   validates :name, presence: { message: "is required" }
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
             format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
-  
-  # Custom validation to ensure either email or phone is present
-  validate :email_or_phone_present
+  validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
   
   before_validation :normalize_email
+  before_validation :normalize_phone
   before_validation :set_default_values
   before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
   before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
@@ -127,6 +126,25 @@ class Customer < ApplicationRecord
     self.email = email.downcase.strip if email.present?
   end
   
+  def normalize_phone
+    if phone.present?
+      # First, strip any whitespace
+      cleaned_phone = phone.strip
+      
+      # Check if the phone already has a plus sign
+      has_plus = cleaned_phone.start_with?('+')
+      
+      # Remove all non-digit characters
+      digits_only = cleaned_phone.gsub(/\D/, '')
+      
+      # Add the plus sign back if it was there, or add it if it wasn't
+      self.phone = '+' + digits_only
+      
+      # Log the normalized phone number for debugging
+      Rails.logger.debug("Phone normalized from '#{phone}' to '#{self.phone}'")
+    end
+  end
+  
   def set_default_values
     self.exhaust_status ||= 'NA'
     self.status ||= 'Pending'
@@ -160,13 +178,6 @@ class Customer < ApplicationRecord
         details: "Changed from '#{old_value}' to '#{new_value}'",
         user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
       )
-    end
-  end
-  
-  def email_or_phone_present
-    if email.blank? && phone.blank?
-      errors.add(:email, "or phone must be provided")
-      errors.add(:phone, "or email must be provided")
     end
   end
 end

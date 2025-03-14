@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["select", "selectedFlag", "dropdown", "searchInput", "codeField"]
+  static targets = ["select", "selectedFlag", "dropdown", "searchInput"]
   static values = {
     countries: Array
   }
@@ -212,9 +212,6 @@ export default class extends Controller {
       const country = this.countriesValue.find(c => c.name === initialValue)
       if (country) {
         this.updateSelectedFlag(country)
-        if (this.hasCodeFieldTarget) {
-          this.codeFieldTarget.value = country.code
-        }
       }
     }
     
@@ -292,9 +289,6 @@ export default class extends Controller {
     
     if (country) {
       this.selectTarget.value = country.name
-      if (this.hasCodeFieldTarget) {
-        this.codeFieldTarget.value = country.code
-      }
       this.updateSelectedFlag(country)
       this.dropdownTarget.classList.add('hidden')
     }
