@@ -35,6 +35,18 @@ class TwilioService
     end
   end
 
+  def call_sales_rep(phone_number)
+    Twilio::TwiML::VoiceResponse.new do |r|
+      if phone_number
+        r.dial(caller_id: phone_number, record: 'record-from-answer', recording_status_callback: "#{base_url}/calling/recording_status") do |d|
+          d.number(phone_number)
+        end
+      else
+        r.say('Thanks for calling our team. We will reach out to you shortly.', voice: 'alice')
+      end
+    end
+  end
+
   def fetch_recordings(limit = 20)
     @client.recordings.list(limit: limit).map do |recording|
       {
