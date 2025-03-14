@@ -12,13 +12,21 @@
 
   <h1 class="text-2xl font-semibold text-gray-900 mb-6">Calling Interface</h1>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 lg:grid-cols-<%= current_user&.admin? ? '2' : '1' %> gap-6">
     <!-- Phone Interface -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
         <h3 class="text-xl font-bold m-0">Browser Phone</h3>
       </div>
       <div class="p-4">
+        <!-- Customer Search -->
+        <div class="mb-4">
+          <%= form_with(url: calling_path, method: :get, local: true, class: "flex items-center") do |f| %>
+            <%= f.text_field :search, placeholder: "Search customers...", value: params[:search], class: "flex-grow border border-gray-300 rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent" %>
+            <%= f.submit "Search", class: "bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-r" %>
+          <% end %>
+        </div>
+        
         <!-- Customer Selection -->
         <div class="mb-4">
           <label for="customer-select" class="block mb-1 font-medium text-gray-700">Select Customer:</label>
@@ -103,7 +111,8 @@
       </div>
     </div>
     
-    <!-- Call Recordings Section -->
+    <% if current_user&.admin? %>
+    <!-- Call Recordings Section - Admin Only -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden">
       <div class="bg-gray-900 text-white p-4 flex justify-between items-center">
         <h3 class="text-xl font-bold m-0">Call Recordings</h3>
@@ -147,6 +156,14 @@
         </div>
       </div>
     </div>
+    <% else %>
+    <!-- Message for non-admin users -->
+    <div class="mt-6 bg-white rounded-lg shadow-md overflow-hidden lg:hidden">
+      <div class="p-4 text-center">
+        <p class="text-gray-600">Call recordings are only available to administrators.</p>
+      </div>
+    </div>
+    <% end %>
   </div>
 </div>
 

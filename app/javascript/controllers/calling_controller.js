@@ -228,6 +228,11 @@ export default class extends Controller {
 
   // Fetch call recordings from the server
   async fetchRecordings() {
+    // Skip if user is not admin (check if the recordings section exists)
+    if (!document.querySelector('[data-calling-target="recordingsList"]')) {
+      return;
+    }
+    
     this.recordingsLoadingTarget.classList.remove('hidden')
     this.noRecordingsTarget.classList.add('hidden')
     this.recordingsListTarget.classList.add('hidden')
@@ -235,6 +240,15 @@ export default class extends Controller {
     
     try {
       const response = await fetch('/calling/recordings')
+      
+      // If redirected due to not being admin
+      if (response.redirected) {
+        this.recordingsLoadingTarget.classList.add('hidden')
+        this.noRecordingsTarget.classList.remove('hidden')
+        this.noRecordingsTarget.innerHTML = '<p class="text-red-600">You do not have permission to view recordings.</p>'
+        return
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`)
       }
@@ -252,7 +266,8 @@ export default class extends Controller {
     } catch (error) {
       console.error('Error fetching recordings:', error)
       this.recordingsLoadingTarget.classList.add('hidden')
-      this.showError('Error fetching recordings: ' + error.message)
+      this.noRecordingsTarget.classList.remove('hidden')
+      this.noRecordingsTarget.innerHTML = `<p class="text-red-600">Error loading recordings: ${error.message}</p>`
     }
   }
 

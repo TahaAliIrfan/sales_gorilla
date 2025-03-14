@@ -2,11 +2,23 @@ class CallingController < ApplicationController
   # Skip CSRF protection for Twilio webhooks
   skip_before_action :verify_authenticity_token, only: [:voice, :recording_status]
   layout 'dashboard'
+  before_action :require_admin, only: [:recordings, :play_recording]
 
   # Display the browser-based phone interface
   def index
     @twilio_numbers = twilio_service.fetch_available_numbers
-    @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
+    
+    # Filter customers by current user unless they're an admin
+    if current_user&.admin?
+      @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
+    else
+      @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
+    end
+
+    # Add search functionality
+    if params[:search].present?
+      @customers = @customers.search(params[:search])
+    end
 
     if params[:customer_id].present?
       @selected_customer = Customer.find_by(id: params[:customer_id])
@@ -79,7 +91,7 @@ class CallingController < ApplicationController
     head :ok
   end
 
-  # Fetch list of recordings
+  # Fetch list of recordings - Admin only
   def recordings
     if params[:customer_id].present?
       # Get recordings for a specific customer
@@ -95,7 +107,7 @@ class CallingController < ApplicationController
     end
   end
 
-  # Play a specific recording
+  # Play a specific recording - Admin only
   def play_recording
     recording_sid = params[:sid]
 
@@ -160,5 +172,16 @@ class CallingController < ApplicationController
         user_name: recording.user&.name
       }
     end
+  end
+  
+  def require_admin
+    unless current_user&.admin?
+      flash[:error] = "You must be an admin to access recordings"
+      redirect_to calling_path
+    end
+  end
+  
+  def current_user
+    @current_user ||= User.find_by(id: session[:user_id])
   end
 end 

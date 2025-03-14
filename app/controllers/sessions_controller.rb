@@ -10,19 +10,14 @@ class SessionsController < ApplicationController
       u.email = auth.info.email
       
       # Make specific users admins by default
-      admin_emails = ['sarmad.mansoor@tecaudex.com']
+      admin_emails = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
       u.is_admin = admin_emails.include?(u.email.downcase)
     end
 
     # Allow specific email addresses or @tecaudex.com domain
-    allowed_emails = ['ifrah.khurram97@gmail.com', 'dev.taha13@gmail.com']
+    allowed_emails = ['ifrah.khurram97@gmail.com', 'tahairfan1993@gmail.com']
     
     if user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
-      # Ensure existing users with these emails are also admins
-      if allowed_emails.include?(user.email.downcase) && !user.admin?
-        user.update(is_admin: true)
-      end
-      
       session[:user_id] = user.id
       session[:user_email] = user.email
       flash[:success] = 'Successfully signed in!'
