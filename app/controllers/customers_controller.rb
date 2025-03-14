@@ -78,6 +78,22 @@ class CustomersController < ApplicationController
     # Log the customer object before saving
     Rails.logger.debug("Customer before save: #{@customer.attributes.inspect}")
 
+    # Validate required fields
+    if @customer.name.blank?
+      @customer.errors.add(:name, "can't be blank")
+    end
+    
+    if @customer.email.blank? && @customer.phone.blank?
+      @customer.errors.add(:base, "Either email or phone must be provided")
+      @customer.errors.add(:email, "or phone must be provided")
+      @customer.errors.add(:phone, "or email must be provided")
+    end
+    
+    if @customer.errors.any?
+      render :new, status: :unprocessable_entity
+      return
+    end
+
     begin
       # Use save! to raise an exception on validation failure
       @customer.save!
@@ -111,9 +127,28 @@ class CustomersController < ApplicationController
       return
     end
     
+    # Assign attributes but don't save yet
+    @customer.assign_attributes(customer_params)
+    
+    # Validate required fields
+    if @customer.name.blank?
+      @customer.errors.add(:name, "can't be blank")
+    end
+    
+    if @customer.email.blank? && @customer.phone.blank?
+      @customer.errors.add(:base, "Either email or phone must be provided")
+      @customer.errors.add(:email, "or phone must be provided")
+      @customer.errors.add(:phone, "or email must be provided")
+    end
+    
+    if @customer.errors.any?
+      render :edit, status: :unprocessable_entity
+      return
+    end
+    
     begin
-      # Use update! to raise an exception on validation failure
-      @customer.update!(customer_params)
+      # Use save! to raise an exception on validation failure
+      @customer.save!
       redirect_to @customer, notice: 'Customer was successfully updated.'
     rescue ActiveRecord::RecordInvalid
       # Log validation errors for debugging

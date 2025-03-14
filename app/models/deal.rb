@@ -5,9 +5,13 @@ class Deal < ApplicationRecord
   has_many :deal_activities, dependent: :destroy
   has_many :deal_recordings, dependent: :destroy
   
-  validates :title, presence: true
-  validates :amount, presence: true, numericality: { greater_than: 0 }
-  validates :status, presence: true
+  validates :title, presence: { message: "is required" }
+  validates :amount, presence: { message: "is required" }, 
+                    numericality: { greater_than: 0, message: "must be greater than 0" }
+  validates :status, presence: { message: "is required" }
+  validates :customer_id, presence: { message: "is required - please select a customer" }
+  validates :deal_stage_id, presence: { message: "is required - please select a deal stage" }
+  validates :user_id, presence: { message: "is required - please select an owner" }
   
   # Constants for dropdown fields
   STATUSES = {
@@ -17,7 +21,7 @@ class Deal < ApplicationRecord
   }.freeze
   
   # Validation for status
-  validates :status, inclusion: { in: STATUSES.values }
+  validates :status, inclusion: { in: STATUSES.values, message: "must be one of: active, won, lost" }
   
   scope :assigned_to, ->(user) { where(user: user) }
   scope :by_stage, ->(stage) { where(deal_stage: stage) }

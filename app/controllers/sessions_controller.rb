@@ -8,15 +8,27 @@ class SessionsController < ApplicationController
     user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
       u.name = auth.info.name
       u.email = auth.info.email
+      
+      # Make specific users admins by default
+      admin_emails = ['sarmad.mansoor@tecaudex.com']
+      u.is_admin = admin_emails.include?(u.email.downcase)
     end
 
-    if user.email.ends_with?('@tecaudex.com')
+    # Allow specific email addresses or @tecaudex.com domain
+    allowed_emails = ['ifrah.khurram97@gmail.com', 'dev.taha13@gmail.com']
+    
+    if user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
+      # Ensure existing users with these emails are also admins
+      if allowed_emails.include?(user.email.downcase) && !user.admin?
+        user.update(is_admin: true)
+      end
+      
       session[:user_id] = user.id
       session[:user_email] = user.email
       flash[:success] = 'Successfully signed in!'
       redirect_to dashboard_path
     else
-      flash[:error] = 'Access restricted to @tecaudex.com domain'
+      flash[:error] = 'Access restricted to authorized email addresses'
       redirect_to root_path
     end
   rescue => e

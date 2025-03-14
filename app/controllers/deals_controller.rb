@@ -89,9 +89,36 @@ class DealsController < ApplicationController
         @users = User.all
         @deal_stages = DealStage.all
         
-        render :new
+        render :new, status: :unprocessable_entity
         return
       end
+    end
+
+    # Validate required fields
+    if @deal.title.blank?
+      @deal.errors.add(:title, "can't be blank")
+    end
+    
+    if @deal.customer_id.blank?
+      @deal.errors.add(:customer_id, "can't be blank - please select a customer")
+    end
+    
+    if @deal.deal_stage_id.blank?
+      @deal.errors.add(:deal_stage_id, "can't be blank - please select a deal stage")
+    end
+
+    if @deal.errors.any?
+      # Get customers based on user role for the form
+      if current_user&.admin?
+        @customers = Customer.all
+      else
+        @customers = Customer.where(user_id: current_user.id)
+      end
+      
+      @users = User.all
+      @deal_stages = DealStage.all
+      render :new, status: :unprocessable_entity
+      return
     end
 
     if @deal.save
@@ -107,7 +134,7 @@ class DealsController < ApplicationController
       
       @users = User.all
       @deal_stages = DealStage.all
-      render :new
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -149,7 +176,7 @@ class DealsController < ApplicationController
         @users = User.all
         @deal_stages = DealStage.all
         
-        render :edit
+        render :edit, status: :unprocessable_entity
         return
       end
     end
@@ -162,7 +189,36 @@ class DealsController < ApplicationController
       update_params = update_params.except(:user_id)
     end
     
-    if @deal.update(update_params)
+    # Validate required fields
+    @deal.assign_attributes(update_params)
+    
+    if @deal.title.blank?
+      @deal.errors.add(:title, "can't be blank")
+    end
+    
+    if @deal.customer_id.blank?
+      @deal.errors.add(:customer_id, "can't be blank - please select a customer")
+    end
+    
+    if @deal.deal_stage_id.blank?
+      @deal.errors.add(:deal_stage_id, "can't be blank - please select a deal stage")
+    end
+    
+    if @deal.errors.any?
+      # Get customers based on user role for the form
+      if current_user&.admin?
+        @customers = Customer.all
+      else
+        @customers = Customer.where(user_id: current_user.id)
+      end
+      
+      @users = User.all
+      @deal_stages = DealStage.all
+      render :edit, status: :unprocessable_entity
+      return
+    end
+    
+    if @deal.save
       # Log changes
       changes = []
       
@@ -207,7 +263,7 @@ class DealsController < ApplicationController
       
       @users = User.all
       @deal_stages = DealStage.all
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
   end
 

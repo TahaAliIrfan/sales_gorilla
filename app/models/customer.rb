@@ -4,9 +4,12 @@ class Customer < ApplicationRecord
   has_many :recordings, dependent: :nullify
   has_many :customer_activities, dependent: :destroy
   
-  validates :name, presence: true
-  validates :email, uniqueness: { case_sensitive: false },
-            format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_blank: true
+  validates :name, presence: { message: "is required" }
+  validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
+            format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
+  
+  # Custom validation to ensure either email or phone is present
+  validate :email_or_phone_present
   
   before_validation :normalize_email
   before_validation :set_default_values
@@ -157,6 +160,13 @@ class Customer < ApplicationRecord
         details: "Changed from '#{old_value}' to '#{new_value}'",
         user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
       )
+    end
+  end
+  
+  def email_or_phone_present
+    if email.blank? && phone.blank?
+      errors.add(:email, "or phone must be provided")
+      errors.add(:phone, "or email must be provided")
     end
   end
 end
