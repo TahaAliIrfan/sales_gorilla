@@ -47,7 +47,11 @@ Rails.application.routes.draw do
   get '/auth/google_oauth2', to: 'sessions#new', as: :google_oauth2
 
   # Dashboard routes
-  get 'dashboard', to: 'dashboard#index', as: :dashboard
+  get 'dashboard', to: 'dashboard#index', as: :admin_dashboard
+  get 'dashboard/reports', to: 'dashboard#reports', as: :reports_dashboard
+  
+  # User Dashboard routes
+  get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
   
   # Browser-based calling routes
   get 'calling', to: 'calling#index'
