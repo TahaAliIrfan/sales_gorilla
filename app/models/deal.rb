@@ -9,11 +9,15 @@ class Deal < ApplicationRecord
   validates :amount, presence: true, numericality: { greater_than: 0 }
   validates :status, presence: true
   
-  enum status: {
-    active: 'active',
-    won: 'won',
-    lost: 'lost'
-  }
+  # Constants for dropdown fields
+  STATUSES = {
+    'active' => 'active',
+    'won' => 'won',
+    'lost' => 'lost'
+  }.freeze
+  
+  # Validation for status
+  validates :status, inclusion: { in: STATUSES.values }
   
   scope :assigned_to, ->(user) { where(user: user) }
   scope :by_stage, ->(stage) { where(deal_stage: stage) }

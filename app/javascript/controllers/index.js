@@ -9,3 +9,6 @@ application.register("drag", DragController)
 
 import CustomerFilterController from "./customer_filter_controller"
 application.register("customer-filter", CustomerFilterController)
+
+import LeadSourceController from "./lead_source_controller"
+application.register("lead-source", LeadSourceController)

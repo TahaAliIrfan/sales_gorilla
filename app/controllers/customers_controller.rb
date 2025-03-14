@@ -39,6 +39,7 @@ class CustomersController < ApplicationController
 
   def show
     @deals = @customer.deals
+    @activities = @customer.customer_activities.recent.limit(10)
   end
 
   def new
@@ -103,10 +104,15 @@ class CustomersController < ApplicationController
 
   def customer_params
     # Only permit parameters that are actually in the form
-    permitted_params = [:name, :email, :phone, :address, :company, :notes]
+    permitted_params = [
+      :name, :email, :phone, :address, :company, :notes,
+      :lead_source, :country_code, :linkedin_url, :ccr_link, :project_estimated_cost,
+      :project_type, :idea_description, :country, :status, :call_status,
+      :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status
+    ]
     
     # Only admins can assign customers to users
-    if current_user&.admin?
+    if current_user&.admin? || current_user&.sales_manager?
       permitted_params << :user_id
     end
     

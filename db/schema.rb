@@ -10,9 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_14_150904) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_14_161818) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "customer_activities", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "user_id", null: false
+    t.string "action"
+    t.text "details"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
+    t.index ["user_id"], name: "index_customer_activities_on_user_id"
+  end
 
   create_table "customers", force: :cascade do |t|
     t.string "name"
@@ -24,6 +35,22 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_150904) do
     t.datetime "updated_at", null: false
     t.text "notes"
     t.bigint "user_id"
+    t.string "lead_source", default: ""
+    t.string "country_code"
+    t.string "linkedin_url"
+    t.string "ccr_link"
+    t.decimal "project_estimated_cost", precision: 10, scale: 2
+    t.string "project_type", default: "Not Applicable"
+    t.text "idea_description"
+    t.string "status", default: "Pending"
+    t.string "call_status", default: "Pending"
+    t.string "email_status", default: "Pending"
+    t.string "whatsapp_status", default: "Pending"
+    t.string "linkedin_status", default: "Pending"
+    t.string "upwork_profile", default: "Not Applicable"
+    t.string "exhaust_status", default: "Not Applicable"
+    t.datetime "exhaust_date"
+    t.string "country"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
@@ -99,6 +126,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_14_150904) do
     t.boolean "is_admin", default: false
   end
 
+  add_foreign_key "customer_activities", "customers"
+  add_foreign_key "customer_activities", "users"
   add_foreign_key "customers", "users"
   add_foreign_key "deal_activities", "deals"
   add_foreign_key "deal_activities", "users"
