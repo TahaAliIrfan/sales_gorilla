@@ -7,7 +7,6 @@ class Customer < ApplicationRecord
   validates :name, presence: true
   validates :email, uniqueness: { case_sensitive: false },
             format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address" }, allow_blank: true
-  validates :phone
   
   before_validation :normalize_email
   before_validation :set_default_values

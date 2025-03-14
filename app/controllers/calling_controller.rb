@@ -28,19 +28,6 @@ class CallingController < ApplicationController
   def voice
     phone_number = params[:To]
     caller_id = params[:caller_id]
-    deal_id = params[:deal_id]
-
-    # Log the call if a deal is associated
-    if deal_id.present?
-      deal = Deal.find_by(id: deal_id)
-      if deal
-        deal.deal_activities.create(
-          action: 'call',
-          details: "Call made to #{phone_number}",
-          user: current_user
-        )
-      end
-    end
 
     if params[:controller] == 'calling' && params[:deal_id].present?
       response = twilio_service.generate_voice_response(phone_number, caller_id)
@@ -74,7 +61,7 @@ class CallingController < ApplicationController
           user: current_user,
           customer: deal.customer
         )
-        
+    
         # Log the recording in deal activities
         deal.deal_activities.create(
           action: 'recording',

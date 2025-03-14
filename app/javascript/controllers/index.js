@@ -12,3 +12,6 @@ application.register("customer-filter", CustomerFilterController)
 
 import LeadSourceController from "./lead_source_controller"
 application.register("lead-source", LeadSourceController)
+
+import CountryController from "./country_controller"
+application.register("country", CountryController)

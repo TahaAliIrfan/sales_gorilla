@@ -1,6 +1,11 @@
 <%= form_with(model: customer, class: "space-y-6") do |form| %>
+  <div class="mb-6 text-center">
+    <h1 class="text-2xl font-bold text-gray-900 mb-2"><%= customer.new_record? ? "New Customer" : "Edit Customer" %></h1>
+    <p class="text-gray-600">Fill in the details below to <%= customer.new_record? ? "create a new" : "update the" %> customer record</p>
+  </div>
+
   <% if customer.errors.any? %>
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 animate-fade-in">
       <div class="flex">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
@@ -23,8 +28,13 @@
     </div>
   <% end %>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
+    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+      </svg>
+      Basic Information
+    </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
@@ -39,8 +49,42 @@
       <div>
         <%= form.label :phone, "Phone Number", class: "block text-sm font-medium text-gray-700" %>
         <div class="flex mt-1">
-          <%= form.select :country_code, ["+1", "+44", "+91", "+92", "+971", "+966"], { include_blank: "Code" }, class: "rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-          <%= form.telephone_field :phone, class: "flex-1 rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", data: { action: "click->phone#dial" } %>
+          <%= form.select :country_code, 
+              [
+                {value: "+1", label: "🇺🇸 +1"},
+                {value: "+44", label: "🇬🇧 +44"},
+                {value: "+91", label: "🇮🇳 +91"},
+                {value: "+92", label: "🇵🇰 +92"},
+                {value: "+971", label: "🇦🇪 +971"},
+                {value: "+966", label: "🇸🇦 +966"},
+                {value: "+49", label: "🇩🇪 +49"},
+                {value: "+33", label: "🇫🇷 +33"},
+                {value: "+39", label: "🇮🇹 +39"},
+                {value: "+34", label: "🇪🇸 +34"},
+                {value: "+7", label: "🇷🇺 +7"},
+                {value: "+55", label: "🇧🇷 +55"},
+                {value: "+61", label: "🇦🇺 +61"},
+                {value: "+81", label: "🇯🇵 +81"},
+                {value: "+86", label: "🇨🇳 +86"},
+                {value: "+52", label: "🇲🇽 +52"},
+                {value: "+27", label: "🇿🇦 +27"},
+                {value: "+82", label: "🇰🇷 +82"},
+                {value: "+65", label: "🇸🇬 +65"},
+                {value: "+64", label: "🇳🇿 +64"},
+                {value: "+60", label: "🇲🇾 +60"},
+                {value: "+63", label: "🇵🇭 +63"},
+                {value: "+62", label: "🇮🇩 +62"},
+                {value: "+84", label: "🇻🇳 +84"},
+                {value: "+66", label: "🇹🇭 +66"},
+                {value: "+90", label: "🇹🇷 +90"},
+                {value: "+20", label: "🇪🇬 +20"},
+                {value: "+234", label: "🇳🇬 +234"},
+                {value: "+254", label: "🇰🇪 +254"},
+                {value: "+31", label: "🇳🇱 +31"}
+              ].map { |option| [option[:label], option[:value]] }, 
+              { include_blank: "Code" }, 
+              class: "rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 min-w-[120px]" %>
+          <%= form.telephone_field :phone, class: "flex-1 rounded-r-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Phone number", data: { action: "click->phone#dial" } %>
         </div>
       </div>
 
@@ -49,20 +93,34 @@
         <%= form.text_field :company, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
 
-      <div>
+      <div data-controller="country">
         <%= form.label :country, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :country, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", list: "country-list" %>
-        <datalist id="country-list">
-          <option value="United States">
-          <option value="United Kingdom">
-          <option value="Canada">
-          <option value="Australia">
-          <option value="India">
-          <option value="Pakistan">
-          <option value="UAE">
-          <option value="Saudi Arabia">
-          <!-- Add more countries as needed -->
-        </datalist>
+        <%= form.hidden_field :country, data: { country_target: "select" } %>
+        <%= form.hidden_field :country_code, data: { country_target: "codeField" } %>
+        
+        <div class="mt-1 relative">
+          <button type="button" 
+                  class="flex items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  data-action="click->country#toggleDropdown">
+            <span data-country-target="selectedFlag" class="flex-grow text-left"><%= customer.country.present? ? "#{customer.country}" : "Select a country" %></span>
+            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          
+          <div data-country-target="dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+            <div class="sticky top-0 z-10 bg-white p-2">
+              <input type="text" 
+                     class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                     placeholder="Search countries..." 
+                     data-country-target="searchInput"
+                     data-action="input->country#search">
+            </div>
+            <ul class="py-1">
+              <% # The list will be dynamically populated by the JavaScript controller %>
+            </ul>
+          </div>
+        </div>
       </div>
 
       <div>
@@ -72,8 +130,13 @@
     </div>
   </div>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6" data-controller="lead-source">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Source & Project Details</h2>
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300" data-controller="lead-source">
+    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clip-rule="evenodd" />
+      </svg>
+      Source & Project Details
+    </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :lead_source, class: "block text-sm font-medium text-gray-700" %>
@@ -112,8 +175,13 @@
     </div>
   </div>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Status & Communication</h2>
+  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
+    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+      </svg>
+      Status & Communication
+    </h2>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :status, class: "block text-sm font-medium text-gray-700" %>
@@ -165,7 +233,53 @@
   </div>
 
   <div class="flex justify-end space-x-3 pt-5">
-    <%= link_to "Cancel", customers_path, class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-    <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+    <%= link_to "Cancel", customers_path, class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150" %>
+    <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 transform hover:scale-105" %>
   </div>
-<% end %> 
+<% end %>
+
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  input:focus, select:focus, textarea:focus {
+    transition: all 0.2s ease-in-out;
+    transform: translateY(-1px);
+  }
+  
+  /* Enhanced dropdown styling */
+  [data-country-target="dropdown"] {
+    animation: fadeIn 0.2s ease-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Flag animations */
+  [data-country-item]:hover .mr-2 {
+    transform: scale(1.2);
+    transition: transform 0.2s ease;
+  }
+  
+  /* Improved section transitions */
+  .hover\:shadow-md {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .hover\:shadow-md:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Button enhancements */
+  .bg-blue-600 {
+    background-image: linear-gradient(to right, #3b82f6, #2563eb);
+  }
+  
+  .bg-blue-600:hover {
+    background-image: linear-gradient(to right, #2563eb, #1d4ed8);
+  }
+</style> 
