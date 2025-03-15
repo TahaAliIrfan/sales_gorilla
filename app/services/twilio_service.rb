@@ -43,12 +43,12 @@ class TwilioService
     end
   end
 
-  def call_sales_rep(phone_number)
+  def call_sales_rep(caller, phone_number, user_id, customer_id = nil)
     Twilio::TwiML::VoiceResponse.new do |r|
       if phone_number
-        r.dial(caller_id: phone_number, 
+        r.dial(caller_id: caller,
                record: 'record-from-answer', 
-               recording_status_callback: "#{@app_url}/calling/recording_status",
+               recording_status_callback: "#{@app_url}/calling/recording_status?user_id=#{user_id}&customer_id=#{customer_id}",
                recording_status_callback_method: 'POST') do |d|
           d.number(phone_number)
         end

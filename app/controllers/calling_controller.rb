@@ -36,7 +36,6 @@ class CallingController < ApplicationController
     render json: { token: token }
   end
 
-  # Handle outgoing calls
   def voice
     phone_number = params[:To]
     caller_id = params[:caller_id]
@@ -51,11 +50,22 @@ class CallingController < ApplicationController
         user_id = customer.user_id
       end
 
-
       response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
       render xml: response.to_s
     else
-      response = twilio_service.call_sales_rep('+923237399596')
+      phone_number = "+923246489818"
+      user_id = User.first.id
+      customer = Customer.find_by(phone: params[:Called])
+      if customer.present?
+        if customer.user.present?
+          phone_number = customer.user.phone
+          user_id = customer.user_id
+        end
+      else
+        customer = Customer.create(name: 'Unknown Caller', phone: params[:Called])
+      end
+
+      response = twilio_service.call_sales_rep(params[:Called], phone_number, user_id, customer.id)
       render xml: response.to_s
     end
   end
