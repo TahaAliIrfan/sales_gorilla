@@ -118,7 +118,7 @@
             <% @customers.each do |customer| %>
               <tr class="customer-row" 
                   data-name="<%= customer.name.downcase %>" 
-                  data-email="<%= customer.email.downcase %>" 
+                  data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>" 
                   data-phone="<%= customer.phone %>"
                   data-user-id="<%= customer.user_id %>">

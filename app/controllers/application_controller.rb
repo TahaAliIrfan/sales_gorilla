@@ -14,6 +14,7 @@ class ApplicationController < ActionController::Base
   def current_user_admin?
     current_user&.admin?
   end
+
   
   def require_login
     unless current_user
