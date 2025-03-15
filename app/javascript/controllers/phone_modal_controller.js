@@ -40,8 +40,13 @@ export default class extends Controller {
       return
     }
     
-    // Submit the form
-    event.target.closest('form').submit()
+    // Find the form within the modal and submit it
+    const form = this.element.querySelector('form')
+    if (form) {
+      form.submit()
+    } else {
+      this.showError("Form not found. Please try again or contact support.")
+    }
   }
   
   showError(message) {
