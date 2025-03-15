@@ -1,42 +1,30 @@
 module Api
   module V1
     class CostCalculatorController < ApplicationController
-      # Skip CSRF protection for API endpoints
       skip_before_action :verify_authenticity_token
       
       # POST /api/v1/cost_calculator
       def cost_calculator
-        # Extract parameters from the request
         name = params[:name]
         email = params[:email]
         phone_number = params[:phone_number]
         country = params[:country]
         file_data = params[:file]
-        
-        # Validate required parameters
-        unless name.present? && email.present?
-          return render json: { error: "Name and email are required" }, status: :bad_request
-        end
-        
-        # Find or create a customer based on email
+
         customer = Customer.find_by(email: email)
         
         if customer.nil?
-          # Normalize phone number if provided
-          normalized_phone = phone_number.present? ? normalize_phone(phone_number) : nil
-          
           # Create a new customer
           customer = Customer.new(
             name: name,
             email: email,
-            phone: normalized_phone,
+            phone: phone_number,
             country: country,
-            lead_source: 'Website',
+            lead_source: 'CCR',
             status: 'Pending'
           )
         end
 
-        # Handle file attachment if present
         if file_data.present?
           begin
             # Decode base64 data
@@ -69,10 +57,6 @@ module Api
               filename: "cost_calculator_attachment#{extension}",
               content_type: content_type
             )
-            
-            # Clean up the temp file
-            temp_file.close
-            temp_file.unlink
           rescue => e
             Rails.logger.error("File attachment error: #{e.message}")
             # Continue without the file if there's an error
