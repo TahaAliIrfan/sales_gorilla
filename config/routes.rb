@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'settings/edit'
+  get 'settings/update'
   # Remove auto-generated routes
   # get 'deal_stages/index'
   # get 'deal_stages/new'
@@ -52,6 +54,10 @@ Rails.application.routes.draw do
   
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
+  
+  # Settings routes
+  get 'settings', to: 'settings#edit', as: :settings
+  patch 'settings/update', to: 'settings#update', as: :update_settings
   
   # Browser-based calling routes
   get 'calling', to: 'calling#index'
