@@ -84,12 +84,6 @@ class CustomersController < ApplicationController
       @customer.errors.add(:name, "can't be blank")
     end
     
-    if @customer.email.blank? && @customer.phone.blank?
-      @customer.errors.add(:base, "Either email or phone must be provided")
-      @customer.errors.add(:email, "or phone must be provided")
-      @customer.errors.add(:phone, "or email must be provided")
-    end
-    
     if @customer.errors.any?
       render :new, status: :unprocessable_entity
       return
@@ -141,12 +135,6 @@ class CustomersController < ApplicationController
     # Validate required fields
     if @customer.name.blank?
       @customer.errors.add(:name, "can't be blank")
-    end
-    
-    if @customer.email.blank? && @customer.phone.blank?
-      @customer.errors.add(:base, "Either email or phone must be provided")
-      @customer.errors.add(:email, "or phone must be provided")
-      @customer.errors.add(:phone, "or email must be provided")
     end
     
     if @customer.errors.any?
