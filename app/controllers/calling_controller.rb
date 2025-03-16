@@ -45,7 +45,7 @@ class CallingController < ApplicationController
       customer = Customer.find_by(id: params[:customer_id])
 
       if customer.user_id.nil?
-        user_id = User.find_by(admin: true).id
+        user_id = User.find_by(is_admin: true).id
       else
         user_id = customer.user_id
       end
