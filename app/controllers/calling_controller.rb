@@ -45,7 +45,7 @@ class CallingController < ApplicationController
       customer = Customer.find_by(id: params[:customer_id])
 
       if customer.user_id.nil?
-        user_id = User.find_by(is_admin: true).id
+        user_id = User.find_by(email: 'sarmad.mansoor@tecaudex.com').id
       else
         user_id = customer.user_id
       end
@@ -53,7 +53,7 @@ class CallingController < ApplicationController
       response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
       render xml: response.to_s
     else
-      phone_number = "+923246489818"
+      phone_number = "+923237399596"
       user_id = User.first.id
       customer = Customer.find_by(phone: params[:Called])
       if customer.present?
