@@ -119,8 +119,8 @@ class DealsController < ApplicationController
     
     # Create an activity for the deal creation
     @deal.deal_activities.build(
-      activity_type: 'deal_created',
-      description: "Deal created with initial stage #{@deal.deal_stage&.name}",
+      action: 'deal_created',
+      details: "Deal created with initial stage #{@deal.deal_stage&.name}",
       user_id: current_user.id
     )
     
@@ -131,8 +131,8 @@ class DealsController < ApplicationController
       # Record the first stage update for the deal
       DealActivity.create!(
         deal_id: @deal.id,
-        activity_type: 'stage_update',
-        description: "Deal initially set to #{@deal.deal_stage.name} stage",
+        action: 'stage_update',
+        details: "Deal initially set to #{@deal.deal_stage.name} stage",
         user_id: current_user.id
       )
       
@@ -231,33 +231,33 @@ class DealsController < ApplicationController
           when 'deal_stage_id'
             old_stage = DealStage.find_by(id: values[:old])&.name || 'Unknown'
             new_stage = DealStage.find_by(id: values[:new])&.name || 'Unknown'
-            description = "Deal stage changed from #{old_stage} to #{new_stage}"
-            activity_type = 'stage_update'
+            details = "Deal stage changed from #{old_stage} to #{new_stage}"
+            action = 'stage_update'
           when 'user_id'
             old_user = User.find_by(id: values[:old])&.name || 'Unknown'
             new_user = User.find_by(id: values[:new])&.name || 'Unknown'
-            description = "Deal assigned from #{old_user} to #{new_user}"
-            activity_type = 'user_assignment'
+            details = "Deal assigned from #{old_user} to #{new_user}"
+            action = 'user_assignment'
           when 'amount'
             old_amount = number_to_currency(values[:old]) rescue values[:old]
             new_amount = number_to_currency(values[:new]) rescue values[:new]
-            description = "Deal amount changed from #{old_amount} to #{new_amount}"
-            activity_type = 'field_update'
+            details = "Deal amount changed from #{old_amount} to #{new_amount}"
+            action = 'field_update'
           when 'expected_close_date'
             old_date = values[:old]&.to_date&.to_s || 'None'
             new_date = values[:new]&.to_date&.to_s || 'None'
-            description = "Expected close date changed from #{old_date} to #{new_date}"
-            activity_type = 'field_update'
+            details = "Expected close date changed from #{old_date} to #{new_date}"
+            action = 'field_update'
           else
-            description = "#{human_field} changed from \"#{values[:old]}\" to \"#{values[:new]}\""
-            activity_type = 'field_update'
+            details = "#{human_field} changed from \"#{values[:old]}\" to \"#{values[:new]}\""
+            action = 'field_update'
           end
           
           # Create activity record
           DealActivity.create!(
             deal_id: @deal.id,
-            activity_type: activity_type,
-            description: description,
+            action: action,
+            details: details,
             user_id: current_user.id
           )
         end
@@ -314,8 +314,8 @@ class DealsController < ApplicationController
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
-        activity_type: 'stage_update',
-        description: "Deal moved from #{previous_stage.name} to #{new_stage.name}",
+        action: 'stage_update',
+        details: "Deal moved from #{previous_stage.name} to #{new_stage.name}",
         user_id: current_user.id
       )
       
@@ -334,8 +334,8 @@ class DealsController < ApplicationController
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
-        activity_type: 'user_assignment',
-        description: "Deal assigned from #{previous_user&.name || 'Unassigned'} to #{new_user.name}",
+        action: 'user_assignment',
+        details: "Deal assigned from #{previous_user&.name || 'Unassigned'} to #{new_user.name}",
         user_id: current_user.id
       )
       
@@ -351,8 +351,8 @@ class DealsController < ApplicationController
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
-        activity_type: 'status_update',
-        description: "Deal marked as Won",
+        action: 'status_update',
+        details: "Deal marked as Won",
         user_id: current_user.id
       )
       redirect_to @deal, notice: 'Deal was marked as Won.'
@@ -367,8 +367,8 @@ class DealsController < ApplicationController
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
-        activity_type: 'status_update',
-        description: "Deal marked as Lost",
+        action: 'status_update',
+        details: "Deal marked as Lost",
         user_id: current_user.id
       )
       redirect_to @deal, notice: 'Deal was marked as Lost.'
