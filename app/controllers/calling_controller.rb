@@ -56,12 +56,12 @@ class CallingController < ApplicationController
       customer = Customer.find_by(phone: params[:Called])
       if customer.present?
         if customer.user.present?
-          phone_number = customer.user.phone
+          phone_number = customer.user.phone_number
           user_id = customer.user_id
         end
       else
         user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
-        phone_number = user.phone
+        phone_number = user.phone_number
         user_id = user.id
         customer = Customer.create(name: 'Unknown Caller', phone: params[:Called])
       end
