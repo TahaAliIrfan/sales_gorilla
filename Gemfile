@@ -51,6 +51,9 @@ gem "twilio-ruby", "~> 6.0"
 # HTTP client for Ruby
 gem "httparty", "~> 0.21.0"
 
+# CORS support for Rails API
+gem 'rack-cors'
+
 # Tailwind CSS for styling
 gem "tailwindcss-rails"
 
