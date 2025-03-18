@@ -7,6 +7,7 @@ class DealStagesController < ApplicationController
 
   def index
     @deal_stages = policy_scope(DealStage)
+    authorize DealStage
   end
 
   def new

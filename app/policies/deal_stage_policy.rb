@@ -3,16 +3,20 @@
 class DealStagePolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
-      scope.all # Deal stages are visible to all users
+      if user.admin?
+        scope.all
+      else
+        scope.none # No deal stages for non-admin users
+      end
     end
   end
   
   def index?
-    true # All authenticated users can list deal stages
+    user.admin? # Only admins can list deal stages
   end
   
   def show?
-    true # All authenticated users can view deal stages
+    user.admin? # Only admins can view deal stages
   end
   
   def create?

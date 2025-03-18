@@ -1,5 +1,6 @@
 class DealsController < ApplicationController
   include ActionView::Helpers::NumberHelper
+  include ActionView::Helpers::DateHelper
   
   layout 'dashboard'
   before_action :require_login
@@ -49,11 +50,11 @@ class DealsController < ApplicationController
       @users = [current_user]
     end
     
-    # Get all deal stages for dropdown
+    # Get all deal stages for dropdown - always available for deal forms
     @deal_stages = DealStage.all
     
-    # If no deal stages exist, create some defaults
-    if @deal_stages.empty?
+    # If no deal stages exist, create some defaults (only admins can create stages)
+    if @deal_stages.empty? && current_user&.admin?
       stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
       stages.each_with_index do |name, index|
         DealStage.create(name: name, position: index + 1)
@@ -179,7 +180,7 @@ class DealsController < ApplicationController
       @users = [current_user]
     end
     
-    # Get all deal stages for dropdown
+    # Get all deal stages for dropdown - always available for deal forms
     @deal_stages = DealStage.all
   end
 
