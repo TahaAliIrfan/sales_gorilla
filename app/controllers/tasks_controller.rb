@@ -4,6 +4,8 @@ class TasksController < ApplicationController
   before_action :set_task, only: [:show, :edit, :update, :destroy, :complete]
   before_action :authorize_admin_for_all_tasks, only: [:index]
   before_action :authorize_task_access, only: [:show, :edit, :update, :destroy, :complete]
+  before_action :ensure_user_assignment_for_non_admin, only: [:create, :update]
+  before_action :process_due_date, only: [:create, :update]
 
   def index
     @tasks = Task.includes(:user, :customer).order(due_date: :asc)
@@ -51,7 +53,9 @@ class TasksController < ApplicationController
   def new
     @task = Task.new
     @task.user_id = current_user.id
-    @task.due_date = Time.current + 1.day
+    @task.due_date = Date.today + 1.day
+    @task.status = :pending
+    @task.priority = 'Medium'
     
     if params[:customer_id].present?
       @task.customer_id = params[:customer_id]
@@ -64,11 +68,6 @@ class TasksController < ApplicationController
   def create
     @task = Task.new(task_params)
     
-    # Only admins can assign tasks to other users
-    unless current_user.admin?
-      @task.user_id = current_user.id
-    end
-
     respond_to do |format|
       if @task.save
         format.html { redirect_to task_path(@task), notice: 'Task was successfully created.' }
@@ -82,11 +81,6 @@ class TasksController < ApplicationController
 
   def update
     respond_to do |format|
-      # Only admins can change the assigned user
-      unless current_user.admin?
-        params[:task][:user_id] = @task.user_id
-      end
-      
       if @task.update(task_params)
         format.html { redirect_to task_path(@task), notice: 'Task was successfully updated.' }
         format.json { render :show, status: :ok, location: @task }
@@ -116,7 +110,20 @@ class TasksController < ApplicationController
     end
 
     def task_params
-      params.require(:task).permit(:title, :description, :due_date, :status, :user_id, :customer_id, :priority)
+      permitted_params = params.require(:task).permit(:title, :description, :due_date, :status, :user_id, :customer_id, :priority)
+      # If user is not admin, ensure they can only assign to themselves
+      permitted_params[:user_id] = current_user.id unless current_user.admin?
+      permitted_params
+    end
+    
+    def process_due_date
+      return unless params[:task] && params[:task][:due_date].present?
+      
+      # If the due_date is just a date (no time component), set it to end of day
+      if params[:task][:due_date].match?(/^\d{4}-\d{2}-\d{2}$/)
+        date = Date.parse(params[:task][:due_date])
+        params[:task][:due_date] = date.end_of_day
+      end
     end
     
     def require_login
@@ -136,6 +143,18 @@ class TasksController < ApplicationController
     def authorize_task_access
       unless current_user.admin? || @task.user_id == current_user.id
         redirect_to my_tasks_tasks_path, alert: "You don't have permission to access this task."
+      end
+    end
+    
+    def ensure_user_assignment_for_non_admin
+      return if current_user.admin?
+      
+      # For create action, ensure the task is assigned to the current user
+      if action_name == 'create'
+        params[:task][:user_id] = current_user.id
+      # For update action, don't allow changing the user_id
+      elsif action_name == 'update'
+        params[:task][:user_id] = @task.user_id
       end
     end
 end

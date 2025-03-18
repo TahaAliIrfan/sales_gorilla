@@ -1,24 +1,22 @@
 class Task < ApplicationRecord
   belongs_to :user
   belongs_to :customer, optional: true
-  
-  # Validations
+
+  enum status: { pending: 0, in_progress: 1, completed: 2, cancelled: 3 }, _prefix: true
+
   validates :title, presence: true
   validates :due_date, presence: true
   validates :priority, inclusion: { in: %w[Low Medium High] }
-  validates :status, inclusion: { in: %w[Pending In-Progress Completed Cancelled] }
-  
-  # Scopes
-  scope :pending, -> { where(status: 'Pending') }
-  scope :in_progress, -> { where(status: 'In-Progress') }
-  scope :completed, -> { where(status: 'Completed') }
-  scope :cancelled, -> { where(status: 'Cancelled') }
-  scope :upcoming, -> { where('due_date >= ?', Time.current) }
-  scope :overdue, -> { where('due_date < ? AND status NOT IN (?)', Time.current, ['Completed', 'Cancelled']) }
-  scope :for_today, -> { where('due_date >= ? AND due_date <= ?', Time.current.beginning_of_day, Time.current.end_of_day) }
+
+  scope :pending, -> { where(status: :pending) }
+  scope :in_progress, -> { where(status: :in_progress) }
+  scope :completed, -> { where(status: :completed) }
+  scope :cancelled, -> { where(status: :cancelled) }
+  scope :upcoming, -> { where('due_date >= ?', Date.today) }
+  scope :overdue, -> { where('due_date < ?', Date.today).pending }
+  scope :for_today, -> { where('due_date >= ? AND due_date <= ?', Date.today.beginning_of_day, Date.today.end_of_day).pending }
   scope :assigned_to, ->(user) { where(user_id: user.id) }
-  
-  # Constants for UI
+
   PRIORITIES = {
     'Low' => 'Low',
     'Medium' => 'Medium',
@@ -26,31 +24,30 @@ class Task < ApplicationRecord
   }.freeze
   
   STATUSES = {
-    'Pending' => 'Pending',
-    'In-Progress' => 'In-Progress',
-    'Completed' => 'Completed',
-    'Cancelled' => 'Cancelled'
+    'pending' => 'Pending',
+    'in_progress' => 'In Progress',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled'
   }.freeze
-  
-  # Methods
+
   def complete!
-    update(status: 'Completed', completed: true)
+    update(status: :completed)
   end
   
   def pending?
-    status == 'Pending'
+    status == 'pending'
   end
   
   def in_progress?
-    status == 'In-Progress'
+    status == 'in_progress'
   end
   
   def completed?
-    status == 'Completed'
+    status == 'completed'
   end
   
   def overdue?
-    due_date < Time.current && !completed? && !cancelled?
+    due_date.to_date < Date.today && !completed? && !cancelled?
   end
   
   def due_today?
@@ -58,6 +55,11 @@ class Task < ApplicationRecord
   end
   
   def cancelled?
-    status == 'Cancelled'
+    status == 'cancelled'
+  end
+  
+  # Get formatted status for display
+  def status_display
+    STATUSES[status]
   end
 end
