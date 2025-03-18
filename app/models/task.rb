@@ -2,8 +2,6 @@ class Task < ApplicationRecord
   belongs_to :user
   belongs_to :customer, optional: true
 
-  enum status: { pending: 0, in_progress: 1, completed: 2, cancelled: 3 }, _prefix: true
-
   validates :title, presence: true
   validates :due_date, presence: true
   validates :priority, inclusion: { in: %w[Low Medium High] }
@@ -22,7 +20,7 @@ class Task < ApplicationRecord
     'Medium' => 'Medium',
     'High' => 'High'
   }.freeze
-  
+
   STATUSES = {
     'pending' => 'Pending',
     'in_progress' => 'In Progress',

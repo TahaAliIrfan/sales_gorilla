@@ -32,8 +32,8 @@
     <div class="sm:col-span-3">
       <%= form.label :status, class: "block text-sm font-medium text-gray-700 mb-1" %>
       <div class="relative">
-        <%= form.select :status, 
-                       options_for_select(Task::STATUSES.map { |k, v| [v, k] }, task.status), 
+        <%= form.select :status,
+                        options_for_select(Task::STATUSES.map { |k, v| [v, k] }, task.status),
                        {}, 
                        class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
         <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
@@ -115,7 +115,7 @@
 
   <div class="pt-6 mt-4 border-t border-gray-200">
     <div class="flex justify-end space-x-3">
-      <%= link_to (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : task_path(@task)), class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+      <%= link_to (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : (task.persisted? ? task_path(task) : tasks_path)), class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
         Cancel
       <% end %>
       <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
