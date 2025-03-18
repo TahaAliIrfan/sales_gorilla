@@ -54,6 +54,8 @@
           <select class="block w-full pl-10 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
                   data-customer-filter-target="sort"
                   data-action="change->customer-filter#filter">
+            <option value="created_at">Sort by Date Added</option>
+            <option value="updated_at">Sort by Last Updated</option>
             <option value="name">Sort by Name</option>
             <option value="email">Sort by Email</option>
             <option value="company">Sort by Company</option>
@@ -64,8 +66,8 @@
           <select class="block w-full pl-3 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
                   data-customer-filter-target="direction"
                   data-action="change->customer-filter#filter">
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
           </select>
         </div>
       </div>
@@ -111,6 +113,9 @@
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <%= sortable "created_at", "Date Added" %>
+              </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -121,7 +126,9 @@
                   data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>" 
                   data-phone="<%= customer.phone %>"
-                  data-user-id="<%= customer.user_id %>">
+                  data-user-id="<%= customer.user_id %>"
+                  data-created-at="<%= customer.created_at.to_i %>"
+                  data-updated-at="<%= customer.updated_at.to_i %>">
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-blue-600">
                     <%= link_to customer.name, customer_path(customer) %>
@@ -158,6 +165,9 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <%= customer.deals.active.count %>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= customer.created_at.strftime('%b %d, %Y') %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="flex space-x-2">

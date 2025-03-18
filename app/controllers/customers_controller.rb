@@ -4,12 +4,10 @@ class CustomersController < ApplicationController
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
 
   def index
-    # Get all users for the filter dropdown (only for admins)
     @users = User.all if current_user&.admin?
     
     # Check if this is an AJAX request for client-side filtering
     if request.xhr?
-      # For AJAX requests, return filtered customers based on user role
       if current_user&.admin?
         @customers = Customer.all.includes(:user, :deals)
       else
@@ -38,8 +36,8 @@ class CustomersController < ApplicationController
     @customers = @customers.search(params[:search])
     
     # Apply sorting
-    sort_column = %w[name email company].include?(params[:sort]) ? params[:sort] : 'name'
-    sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'asc'
+    sort_column = %w[name email company created_at updated_at].include?(params[:sort]) ? params[:sort] : 'created_at'
+    sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("#{sort_column} #{sort_direction}")
     
     # Track filter state for the view
@@ -65,20 +63,11 @@ class CustomersController < ApplicationController
   end
 
   def create
-    # Log the parameters for debugging
-    Rails.logger.debug("Customer params: #{params.inspect}")
-    
     @customer = Customer.new(customer_params)
-    
-    # Automatically assign the current user to the customer if not an admin
-    # or if no user_id was specified
+
     if !current_user&.admin? || @customer.user_id.nil?
       @customer.user_id = current_user.id
     end
-    
-    # Log the customer object before saving
-    Rails.logger.debug("Customer before save: #{@customer.attributes.inspect}")
-    Rails.logger.debug("Phone number before normalization: #{@customer.phone}")
 
     # Validate required fields
     if @customer.name.blank?
@@ -95,12 +84,8 @@ class CustomersController < ApplicationController
       @customer.save!
       redirect_to @customer, notice: 'Customer was successfully created.'
     rescue ActiveRecord::RecordInvalid
-      # Log validation errors for debugging
-      Rails.logger.error("Customer validation failed: #{@customer.errors.full_messages.join(', ')}")
       render :new, status: :unprocessable_entity
     rescue => e
-      # Log any unexpected errors
-      Rails.logger.error("Error creating customer: #{e.message}")
       @customer.errors.add(:base, "An unexpected error occurred: #{e.message}")
       render :new, status: :unprocessable_entity
     end

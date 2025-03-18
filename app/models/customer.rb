@@ -212,7 +212,7 @@ class Customer < ApplicationRecord
       title: "Follow up with new customer: #{name}",
       description: "Contact new customer #{name} (#{company}) and establish connection.",
       due_date: Time.current + 1.day,
-      status: 'Pending',
+      status: 'pending',
       priority: 'Medium',
       user_id: user_id,
       customer_id: id

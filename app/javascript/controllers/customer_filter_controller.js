@@ -122,13 +122,26 @@ export default class extends Controller {
     const rows = Array.from(this.customersListTarget.querySelectorAll('.customer-row:not(.hidden)'))
     
     rows.sort((a, b) => {
-      const aValue = (a.dataset[sortBy] || '').toLowerCase()
-      const bValue = (b.dataset[sortBy] || '').toLowerCase()
-      
-      if (direction === 'asc') {
-        return aValue.localeCompare(bValue)
+      // Special handling for date fields (created_at, updated_at)
+      if (sortBy === 'created_at' || sortBy === 'updated_at') {
+        const aValue = parseInt(a.dataset[sortBy] || '0')
+        const bValue = parseInt(b.dataset[sortBy] || '0')
+        
+        if (direction === 'asc') {
+          return aValue - bValue
+        } else {
+          return bValue - aValue
+        }
       } else {
-        return bValue.localeCompare(aValue)
+        // Text-based sorting for other fields
+        const aValue = (a.dataset[sortBy] || '').toLowerCase()
+        const bValue = (b.dataset[sortBy] || '').toLowerCase()
+        
+        if (direction === 'asc') {
+          return aValue.localeCompare(bValue)
+        } else {
+          return bValue.localeCompare(aValue)
+        }
       }
     })
     
@@ -177,8 +190,8 @@ export default class extends Controller {
   clearAll() {
     this.searchTarget.value = ''
     this.userTarget.value = ''
-    this.sortTarget.value = 'name'
-    this.directionTarget.value = 'asc'
+    this.sortTarget.value = 'created_at'
+    this.directionTarget.value = 'desc'
     this.filter()
   }
 } 
