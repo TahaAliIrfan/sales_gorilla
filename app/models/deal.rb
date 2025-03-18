@@ -13,15 +13,11 @@ class Deal < ApplicationRecord
   validates :deal_stage_id, presence: { message: "is required - please select a deal stage" }
   validates :user_id, presence: { message: "is required - please select an owner" }
   
-  # Constants for dropdown fields
-  STATUSES = {
-    'active' => 'active',
-    'won' => 'won',
-    'lost' => 'lost'
-  }.freeze
-  
-  # Validation for status
-  validates :status, inclusion: { in: STATUSES.values, message: "must be one of: active, won, lost" }
+  enum status: {
+    active: 'active',
+    won: 'won',
+    lost: 'lost'
+  }
   
   scope :assigned_to, ->(user) { where(user: user) }
   scope :by_stage, ->(stage) { where(deal_stage: stage) }

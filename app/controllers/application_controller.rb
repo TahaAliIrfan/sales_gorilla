@@ -1,9 +1,12 @@
 class ApplicationController < ActionController::Base
+  include Pundit::Authorization
+  
   helper_method :current_user, :current_user_admin?
   
   # Rescue from common exceptions
   rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
   rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
+  rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
   
   private
   
@@ -40,5 +43,11 @@ class ApplicationController < ActionController::Base
     Rails.logger.error("Record not found: #{exception.message}")
     flash[:error] = "The requested record could not be found."
     redirect_to root_path
+  end
+  
+  def user_not_authorized(exception)
+    policy_name = exception.policy.class.to_s.underscore
+    flash[:error] = "You are not authorized to perform this action."
+    redirect_to(request.referrer || root_path)
   end
 end

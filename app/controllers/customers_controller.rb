@@ -2,17 +2,15 @@ class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
   before_action :set_customer, only: [:show, :edit, :update, :destroy]
+  after_action :verify_authorized, except: :index
+  after_action :verify_policy_scoped, only: :index
 
   def index
     @users = User.all if current_user&.admin?
     
     # Check if this is an AJAX request for client-side filtering
     if request.xhr?
-      if current_user&.admin?
-        @customers = Customer.all.includes(:user, :deals)
-      else
-        @customers = Customer.where(user_id: current_user.id).includes(:user, :deals)
-      end
+      @customers = policy_scope(Customer).includes(:user, :deals)
       
       render json: @customers.as_json(
         include: { 
@@ -25,11 +23,7 @@ class CustomersController < ApplicationController
     end
     
     # For regular requests, apply server-side filtering
-    if current_user&.admin?
-      @customers = Customer.all
-    else
-      @customers = Customer.where(user_id: current_user.id)
-    end
+    @customers = policy_scope(Customer)
     
     # Apply filters using scopes
     @customers = @customers.assigned_to(params[:user_id]) if params[:user_id].present? && current_user&.admin?
@@ -45,13 +39,7 @@ class CustomersController < ApplicationController
   end
 
   def show
-    # Check if user has permission to view this customer
-    unless current_user&.admin? || @customer.user_id == current_user&.id
-      flash[:error] = "You don't have permission to view this customer"
-      redirect_to customers_path
-      return
-    end
-    
+    authorize @customer
     @deals = @customer.deals
     @activities = @customer.customer_activities.recent.limit(10)
     @recordings = @customer.recordings.recent.limit(20)
@@ -60,6 +48,7 @@ class CustomersController < ApplicationController
 
   def new
     @customer = Customer.new
+    authorize @customer
   end
 
   def create
@@ -68,6 +57,8 @@ class CustomersController < ApplicationController
     if !current_user&.admin? || @customer.user_id.nil?
       @customer.user_id = current_user.id
     end
+    
+    authorize @customer
 
     # Validate required fields
     if @customer.name.blank?
@@ -92,21 +83,11 @@ class CustomersController < ApplicationController
   end
 
   def edit
-    # Check if user has permission to edit this customer
-    unless current_user&.admin? || @customer.user_id == current_user&.id
-      flash[:error] = "You don't have permission to edit this customer"
-      redirect_to customers_path
-      return
-    end
+    authorize @customer
   end
 
   def update
-    # Check if user has permission to update this customer
-    unless current_user&.admin? || @customer.user_id == current_user&.id
-      flash[:error] = "You don't have permission to update this customer"
-      redirect_to customers_path
-      return
-    end
+    authorize @customer
     
     # Log the original phone number
     Rails.logger.debug("Original phone number: #{@customer.phone}")
@@ -145,13 +126,7 @@ class CustomersController < ApplicationController
   end
 
   def destroy
-    # Check if user has permission to delete this customer
-    unless current_user&.admin? || @customer.user_id == current_user&.id
-      flash[:error] = "You don't have permission to delete this customer"
-      redirect_to customers_path
-      return
-    end
-    
+    authorize @customer
     @customer.destroy
     redirect_to customers_path, notice: 'Customer was successfully deleted.'
   end
