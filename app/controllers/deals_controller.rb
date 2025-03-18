@@ -5,326 +5,374 @@ class DealsController < ApplicationController
   before_action :require_login
   before_action :set_deal, only: [:show, :edit, :update, :destroy, :update_stage, :mark_as_won, :mark_as_lost, :assign_user]
   skip_before_action :verify_authenticity_token, only: [:update_stage], if: -> { request.format.json? }
+  after_action :verify_authorized, except: [:index, :my_deals]
+  after_action :verify_policy_scoped, only: [:index, :my_deals]
 
   def index
-    if current_user&.admin?
-      @deals = Deal.all
-    else
-      @deals = Deal.assigned_to(current_user)
-    end
+    @deals = policy_scope(Deal)
     @deal_stages = DealStage.all
   end
 
   def my_deals
-    @deals = Deal.assigned_to(current_user)
+    @deals = policy_scope(Deal).assigned_to(current_user)
     @deal_stages = DealStage.all
     render :index
   end
 
   def show
+    authorize @deal
     @deal = Deal.includes(deal_activities: :user).find(params[:id])
     
-    # Check if user has permission to view this deal
-    unless current_user&.admin? || @deal.user_id == current_user&.id
-      flash[:error] = "You don't have permission to view this deal"
-      redirect_to deals_path
-      return
-    end
+    # Calculate time since last activity
+    @last_activity = @deal.deal_activities.order(created_at: :desc).first
+    @time_since_last_activity = @last_activity ? time_ago_in_words(@last_activity.created_at) : "never"
+    
+    # Get activities for this deal
+    @activities = @deal.deal_activities.order(created_at: :desc)
+    @recordings = @deal.deal_recordings.order(created_at: :desc)
   end
 
   def new
     @deal = Deal.new
+    @deal.customer_id = params[:customer_id] if params[:customer_id].present?
+    authorize @deal
     
-    # Set the initial deal stage if provided
-    if params[:stage_id].present?
-      @deal.deal_stage_id = params[:stage_id]
-    end
+    # Set default user to current user
+    @deal.user_id = current_user.id
     
-    # Set the initial customer if provided
-    if params[:customer_id].present?
-      customer = Customer.find_by(id: params[:customer_id])
-      
-      # Check if user has permission to create a deal for this customer
-      if customer && (current_user&.admin? || customer.user_id == current_user&.id)
-        @deal.customer_id = customer.id
-      else
-        flash[:error] = "You don't have permission to create a deal for this customer"
-        redirect_to customers_path
-        return
-      end
-    end
-    
-    # Set the current user as the default owner
-    @deal.user_id = current_user.id unless current_user&.admin?
-    
-    # Get customers based on user role
+    # Get all customers for dropdown
     if current_user&.admin?
       @customers = Customer.all
+      @users = User.all
     else
       @customers = Customer.where(user_id: current_user.id)
+      @users = [current_user]
     end
     
-    @users = User.all
+    # Get all deal stages for dropdown
     @deal_stages = DealStage.all
+    
+    # If no deal stages exist, create some defaults
+    if @deal_stages.empty?
+      stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
+      stages.each_with_index do |name, index|
+        DealStage.create(name: name, position: index + 1)
+      end
+      @deal_stages = DealStage.all
+    end
   end
 
   def create
     @deal = Deal.new(deal_params)
-    @deal.status = 'active' unless @deal.status.present?
     
-    # Automatically assign the current user to the deal if not an admin
-    # or if no user_id was specified
-    if !current_user&.admin? || @deal.user_id.nil?
-      @deal.user_id = current_user.id
-    end
+    # Set the user_id to current user if not set
+    @deal.user_id ||= current_user.id
     
-    # Verify the customer belongs to the current user if not an admin
-    if !current_user&.admin? && @deal.customer_id.present?
-      customer = Customer.find_by(id: @deal.customer_id)
-      if !customer || customer.user_id != current_user.id
-        flash[:error] = "You can only create deals for your own customers"
-        
-        # Get customers based on user role for the form
-        @customers = Customer.where(user_id: current_user.id)
-        @users = User.all
-        @deal_stages = DealStage.all
-        
-        render :new, status: :unprocessable_entity
-        return
-      end
-    end
-
+    # If no deal stage is selected, use the first one
+    @deal.deal_stage_id ||= DealStage.order(:position).first&.id
+    
+    authorize @deal
+    
     # Validate required fields
     if @deal.title.blank?
       @deal.errors.add(:title, "can't be blank")
     end
     
     if @deal.customer_id.blank?
-      @deal.errors.add(:customer_id, "can't be blank - please select a customer")
+      @deal.errors.add(:customer_id, "can't be blank")
     end
     
-    if @deal.deal_stage_id.blank?
-      @deal.errors.add(:deal_stage_id, "can't be blank - please select a deal stage")
+    # Validate amount is a number
+    if deal_params[:amount].present?
+      begin
+        # Try to parse the amount as a number
+        parsed_amount = deal_params[:amount]
+        if parsed_amount.is_a?(String)
+          # Remove currency symbols and commas
+          parsed_amount = parsed_amount.gsub(/[$,]/, '')
+          # Convert to float
+          parsed_amount = Float(parsed_amount)
+        end
+        @deal.amount = parsed_amount
+      rescue ArgumentError
+        @deal.errors.add(:amount, "must be a valid number")
+      end
     end
-
+    
     if @deal.errors.any?
-      # Get customers based on user role for the form
+      # Get all customers for dropdown
       if current_user&.admin?
         @customers = Customer.all
+        @users = User.all
       else
         @customers = Customer.where(user_id: current_user.id)
+        @users = [current_user]
       end
       
-      @users = User.all
+      # Get all deal stages for dropdown
       @deal_stages = DealStage.all
+      
       render :new, status: :unprocessable_entity
       return
     end
-
-    if @deal.save
-      @deal.log_activity(current_user, 'created', "Deal '#{@deal.title}' was created")
+    
+    # Create an activity for the deal creation
+    @deal.deal_activities.build(
+      activity_type: 'deal_created',
+      description: "Deal created with initial stage #{@deal.deal_stage&.name}",
+      user_id: current_user.id
+    )
+    
+    begin
+      # Use save! to raise an exception on validation failure
+      @deal.save!
+      
+      # Record the first stage update for the deal
+      DealActivity.create!(
+        deal_id: @deal.id,
+        activity_type: 'stage_update',
+        description: "Deal initially set to #{@deal.deal_stage.name} stage",
+        user_id: current_user.id
+      )
+      
       redirect_to @deal, notice: 'Deal was successfully created.'
-    else
-      # Get customers based on user role for the form
+    rescue ActiveRecord::RecordInvalid
+      # Get all customers for dropdown for rendering the form
       if current_user&.admin?
         @customers = Customer.all
+        @users = User.all
       else
         @customers = Customer.where(user_id: current_user.id)
+        @users = [current_user]
       end
       
-      @users = User.all
+      @deal_stages = DealStage.all
+      render :new, status: :unprocessable_entity
+    rescue => e
+      # Log unexpected errors
+      Rails.logger.error("Error creating deal: #{e.message}")
+      @deal.errors.add(:base, "An unexpected error occurred: #{e.message}")
+      
+      # Get data for form
+      if current_user&.admin?
+        @customers = Customer.all
+        @users = User.all
+      else
+        @customers = Customer.where(user_id: current_user.id)
+        @users = [current_user]
+      end
+      
       @deal_stages = DealStage.all
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
-    # Check if user has permission to edit this deal
-    unless current_user&.admin? || @deal.user_id == current_user&.id
-      flash[:error] = "You don't have permission to edit this deal"
-      redirect_to deals_path
-      return
-    end
+    authorize @deal
     
-    # Get customers based on user role
+    # Get all customers for dropdown
     if current_user&.admin?
       @customers = Customer.all
+      @users = User.all
     else
       @customers = Customer.where(user_id: current_user.id)
+      @users = [current_user]
     end
     
-    @users = User.all
+    # Get all deal stages for dropdown
     @deal_stages = DealStage.all
   end
 
   def update
-    # Check if user has permission to update this deal
-    unless current_user&.admin? || @deal.user_id == current_user&.id
-      flash[:error] = "You don't have permission to update this deal"
-      redirect_to deals_path
-      return
+    authorize @deal
+    
+    # Handle amount processing
+    if deal_params[:amount].present?
+      begin
+        # Try to parse the amount as a number
+        parsed_amount = deal_params[:amount]
+        if parsed_amount.is_a?(String)
+          # Remove currency symbols and commas
+          parsed_amount = parsed_amount.gsub(/[$,]/, '')
+          # Convert to float
+          parsed_amount = Float(parsed_amount)
+        end
+        params[:deal][:amount] = parsed_amount
+      rescue ArgumentError
+        @deal.errors.add(:amount, "must be a valid number")
+      end
     end
     
-    # Verify the customer belongs to the current user if not an admin
-    if !current_user&.admin? && deal_params[:customer_id].present?
-      customer = Customer.find_by(id: deal_params[:customer_id])
-      if !customer || customer.user_id != current_user.id
-        flash[:error] = "You can only select your own customers"
+    # Track changes for activity log
+    changes = {}
+    deal_params.each do |key, value|
+      # Skip if the value didn't change
+      next if @deal.send(key) == value
+      
+      # Record the change
+      changes[key] = {
+        old: @deal.send(key),
+        new: value
+      }
+    end
+    
+    begin
+      Deal.transaction do
+        # Update the deal
+        @deal.update!(deal_params)
         
-        # Get customers based on user role for the form
-        @customers = Customer.where(user_id: current_user.id)
-        @users = User.all
-        @deal_stages = DealStage.all
-        
-        render :edit, status: :unprocessable_entity
-        return
-      end
-    end
-    
-    old_attributes = @deal.attributes
-    
-    # Ensure non-admin users can't change the owner
-    update_params = deal_params
-    if !current_user&.admin? && update_params[:user_id].present? && update_params[:user_id].to_i != current_user.id
-      update_params = update_params.except(:user_id)
-    end
-    
-    # Validate required fields
-    @deal.assign_attributes(update_params)
-    
-    if @deal.title.blank?
-      @deal.errors.add(:title, "can't be blank")
-    end
-    
-    if @deal.customer_id.blank?
-      @deal.errors.add(:customer_id, "can't be blank - please select a customer")
-    end
-    
-    if @deal.deal_stage_id.blank?
-      @deal.errors.add(:deal_stage_id, "can't be blank - please select a deal stage")
-    end
-    
-    if @deal.errors.any?
-      # Get customers based on user role for the form
-      if current_user&.admin?
-        @customers = Customer.all
-      else
-        @customers = Customer.where(user_id: current_user.id)
-      end
-      
-      @users = User.all
-      @deal_stages = DealStage.all
-      render :edit, status: :unprocessable_entity
-      return
-    end
-    
-    if @deal.save
-      # Log changes
-      changes = []
-      
-      if old_attributes['title'] != @deal.title
-        changes << "Title changed from '#{old_attributes['title']}' to '#{@deal.title}'"
-      end
-      
-      if old_attributes['amount'].to_f != @deal.amount.to_f
-        changes << "Amount changed from '$#{old_attributes['amount']}' to '$#{@deal.amount}'"
-      end
-      
-      if old_attributes['customer_id'] != @deal.customer_id
-        old_customer = Customer.find_by(id: old_attributes['customer_id'])
-        new_customer = @deal.customer
-        old_name = old_customer ? old_customer.name : 'None'
-        new_name = new_customer ? new_customer.name : 'None'
-        changes << "Customer changed from '#{old_name}' to '#{new_name}'"
-      end
-      
-      if old_attributes['expected_close_date'] != @deal.expected_close_date
-        old_date = old_attributes['expected_close_date'] ? old_attributes['expected_close_date'].to_date.strftime("%B %d, %Y") : 'None'
-        new_date = @deal.expected_close_date ? @deal.expected_close_date.strftime("%B %d, %Y") : 'None'
-        changes << "Expected close date changed from '#{old_date}' to '#{new_date}'"
-      end
-      
-      if old_attributes['description'] != @deal.description
-        changes << "Description was updated"
-      end
-      
-      if changes.any?
-        @deal.log_activity(current_user, 'updated', changes.join(". "))
+        # Log changes as activities
+        changes.each do |field, values|
+          human_field = field.humanize
+          
+          # Special handling for certain fields
+          case field
+          when 'deal_stage_id'
+            old_stage = DealStage.find_by(id: values[:old])&.name || 'Unknown'
+            new_stage = DealStage.find_by(id: values[:new])&.name || 'Unknown'
+            description = "Deal stage changed from #{old_stage} to #{new_stage}"
+            activity_type = 'stage_update'
+          when 'user_id'
+            old_user = User.find_by(id: values[:old])&.name || 'Unknown'
+            new_user = User.find_by(id: values[:new])&.name || 'Unknown'
+            description = "Deal assigned from #{old_user} to #{new_user}"
+            activity_type = 'user_assignment'
+          when 'amount'
+            old_amount = number_to_currency(values[:old]) rescue values[:old]
+            new_amount = number_to_currency(values[:new]) rescue values[:new]
+            description = "Deal amount changed from #{old_amount} to #{new_amount}"
+            activity_type = 'field_update'
+          when 'expected_close_date'
+            old_date = values[:old]&.to_date&.to_s || 'None'
+            new_date = values[:new]&.to_date&.to_s || 'None'
+            description = "Expected close date changed from #{old_date} to #{new_date}"
+            activity_type = 'field_update'
+          else
+            description = "#{human_field} changed from \"#{values[:old]}\" to \"#{values[:new]}\""
+            activity_type = 'field_update'
+          end
+          
+          # Create activity record
+          DealActivity.create!(
+            deal_id: @deal.id,
+            activity_type: activity_type,
+            description: description,
+            user_id: current_user.id
+          )
+        end
       end
       
       redirect_to @deal, notice: 'Deal was successfully updated.'
-    else
-      # Get customers based on user role for the form
+    rescue ActiveRecord::RecordInvalid
+      # Get data for form
       if current_user&.admin?
         @customers = Customer.all
+        @users = User.all
       else
         @customers = Customer.where(user_id: current_user.id)
+        @users = [current_user]
       end
       
-      @users = User.all
+      @deal_stages = DealStage.all
+      render :edit, status: :unprocessable_entity
+    rescue => e
+      Rails.logger.error("Error updating deal: #{e.message}")
+      @deal.errors.add(:base, "An unexpected error occurred: #{e.message}")
+      
+      # Get data for form
+      if current_user&.admin?
+        @customers = Customer.all
+        @users = User.all
+      else
+        @customers = Customer.where(user_id: current_user.id)
+        @users = [current_user]
+      end
+      
       @deal_stages = DealStage.all
       render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
-    # Check if user has permission to delete this deal
-    unless current_user&.admin? || @deal.user_id == current_user&.id
-      flash[:error] = "You don't have permission to delete this deal"
-      redirect_to deals_path
-      return
-    end
+    authorize @deal
     
-    title = @deal.title
-    @deal.log_activity(current_user, 'deleted', "Deal '#{title}' was deleted")
-    @deal.destroy
-    redirect_to deals_path, notice: 'Deal was successfully deleted.'
+    begin
+      @deal.destroy!
+      redirect_to deals_url, notice: 'Deal was successfully deleted.'
+    rescue => e
+      redirect_to deals_url, alert: "Could not delete the deal: #{e.message}"
+    end
   end
 
   def update_stage
+    authorize @deal
     previous_stage = @deal.deal_stage
+    new_stage = DealStage.find(params[:deal_stage_id])
     
     if @deal.update(deal_stage_id: params[:deal_stage_id])
-      @deal.log_activity(current_user, 'stage_changed', "Deal moved from '#{previous_stage.name}' to '#{@deal.deal_stage.name}'")
-      respond_to do |format|
-        format.html { redirect_to request.referer || @deal, notice: "Deal moved from #{previous_stage.name} to #{@deal.deal_stage.name}." }
-        format.json { render json: { success: true, message: "Deal moved from #{previous_stage.name} to #{@deal.deal_stage.name}." } }
-      end
+      # Create activity
+      DealActivity.create(
+        deal_id: @deal.id,
+        activity_type: 'stage_update',
+        description: "Deal moved from #{previous_stage.name} to #{new_stage.name}",
+        user_id: current_user.id
+      )
+      
+      render json: { success: true }
     else
-      respond_to do |format|
-        format.html { redirect_to request.referer || @deal, alert: 'Failed to update deal stage.' }
-        format.json { render json: { success: false, errors: @deal.errors.full_messages }, status: :unprocessable_entity }
-      end
+      render json: { success: false, errors: @deal.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   def assign_user
+    authorize @deal
     previous_user = @deal.user
+    new_user = User.find(params[:user_id])
     
-    if params[:user_id].present? && @deal.update(user_id: params[:user_id])
-      new_user = User.find(params[:user_id])
-      @deal.log_activity(current_user, 'user_assigned', "Deal reassigned from '#{previous_user.name}' to '#{new_user.name}'")
-      redirect_to request.referer || @deal, notice: "Deal assigned to #{new_user.name}."
+    if @deal.update(user_id: params[:user_id])
+      # Create activity
+      DealActivity.create(
+        deal_id: @deal.id,
+        activity_type: 'user_assignment',
+        description: "Deal assigned from #{previous_user&.name || 'Unassigned'} to #{new_user.name}",
+        user_id: current_user.id
+      )
+      
+      redirect_to @deal, notice: 'Deal was successfully assigned.'
     else
-      redirect_to request.referer || @deal, alert: 'Failed to assign deal to user.'
+      redirect_to @deal, alert: 'Failed to assign deal.'
     end
   end
 
   def mark_as_won
+    authorize @deal
     if @deal.update(status: 'won')
-      @deal.log_activity(current_user, 'marked_won', "Deal marked as won")
-      redirect_to request.referer || @deal, notice: 'Deal was marked as won.'
+      # Create activity
+      DealActivity.create(
+        deal_id: @deal.id,
+        activity_type: 'status_update',
+        description: "Deal marked as Won",
+        user_id: current_user.id
+      )
+      redirect_to @deal, notice: 'Deal was marked as Won.'
     else
-      redirect_to request.referer || @deal, alert: 'Failed to mark deal as won.'
+      redirect_to @deal, alert: 'Failed to update deal status.'
     end
   end
 
   def mark_as_lost
+    authorize @deal
     if @deal.update(status: 'lost')
-      @deal.log_activity(current_user, 'marked_lost', "Deal marked as lost")
-      redirect_to request.referer || @deal, notice: 'Deal was marked as lost.'
+      # Create activity
+      DealActivity.create(
+        deal_id: @deal.id,
+        activity_type: 'status_update',
+        description: "Deal marked as Lost",
+        user_id: current_user.id
+      )
+      redirect_to @deal, notice: 'Deal was marked as Lost.'
     else
-      redirect_to request.referer || @deal, alert: 'Failed to mark deal as lost.'
+      redirect_to @deal, alert: 'Failed to update deal status.'
     end
   end
 

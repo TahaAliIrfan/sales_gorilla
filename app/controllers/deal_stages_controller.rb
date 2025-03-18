@@ -1,19 +1,22 @@
 class DealStagesController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :require_admin
   before_action :set_deal_stage, only: [:edit, :update, :destroy]
+  after_action :verify_authorized
+  after_action :verify_policy_scoped, only: :index
 
   def index
-    @deal_stages = DealStage.all
+    @deal_stages = policy_scope(DealStage)
   end
 
   def new
     @deal_stage = DealStage.new
+    authorize @deal_stage
   end
 
   def create
     @deal_stage = DealStage.new(deal_stage_params)
+    authorize @deal_stage
 
     if @deal_stage.save
       redirect_to deal_stages_path, notice: 'Deal stage was successfully created.'
@@ -23,9 +26,11 @@ class DealStagesController < ApplicationController
   end
 
   def edit
+    authorize @deal_stage
   end
 
   def update
+    authorize @deal_stage
     if @deal_stage.update(deal_stage_params)
       redirect_to deal_stages_path, notice: 'Deal stage was successfully updated.'
     else
@@ -34,6 +39,7 @@ class DealStagesController < ApplicationController
   end
 
   def destroy
+    authorize @deal_stage
     if @deal_stage.deals.any?
       redirect_to deal_stages_path, alert: 'Cannot delete a stage that has deals assigned to it.'
     else

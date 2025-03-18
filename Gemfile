@@ -63,6 +63,9 @@ gem 'omniauth'
 gem 'omniauth-rails_csrf_protection'
 gem 'aws-sdk-s3'
 
+# Authorization
+gem 'pundit'
+
 # Time-based grouping for ActiveRecord
 gem 'groupdate'
 

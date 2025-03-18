@@ -241,6 +241,8 @@ GEM
       stringio
     puma (6.6.0)
       nio4r (~> 2.0)
+    pundit (2.5.0)
+      activesupport (>= 3.0.0)
     racc (1.8.1)
     rack (3.1.12)
     rack-cors (2.0.2)
@@ -373,6 +375,7 @@ DEPENDENCIES
   omniauth-rails_csrf_protection
   pg (~> 1.1)
   puma (>= 5.0)
+  pundit
   rack-cors
   rails (~> 7.1.5, >= 7.1.5.1)
   sprockets-rails
