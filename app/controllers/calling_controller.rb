@@ -54,15 +54,19 @@ class CallingController < ApplicationController
       render xml: response.to_s
     else
       customer = Customer.find_by(phone: params[:Called])
+      # DEFAULT NUMBER
+      user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
+      phone_number = user.phone_number
+      user_id = user.id
+
+      # DEFAULT NUMBER END
+      #
       if customer.present?
         if customer.user.present?
           phone_number = customer.user.phone_number
           user_id = customer.user_id
         end
       else
-        user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
-        phone_number = user.phone_number
-        user_id = user.id
         customer = Customer.create(name: 'Unknown Caller', phone: params[:Called])
       end
 
