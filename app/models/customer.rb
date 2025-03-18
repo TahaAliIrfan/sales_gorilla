@@ -1,9 +1,9 @@
 class Customer < ApplicationRecord
   belongs_to :user, optional: true
   has_many :deals
-  has_many :recordings, dependent: :nullify
+  has_many :recordings, dependent: :destroy
   has_many :customer_activities, dependent: :destroy
-  has_many :tasks, dependent: :nullify
+  has_many :tasks, dependent: :destroy
   
   # Add file attachment capability
   has_one_attached :file
