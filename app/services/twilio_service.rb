@@ -5,12 +5,13 @@ class TwilioService
     @application_sid = Rails.application.credentials.dig(:TWILIO_APP_SID)
     @default_caller_id = '+447897021964'
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
+    @app_url = 'https://crm.tecaudex.com'
 
-    if Rails.env.development?
-      @app_url = 'https://6547-185-141-119-111.ngrok-free.app'
-    else
-      @app_url = 'https://crm.tecaudex.com'
-    end
+    # if Rails.env.development?
+    #   @app_url = 'https://6547-185-141-119-111.ngrok-free.app'
+    # else
+    #   @app_url = 'https://crm.tecaudex.com'
+    # end
   end
 
   def generate_capability_token
