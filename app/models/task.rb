@@ -14,7 +14,7 @@ class Task < ApplicationRecord
   scope :cancelled, -> { where(status: :cancelled) }
   scope :upcoming, -> { where('due_date >= ?', Date.today) }
   scope :overdue, -> { where('due_date < ?', Date.today).pending }
-  scope :for_today, -> { where('due_date >= ? AND due_date <= ?', Date.today.beginning_of_day, Date.today.end_of_day).pending }
+  scope :for_today, -> { where('due_date >= ? AND due_date <= ?', Date.today.beginning_of_day, Date.today.end_of_day) }
   scope :assigned_to, ->(user) { where(user_id: user.id) }
 
   PRIORITIES = {
