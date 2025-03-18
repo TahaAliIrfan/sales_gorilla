@@ -71,6 +71,9 @@ Rails.application.routes.draw do
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
   
+  # My Tasks Dashboard route
+  get 'my_tasks_dashboard', to: 'my_tasks_dashboard#index', as: :my_tasks_dashboard
+  
   # Settings routes
   get 'settings', to: 'settings#edit', as: :settings
   patch 'settings/update', to: 'settings#update', as: :update_settings

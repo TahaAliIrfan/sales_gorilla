@@ -141,7 +141,15 @@ class TasksController < ApplicationController
     authorize @task
     @task.complete!
     respond_to do |format|
-      format.html { redirect_to request.referer || tasks_url, notice: 'Task marked as complete.' }
+      format.html { 
+        if params[:return_to] == 'dashboard'
+          redirect_to dashboard_path, notice: 'Task marked as complete.'
+        elsif params[:return_to] == 'my_tasks_dashboard'
+          redirect_to my_tasks_dashboard_path, notice: 'Task marked as complete.'
+        else
+          redirect_to request.referer || tasks_url, notice: 'Task marked as complete.' 
+        end
+      }
       format.json { head :no_content }
     end
   end

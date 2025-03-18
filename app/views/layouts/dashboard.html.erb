@@ -82,6 +82,13 @@
               My Tasks
             <% end %>
 
+            <%= link_to my_tasks_dashboard_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'my_tasks_dashboard' ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
+              </svg>
+              My Tasks Dashboard
+            <% end %>
+
             <% if current_user&.admin? %>
               <%= link_to deal_stages_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deal_stages' ? 'bg-gray-800 text-white' : ''}" do %>
                 <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -113,6 +120,8 @@
                 <h1 class="text-2xl font-semibold text-gray-900">My Dashboard</h1>
               <% elsif current_page?(reports_dashboard_path) && current_user&.admin? %>
                 <h1 class="text-2xl font-semibold text-gray-900">Reports</h1>
+              <% elsif current_page?(my_tasks_dashboard_path) %>
+                <h1 class="text-2xl font-semibold text-gray-900">My Tasks Dashboard</h1>
               <% elsif current_page?(calling_path) %>
                 <h1 class="text-2xl font-semibold text-gray-900">Calling</h1>
               <% elsif controller_name == 'customers' %>
