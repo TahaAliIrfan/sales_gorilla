@@ -6,7 +6,7 @@ class Customer < ApplicationRecord
   has_many :tasks, dependent: :nullify
   
   # Add file attachment capability
-  has_one_attached :file
+  has_many_attached :file
   
   validates :name, presence: { message: "is required" }
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
