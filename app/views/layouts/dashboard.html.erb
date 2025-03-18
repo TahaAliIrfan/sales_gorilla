@@ -149,11 +149,6 @@
                       </a>
                     </div>
                   <% end %>
-                  <span class="text-gray-700 mr-4 hidden sm:inline"><%= session[:user_email] %></span>
-                  <p class="text-sm text-gray-400"><%= current_user.phone_number %></p>
-                  <%= link_to new_task_path, class: "mr-2 rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600" do %>
-                      New Task
-                  <% end %>
                   <%= link_to settings_path, class: "mr-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" do %>
                     Settings
                   <% end %>
