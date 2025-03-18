@@ -217,8 +217,10 @@
                       </p>
                     </div>
                     <div>
-                      <%= button_to complete_task_path(task), method: :patch, class: "inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200" do %>
-                        Complete
+                      <%= button_to complete_task_path(task, return_to: 'dashboard'), method: :patch, class: "rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
                       <% end %>
                     </div>
                   </div>
@@ -264,8 +266,10 @@
                       </p>
                     </div>
                     <div>
-                      <%= button_to complete_task_path(task), method: :patch, class: "inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200" do %>
-                        Complete
+                      <%= button_to complete_task_path(task, return_to: 'dashboard'), method: :patch, class: "rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
                       <% end %>
                     </div>
                   </div>
@@ -310,7 +314,7 @@
                         <% end %>
                       </p>
                     </div>
-                    <div>
+                    <div class="flex space-x-2">
                       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                         <%= case task.priority
                             when 'High' then 'bg-red-100 text-red-800'
@@ -319,6 +323,11 @@
                             end %>">
                         <%= task.priority %>
                       </span>
+                      <%= button_to complete_task_path(task, return_to: 'dashboard'), method: :patch, class: "rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      <% end %>
                     </div>
                   </div>
                 </li>

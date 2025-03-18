@@ -101,7 +101,17 @@ class TasksController < ApplicationController
   
   def complete
     @task.complete!
-    redirect_to task_path(@task), notice: 'Task marked as completed.'
+    
+    # Check if the request is coming from the dashboard
+    if params[:return_to] == 'dashboard'
+      if current_user.admin?
+        redirect_to admin_dashboard_path, notice: 'Task marked as completed.'
+      else
+        redirect_to dashboard_path, notice: 'Task marked as completed.'
+      end
+    else
+      redirect_to task_path(@task), notice: 'Task marked as completed.'
+    end
   end
 
   private
