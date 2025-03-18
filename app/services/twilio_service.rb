@@ -64,7 +64,7 @@ class TwilioService
         sid: recording.sid,
         duration: recording.duration,
         date: recording.date_created,
-        url: "#{base_url}/calling/play_recording/#{recording.sid}",
+        url: "#{@app_url}/calling/play_recording/#{recording.sid}",
         call_sid: recording.call_sid
       }
       
@@ -84,7 +84,7 @@ class TwilioService
       sid: recording.sid,
       duration: recording.duration,
       date: recording.date_created,
-      url: "#{base_url}/calling/play_recording/#{recording.sid}",
+      url: "#{@app_url}/calling/play_recording/#{recording.sid}",
       call_sid: recording.call_sid,
       media_url: recording.media_url.to_s
     }
@@ -126,20 +126,5 @@ class TwilioService
     return numbers unless numbers.empty?
     
     [{ phone_number: @default_caller_id, friendly_name: 'Default Number' }]
-  end
-
-  private
-
-  def base_url
-    host = Rails.application.config.action_controller.default_url_options&.fetch(:host) ||
-           Rails.application.config.action_mailer.default_url_options&.fetch(:host) ||
-           ENV['APP_HOST'] ||
-           '6547-185-141-119-111.ngrok-free.app'
-           
-    protocol = Rails.application.config.action_controller.default_url_options&.fetch(:protocol, 'https') ||
-               Rails.application.config.action_mailer.default_url_options&.fetch(:protocol, 'https') ||
-               'https'
-
-    "#{protocol}://#{host}"
   end
 end 
