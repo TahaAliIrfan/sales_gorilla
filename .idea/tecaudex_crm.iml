@@ -33,11 +33,13 @@
     <orderEntry type="library" scope="PROVIDED" name="crass (v1.0.6, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="globalid (v1.2.1, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="hashie (v5.0.0, rbenv: 2.7.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="jmespath (v1.6.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mail (v2.8.1, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="marcel (v1.0.4, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mini_mime (v1.1.5, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-pop (v0.1.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-protocol (v0.2.2, rbenv: 2.7.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="net-sftp (v4.0.0, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="oauth2 (v2.0.9, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="omniauth (v2.1.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="omniauth-google-oauth2 (v1.1.1, rbenv: 2.7.8) [gem]" level="application" />

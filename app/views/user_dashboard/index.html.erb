@@ -170,7 +170,7 @@
           <% @deal_stages.each do |stage| %>
             <div class="flex-1 text-center">
               <div class="text-sm font-medium text-gray-500"><%= stage.name %></div>
-              <div class="mt-1 text-2xl font-semibold text-gray-900"><%= @my_deals_by_stage[stage.id] || 0 %></div>
+              <div class="mt-1 text-2xl font-semibold text-gray-900"><%= @deals_by_stage[stage.id] || 0 %></div>
             </div>
             <% unless stage == @deal_stages.last %>
               <div class="text-gray-300">
@@ -185,6 +185,159 @@
     </div>
   </div>
 
+  <!-- Tasks Overview Cards -->
+  <div class="mt-8">
+    <h2 class="text-lg font-medium text-gray-900 mb-4">My Tasks</h2>
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <!-- Today's Tasks Card -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Today's Tasks</h3>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+              <%= @today_tasks_count %>
+            </span>
+          </div>
+        </div>
+        <div class="p-5">
+          <% if @today_tasks.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @today_tasks.each do |task| %>
+                <li class="py-3">
+                  <div class="flex items-center">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium">
+                        <%= link_to task.title, task_path(task, from: "my_tasks"), class: "text-blue-600 hover:text-blue-900" %>
+                      </h4>
+                      <p class="text-xs text-gray-500">
+                        Due <%= task.due_date.strftime("%I:%M %p") %>
+                        <% if task.customer %>
+                         • <%= task.customer.name %>
+                        <% end %>
+                      </p>
+                    </div>
+                    <div>
+                      <%= button_to complete_task_path(task), method: :patch, class: "inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200" do %>
+                        Complete
+                      <% end %>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="text-center text-gray-500 text-sm py-4">No tasks due today</p>
+          <% end %>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <%= link_to my_tasks_tasks_path, class: "text-sm font-medium text-blue-600 hover:text-blue-900" do %>
+            View all my tasks
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Overdue Tasks Card -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Overdue Tasks</h3>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+              <%= @overdue_tasks_count %>
+            </span>
+          </div>
+        </div>
+        <div class="p-5">
+          <% if @overdue_tasks.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @overdue_tasks.first(5).each do |task| %>
+                <li class="py-3">
+                  <div class="flex items-center">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium">
+                        <%= link_to task.title, task_path(task, from: "my_tasks"), class: "text-blue-600 hover:text-blue-900" %>
+                      </h4>
+                      <p class="text-xs text-gray-500">
+                        Due <%= task.due_date.strftime("%b %d, %I:%M %p") %>
+                        <% if task.customer %>
+                         • <%= task.customer.name %>
+                        <% end %>
+                      </p>
+                    </div>
+                    <div>
+                      <%= button_to complete_task_path(task), method: :patch, class: "inline-flex items-center px-2 py-1 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200" do %>
+                        Complete
+                      <% end %>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="text-center text-gray-500 text-sm py-4">No overdue tasks</p>
+          <% end %>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <%= link_to my_tasks_tasks_path(status: "Pending"), class: "text-sm font-medium text-blue-600 hover:text-blue-900" do %>
+            View all overdue tasks
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Upcoming Tasks Card -->
+      <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="p-5 border-b border-gray-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg leading-6 font-medium text-gray-900">Pending Tasks</h3>
+            <span class="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+              <%= @pending_tasks_count %>
+            </span>
+          </div>
+        </div>
+        <div class="p-5">
+          <% if @pending_tasks.any? %>
+            <ul class="divide-y divide-gray-200">
+              <% @pending_tasks.each do |task| %>
+                <li class="py-3">
+                  <div class="flex items-center">
+                    <div class="flex-1">
+                      <h4 class="text-sm font-medium">
+                        <%= link_to task.title, task_path(task, from: "my_tasks"), class: "text-blue-600 hover:text-blue-900" %>
+                      </h4>
+                      <p class="text-xs text-gray-500">
+                        Due <%= task.due_date.strftime("%b %d, %I:%M %p") %>
+                        <% if task.customer %>
+                         • <%= task.customer.name %>
+                        <% end %>
+                      </p>
+                    </div>
+                    <div>
+                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        <%= case task.priority
+                            when 'High' then 'bg-red-100 text-red-800'
+                            when 'Medium' then 'bg-yellow-100 text-yellow-800'
+                            when 'Low' then 'bg-green-100 text-green-800'
+                            end %>">
+                        <%= task.priority %>
+                      </span>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="text-center text-gray-500 text-sm py-4">No pending tasks</p>
+          <% end %>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <%= link_to my_tasks_tasks_path, class: "text-sm font-medium text-blue-600 hover:text-blue-900" do %>
+            View all tasks
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- My Deals and Customers -->
   <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
     <!-- My Deals -->
     <div class="bg-white shadow rounded-lg">

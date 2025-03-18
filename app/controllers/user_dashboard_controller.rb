@@ -3,17 +3,26 @@ class UserDashboardController < ApplicationController
   before_action :require_login
 
   def index
-    # Get deals for the current user
-    @my_deals = current_user ? Deal.assigned_to(current_user).active.order(expected_close_date: :asc).limit(5) : []
+    # Get the current user's customers
+    @my_customers = current_user.customers.order(created_at: :desc).limit(5)
+    @total_customers = current_user.customers.count
     
-    # Get customers assigned to the current user
-    @my_customers = current_user ? Customer.where(user_id: current_user.id).order(created_at: :desc).limit(5) : []
+    # Get the current user's deals
+    @my_deals = current_user.deals.active.order(expected_close_date: :asc).limit(5)
+    @total_deals = current_user.deals.count
+    @active_deals = current_user.deals.active.count
+    @won_deals = current_user.deals.won.count
+    @lost_deals = current_user.deals.lost.count
     
-    # Get deals by stage for the current user
+    # Get value metrics
+    @total_deal_value = current_user.deals.sum(:amount)
+    @won_deal_value = current_user.deals.won.sum(:amount)
+    
+    # Get deals by stage for a simple pipeline overview
     @deal_stages = DealStage.all
-    @my_deals_by_stage = {}
+    @deals_by_stage = {}
     @deal_stages.each do |stage|
-      @my_deals_by_stage[stage.id] = Deal.active.assigned_to(current_user).by_stage(stage).count
+      @deals_by_stage[stage.id] = current_user.deals.active.by_stage(stage).count
     end
     
     # Check for deals and customers that need attention
@@ -21,13 +30,15 @@ class UserDashboardController < ApplicationController
     @customers_needing_attention = customers_needing_attention
     @needs_attention = @deals_needing_attention.any? || @customers_needing_attention.any?
     
-    # User performance metrics
-    @total_deals = Deal.assigned_to(current_user).count
-    @active_deals = Deal.assigned_to(current_user).active.count
-    @won_deals = Deal.assigned_to(current_user).won.count
-    @lost_deals = Deal.assigned_to(current_user).lost.count
-    @total_deal_value = Deal.assigned_to(current_user).sum(:amount)
-    @won_deal_value = Deal.assigned_to(current_user).won.sum(:amount)
+    # Get tasks for the user
+    @pending_tasks = current_user.tasks.pending.order(due_date: :asc).limit(5)
+    @today_tasks = current_user.tasks.for_today.order(due_date: :asc)
+    @overdue_tasks = current_user.tasks.overdue.order(due_date: :asc)
+    
+    # Summary counts
+    @pending_tasks_count = current_user.pending_tasks.count
+    @today_tasks_count = current_user.tasks_for_today.count
+    @overdue_tasks_count = current_user.overdue_tasks.count
   end
 
   private

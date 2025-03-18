@@ -238,4 +238,160 @@
       </div>
     </div>
   </div>
+
+  <!-- Tasks Overview -->
+  <div class="mt-8">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-medium text-gray-900">Tasks Overview</h2>
+      <div>
+        <%= link_to tasks_path, class: "text-sm font-medium text-blue-600 hover:text-blue-900" do %>
+          View all tasks
+        <% end %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-6">
+      <!-- Pending Tasks Card -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Pending Tasks</dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900"><%= @pending_tasks_count %></div>
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <%= link_to tasks_path(status: 'Pending'), class: "font-medium text-blue-600 hover:text-blue-900" do %>
+              View pending tasks
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Tasks Card -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Today's Tasks</dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900"><%= @today_tasks_count %></div>
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <%= link_to tasks_path(due_date: Date.today), class: "font-medium text-blue-600 hover:text-blue-900" do %>
+              View today's tasks
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overdue Tasks Card -->
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Overdue Tasks</dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900"><%= @overdue_tasks_count %></div>
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 px-5 py-3">
+          <div class="text-sm">
+            <%= link_to tasks_path, class: "font-medium text-blue-600 hover:text-blue-900" do %>
+              View overdue tasks
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today's Tasks -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Today's Tasks</h3>
+        <p class="mt-1 max-w-2xl text-sm text-gray-500">
+          Tasks due today across all team members
+        </p>
+      </div>
+      <div class="px-4 py-5 sm:p-6">
+        <% if @today_tasks.any? %>
+          <div class="flow-root">
+            <ul class="-my-5 divide-y divide-gray-200">
+              <% @today_tasks.each do |task| %>
+                <li class="py-4">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <div class="min-w-0 flex-1 flex items-center">
+                        <div class="flex-shrink-0">
+                          <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            <%= case task.priority
+                                when 'High' then 'bg-red-100 text-red-800'
+                                when 'Medium' then 'bg-yellow-100 text-yellow-800'
+                                when 'Low' then 'bg-green-100 text-green-800'
+                                end %>">
+                            <%= task.priority %>
+                          </span>
+                        </div>
+                        <div class="min-w-0 flex-1 px-4">
+                          <div>
+                            <div class="flex">
+                              <p class="text-sm font-medium text-blue-600 truncate">
+                                <%= link_to task.title, task_path(task) %>
+                              </p>
+                            </div>
+                            <p class="mt-1 text-sm text-gray-500">
+                              Due: <%= task.due_date.strftime("%I:%M %p") %> • 
+                              Assigned to: <%= task.user.name %>
+                              <% if task.customer.present? %>
+                                • Customer: <%= link_to task.customer.name, customer_path(task.customer), class: "text-blue-600 hover:text-blue-900" %>
+                              <% end %>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% else %>
+          <div class="text-center text-gray-500 py-4">
+            No tasks due today
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
 </div>

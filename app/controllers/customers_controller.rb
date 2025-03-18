@@ -57,6 +57,7 @@ class CustomersController < ApplicationController
     @deals = @customer.deals
     @activities = @customer.customer_activities.recent.limit(10)
     @recordings = @customer.recordings.recent.limit(20)
+    @tasks = @customer.tasks.order(due_date: :asc)
   end
 
   def new

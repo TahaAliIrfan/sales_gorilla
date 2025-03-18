@@ -29,6 +29,25 @@ class DashboardController < ApplicationController
     @deals_needing_attention = deals_needing_attention
     @customers_needing_attention = customers_needing_attention
     @needs_attention = @deals_needing_attention.any? || @customers_needing_attention.any?
+    
+    # Get tasks data
+    @pending_tasks_count = Task.pending.count
+    @today_tasks_count = Task.for_today.count
+    @overdue_tasks_count = Task.overdue.count
+    
+    # Get tasks by user for admin dashboard
+    @users = User.all
+    @tasks_by_user = {}
+    @users.each do |user|
+      @tasks_by_user[user.id] = {
+        pending: user.tasks.pending.count,
+        today: user.tasks.for_today.count,
+        overdue: user.tasks.overdue.count
+      }
+    end
+    
+    # Get today's tasks across all users for admin view
+    @today_tasks = Task.for_today.includes(:user, :customer).order(due_date: :asc).limit(10)
   end
 
   def reports

@@ -1,4 +1,12 @@
 Rails.application.routes.draw do
+  get 'tasks/index'
+  get 'tasks/show'
+  get 'tasks/new'
+  get 'tasks/edit'
+  get 'tasks/create'
+  get 'tasks/update'
+  get 'tasks/destroy'
+  get 'tasks/complete'
   get 'settings/edit'
   get 'settings/update'
   # Remove auto-generated routes
@@ -26,6 +34,14 @@ Rails.application.routes.draw do
   # Add RESTful routes for our models
   resources :customers
   resources :deal_stages
+  resources :tasks do
+    member do
+      patch 'complete'
+    end
+    collection do
+      get 'my_tasks'
+    end
+  end
   resources :deals do
     collection do
       get 'my_deals', to: 'deals#my_deals'

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_15_005524) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_18_131039) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -144,6 +144,24 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_15_005524) do
     t.index ["user_id"], name: "index_recordings_on_user_id"
   end
 
+  create_table "tasks", force: :cascade do |t|
+    t.string "title"
+    t.text "description"
+    t.datetime "due_date"
+    t.string "status", default: "Pending"
+    t.bigint "user_id", null: false
+    t.bigint "customer_id"
+    t.string "priority", default: "Medium"
+    t.boolean "completed", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["completed"], name: "index_tasks_on_completed"
+    t.index ["customer_id"], name: "index_tasks_on_customer_id"
+    t.index ["due_date"], name: "index_tasks_on_due_date"
+    t.index ["status"], name: "index_tasks_on_status"
+    t.index ["user_id"], name: "index_tasks_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "provider"
     t.string "uid"
@@ -170,4 +188,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_15_005524) do
   add_foreign_key "deals", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
+  add_foreign_key "tasks", "customers"
+  add_foreign_key "tasks", "users"
 end

@@ -3,6 +3,7 @@ class Customer < ApplicationRecord
   has_many :deals
   has_many :recordings, dependent: :nullify
   has_many :customer_activities, dependent: :destroy
+  has_many :tasks, dependent: :nullify
   
   # Add file attachment capability
   has_one_attached :file
@@ -21,6 +22,7 @@ class Customer < ApplicationRecord
   before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
   before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
   before_save :record_activity_changes
+  after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   
   # Constants for dropdown fields
   LEAD_SOURCES = {
@@ -202,5 +204,18 @@ class Customer < ApplicationRecord
         user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
       )
     end
+  end
+  
+  # Create a task when a customer is assigned to a user
+  def create_task_on_user_assignment
+    Task.create!(
+      title: "Follow up with new customer: #{name}",
+      description: "Contact new customer #{name} (#{company}) and establish connection.",
+      due_date: Time.current + 1.day,
+      status: 'Pending',
+      priority: 'Medium',
+      user_id: user_id,
+      customer_id: id
+    )
   end
 end
