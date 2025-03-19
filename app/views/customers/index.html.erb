@@ -111,6 +111,7 @@
                 <%= sortable "email" %>
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone/Preferred Time</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead Source</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -164,6 +165,17 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">
+                    <% if customer.lead_source.present? %>
+                      <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        <%= customer.lead_source %>
+                      </span>
+                    <% else %>
+                      <span class="text-gray-500">Not specified</span>
+                    <% end %>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">
                     <% if customer.user %>
                       <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                         <%= customer.user.name %>
@@ -207,6 +219,26 @@
           </button>
         </div>
       </div>
+      
+      <!-- Pagination Controls -->
+      <% if @customers.total_pages > 1 %>
+        <div class="px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div class="flex-1 flex justify-between sm:hidden">
+            <%= link_to_prev_page @customers, 'Previous', class: "relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+            <%= link_to_next_page @customers, 'Next', class: "ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Showing <span class="font-medium"><%= @customers.offset_value + 1 %></span> to <span class="font-medium"><%= @customers.offset_value + @customers.size %></span> of <span class="font-medium"><%= @customers.total_count %></span> customers
+              </p>
+            </div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <%= paginate @customers %>
+            </nav>
+          </div>
+        </div>
+      <% end %>
     <% else %>
       <div class="text-center py-12 px-4">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -224,7 +256,11 @@
   <!-- Results Count -->
   <div class="mt-4 text-sm text-gray-600" data-customer-filter-target="resultsCount">
     <% if @customers.any? %>
-      Showing <%= @customers.count %> customers
+      <% if @customers.total_pages > 1 %>
+        Showing page <%= @customers.current_page %> of <%= @customers.total_pages %>
+      <% else %>
+        Showing <%= @customers.count %> customers
+      <% end %>
     <% end %>
   </div>
 </div>

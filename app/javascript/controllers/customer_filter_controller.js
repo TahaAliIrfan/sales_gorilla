@@ -22,7 +22,6 @@ export default class extends Controller {
     
     // Initialize filter state
     this.updateActiveFilters()
-    this.filter()
     
     // Set up debounce for search input
     this.searchDebounceTimeout = null
@@ -57,52 +56,35 @@ export default class extends Controller {
   }
 
   filter() {
-    const searchTerm = this.searchTarget.value.toLowerCase().trim()
+    const searchTerm = this.searchTarget.value.trim()
     const userId = this.userTarget.value
     const sortBy = this.sortTarget.value
     const sortDirection = this.directionTarget.value
     
-    // Update active filters display
-    this.updateActiveFilters()
+    // Build URL parameters
+    const params = new URLSearchParams()
     
-    // Get all customer rows
-    const rows = this.customersListTarget.querySelectorAll('.customer-row')
-    let visibleCount = 0
+    // Add search param if present
+    if (searchTerm) {
+      params.append('search', searchTerm)
+    }
     
-    // Filter and sort rows
-    Array.from(rows).forEach(row => {
-      // Filter by search term
-      const name = row.dataset.name || ''
-      const email = row.dataset.email || ''
-      const company = row.dataset.company || ''
-      const phone = row.dataset.phone || ''
-      
-      const matchesSearch = searchTerm === '' || 
-        name.includes(searchTerm) || 
-        email.includes(searchTerm) || 
-        company.includes(searchTerm) || 
-        phone.includes(searchTerm)
-      
-      // Filter by user
-      const matchesUser = userId === '' || row.dataset.userId === userId
-      
-      // Show/hide row based on filters
-      const shouldShow = matchesSearch && matchesUser
-      row.classList.toggle('hidden', !shouldShow)
-      
-      if (shouldShow) {
-        visibleCount++
-      }
-    })
+    // Add user_id param if present
+    if (userId) {
+      params.append('user_id', userId)
+    }
     
-    // Sort visible rows
-    this.sortRows(sortBy, sortDirection)
+    // Add sorting params
+    if (sortBy) {
+      params.append('sort', sortBy)
+    }
     
-    // Update results count
-    this.updateResultsCount(visibleCount)
+    if (sortDirection) {
+      params.append('direction', sortDirection)
+    }
     
-    // Show/hide no results message
-    this.noResultsTarget.classList.toggle('hidden', visibleCount > 0)
+    // Navigate to the filtered URL
+    window.location.href = `${window.location.pathname}?${params.toString()}`
   }
   
   // Debounced filter for search input
@@ -115,44 +97,7 @@ export default class extends Controller {
     // Set a new timeout to filter after a short delay
     this.searchDebounceTimeout = setTimeout(() => {
       this.filter()
-    }, 150) // 150ms delay for smooth typing experience
-  }
-  
-  sortRows(sortBy, direction) {
-    const rows = Array.from(this.customersListTarget.querySelectorAll('.customer-row:not(.hidden)'))
-    
-    rows.sort((a, b) => {
-      // Special handling for date fields (created_at, updated_at)
-      if (sortBy === 'created_at' || sortBy === 'updated_at') {
-        const aValue = parseInt(a.dataset[sortBy] || '0')
-        const bValue = parseInt(b.dataset[sortBy] || '0')
-        
-        if (direction === 'asc') {
-          return aValue - bValue
-        } else {
-          return bValue - aValue
-        }
-      } else {
-        // Text-based sorting for other fields
-        const aValue = (a.dataset[sortBy] || '').toLowerCase()
-        const bValue = (b.dataset[sortBy] || '').toLowerCase()
-        
-        if (direction === 'asc') {
-          return aValue.localeCompare(bValue)
-        } else {
-          return bValue.localeCompare(aValue)
-        }
-      }
-    })
-    
-    // Reorder rows in the DOM
-    rows.forEach(row => {
-      this.customersListTarget.appendChild(row)
-    })
-  }
-  
-  updateResultsCount(count) {
-    this.resultsCountTarget.textContent = `Showing ${count} customer${count !== 1 ? 's' : ''}`
+    }, 500) // 500ms delay for search input
   }
   
   updateActiveFilters() {

@@ -34,6 +34,9 @@ class CustomersController < ApplicationController
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("#{sort_column} #{sort_direction}")
     
+    # Apply pagination with 20 items per page
+    @customers = @customers.page(params[:page]).per(20)
+    
     # Track filter state for the view
     @filter_applied = params[:search].present? || params[:user_id].present?
   end
