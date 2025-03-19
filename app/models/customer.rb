@@ -31,7 +31,8 @@ class Customer < ApplicationRecord
     'Email Marketing' => 'Email Marketing',
     'Social Media Platforms' => 'Social Media Platforms',
     'Website' => 'Website',
-    'CCR' => 'CCR'
+    'CCR' => 'CCR',
+    'Inbound' => 'Inbound'
   }.freeze
   
   PROJECT_TYPES = {
@@ -45,13 +46,14 @@ class Customer < ApplicationRecord
   
   STATUSES = {
     'Pending' => 'Pending',
-    'Connection Established' => 'Connection Established',
-    'Connection Not Established' => 'Connection Not Established',
+    'Contact Established' => 'Contact Established',
+    'Contact Not Established' => 'Contact Not Established',
     'Unresponsive' => 'Unresponsive',
     'Converted' => 'Converted',
     'Proposal Sent' => 'Proposal Sent',
     'Not Interested' => 'Not Interested',
-    'Exhausted' => 'Exhausted'
+    'Exhausted' => 'Exhausted',
+    'Invalid' => 'Invalid'
   }.freeze
   
   CALL_STATUSES = {
@@ -59,7 +61,7 @@ class Customer < ApplicationRecord
     'Called' => 'Called',
     'Followup' => 'Followup',
     'Incorrect Number' => 'Incorrect Number',
-    'Call Connected' => 'Call Connected',
+    'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
   
