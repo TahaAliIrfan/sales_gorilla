@@ -29,6 +29,9 @@ class CustomersController < ApplicationController
     @customers = @customers.assigned_to(params[:user_id]) if params[:user_id].present? && current_user&.admin?
     @customers = @customers.search(params[:search])
     
+    # Filter by lead source if provided
+    @customers = @customers.where(lead_source: params[:lead_source]) if params[:lead_source].present?
+    
     # Apply sorting
     sort_column = %w[name email company created_at updated_at].include?(params[:sort]) ? params[:sort] : 'created_at'
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
@@ -38,7 +41,7 @@ class CustomersController < ApplicationController
     @customers = @customers.page(params[:page]).per(20)
     
     # Track filter state for the view
-    @filter_applied = params[:search].present? || params[:user_id].present?
+    @filter_applied = params[:search].present? || params[:user_id].present? || params[:lead_source].present?
   end
 
   def show

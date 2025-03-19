@@ -4,6 +4,7 @@ export default class extends Controller {
   static targets = [
     "search", 
     "user", 
+    "leadSource",
     "sort", 
     "direction", 
     "customersList", 
@@ -13,7 +14,9 @@ export default class extends Controller {
     "searchBadge", 
     "searchText", 
     "userBadge", 
-    "userText"
+    "userText",
+    "leadSourceBadge",
+    "leadSourceText"
   ]
 
   connect() {
@@ -43,6 +46,12 @@ export default class extends Controller {
       this.userTarget.value = userIdParam
     }
     
+    // Set lead source dropdown from URL parameter
+    const leadSourceParam = urlParams.get('lead_source')
+    if (leadSourceParam) {
+      this.leadSourceTarget.value = leadSourceParam
+    }
+    
     // Set sort options from URL parameters
     const sortParam = urlParams.get('sort')
     if (sortParam && this.sortTarget.querySelector(`option[value="${sortParam}"]`)) {
@@ -58,6 +67,7 @@ export default class extends Controller {
   filter() {
     const searchTerm = this.searchTarget.value.trim()
     const userId = this.userTarget.value
+    const leadSource = this.leadSourceTarget.value
     const sortBy = this.sortTarget.value
     const sortDirection = this.directionTarget.value
     
@@ -72,6 +82,11 @@ export default class extends Controller {
     // Add user_id param if present
     if (userId) {
       params.append('user_id', userId)
+    }
+    
+    // Add lead_source param if present
+    if (leadSource) {
+      params.append('lead_source', leadSource)
     }
     
     // Add sorting params
@@ -104,6 +119,8 @@ export default class extends Controller {
     const searchTerm = this.searchTarget.value.trim()
     const userId = this.userTarget.value
     const userText = userId ? this.userTarget.options[this.userTarget.selectedIndex].text : ''
+    const leadSource = this.leadSourceTarget.value
+    const leadSourceText = leadSource ? this.leadSourceTarget.options[this.leadSourceTarget.selectedIndex].text : ''
     
     // Update search badge
     this.searchBadgeTarget.classList.toggle('hidden', !searchTerm)
@@ -117,8 +134,14 @@ export default class extends Controller {
       this.userTextTarget.textContent = `Assigned to: ${userText}`
     }
     
+    // Update lead source badge
+    this.leadSourceBadgeTarget.classList.toggle('hidden', !leadSource)
+    if (leadSource) {
+      this.leadSourceTextTarget.textContent = `Lead Source: ${leadSourceText}`
+    }
+    
     // Show/hide active filters section
-    const hasActiveFilters = searchTerm || userId
+    const hasActiveFilters = searchTerm || userId || leadSource
     this.activeFiltersTarget.classList.toggle('hidden', !hasActiveFilters)
   }
   
@@ -132,9 +155,15 @@ export default class extends Controller {
     this.filter()
   }
   
+  clearLeadSource() {
+    this.leadSourceTarget.value = ''
+    this.filter()
+  }
+  
   clearAll() {
     this.searchTarget.value = ''
     this.userTarget.value = ''
+    this.leadSourceTarget.value = ''
     this.sortTarget.value = 'created_at'
     this.directionTarget.value = 'desc'
     this.filter()

@@ -43,6 +43,23 @@
         </select>
       </div>
       
+      <!-- Lead Source Filter -->
+      <div class="relative flex-grow border-b md:border-b-0 md:border-r border-gray-200">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+          </svg>
+        </div>
+        <select class="block w-full pl-10 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
+                data-customer-filter-target="leadSource"
+                data-action="change->customer-filter#filter">
+          <option value="">All Lead Sources</option>
+          <% Customer::LEAD_SOURCES.each do |key, value| %>
+            <option value="<%= value %>"><%= key %></option>
+          <% end %>
+        </select>
+      </div>
+      
       <!-- Sort Options -->
       <div class="flex flex-grow">
         <div class="relative flex-grow border-r border-gray-200">
@@ -92,6 +109,15 @@
           </svg>
         </button>
       </span>
+      
+      <span data-customer-filter-target="leadSourceBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800">
+        <span data-customer-filter-target="leadSourceText"></span>
+        <button type="button" data-action="click->customer-filter#clearLeadSource" class="ml-1 text-green-500 hover:text-green-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </span>
     </div>
   </div>
 
@@ -128,6 +154,7 @@
                   data-company="<%= customer.company&.downcase %>" 
                   data-phone="<%= customer.phone %>"
                   data-user-id="<%= customer.user_id %>"
+                  data-lead-source="<%= customer.lead_source %>"
                   data-created-at="<%= customer.created_at.to_i %>"
                   data-updated-at="<%= customer.updated_at.to_i %>">
                 <td class="px-6 py-4 whitespace-nowrap">
