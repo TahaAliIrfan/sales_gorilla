@@ -18,3 +18,6 @@ application.register("lead-source", LeadSourceController)
 
 import CountryController from "./country_controller"
 application.register("country", CountryController)
+
+import CommunicationStatusController from "./communication_status_controller"
+application.register("communication-status", CommunicationStatusController)

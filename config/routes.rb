@@ -35,6 +35,7 @@ Rails.application.routes.draw do
   resources :customers do
     member do
       patch 'update_status'
+      patch 'update_communication_status'
     end
   end
   resources :deal_stages

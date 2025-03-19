@@ -34,4 +34,8 @@ class CustomerPolicy < ApplicationPolicy
   def update_status?
     user.admin? || record.user_id == user.id
   end
+
+  def update_communication_status?
+    user.admin? || record.user_id == user.id
+  end
 end 

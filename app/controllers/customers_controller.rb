@@ -154,6 +154,50 @@ class CustomersController < ApplicationController
     end
   end
 
+  def update_communication_status
+    @customer = Customer.find(params[:id])
+    authorize @customer
+    
+    # Extract status type and value from params
+    status_type = params[:status_type]
+    status_value = params[:status_value]
+    
+    # Validate status type and value before updating
+    valid_status_types = ['call_status', 'email_status', 'whatsapp_status', 'linkedin_status']
+    valid_status_values = case status_type
+                          when 'call_status'
+                            Customer::CALL_STATUSES.values
+                          when 'email_status'
+                            Customer::EMAIL_STATUSES.values
+                          when 'whatsapp_status'
+                            Customer::WHATSAPP_STATUSES.values
+                          when 'linkedin_status'
+                            Customer::LINKEDIN_STATUSES.values
+                          else
+                            []
+                          end
+    
+    unless valid_status_types.include?(status_type) && valid_status_values.include?(status_value)
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Invalid status type or value' }
+        format.json { render json: { success: false, error: 'Invalid status type or value' }, status: :unprocessable_entity }
+      end
+      return
+    end
+    
+    if @customer.update(status_type => status_value)
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: "#{status_type.humanize} updated successfully" }
+        format.json { render json: { success: true } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: "Failed to update #{status_type.humanize}" }
+        format.json { render json: { success: false, errors: @customer.errors.full_messages }, status: :unprocessable_entity }
+      end
+    end
+  end
+
   private
 
   def set_customer
