@@ -197,11 +197,16 @@
         <% if @high_priority_tasks.any? %>
           <div class="flow-root">
             <ul class="-my-5 divide-y divide-gray-200">
-              <% @high_priority_tasks.each do |task| %>
+              <% @high_priority_tasks.each_with_index do |task, index| %>
                 <li class="py-4">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center">
                       <div class="min-w-0 flex-1 flex items-center">
+                        <div class="flex-shrink-0 mr-2">
+                          <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-100 text-red-800 text-xs font-medium">
+                            <%= index + 1 %>
+                          </span>
+                        </div>
                         <div class="min-w-0 flex-1 px-4">
                           <div>
                             <div class="flex">
@@ -257,9 +262,14 @@
         <% if @recently_completed_tasks.any? %>
           <div class="flow-root">
             <ul class="-my-5 divide-y divide-gray-200">
-              <% @recently_completed_tasks.each do |task| %>
+              <% @recently_completed_tasks.each_with_index do |task, index| %>
                 <li class="py-4">
                   <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                        <%= index + 1 %>
+                      </span>
+                    </div>
                     <div class="flex-1">
                       <h4 class="text-sm font-medium text-gray-500 line-through">
                         <%= link_to task.title, task_path(task) %>
@@ -306,11 +316,16 @@
         <% if @today_tasks.any? %>
           <div class="flow-root">
             <ul class="-my-5 divide-y divide-gray-200">
-              <% @today_tasks.each do |task| %>
+              <% @today_tasks.each_with_index do |task, index| %>
                 <li class="py-4">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center">
                       <div class="min-w-0 flex-1 flex items-center">
+                        <div class="flex-shrink-0 mr-2">
+                          <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                            <%= index + 1 %>
+                          </span>
+                        </div>
                         <div class="flex-shrink-0">
                           <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                             <%= case task.priority

@@ -202,9 +202,14 @@
         <div class="p-5">
           <% if @today_tasks.any? %>
             <ul class="divide-y divide-gray-200">
-              <% @today_tasks.each do |task| %>
+              <% @today_tasks.each_with_index do |task, index| %>
                 <li class="py-3">
                   <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                        <%= index + 1 %>
+                      </span>
+                    </div>
                     <div class="flex-1">
                       <h4 class="text-sm font-medium">
                         <%= link_to task.title, task_path(task, from: "my_tasks"), class: "#{task.completed? ? 'text-gray-500 line-through' : 'text-blue-600 hover:text-blue-900'}" %>
@@ -262,9 +267,14 @@
         <div class="p-5">
           <% if @overdue_tasks.any? %>
             <ul class="divide-y divide-gray-200">
-              <% @overdue_tasks.first(5).each do |task| %>
+              <% @overdue_tasks.first(5).each_with_index do |task, index| %>
                 <li class="py-3">
                   <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-red-100 text-red-800 text-xs font-medium">
+                        <%= index + 1 %>
+                      </span>
+                    </div>
                     <div class="flex-1">
                       <h4 class="text-sm font-medium">
                         <%= link_to task.title, task_path(task, from: "my_tasks"), class: "text-blue-600 hover:text-blue-900" %>
@@ -312,9 +322,14 @@
         <div class="p-5">
           <% if @pending_tasks.any? %>
             <ul class="divide-y divide-gray-200">
-              <% @pending_tasks.each do |task| %>
+              <% @pending_tasks.each_with_index do |task, index| %>
                 <li class="py-3">
                   <div class="flex items-center">
+                    <div class="flex-shrink-0 mr-2">
+                      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-yellow-100 text-yellow-800 text-xs font-medium">
+                        <%= index + 1 %>
+                      </span>
+                    </div>
                     <div class="flex-1">
                       <h4 class="text-sm font-medium">
                         <%= link_to task.title, task_path(task, from: "my_tasks"), class: "text-blue-600 hover:text-blue-900" %>

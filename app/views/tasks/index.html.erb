@@ -62,12 +62,19 @@
   <div class="bg-white shadow overflow-hidden sm:rounded-md">
     <ul class="divide-y divide-gray-200">
       <% if @tasks.present? && @tasks.any? %>
-        <% @tasks.each do |task| %>
+        <% @tasks.each_with_index do |task, index| %>
           <li>
             <div class="px-4 py-4 sm:px-6 hover:bg-gray-50">
               <div class="flex items-center justify-between">
                 <div class="flex items-center">
                   <div class="min-w-0 flex-1 flex items-center">
+                    <% if params[:action] == 'my_tasks' %>
+                      <div class="flex-shrink-0 mr-2">
+                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                          <%= index + 1 %>
+                        </span>
+                      </div>
+                    <% end %>
                     <div class="flex-shrink-0">
                       <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                         <%= case task.priority
