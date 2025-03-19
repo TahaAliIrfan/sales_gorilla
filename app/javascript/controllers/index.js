@@ -10,6 +10,9 @@ application.register("drag", DragController)
 import CustomerFilterController from "./customer_filter_controller"
 application.register("customer-filter", CustomerFilterController)
 
+import CustomerNavigationController from "./customer_navigation_controller"
+application.register("customer-navigation", CustomerNavigationController)
+
 import LeadSourceController from "./lead_source_controller"
 application.register("lead-source", LeadSourceController)
 
