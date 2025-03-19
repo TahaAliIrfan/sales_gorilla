@@ -44,6 +44,23 @@ class Customer < ApplicationRecord
     'Not Applicable' => 'Not Applicable'
   }.freeze
   
+  PLATFORMS = {
+    'Mobile App' => 'Mobile App',
+    'Web App' => 'Web App',
+    'Web and Mobile App' => 'Web and Mobile App',
+    'AI App' => 'AI App',
+    'Smart Watch' => 'Smart Watch',
+    'Frontend' => 'Frontend',
+    'Not Applicable' => 'Not Applicable'
+  }.freeze
+  
+  PROJECT_SCOPES = {
+    'Lean-Launch-MVP' => 'Lean-Launch-MVP',
+    'Enterprise-Scale' => 'Enterprise-Scale',
+    'Growth-Ready' => 'Growth-Ready',
+    'Not Applicable' => 'Not Applicable'
+  }.freeze
+  
   STATUSES = {
     'Pending' => 'Pending',
     'Contact Established' => 'Contact Established',
@@ -115,6 +132,8 @@ class Customer < ApplicationRecord
   validates :linkedin_status, inclusion: { in: LINKEDIN_STATUSES.values }, allow_blank: true
   validates :upwork_profile, inclusion: { in: UPWORK_PROFILES.values }, allow_blank: true
   validates :exhaust_status, inclusion: { in: EXHAUST_STATUSES.values }, allow_blank: true
+  validates :platform, inclusion: { in: PLATFORMS.values }, allow_blank: true
+  validates :project_scope, inclusion: { in: PROJECT_SCOPES.values }, allow_blank: true
   
   # Scopes
   scope :assigned_to, ->(user_id) { where(user_id: user_id) if user_id.present? }
@@ -185,6 +204,8 @@ class Customer < ApplicationRecord
     self.project_type ||= 'Not Applicable'
     self.upwork_profile ||= 'Not Applicable'
     self.preferred_calling_time ||= 'Not Applicable'
+    self.platform ||= 'Not Applicable'
+    self.project_scope ||= 'Not Applicable'
   end
   
   def set_exhaust_date

@@ -311,6 +311,18 @@
             <h3 class="text-sm font-medium text-gray-500">Project Type</h3>
             <p class="mt-1 text-lg text-gray-900"><%= @customer.project_type %></p>
           </div>
+          <% if @customer.platform != 'Not Applicable' %>
+          <div>
+            <h3 class="text-sm font-medium text-gray-500">Platform</h3>
+            <p class="mt-1 text-lg text-gray-900"><%= @customer.platform %></p>
+          </div>
+          <% end %>
+          <% if @customer.project_scope != 'Not Applicable' %>
+          <div>
+            <h3 class="text-sm font-medium text-gray-500">Project Scope</h3>
+            <p class="mt-1 text-lg text-gray-900"><%= @customer.project_scope %></p>
+          </div>
+          <% end %>
           <% if @customer.project_estimated_cost.present? %>
             <div>
               <h3 class="text-sm font-medium text-gray-500">Estimated Cost</h3>

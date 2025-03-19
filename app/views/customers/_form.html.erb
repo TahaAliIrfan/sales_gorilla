@@ -176,6 +176,16 @@
         <%= form.select :project_type, Customer::PROJECT_TYPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
 
+      <div>
+        <%= form.label :platform, class: "block text-sm font-medium text-gray-700" %>
+        <%= form.select :platform, Customer::PLATFORMS.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <%= form.label :project_scope, class: "block text-sm font-medium text-gray-700" %>
+        <%= form.select :project_scope, Customer::PROJECT_SCOPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
       <div class="md:col-span-2">
         <%= form.label :idea_description, class: "block text-sm font-medium text-gray-700" %>
         <%= form.text_area :idea_description, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>

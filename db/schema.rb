@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_19_223618) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_19_230529) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -81,6 +81,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_19_223618) do
     t.string "country"
     t.string "preferred_calling_time", default: ""
     t.string "timezone"
+    t.string "platform", default: "Not Applicable"
+    t.string "project_scope", default: "Not Applicable"
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
