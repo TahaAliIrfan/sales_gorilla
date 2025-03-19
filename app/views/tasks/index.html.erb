@@ -110,12 +110,12 @@
                             </span>
                           <% end %>
                         </div>
-                        <p class="mt-1 text-sm text-gray-500">
-                          Due: <%= task.due_date.strftime("%b %d, %Y") %>
+                        <div class="text-sm text-gray-500">
+                          Due: <%= task.due_date.strftime("%b %d, %Y at %I:%M %p") %>
                           <% if task.customer.present? %>
                             | Customer: <%= link_to task.customer.name, customer_path(task.customer), class: "text-blue-600 hover:text-blue-900" %>
                           <% end %>
-                        </p>
+                        </div>
                       </div>
                     </div>
                   </div>
