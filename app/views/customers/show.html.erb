@@ -48,6 +48,14 @@
             <p class="mt-1 text-lg text-gray-900"><%= @customer.preferred_calling_time.present? && @customer.preferred_calling_time != 'Not Applicable' ? @customer.preferred_calling_time : "No preference" %></p>
           </div>
           <div>
+            <h3 class="text-sm font-medium text-gray-500">Current Customer Time</h3>
+            <p class="mt-1 text-lg text-gray-900">
+              <span class="text-xs text-gray-500 block">
+                (<%= @customer.timezone.present? ? @customer.timezone : "Based on #{@customer.country}" %>)
+              </span>
+            </p>
+          </div>
+          <div>
             <h3 class="text-sm font-medium text-gray-500">Country</h3>
             <p class="mt-1 text-lg text-gray-900"><%= @customer.country.present? ? @customer.country : "N/A" %></p>
           </div>

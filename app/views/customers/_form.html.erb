@@ -89,6 +89,12 @@
       </div>
 
       <div>
+        <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.select :timezone, ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }, { include_blank: "Auto-detect from country" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <p class="mt-1 text-xs text-gray-500">If not selected, timezone will be determined based on country</p>
+      </div>
+
+      <div>
         <%= form.label :address, class: "block text-sm font-medium text-gray-700" %>
         <%= form.text_area :address, rows: 2, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
