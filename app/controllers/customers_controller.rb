@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -135,6 +135,23 @@ class CustomersController < ApplicationController
     authorize @customer
     @customer.destroy
     redirect_to customers_path, notice: 'Customer was successfully deleted.'
+  end
+
+  def update_status
+    @customer = Customer.find(params[:id])
+    authorize @customer
+    
+    if @customer.update(status: params[:status])
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Status updated successfully.' }
+        format.json { render json: { success: true } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Failed to update status.' }
+        format.json { render json: { success: false, errors: @customer.errors.full_messages }, status: :unprocessable_entity }
+      end
+    end
   end
 
   private

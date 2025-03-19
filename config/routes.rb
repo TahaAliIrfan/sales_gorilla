@@ -32,7 +32,11 @@ Rails.application.routes.draw do
   # get 'customers/destroy'
   
   # Add RESTful routes for our models
-  resources :customers
+  resources :customers do
+    member do
+      patch 'update_status'
+    end
+  end
   resources :deal_stages
   resources :tasks do
     member do

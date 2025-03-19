@@ -101,12 +101,44 @@
           </div>
           <div>
             <h3 class="text-sm font-medium text-gray-500">Status</h3>
-            <span class="mt-1 px-2 inline-flex text-sm leading-5 font-semibold rounded-full 
-              <%= @customer.status == 'Connection Established' ? 'bg-green-100 text-green-800' : 
-                  @customer.status == 'Exhausted' ? 'bg-red-100 text-red-800' : 
-                  'bg-blue-100 text-blue-800' %>">
-              <%= @customer.status %>
-            </span>
+            <div class="mt-1 flex flex-wrap gap-2">
+              <% Customer::STATUSES.keys.each do |status| %>
+                <button
+                  data-status="<%= status %>"
+                  data-customer-id="<%= @customer.id %>"
+                  class="status-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:shadow-md
+                    <%= status == @customer.status ? 
+                        case status
+                        when 'Contact Established' then 'bg-green-100 text-green-800 ring-2 ring-green-300'
+                        when 'Exhausted' then 'bg-red-100 text-red-800 ring-2 ring-red-300'
+                        when 'Pending' then 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
+                        when 'Contact Not Established' then 'bg-red-100 text-red-800 ring-2 ring-red-300'
+                        when 'Unresponsive' then 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
+                        when 'Converted' then 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+                        when 'Proposal Sent' then 'bg-indigo-100 text-indigo-800 ring-2 ring-indigo-300'
+                        when 'Not Interested' then 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
+                        when 'Invalid' then 'bg-purple-100 text-purple-800 ring-2 ring-purple-300'
+                        else 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+                        end
+                      : 
+                        case status
+                        when 'Contact Established' then 'bg-green-50 text-green-700'
+                        when 'Exhausted' then 'bg-red-50 text-red-700'
+                        when 'Pending' then 'bg-yellow-50 text-yellow-700'
+                        when 'Contact Not Established' then 'bg-red-50 text-red-700'
+                        when 'Unresponsive' then 'bg-orange-50 text-orange-700'
+                        when 'Converted' then 'bg-blue-50 text-blue-700'
+                        when 'Proposal Sent' then 'bg-indigo-50 text-indigo-700'
+                        when 'Not Interested' then 'bg-gray-50 text-gray-700'
+                        when 'Invalid' then 'bg-purple-50 text-purple-700'
+                        else 'bg-blue-50 text-blue-700'
+                        end
+                    %>"
+                >
+                  <%= status %>
+                </button>
+              <% end %>
+            </div>
           </div>
           <div>
             <h3 class="text-sm font-medium text-gray-500">Call Status</h3>
@@ -447,4 +479,190 @@
       console.error('Error playing audio:', error);
     });
   }
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const statusTags = document.querySelectorAll('.status-tag');
+    
+    statusTags.forEach(tag => {
+      tag.addEventListener('click', function() {
+        const status = this.dataset.status;
+        const customerId = this.dataset.customerId;
+        
+        // Show a loading indicator
+        this.classList.add('opacity-50');
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        
+        if (!csrfToken) {
+          console.error('CSRF token not found');
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-red-50 text-red-800 px-4 py-2 rounded-md shadow-md z-50';
+          notification.textContent = 'CSRF token not found. Please refresh the page.';
+          document.body.appendChild(notification);
+          setTimeout(() => notification.remove(), 3000);
+          this.classList.remove('opacity-50');
+          return;
+        }
+        
+        console.log('Sending request to update status to:', status);
+        
+        // Send AJAX request to update status
+        fetch(`/customers/${customerId}/update_status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-Token': csrfToken.content
+          },
+          body: JSON.stringify({ status: status })
+        })
+        .then(response => {
+          // Log the full response for debugging
+          console.log('Response status:', response.status);
+          console.log('Response headers:', response.headers);
+          
+          // Check if response is ok before parsing JSON
+          if (!response.ok) {
+            console.error('Response not OK:', response.status, response.statusText);
+            return response.text().then(text => {
+              console.error('Error response text:', text);
+              throw new Error(`Request failed with status ${response.status}: ${text}`);
+            });
+          }
+          
+          return response.json();
+        })
+        .then(data => {
+          // Additional logging
+          console.log('Response data:', data);
+          
+          if (data.success) {
+            // Remove highlighting from all tags
+            statusTags.forEach(t => {
+              t.className = t.className.replace(/ring-2 ring-\w+-300/g, '');
+              
+              // Reset base colors based on status type
+              const tagStatus = t.dataset.status;
+              let baseClass = '';
+              
+              switch(tagStatus) {
+                case 'Contact Established':
+                  baseClass = 'bg-green-50 text-green-700';
+                  break;
+                case 'Exhausted':
+                  baseClass = 'bg-red-50 text-red-700';
+                  break;
+                case 'Pending':
+                  baseClass = 'bg-yellow-50 text-yellow-700';
+                  break;
+                case 'Contact Not Established':
+                  baseClass = 'bg-red-50 text-red-700';
+                  break;
+                case 'Unresponsive':
+                  baseClass = 'bg-orange-50 text-orange-700';
+                  break;
+                case 'Converted':
+                  baseClass = 'bg-blue-50 text-blue-700';
+                  break;
+                case 'Proposal Sent':
+                  baseClass = 'bg-indigo-50 text-indigo-700';
+                  break;
+                case 'Not Interested':
+                  baseClass = 'bg-gray-50 text-gray-700';
+                  break;
+                case 'Invalid':
+                  baseClass = 'bg-purple-50 text-purple-700';
+                  break;
+                default:
+                  baseClass = 'bg-blue-50 text-blue-700';
+              }
+              
+              t.className = `status-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:shadow-md ${baseClass}`;
+            });
+            
+            // Add highlighting to the selected tag
+            let activeClass = '';
+            switch(status) {
+              case 'Contact Established':
+                activeClass = 'bg-green-100 text-green-800 ring-2 ring-green-300';
+                break;
+              case 'Exhausted':
+                activeClass = 'bg-red-100 text-red-800 ring-2 ring-red-300';
+                break;
+              case 'Pending':
+                activeClass = 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300';
+                break;
+              case 'Contact Not Established':
+                activeClass = 'bg-red-100 text-red-800 ring-2 ring-red-300';
+                break;
+              case 'Unresponsive':
+                activeClass = 'bg-orange-100 text-orange-800 ring-2 ring-orange-300';
+                break;
+              case 'Converted':
+                activeClass = 'bg-blue-100 text-blue-800 ring-2 ring-blue-300';
+                break;
+              case 'Proposal Sent':
+                activeClass = 'bg-indigo-100 text-indigo-800 ring-2 ring-indigo-300';
+                break;
+              case 'Not Interested':
+                activeClass = 'bg-gray-100 text-gray-800 ring-2 ring-gray-300';
+                break;
+              case 'Invalid':
+                activeClass = 'bg-purple-100 text-purple-800 ring-2 ring-purple-300';
+                break;
+              default:
+                activeClass = 'bg-blue-100 text-blue-800 ring-2 ring-blue-300';
+            }
+            
+            this.className = `status-tag inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:shadow-md ${activeClass}`;
+            
+            // Show success notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-50 text-green-800 px-4 py-2 rounded-md shadow-md z-50 animate-fade-in-out';
+            notification.textContent = `Status updated to ${status}`;
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+              notification.remove();
+            }, 3000);
+          } else {
+            // Show error notification
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-red-50 text-red-800 px-4 py-2 rounded-md shadow-md z-50';
+            notification.textContent = 'Failed to update status';
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+              notification.remove();
+            }, 3000);
+          }
+          
+          // Remove loading indicator
+          this.classList.remove('opacity-50');
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          
+          // Show error notification
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-red-50 text-red-800 px-4 py-2 rounded-md shadow-md z-50';
+          notification.textContent = 'An error occurred while updating status';
+          document.body.appendChild(notification);
+          
+          // Remove notification after 3 seconds
+          setTimeout(() => {
+            notification.remove();
+          }, 3000);
+          
+          // Remove loading indicator
+          this.classList.remove('opacity-50');
+        });
+      });
+    });
+  });
 </script>

@@ -30,4 +30,8 @@ class CustomerPolicy < ApplicationPolicy
   def destroy?
     user.admin?
   end
+  
+  def update_status?
+    user.admin? || record.user_id == user.id
+  end
 end 
