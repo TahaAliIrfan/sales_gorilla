@@ -10,6 +10,11 @@ module Api
         phone_number = params[:phone_number]
         country = params[:country]
         file_data = params[:file]
+        if params[:lead_source].present?
+          lead_source = params[:lead_source]
+        else
+          lead_source = 'CCR'
+        end
 
         customer = Customer.find_by(email: email)
         
@@ -20,7 +25,7 @@ module Api
             email: email,
             phone: phone_number,
             country: country,
-            lead_source: 'CCR',
+            lead_source: lead_source,
             status: 'Pending'
           )
         end
