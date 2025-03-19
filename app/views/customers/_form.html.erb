@@ -203,6 +203,11 @@
       </div>
 
       <div>
+        <%= form.label :preferred_calling_time, "Preferred Calling Time", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.text_field :preferred_calling_time, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
         <%= form.label :email_status, class: "block text-sm font-medium text-gray-700" %>
         <%= form.select :email_status, Customer::EMAIL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>

@@ -144,7 +144,7 @@ class CustomersController < ApplicationController
       :lead_source, :linkedin_url, :ccr_link, :project_estimated_cost,
       :project_type, :idea_description, :country, :status, :call_status,
       :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status,
-      :file
+      :preferred_calling_time, :file
     ]
     
     # Only admins can assign customers to users

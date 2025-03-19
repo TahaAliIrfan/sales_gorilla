@@ -47,6 +47,9 @@ class Customer < ApplicationRecord
     'Pending' => 'Pending',
     'Connection Established' => 'Connection Established',
     'Connection Not Established' => 'Connection Not Established',
+    'Unresponsive' => 'Unresponsive',
+    'Converted' => 'Converted',
+    'Proposal Sent' => 'Proposal Sent',
     'Not Interested' => 'Not Interested',
     'Exhausted' => 'Exhausted'
   }.freeze
@@ -179,6 +182,7 @@ class Customer < ApplicationRecord
     self.linkedin_status ||= 'Pending'
     self.project_type ||= 'Not Applicable'
     self.upwork_profile ||= 'Not Applicable'
+    self.preferred_calling_time ||= 'Not Applicable'
   end
   
   def set_exhaust_date
@@ -193,7 +197,7 @@ class Customer < ApplicationRecord
     return if new_record? # Skip for new records
     
     # Track changes to important fields
-    tracked_fields = %w[status call_status email_status whatsapp_status linkedin_status user_id]
+    tracked_fields = %w[status call_status email_status whatsapp_status linkedin_status user_id preferred_calling_time]
     
     changes_to_track = self.changes.select { |field, _| tracked_fields.include?(field) }
     

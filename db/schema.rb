@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_18_131039) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_19_002736) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -79,6 +79,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_18_131039) do
     t.string "exhaust_status", default: "Not Applicable"
     t.datetime "exhaust_date"
     t.string "country"
+    t.string "preferred_calling_time", default: ""
     t.index ["user_id"], name: "index_customers_on_user_id"
   end
 
