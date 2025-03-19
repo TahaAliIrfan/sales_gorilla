@@ -33,7 +33,7 @@ class CustomersController < ApplicationController
     @customers = @customers.where(lead_source: params[:lead_source]) if params[:lead_source].present?
     
     # Apply sorting
-    sort_column = %w[name email company created_at updated_at].include?(params[:sort]) ? params[:sort] : 'created_at'
+    sort_column = %w[name email created_at updated_at].include?(params[:sort]) ? params[:sort] : 'created_at'
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("#{sort_column} #{sort_direction}")
     
