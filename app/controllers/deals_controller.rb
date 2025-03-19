@@ -41,6 +41,9 @@ class DealsController < ApplicationController
     # Set default user to current user
     @deal.user_id = current_user.id
     
+    # Set default status to active
+    @deal.status = 'active'
+    
     # Get all customers for dropdown
     if current_user&.admin?
       @customers = Customer.all
@@ -71,6 +74,9 @@ class DealsController < ApplicationController
     
     # If no deal stage is selected, use the first one
     @deal.deal_stage_id ||= DealStage.order(:position).first&.id
+    
+    # Set default status to active if none provided
+    @deal.status ||= 'active'
     
     authorize @deal
     
