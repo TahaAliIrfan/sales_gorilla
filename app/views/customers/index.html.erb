@@ -158,7 +158,18 @@
           </thead>
           <tbody class="bg-white divide-y divide-gray-200" data-customer-filter-target="customersList">
             <% @customers.each do |customer| %>
-              <tr class="customer-row" 
+              <tr class="customer-row <%= case customer.status
+                      when 'Pending' then 'border-l-2 border-yellow-400'
+                      when 'Contact Established' then 'border-l-2 border-green-400'
+                      when 'Contact Not Established' then 'border-l-2 border-red-400'
+                      when 'Unresponsive' then 'border-l-2 border-orange-400'
+                      when 'Converted' then 'border-l-2 border-blue-400'
+                      when 'Proposal Sent' then 'border-l-2 border-indigo-400'
+                      when 'Not Interested' then 'border-l-2 border-gray-400'
+                      when 'Exhausted' then 'border-l-2 border-purple-400'
+                      when 'Invalid' then 'border-l-2 border-purple-400'
+                      else 'border-l-2 border-gray-200'
+                    end %>" 
                   data-name="<%= customer.name.downcase %>" 
                   data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>" 
