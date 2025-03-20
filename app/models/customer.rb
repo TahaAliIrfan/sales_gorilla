@@ -51,7 +51,7 @@ class Customer < ApplicationRecord
     'AI App' => 'AI App',
     'Smart Watch' => 'Smart Watch',
     'Frontend' => 'Frontend',
-    'Not Applicable' => 'Not Applicable'
+    'Not Applicable' => 'Not Applicable',
   }.freeze
   
   PROJECT_SCOPES = {
@@ -87,16 +87,16 @@ class Customer < ApplicationRecord
     'Email Sent' => 'Email Sent',
     'Followup' => 'Followup',
     'Incorrect Email' => 'Incorrect Email',
-    'Conversation Initiated' => 'Conversation Initiated',
+    'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
   
   WHATSAPP_STATUSES = {
     'Pending' => 'Pending',
-    'WhatsApp Message Sent' => 'WhatsApp Message Sent',
+    'Message Sent' => 'Message Sent',
     'Followup' => 'Followup',
     'Incorrect Number' => 'Incorrect Number',
-    'Conversation Initiated' => 'Conversation Initiated',
+    'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
   
