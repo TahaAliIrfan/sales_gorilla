@@ -455,7 +455,7 @@
                           <%= deal.status == 'active' ? 'bg-blue-100 text-blue-800' : 
                               deal.status == 'won' ? 'bg-green-100 text-green-800' : 
                               'bg-red-100 text-red-800' %>">
-                          <%= deal.status.capitalize %>
+                          <%= deal.status&.capitalize %>
                         </span>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
