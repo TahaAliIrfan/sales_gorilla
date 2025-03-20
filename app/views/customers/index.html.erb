@@ -27,69 +27,69 @@
       </div>
       
       <!-- Assigned To Filter -->
-      <div class="relative flex-grow border-b md:border-b-0 md:border-r border-gray-200">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-          </svg>
+      <% if current_user&.admin? %>
+        <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200">
+          <label for="user-filter" class="block text-xs font-medium text-gray-500 mb-1">Assigned To</label>
+          <select id="user-filter" 
+                  class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
+                  data-customer-filter-target="user"
+                  data-action="change->customer-filter#filter">
+            <option value="">All Users</option>
+            <% @users.each do |user| %>
+              <option value="<%= user.id %>"><%= user.name %></option>
+            <% end %>
+          </select>
         </div>
-        <select class="block w-full pl-10 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
-                data-customer-filter-target="user"
+      <% end %>
+      
+      <!-- Status Filter -->
+      <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <label for="status-filter" class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+        <select id="status-filter" 
+                class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
+                data-customer-filter-target="status"
                 data-action="change->customer-filter#filter">
-          <option value="">All Users</option>
-          <% @users&.each do |user| %>
-            <option value="<%= user.id %>"><%= user.name %></option>
+          <option value="">All Statuses</option>
+          <% Customer::STATUSES.each do |key, value| %>
+            <option value="<%= value %>" <%= 'selected' if params[:status] == value %>><%= value %></option>
           <% end %>
         </select>
+        <% if !current_user&.admin? %>
+          <!-- Debug information for non-admin users -->
+          <div class="hidden">
+            <p>User is not admin. Current filter status: <%= params[:status] %></p>
+          </div>
+        <% end %>
       </div>
       
       <!-- Lead Source Filter -->
-      <div class="relative flex-grow border-b md:border-b-0 md:border-r border-gray-200">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
-          </svg>
-        </div>
-        <select class="block w-full pl-10 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
+      <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <label for="lead-source-filter" class="block text-xs font-medium text-gray-500 mb-1">Lead Source</label>
+        <select id="lead-source-filter" 
+                class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
                 data-customer-filter-target="leadSource"
                 data-action="change->customer-filter#filter">
-          <option value="">All Lead Sources</option>
+          <option value="">All Sources</option>
           <% Customer::LEAD_SOURCES.each do |key, value| %>
-            <option value="<%= value %>"><%= key %></option>
+            <option value="<%= value %>"><%= value %></option>
           <% end %>
         </select>
       </div>
       
-      <!-- Sort Options -->
-      <div class="flex flex-grow">
-        <div class="relative flex-grow border-r border-gray-200">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
-            </svg>
-          </div>
-          <select class="block w-full pl-10 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
-                  data-customer-filter-target="sort"
-                  data-action="change->customer-filter#filter">
-            <option value="created_at">Sort by Date Added</option>
-            <option value="updated_at">Sort by Last Updated</option>
-            <option value="name">Sort by Name</option>
-            <option value="email">Sort by Email</option>
-          </select>
-        </div>
-        
-        <div class="relative flex-grow">
-          <select class="block w-full pl-3 pr-3 py-3 border-0 focus:ring-0 focus:outline-none text-sm bg-transparent"
-                  data-customer-filter-target="direction"
-                  data-action="change->customer-filter#filter">
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
-          </select>
-        </div>
+      <!-- Sort Direction -->
+      <div class="px-3 py-2">
+        <label for="direction-filter" class="block text-xs font-medium text-gray-500 mb-1">Order</label>
+        <select id="direction-filter" 
+                class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
+                data-customer-filter-target="direction"
+                data-action="change->customer-filter#filter">
+          <option value="desc">Descending</option>
+          <option value="asc">Ascending</option>
+        </select>
       </div>
     </div>
     
-    <!-- Active Filters (only shown when filters are applied) -->
+    <!-- Active Filter Tags -->
     <div data-customer-filter-target="activeFilters" class="hidden px-4 py-2 bg-gray-50 border-t border-gray-200 text-xs flex flex-wrap gap-2">
       <span data-customer-filter-target="searchBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-blue-100 text-blue-800">
         <span data-customer-filter-target="searchText"></span>
@@ -109,14 +109,29 @@
         </button>
       </span>
       
-      <span data-customer-filter-target="leadSourceBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800">
-        <span data-customer-filter-target="leadSourceText"></span>
-        <button type="button" data-action="click->customer-filter#clearLeadSource" class="ml-1 text-green-500 hover:text-green-700">
+      <span data-customer-filter-target="statusBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-green-100 text-green-800">
+        <span data-customer-filter-target="statusText"></span>
+        <button type="button" data-action="click->customer-filter#clearStatus" class="ml-1 text-green-500 hover:text-green-700">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       </span>
+      
+      <span data-customer-filter-target="leadSourceBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800">
+        <span data-customer-filter-target="leadSourceText"></span>
+        <button type="button" data-action="click->customer-filter#clearLeadSource" class="ml-1 text-purple-500 hover:text-purple-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </span>
+      
+      <button type="button" 
+              data-action="click->customer-filter#clearAll" 
+              class="ml-auto text-xs text-gray-500 hover:text-gray-700 underline">
+        Clear All
+      </button>
     </div>
   </div>
 
@@ -127,16 +142,16 @@
           <thead class="bg-gray-50">
             <tr>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <%= sortable "name" %>
+                Name
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <%= sortable "email" %>
+                Email
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone/Preferred Time</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead Source</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <%= sortable "created_at", "Date Added" %>
+                Date Added
               </th>
               <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -150,6 +165,7 @@
                   data-phone="<%= customer.phone %>"
                   data-user-id="<%= customer.user_id %>"
                   data-lead-source="<%= customer.lead_source %>"
+                  data-status="<%= customer.status %>"
                   data-created-at="<%= customer.created_at.to_i %>"
                   data-updated-at="<%= customer.updated_at.to_i %>">
                 <td class="px-6 py-4 whitespace-nowrap">

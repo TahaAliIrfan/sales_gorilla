@@ -5,7 +5,7 @@ export default class extends Controller {
     "search", 
     "user", 
     "leadSource",
-    "sort", 
+    "status",
     "direction", 
     "customersList", 
     "noResults", 
@@ -15,11 +15,13 @@ export default class extends Controller {
     "searchText", 
     "userBadge", 
     "userText",
+    "statusBadge",
+    "statusText",
     "leadSourceBadge",
     "leadSourceText"
   ]
 
-  connect() {
+  connect() {   
     // First check URL parameters, then fallback to sessionStorage if no URL params
     if (this.hasUrlParams()) {
       // Initialize filter inputs from URL parameters if present
@@ -41,7 +43,7 @@ export default class extends Controller {
   hasUrlParams() {
     const urlParams = new URLSearchParams(window.location.search)
     return urlParams.has('search') || urlParams.has('user_id') || 
-           urlParams.has('lead_source') || urlParams.has('sort') || 
+           urlParams.has('status') || urlParams.has('lead_source') || 
            urlParams.has('direction')
   }
   
@@ -61,18 +63,19 @@ export default class extends Controller {
       this.userTarget.value = userIdParam
     }
     
+    // Set status dropdown from URL parameter
+    const statusParam = urlParams.get('status')
+    if (statusParam) {
+      this.statusTarget.value = statusParam
+    }
+    
     // Set lead source dropdown from URL parameter
     const leadSourceParam = urlParams.get('lead_source')
     if (leadSourceParam) {
       this.leadSourceTarget.value = leadSourceParam
     }
     
-    // Set sort options from URL parameters
-    const sortParam = urlParams.get('sort')
-    if (sortParam && this.sortTarget.querySelector(`option[value="${sortParam}"]`)) {
-      this.sortTarget.value = sortParam
-    }
-    
+    // Set direction parameter
     const directionParam = urlParams.get('direction')
     if (directionParam && this.directionTarget.querySelector(`option[value="${directionParam}"]`)) {
       this.directionTarget.value = directionParam
@@ -89,16 +92,17 @@ export default class extends Controller {
         this.searchTarget.value = storedFilters.search
       }
       
-      if (storedFilters.userId) {
+      // Only set user if target exists (admin only)
+      if (storedFilters.userId && this.hasUserTarget) {
         this.userTarget.value = storedFilters.userId
+      }
+      
+      if (storedFilters.status) {
+        this.statusTarget.value = storedFilters.status
       }
       
       if (storedFilters.leadSource) {
         this.leadSourceTarget.value = storedFilters.leadSource
-      }
-      
-      if (storedFilters.sortBy && this.sortTarget.querySelector(`option[value="${storedFilters.sortBy}"]`)) {
-        this.sortTarget.value = storedFilters.sortBy
       }
       
       if (storedFilters.sortDirection && this.directionTarget.querySelector(`option[value="${storedFilters.sortDirection}"]`)) {
@@ -116,8 +120,8 @@ export default class extends Controller {
     return filters && (
       filters.search || 
       filters.userId || 
+      filters.status ||
       filters.leadSource || 
-      (filters.sortBy && filters.sortBy !== 'created_at') || 
       (filters.sortDirection && filters.sortDirection !== 'desc')
     )
   }
@@ -125,10 +129,14 @@ export default class extends Controller {
   saveFiltersToStorage() {
     const filters = {
       search: this.searchTarget.value.trim(),
-      userId: this.userTarget.value,
+      status: this.statusTarget.value,
       leadSource: this.leadSourceTarget.value,
-      sortBy: this.sortTarget.value,
       sortDirection: this.directionTarget.value
+    }
+    
+    // Only add userId if user target exists (admin only)
+    if (this.hasUserTarget) {
+      filters.userId = this.userTarget.value
     }
     
     // Store in sessionStorage
@@ -142,10 +150,22 @@ export default class extends Controller {
 
   filter() {
     const searchTerm = this.searchTarget.value.trim()
-    const userId = this.userTarget.value
+    const status = this.statusTarget.value
     const leadSource = this.leadSourceTarget.value
-    const sortBy = this.sortTarget.value
     const sortDirection = this.directionTarget.value
+    
+    // Only use userId if the user target exists (for admin users)
+    const userId = this.hasUserTarget ? this.userTarget.value : null
+    
+    // Debug logging
+    console.log("Filter values:", {
+      searchTerm,
+      userId,
+      status,
+      leadSource,
+      sortDirection,
+      hasUserTarget: this.hasUserTarget
+    })
     
     // Save filters to sessionStorage for persistence
     this.saveFiltersToStorage()
@@ -158,9 +178,15 @@ export default class extends Controller {
       params.append('search', searchTerm)
     }
     
-    // Add user_id param if present
-    if (userId) {
+    // Add user_id param if present and user has access to user filter
+    if (userId && this.hasUserTarget) {
       params.append('user_id', userId)
+    }
+    
+    // Add status param if present
+    if (status) {
+      console.log("Adding status to params:", status)
+      params.append('status', status)
     }
     
     // Add lead_source param if present
@@ -168,14 +194,13 @@ export default class extends Controller {
       params.append('lead_source', leadSource)
     }
     
-    // Add sorting params
-    if (sortBy) {
-      params.append('sort', sortBy)
-    }
-    
+    // Add direction param
     if (sortDirection) {
       params.append('direction', sortDirection)
     }
+    
+    // Debug logging
+    console.log("Final URL params:", params.toString())
     
     // Navigate to the filtered URL
     window.location.href = `${window.location.pathname}?${params.toString()}`
@@ -196,8 +221,13 @@ export default class extends Controller {
   
   updateActiveFilters() {
     const searchTerm = this.searchTarget.value.trim()
-    const userId = this.userTarget.value
-    const userText = userId ? this.userTarget.options[this.userTarget.selectedIndex].text : ''
+    
+    // Only get user value if target exists (admin only)
+    const userId = this.hasUserTarget ? this.userTarget.value : null
+    const userText = userId && this.hasUserTarget ? this.userTarget.options[this.userTarget.selectedIndex].text : ''
+    
+    const status = this.statusTarget.value
+    const statusText = status ? this.statusTarget.options[this.statusTarget.selectedIndex].text : ''
     const leadSource = this.leadSourceTarget.value
     const leadSourceText = leadSource ? this.leadSourceTarget.options[this.leadSourceTarget.selectedIndex].text : ''
     
@@ -207,10 +237,18 @@ export default class extends Controller {
       this.searchTextTarget.textContent = `Search: ${searchTerm}`
     }
     
-    // Update user badge
-    this.userBadgeTarget.classList.toggle('hidden', !userId)
-    if (userId) {
-      this.userTextTarget.textContent = `Assigned to: ${userText}`
+    // Update user badge only if target exists (admin only)
+    if (this.hasUserTarget) {
+      this.userBadgeTarget.classList.toggle('hidden', !userId)
+      if (userId) {
+        this.userTextTarget.textContent = `Assigned to: ${userText}`
+      }
+    }
+    
+    // Update status badge
+    this.statusBadgeTarget.classList.toggle('hidden', !status)
+    if (status) {
+      this.statusTextTarget.textContent = `Status: ${statusText}`
     }
     
     // Update lead source badge
@@ -220,7 +258,7 @@ export default class extends Controller {
     }
     
     // Show/hide active filters section
-    const hasActiveFilters = searchTerm || userId || leadSource
+    const hasActiveFilters = searchTerm || userId || status || leadSource
     this.activeFiltersTarget.classList.toggle('hidden', !hasActiveFilters)
   }
   
@@ -234,6 +272,11 @@ export default class extends Controller {
     this.filter()
   }
   
+  clearStatus() {
+    this.statusTarget.value = ''
+    this.filter()
+  }
+  
   clearLeadSource() {
     this.leadSourceTarget.value = ''
     this.filter()
@@ -241,9 +284,12 @@ export default class extends Controller {
   
   clearAll() {
     this.searchTarget.value = ''
-    this.userTarget.value = ''
+    // Only clear user if target exists (admin only)
+    if (this.hasUserTarget) {
+      this.userTarget.value = ''
+    }
+    this.statusTarget.value = ''
     this.leadSourceTarget.value = ''
-    this.sortTarget.value = 'created_at'
     this.directionTarget.value = 'desc'
     
     // Clear stored filters
