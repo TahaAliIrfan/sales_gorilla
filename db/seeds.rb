@@ -2,11 +2,6 @@
 
 require 'csv'
 
-User.create(email: "shahab.khan@tecaudex.com")
-User.create(email: "saad.ali@tecaudex.com")
-User.create(email: "areej.shamshad@tecaudex.com")
-User.create(email: "farrukh.hamayoun@tecaudex.com")
-
 # Define user IDs based on the email
 users = {
   "Shahab" => User.find_by(email: "shahab.khan@tecaudex.com").id,
@@ -34,7 +29,7 @@ CSV.foreach(csv_file_path, headers: true) do |row|
     company: row['Description'],
     notes: row['notes'],
     user_id: users[row['user_id']] || nil, # Assign user_id based on the assigned user or nil if unassigned
-    lead_source: "", # Not provided in the CSV
+    lead_source: "CCR", # Not provided in the CSV
     country_code: row['country'], # Assuming country_code is the same as country
     linkedin_url: nil, # Not provided in the CSV
     ccr_link: row['ccr_link'],
