@@ -26,7 +26,13 @@ class CustomersController < ApplicationController
     @customers = policy_scope(Customer)
     
     # Apply filters using scopes
-    @customers = @customers.assigned_to(params[:user_id]) if params[:user_id].present? && current_user&.admin?
+    if params[:user_id].present? && current_user&.admin?
+      if params[:user_id] == 'unassigned'
+        @customers = @customers.where(user_id: nil)
+      else
+        @customers = @customers.assigned_to(params[:user_id])
+      end
+    end
     @customers = @customers.search(params[:search])
     
     # Filter by status if provided (for all users, not just admins)

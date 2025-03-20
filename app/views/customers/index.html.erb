@@ -35,6 +35,7 @@
                   data-customer-filter-target="user"
                   data-action="change->customer-filter#filter">
             <option value="">All Users</option>
+            <option value="unassigned">Unassigned</option>
             <% @users.each do |user| %>
               <option value="<%= user.id %>"><%= user.name %></option>
             <% end %>
