@@ -100,6 +100,7 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
+      post 'inbound_lead', to: 'cost_calculator#inbound_lead'
     end
   end
   

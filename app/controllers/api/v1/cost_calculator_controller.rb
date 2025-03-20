@@ -10,11 +10,13 @@ module Api
         phone_number = params[:phone_number]
         country = params[:country]
         file_data = params[:file]
-        if params[:lead_source].present?
-          lead_source = params[:lead_source]
-        else
-          lead_source = 'CCR'
-        end
+        # to add from CCR
+        description = params[:description] || nil
+        timezone = params[:timezone] || nil
+        preferred_calling_time = params[:preferred_calling_time] || nil
+        platform= params[:platform]
+        project_scope = params[:project_scope]
+        lead_source = 'CCR'
 
         customer = Customer.find_by(email: email)
         
@@ -26,7 +28,12 @@ module Api
             phone: phone_number,
             country: country,
             lead_source: lead_source,
-            status: 'Pending'
+            status: 'Pending',
+            idea_description: description,
+            timezone: timezone,
+            preferred_calling_time: preferred_calling_time,
+            platform: platform,
+            project_scope: project_scope
           )
         end
 
@@ -76,6 +83,37 @@ module Api
           }, status: :ok
         end
       end
+
+
+      def inbound_lead
+        name = params[:name]
+        email = params[:email]
+        phone_number = params[:phone_number]
+        country = params[:country]
+        description = params[:description] || nil
+        #    timezone = extract_timezone_from_timestamp(params[:timezone])
+        preferred_calling_time = params[:preferred_calling_time] || nil
+        lead_source = params[:lead_source]
+
+        customer = Customer.find_by(email: email)
+
+        if customer.nil?
+          customer = Customer.new(
+            name: name,
+            email: email,
+            phone: phone_number,
+            country: country,
+            lead_source: 'Inbound',
+            status: 'Pending',
+            idea_description: description,
+            preferred_calling_time: preferred_calling_time
+          )
+        end
+
+        if customer.save
+          return render json: { success: true, message: "Successfully added" }, status: :ok
+        end
+      end
       
       private
       
@@ -91,6 +129,24 @@ module Api
         
         # Add the plus sign back if it was there, or add it if it wasn't
         '+' + digits_only
+      end
+
+      def extract_timezone_from_timestamp(timestamp)
+        return nil if timestamp.blank?
+        
+        begin
+          # Extract timezone offset from formats like "2024-09-24T10:52:24+0000"
+          # The timezone is the part after the time ("+0000" in this example)
+          if timestamp =~ /.*T\d{2}:\d{2}:\d{2}([+-]\d{4})/
+            offset = $1
+            # Format as "+00:00" style for better readability
+            formatted_offset = "#{offset[0]}#{offset[1..2]}:#{offset[3..4]}"
+            return formatted_offset
+          end
+          return nil
+        rescue
+          return nil
+        end
       end
     end
   end
