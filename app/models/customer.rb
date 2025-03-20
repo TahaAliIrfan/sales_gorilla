@@ -152,6 +152,130 @@ class Customer < ApplicationRecord
     deals.active.count
   end
   
+  # Returns the current time in the customer's timezone
+  def current_time_in_timezone
+    return nil unless timezone.present? || country.present?
+
+    tz = if timezone.present?
+      timezone
+    else
+      # Fallback to country-based timezone
+      country_code = country&.strip&.upcase
+      
+      case country_code
+      # North America
+      when 'UNITED STATES', 'USA', 'US'
+        'America/New_York'
+      when 'CANADA', 'CA'
+        'America/Toronto'
+      when 'MEXICO', 'MX'
+        'America/Mexico_City'
+        
+      # Europe
+      when 'UNITED KINGDOM', 'UK', 'GB'
+        'Europe/London'
+      when 'IRELAND', 'IE'
+        'Europe/Dublin'
+      when 'PORTUGAL', 'PT'
+        'Europe/Lisbon'
+      when 'GERMANY', 'DE'
+        'Europe/Berlin'
+      when 'FRANCE', 'FR'
+        'Europe/Paris'
+      when 'SPAIN', 'ES'
+        'Europe/Madrid'
+      when 'ITALY', 'IT'
+        'Europe/Rome'
+      when 'NETHERLANDS', 'NL'
+        'Europe/Amsterdam'
+      when 'BELGIUM', 'BE'
+        'Europe/Brussels'
+      when 'SWITZERLAND', 'CH'
+        'Europe/Zurich'
+      when 'AUSTRIA', 'AT'
+        'Europe/Vienna'
+      when 'SWEDEN', 'SE'
+        'Europe/Stockholm'
+      when 'NORWAY', 'NO'
+        'Europe/Oslo'
+      when 'DENMARK', 'DK'
+        'Europe/Copenhagen'
+      when 'FINLAND', 'FI'
+        'Europe/Helsinki'
+        
+      # Asia
+      when 'PAKISTAN', 'PK'
+        'Asia/Karachi'
+      when 'INDIA', 'IN'
+        'Asia/Kolkata'
+      when 'BANGLADESH', 'BD'
+        'Asia/Dhaka'
+      when 'SRI LANKA', 'LK'
+        'Asia/Colombo'
+      when 'JAPAN', 'JP'
+        'Asia/Tokyo'
+      when 'SOUTH KOREA', 'KR'
+        'Asia/Seoul'
+      when 'CHINA', 'CN'
+        'Asia/Shanghai'
+      when 'TAIWAN', 'TW'
+        'Asia/Taipei'
+      when 'HONG KONG', 'HK'
+        'Asia/Hong_Kong'
+      when 'SINGAPORE', 'SG'
+        'Asia/Singapore'
+      when 'MALAYSIA', 'MY'
+        'Asia/Kuala_Lumpur'
+      when 'THAILAND', 'TH'
+        'Asia/Bangkok'
+      when 'INDONESIA', 'ID'
+        'Asia/Jakarta'
+      when 'PHILIPPINES', 'PH'
+        'Asia/Manila'
+      when 'VIETNAM', 'VN'
+        'Asia/Ho_Chi_Minh'
+        
+      # Middle East
+      when 'UNITED ARAB EMIRATES', 'UAE', 'AE'
+        'Asia/Dubai'
+      when 'SAUDI ARABIA', 'SA'
+        'Asia/Riyadh'
+      when 'QATAR', 'QA'
+        'Asia/Qatar'
+      when 'KUWAIT', 'KW'
+        'Asia/Kuwait'
+      when 'BAHRAIN', 'BH'
+        'Asia/Bahrain'
+      when 'OMAN', 'OM'
+        'Asia/Muscat'
+      when 'ISRAEL', 'IL'
+        'Asia/Jerusalem'
+        
+      # Oceania
+      when 'AUSTRALIA', 'AU'
+        'Australia/Sydney'
+      when 'NEW ZEALAND', 'NZ'
+        'Pacific/Auckland'
+        
+      # Africa
+      when 'SOUTH AFRICA', 'ZA'
+        'Africa/Johannesburg'
+      when 'EGYPT', 'EG'
+        'Africa/Cairo'
+      when 'NIGERIA', 'NG'
+        'Africa/Lagos'
+      when 'KENYA', 'KE'
+        'Africa/Nairobi'
+        
+      # Default
+      else
+        'UTC'
+      end
+    end
+
+    Time.current.in_time_zone(tz)
+  end
+  
   private
   
   def acceptable_file
