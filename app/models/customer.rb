@@ -157,8 +157,19 @@ class Customer < ApplicationRecord
     return nil unless timezone.present? || country.present?
 
     tz = if timezone.present?
-      timezone
-    else
+      # Validate timezone before using it
+      begin
+        # Try to ensure it's a valid timezone identifier
+        valid_tz = ActiveSupport::TimeZone.find_tzinfo(timezone) rescue nil
+        valid_tz ? timezone : 'UTC'
+      rescue ArgumentError, TZInfo::InvalidTimezoneIdentifier
+        # Fallback to country-based timezone if the timezone is invalid
+        nil
+      end
+    end
+
+    # If timezone is invalid or not present, use country-based fallback
+    if tz.nil?
       # Fallback to country-based timezone
       country_code = country&.strip&.upcase
       
@@ -272,8 +283,11 @@ class Customer < ApplicationRecord
         'UTC'
       end
     end
-
     Time.current.in_time_zone(tz)
+  rescue ArgumentError, TZInfo::InvalidTimezoneIdentifier => e
+    # Handle invalid timezone by returning nil
+    Rails.logger.warn("Invalid timezone for customer #{id}: #{e.message}")
+    nil
   end
   
   private
