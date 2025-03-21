@@ -185,7 +185,11 @@
               </p>
               <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
                 <span>Assigned to: <%= deal.user.name %></span>
-                <span>Stage: <%= deal.deal_stage.name %></span>
+                <% if deal.closing_date.present? %>
+                  <span>Closing: <%= deal.closing_date.strftime("%b %d, %Y") %></span>
+                <% else %>
+                  <span>No closing date</span>
+                <% end %>
               </div>
             </div>
           <% end %>
@@ -223,7 +227,11 @@
               </p>
               <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
                 <span>Assigned to: <%= deal.user.name %></span>
-                <span>Stage: <%= deal.deal_stage.name %></span>
+                <% if deal.closing_date.present? %>
+                  <span>Closing: <%= deal.closing_date.strftime("%b %d, %Y") %></span>
+                <% else %>
+                  <span>No closing date</span>
+                <% end %>
               </div>
             </div>
           <% end %>
