@@ -4,13 +4,8 @@ class CustomerFollowupsController < ApplicationController
   before_action :set_customer
   
   def new
-    @followup = {
-      date: Date.tomorrow,
-      time: Time.current.strftime("%H:%M"),
-      notes: ""
-    }
-    
-    authorize @customer, :update?
+    # Since we're now using a modal, redirect back to the customer page
+    redirect_to customer_path(params[:customer_id])
   end
   
   def create
@@ -27,10 +22,18 @@ class CustomerFollowupsController < ApplicationController
         user_id: current_user.id
       )
       
-      redirect_to @customer, notice: 'Follow-up scheduled successfully.'
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Follow-up scheduled successfully.' }
+        format.json { render json: { success: true, message: 'Follow-up scheduled successfully.' }, status: :ok }
+      end
     else
-      flash.now[:alert] = 'Unable to schedule follow-up. Please try again.'
-      render :new
+      respond_to do |format|
+        format.html do
+          flash.now[:alert] = 'Unable to schedule follow-up. Please try again.'
+          render :new
+        end
+        format.json { render json: { success: false, error: 'Unable to schedule follow-up. Please try again.' }, status: :unprocessable_entity }
+      end
     end
   end
   

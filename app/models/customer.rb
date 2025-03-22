@@ -291,7 +291,7 @@ class Customer < ApplicationRecord
   end
   
   # Follow-up methods
-  def schedule_followup(followup_date, notes, current_user)
+  def schedule_followup(followup_date, notes, user)
     return false unless user.present?
     
     # If the user has Google Calendar configured, use that
