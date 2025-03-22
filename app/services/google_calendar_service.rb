@@ -13,6 +13,8 @@ class GoogleCalendarService
   def create_customer_followup_event(customer, followup_date, description)
     return { success: false, error: 'Google Calendar not connected' } unless @calendar_api.authorization
 
+    followup_date = followup_date.to_datetime + 300.minutes
+
     event = Google::Apis::CalendarV3::Event.new(
       summary: "Follow up with #{customer.name}",
       description: description,
