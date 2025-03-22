@@ -26,6 +26,18 @@ export default class extends Controller {
       this.errorTarget.textContent = ""
       this.errorTarget.classList.add("hidden")
     }
+
+    // Reset the submit button state
+    if (document.getElementById('follow-up-submit-btn')) {
+      const submitBtn = document.getElementById('follow-up-submit-btn')
+      submitBtn.disabled = false
+      submitBtn.classList.remove('opacity-75', 'cursor-not-allowed')
+      submitBtn.innerText = 'Schedule Follow-up'
+      
+      if (document.getElementById('follow-up-loading')) {
+        document.getElementById('follow-up-loading').classList.add('hidden')
+      }
+    }
   }
 
   close() {
@@ -42,6 +54,17 @@ export default class extends Controller {
   
   async submit(event) {
     event.preventDefault()
+    
+    // Set the submit button to loading state
+    const submitBtn = document.getElementById('follow-up-submit-btn')
+    const loadingEl = document.getElementById('follow-up-loading')
+    
+    if (submitBtn && loadingEl) {
+      submitBtn.disabled = true
+      submitBtn.classList.add('opacity-75', 'cursor-not-allowed')
+      submitBtn.innerText = 'Scheduling...'
+      loadingEl.classList.remove('hidden')
+    }
     
     try {
       const response = await fetch(this.formTarget.action, {
@@ -65,12 +88,28 @@ export default class extends Controller {
           this.errorTarget.textContent = result.error || "An error occurred while scheduling the follow-up."
           this.errorTarget.classList.remove("hidden")
         }
+        
+        // Reset the submit button state
+        if (submitBtn && loadingEl) {
+          submitBtn.disabled = false
+          submitBtn.classList.remove('opacity-75', 'cursor-not-allowed')
+          submitBtn.innerText = 'Schedule Follow-up'
+          loadingEl.classList.add('hidden')
+        }
       }
     } catch (error) {
       console.error("Error scheduling followup:", error)
       if (this.hasErrorTarget) {
         this.errorTarget.textContent = "An error occurred while scheduling the follow-up."
         this.errorTarget.classList.remove("hidden")
+      }
+      
+      // Reset the submit button state
+      if (submitBtn && loadingEl) {
+        submitBtn.disabled = false
+        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed')
+        submitBtn.innerText = 'Schedule Follow-up'
+        loadingEl.classList.add('hidden')
       }
     }
   }

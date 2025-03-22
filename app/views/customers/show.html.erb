@@ -104,7 +104,7 @@
             <h2 class="text-xl font-bold text-gray-900">Status Information</h2>
             <button 
               type="button"
-              onclick="openFollowupModal();"
+              data-action="click->followup-modal#open"
               class="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
@@ -659,7 +659,7 @@
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-<!-- JavaScript for playing recordings and handling the followup modal -->
+<!-- JavaScript for playing recordings -->
 <script>
   function playRecording(url) {
     const recordingPlayer = document.getElementById('recording-player');
@@ -671,64 +671,8 @@
       console.error('Error playing audio:', error);
     });
   }
-  
-  // Functions to handle the followup modal
-  function openFollowupModal() {
-    const modal = document.getElementById('followup-modal-container').querySelector('[data-followup-modal-target=modal]');
-    modal.classList.remove('hidden');
-    document.body.classList.add('overflow-hidden');
-    
-    // Set default values for date and time
-    const dateInput = document.querySelector('[data-followup-modal-target=date]');
-    const timeInput = document.querySelector('[data-followup-modal-target=time]');
-    const notesInput = document.querySelector('[data-followup-modal-target=notes]');
-    
-    if (dateInput) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dateInput.value = tomorrow.toISOString().split('T')[0];
-    }
-    
-    if (timeInput) {
-      const now = new Date();
-      timeInput.value = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    }
-    
-    if (notesInput) {
-      notesInput.value = "";
-    }
-  }
-  
-  function closeFollowupModal() {
-    const modal = document.getElementById('followup-modal-container').querySelector('[data-followup-modal-target=modal]');
-    modal.classList.add('hidden');
-    document.body.classList.remove('overflow-hidden');
-  }
-  
-  // Set up event listeners for the modal
-  document.addEventListener('DOMContentLoaded', function() {
-    // Close buttons
-    document.querySelectorAll('[data-action="followup-modal#close"]').forEach(button => {
-      button.addEventListener('click', closeFollowupModal);
-    });
-    
-    // Click outside modal to close
-    const modal = document.getElementById('followup-modal-container').querySelector('[data-followup-modal-target=modal]');
-    modal.addEventListener('click', function(event) {
-      if (event.target === modal) {
-        closeFollowupModal();
-      }
-    });
-    
-    // Escape key to close modal
-    document.addEventListener('keydown', function(event) {
-      if (event.key === 'Escape') {
-        closeFollowupModal();
-      }
-    });
-  });
 </script>
 
-<div id="followup-modal-wrapper">
+<div id="followup-modal-wrapper" data-controller="followup-modal">
   <%= render partial: 'customer_followups/modal' %>
 </div>
