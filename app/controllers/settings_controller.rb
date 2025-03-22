@@ -4,6 +4,14 @@ class SettingsController < ApplicationController
   
   def edit
     @user = current_user
+    
+    # Check if Google Calendar is actually accessible
+    if @user.google_auth_configured?
+      calendar_service = GoogleCalendarService.new(@user)
+      @calendar_connected = calendar_service.check_connection
+    else
+      @calendar_connected = false
+    end
   end
 
   def update
@@ -19,6 +27,16 @@ class SettingsController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  end
+  
+  def disconnect_google
+    current_user.update(
+      google_token: nil,
+      google_refresh_token: nil,
+      google_token_expires_at: nil
+    )
+    
+    redirect_to settings_path, notice: 'Google Calendar disconnected successfully.'
   end
   
   private

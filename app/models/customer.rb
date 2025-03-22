@@ -290,6 +290,35 @@ class Customer < ApplicationRecord
     nil
   end
   
+  # Follow-up methods
+  def schedule_followup(followup_date, notes, current_user)
+    return false unless user.present?
+    
+    # If the user has Google Calendar configured, use that
+    if user.google_auth_configured?
+      user.schedule_customer_followup(self, followup_date, notes)
+    else
+      # Just create a task without Google Calendar integration
+      update(followup_date: followup_date, followup_notes: notes)
+      
+      Task.create!(
+        user: user,
+        customer: self,
+        title: "Follow up with #{name}",
+        description: notes,
+        due_date: followup_date,
+        priority: 'Medium',
+        status: 'pending'
+      )
+      
+      true
+    end
+  end
+  
+  def has_pending_followup?
+    followup_date.present? && followup_date > Time.current
+  end
+  
   private
   
   def acceptable_file
