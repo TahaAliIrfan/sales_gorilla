@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["modal", "form", "date", "time", "notes", "error"]
+  static targets = ["modal", "form", "date", "time", "notes", "error", "calendar"]
 
   connect() {
     console.log("Followup modal controller connected")

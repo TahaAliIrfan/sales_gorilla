@@ -291,11 +291,11 @@ class Customer < ApplicationRecord
   end
   
   # Follow-up methods
-  def schedule_followup(followup_date, notes, user)
+  def schedule_followup(followup_date, notes, user, add_to_calendar = true)
     return false unless user.present?
     
-    # If the user has Google Calendar configured, use that
-    if user.google_auth_configured?
+    # If the user has Google Calendar configured and add_to_calendar is true, use that
+    if user.google_auth_configured? && add_to_calendar
       user.schedule_customer_followup(self, followup_date, notes)
     else
       # Just create a task without Google Calendar integration

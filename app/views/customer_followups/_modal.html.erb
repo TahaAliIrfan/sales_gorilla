@@ -36,6 +36,18 @@
           <p class="text-sm text-gray-500 mt-1">Enter any notes about this follow-up that will be included in the calendar event and todo.</p>
         </div>
         
+        <% if current_user && current_user.google_auth_configured? %>
+        <div class="flex items-start mt-4">
+          <div class="flex items-center h-5">
+            <%= form.check_box 'followup[add_to_calendar]', { checked: true, data: { followup_modal_target: "calendar" }, class: "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" } %>
+          </div>
+          <div class="ml-3 text-sm">
+            <label for="followup_add_to_calendar" class="font-medium text-gray-700">Add to Google Calendar</label>
+            <p class="text-gray-500">Check this option to add this follow-up to your Google Calendar</p>
+          </div>
+        </div>
+        <% end %>
+        
         <div class="flex items-center justify-between pt-4">
           <button 
             type="button" 

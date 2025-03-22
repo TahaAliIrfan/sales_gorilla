@@ -13,8 +13,9 @@ class CustomerFollowupsController < ApplicationController
     
     followup_date = Time.zone.parse("#{params[:followup][:date]} #{params[:followup][:time]}")
     followup_notes = params[:followup][:notes]
+    add_to_calendar = params[:followup][:add_to_calendar] == "1"
     
-    if @customer.schedule_followup(followup_date, followup_notes, current_user)
+    if @customer.schedule_followup(followup_date, followup_notes, current_user, add_to_calendar)
       # Create an activity entry for the follow-up
       @customer.customer_activities.create!(
         action: 'follow_up_scheduled',
