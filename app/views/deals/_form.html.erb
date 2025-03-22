@@ -49,6 +49,16 @@
         <%= form.label :expected_close_date, class: "block text-sm font-medium text-gray-700" %>
         <%= form.date_field :expected_close_date, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
+
+      <div>
+        <%= form.label :closing_date, "Closing Date", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.date_field :closing_date, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <%= form.label :created_at, class: "block text-sm font-medium text-gray-700" %>
+        <%= form.datetime_local_field :created_at, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
     </div>
 
     <div class="space-y-6">

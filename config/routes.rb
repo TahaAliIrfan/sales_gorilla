@@ -37,6 +37,9 @@ Rails.application.routes.draw do
       patch 'update_status'
       patch 'update_communication_status'
     end
+    
+    # Add routes for follow-ups
+    resources :followups, controller: 'customer_followups', only: [:new, :create]
   end
   resources :deal_stages
   resources :tasks do
@@ -82,6 +85,7 @@ Rails.application.routes.draw do
   # Settings routes
   get 'settings', to: 'settings#edit', as: :settings
   patch 'settings/update', to: 'settings#update', as: :update_settings
+  delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
   
   # Browser-based calling routes
   get 'calling', to: 'calling#index'

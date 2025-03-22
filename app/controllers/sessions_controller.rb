@@ -5,6 +5,18 @@ class SessionsController < ApplicationController
 
   def create
     auth = request.env['omniauth.auth']
+
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts auth
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
+    puts "ashgasghghsa"
     user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
       u.name = auth.info.name
       u.email = auth.info.email
@@ -12,6 +24,15 @@ class SessionsController < ApplicationController
       # Make specific users admins by default
       admin_emails = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
       u.is_admin = admin_emails.include?(u.email.downcase)
+    end
+
+    # Save Google OAuth tokens if they exist
+    if auth.credentials.present?
+      user.update(
+        google_token: auth.credentials.token,
+        google_refresh_token: auth.credentials.refresh_token || user.google_refresh_token,
+        google_token_expires_at: auth.credentials.expires_at.present? ? Time.at(auth.credentials.expires_at) : nil
+      )
     end
 
     # Allow specific email addresses or @tecaudex.com domain

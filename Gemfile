@@ -63,6 +63,9 @@ gem 'omniauth'
 gem 'omniauth-rails_csrf_protection'
 gem 'aws-sdk-s3'
 
+# Google API client for Calendar integration
+gem 'google-api-client', '~> 0.53.0'
+
 # Authorization
 gem 'pundit'
 

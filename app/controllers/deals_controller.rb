@@ -353,7 +353,7 @@ class DealsController < ApplicationController
 
   def mark_as_won
     authorize @deal
-    if @deal.update(status: 'won')
+    if @deal.update(status: 'won', closing_date: @deal.closing_date || Date.today)
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
@@ -369,7 +369,7 @@ class DealsController < ApplicationController
 
   def mark_as_lost
     authorize @deal
-    if @deal.update(status: 'lost')
+    if @deal.update(status: 'lost', closing_date: @deal.closing_date || Date.today)
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
@@ -390,7 +390,7 @@ class DealsController < ApplicationController
   end
 
   def deal_params
-    params.require(:deal).permit(:title, :description, :amount, :customer_id, :user_id, :deal_stage_id, :expected_close_date, :status)
+    params.require(:deal).permit(:title, :description, :amount, :customer_id, :user_id, :deal_stage_id, :expected_close_date, :status, :created_at, :closing_date)
   end
   
   def require_login

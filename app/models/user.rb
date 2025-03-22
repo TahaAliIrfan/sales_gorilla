@@ -41,4 +41,41 @@ class User < ApplicationRecord
   def overdue_tasks
     tasks.overdue
   end
+  
+  # Google Calendar methods
+  def google_auth_configured?
+    google_token.present? && google_refresh_token.present?
+  end
+  
+  def schedule_customer_followup(customer, followup_date, notes)
+    return false unless google_auth_configured?
+    
+    # Create a Google Calendar event
+    calendar_service = GoogleCalendarService.new(self)
+    result = calendar_service.create_customer_followup_event(customer, followup_date, notes)
+    
+    if result[:success]
+      customer.update(
+        followup_date: followup_date,
+        followup_notes: notes,
+        google_calendar_event_id: result[:event_id],
+        google_calendar_event_link: result[:html_link]
+      )
+      
+      # Create a task for the follow-up
+      Task.create!(
+        user: self,
+        customer: customer,
+        title: "Follow up with #{customer.name}",
+        description: notes,
+        due_date: followup_date,
+        priority: 'Medium',
+        status: 'pending'
+      )
+      
+      true
+    else
+      false
+    end
+  end
 end
