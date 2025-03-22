@@ -55,7 +55,6 @@ class User < ApplicationRecord
     result = calendar_service.create_customer_followup_event(customer, followup_date, notes)
     
     if result[:success]
-      # Update the customer with follow-up info
       customer.update(
         followup_date: followup_date,
         followup_notes: notes,

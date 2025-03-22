@@ -17,8 +17,8 @@ class CustomerFollowupsController < ApplicationController
     if @customer.schedule_followup(followup_date, followup_notes, current_user)
       # Create an activity entry for the follow-up
       @customer.customer_activities.create!(
-        activity_type: 'follow_up_scheduled',
-        description: "Follow-up scheduled for #{followup_date.strftime('%b %d, %Y at %I:%M %p')}",
+        action: 'follow_up_scheduled',
+        details: "Follow-up scheduled for #{followup_date.strftime('%b %d, %Y at %I:%M %p')}",
         user_id: current_user.id
       )
       

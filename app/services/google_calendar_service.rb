@@ -25,11 +25,7 @@ class GoogleCalendarService
         time_zone: 'UTC'
       },
       reminders: {
-        use_default: false,
-        overrides: [
-          { method: 'email', minutes: 24 * 60 },  # 1 day before
-          { method: 'popup', minutes: 30 }        # 30 minutes before
-        ]
+        use_default: true
       }
     )
 
