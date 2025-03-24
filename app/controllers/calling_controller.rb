@@ -70,7 +70,7 @@ class CallingController < ApplicationController
         customer = Customer.create(name: 'Unknown Caller', phone: params[:Called])
       end
 
-      response = twilio_service.call_sales_rep(params[:Called], phone_number, user_id, customer.id)
+      response = twilio_service.call_sales_rep(params[:Called], '+923246489818', user_id, customer.id)
       render xml: response.to_s
     end
   end
