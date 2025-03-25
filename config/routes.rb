@@ -74,7 +74,8 @@ Rails.application.routes.draw do
 
   # Dashboard routes
   get 'dashboard', to: 'dashboard#index', as: :admin_dashboard
-  get 'dashboard/reports', to: 'dashboard#reports', as: :reports_dashboard
+  get 'dashboard/reports', to: 'dashboard#reports', as: :reports
+  get 'dashboard/my_reports', to: 'dashboard#my_reports', as: :my_reports
   
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
