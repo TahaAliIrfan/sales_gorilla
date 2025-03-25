@@ -347,9 +347,12 @@ export default class extends Controller {
       const seconds = recording.duration % 60
       const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
       
-      // Customer info with tooltip
+      // Customer info with link to customer view page
       const customerName = recording.customer_name || 'Unknown'
-      const customerInfo = `<div class="font-medium">${customerName}</div>`
+      const customerId = recording.customer_id
+      const customerInfo = customerId ? 
+        `<div class="font-medium"><a href="/customers/${customerId}" class="text-blue-600 hover:text-blue-800 hover:underline">${customerName}</a></div>` : 
+        `<div class="font-medium">${customerName}</div>`
       
       // Agent info with tooltip
       const agentName = recording.user_name || 'Unknown'
