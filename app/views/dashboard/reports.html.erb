@@ -98,9 +98,9 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Lead Sources</h3>
-      <div class="h-64">
+      <div class="h-full">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded">
+        <div class="bg-gray-100 rounded">
           <%= pie_chart @lead_source_distribution, 
               colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
               donut: true, 
@@ -113,9 +113,9 @@
     
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Deal Stages</h3>
-      <div class="h-64">
+      <div class="h-full">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded">
+        <div class="bg-gray-100 rounded">
           <%= pie_chart @deal_stage_distribution, 
               colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
               donut: true, 
