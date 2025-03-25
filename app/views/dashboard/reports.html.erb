@@ -39,31 +39,124 @@
   </div>
 
   <% if @selected_user_id.blank? %>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Member</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Won Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <% @users.each do |user| %>
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                <a href="<%= reports_path(user_id: user.id, filter_range: @filter_range) %>" class="text-blue-600 hover:text-blue-800"><%= user.name %></a>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_deal_counts[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_active_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_won_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$<%= number_with_delimiter(@user_deal_values[user.id] || 0) %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-8">
+      <h3 class="text-lg font-medium mb-4">Customer & Deal Progression by User</h3>
+      <div class="h-96">
+        <% 
+          # Prepare data for horizontal stacked bar chart with specific order
+          series_data = [
+            { name: "Deals Won", color: "#10B981", data: {} },
+            { name: "Deals Created", color: "#8B5CF6", data: {} },
+            { name: "Contact Established", color: "#3B82F6", data: {} },
+            { name: "Pending", color: "#F59E0B", data: {} }
+          ]
+          
+          # Populate the data for each user and series
+          @users.each do |user|
+            series_data[0][:data][user.name] = @user_progression_metrics[user.id]['Deals Won']
+            series_data[1][:data][user.name] = @user_progression_metrics[user.id]['Deals Created']
+            series_data[2][:data][user.name] = @user_progression_metrics[user.id]['Contact Established']
+            series_data[3][:data][user.name] = @user_progression_metrics[user.id]['Pending']
+          end
+        %>
+        <%= bar_chart series_data,
+          stacked: true,
+          legend: true,
+          library: {
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.y}'
+                }
+              },
+              bar: {
+                horizontal: true
+              }
+            },
+            chart: {
+              type: 'bar',
+              height: 400
+            },
+            xAxis: {
+              title: {
+                text: 'Count'
+              }
+            },
+            yAxis: {
+              title: {
+                text: 'Users'
+              }
+            }
+          }
+        %>
+      </div>
+      <div class="mt-4 text-sm text-gray-600">
+        <p>This chart shows the progression of customers from initial status to deal won for each user.</p>
+        <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-8">
+      <h3 class="text-lg font-medium mb-4">Customer & Deal Progression</h3>
+      <div class="h-64">
+        <% 
+          # Prepare data for horizontal stacked bar chart with specific order
+          series_data = [
+            { name: "Deals Won", color: "#10B981", data: {} },
+            { name: "Deals Created", color: "#8B5CF6", data: {} },
+            { name: "Contact Established", color: "#3B82F6", data: {} },
+            { name: "Pending", color: "#F59E0B", data: {} }
+          ]
+          
+          # Populate the data for single user
+          series_data[0][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Won']
+          series_data[1][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Created']
+          series_data[2][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Contact Established']
+          series_data[3][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Pending']
+        %>
+        <%= bar_chart series_data,
+          stacked: true,
+          legend: true,
+          library: {
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.y}'
+                }
+              },
+              bar: {
+                horizontal: true
+              }
+            },
+            chart: {
+              type: 'bar',
+              height: 200
+            },
+            xAxis: {
+              title: {
+                text: 'Count'
+              }
+            },
+            yAxis: {
+              title: {
+                text: 'Status'
+              }
+            }
+          }
+        %>
+      </div>
+      <div class="mt-4 text-sm text-gray-600">
+        <p>This chart shows your progression of customers from initial status to deal won.</p>
+        <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
+      </div>
     </div>
   <% end %>
 </div>

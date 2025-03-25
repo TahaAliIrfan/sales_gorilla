@@ -272,6 +272,7 @@ class DashboardController < ApplicationController
     # Additional team metrics
     prepare_sales_rep_metrics(nil)
     prepare_communication_metrics(nil)
+    prepare_user_progression_metrics
   end
   
   def prepare_user_reports(user)
@@ -291,6 +292,20 @@ class DashboardController < ApplicationController
     # Prepare individual metrics
     prepare_sales_rep_metrics(user)
     prepare_communication_metrics(user)
+    
+    # Prepare individual progression metrics
+    @user_progression_metrics = {}
+    pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
+    contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
+    deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
+    deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+    
+    @user_progression_metrics[user.id] = {
+      'Pending' => pending_count,
+      'Contact Established' => contact_established_count,
+      'Deals Created' => deals_created_count,
+      'Deals Won' => deals_won_count
+    }
   end
   
   def prepare_sales_rep_metrics(user)
@@ -384,5 +399,30 @@ class DashboardController < ApplicationController
     
     # LinkedIn metrics
     @linkedin_conversations_monthly = date_filtered_customers.where(linkedin_status: ['Message Sent', 'Conversation Initiated']).count
+  end
+  
+  def prepare_user_progression_metrics
+    # Initialize data structure for user progression metrics
+    @user_progression_metrics = {}
+    
+    @users.each do |user|
+      # Get counts for each status stage in the progression
+      pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
+      contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
+      
+      # Count deals created by this user
+      deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
+      
+      # Count won deals by this user
+      deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+      
+      # Store the data in our hash
+      @user_progression_metrics[user.id] = {
+        'Pending' => pending_count,
+        'Contact Established' => contact_established_count,
+        'Deals Created' => deals_created_count,
+        'Deals Won' => deals_won_count
+      }
+    end
   end
 end
