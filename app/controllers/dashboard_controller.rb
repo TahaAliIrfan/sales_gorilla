@@ -218,6 +218,30 @@ class DashboardController < ApplicationController
     result
   end
   
+  # Manual implementation of group_by_month for recordings
+  def group_by_month_manual_for_recordings(scope, months_count)
+    result = {}
+    
+    # Get the last N months
+    end_date = Date.today.end_of_month
+    start_date = (end_date - (months_count - 1).months).beginning_of_month
+    
+    # Create a hash with all months initialized to 0
+    current_date = start_date
+    while current_date <= end_date
+      result[current_date] = 0
+      current_date = current_date.next_month
+    end
+    
+    # Count records for each month
+    scope.where(date: start_date.beginning_of_day..end_date.end_of_day).each do |record|
+      month_start = Date.new(record.date.year, record.date.month, 1)
+      result[month_start] += 1 if result.key?(month_start)
+    end
+    
+    result
+  end
+  
   def prepare_team_reports
     # Team performance metrics
     @user_deal_counts = {}
@@ -248,6 +272,7 @@ class DashboardController < ApplicationController
     # Additional team metrics
     prepare_sales_rep_metrics(nil)
     prepare_communication_metrics(nil)
+    prepare_user_progression_metrics
   end
   
   def prepare_user_reports(user)
@@ -267,6 +292,20 @@ class DashboardController < ApplicationController
     # Prepare individual metrics
     prepare_sales_rep_metrics(user)
     prepare_communication_metrics(user)
+    
+    # Prepare individual progression metrics
+    @user_progression_metrics = {}
+    pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
+    contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
+    deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
+    deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+    
+    @user_progression_metrics[user.id] = {
+      'Pending' => pending_count,
+      'Contact Established' => contact_established_count,
+      'Deals Created' => deals_created_count,
+      'Deals Won' => deals_won_count
+    }
   end
   
   def prepare_sales_rep_metrics(user)
@@ -283,10 +322,28 @@ class DashboardController < ApplicationController
     # Lead sources distribution for pie chart
     @lead_source_distribution = date_filtered_customers.group(:lead_source).count
     
+    # Clean up the lead source data - replace blank/nil with "Unknown"
+    cleaned_lead_source_distribution = {}
+    @lead_source_distribution.each do |source, count|
+      key = source.presence || "Unknown"
+      cleaned_lead_source_distribution[key] = count
+    end
+    @lead_source_distribution = cleaned_lead_source_distribution
+    
     # Deal metrics
     @total_deals = date_filtered_deals.count
     @deal_stage_distribution = date_filtered_deals.joins(:deal_stage).group('deal_stages.name').count
     @total_deal_value = date_filtered_deals.sum(:amount)
+    
+    # Additional deal metrics - won and lost deals
+    @total_won_deals = date_filtered_deals.won.count
+    @total_won_deal_value = date_filtered_deals.won.sum(:amount)
+    @total_lost_deals = date_filtered_deals.lost.count
+    @total_lost_deal_value = date_filtered_deals.lost.sum(:amount)
+    
+    # System call metrics
+    recording_scope = user ? Recording.where(user: user) : Recording
+    @total_system_calls = recording_scope.where(date: @start_date..@end_date).count
     
     # Customer status metrics
     @connection_established_percentage = view_context.calculate_percentage(date_filtered_customers.where(status: 'Contact Established').count, @total_assigned_leads)
@@ -300,6 +357,18 @@ class DashboardController < ApplicationController
   def prepare_communication_metrics(user)
     customer_scope = user ? Customer.where(user_id: user.id) : Customer
     date_filtered_customers = customer_scope.where(created_at: @start_date..@end_date)
+    
+    # Recording scope for system calls
+    recording_scope = user ? Recording.where(user: user) : Recording
+    
+    # Monthly system calls data for charts
+    begin
+      # Try to use groupdate gem if available
+      @monthly_system_calls = recording_scope.where(date: @start_date..@end_date).group_by_month(:date, last: 6).count
+    rescue NoMethodError
+      # Fallback to manual grouping if groupdate gem is not available
+      @monthly_system_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date), 6)
+    end
     
     # Call metrics
     @total_calls_daily = {}
@@ -319,7 +388,7 @@ class DashboardController < ApplicationController
     end
     
     @calls_connected_count_monthly = date_filtered_customers.where(call_status: 'Connected').count
-    @total_calls_monthly = date_filtered_customers.where(call_status: ['Called', 'Connected']).count
+    @total_calls_monthly = date_filtered_customers.count
     @calls_connected_percentage_monthly = view_context.calculate_percentage(@calls_connected_count_monthly, @total_calls_monthly)
     
     # WhatsApp metrics
@@ -330,5 +399,30 @@ class DashboardController < ApplicationController
     
     # LinkedIn metrics
     @linkedin_conversations_monthly = date_filtered_customers.where(linkedin_status: ['Message Sent', 'Conversation Initiated']).count
+  end
+  
+  def prepare_user_progression_metrics
+    # Initialize data structure for user progression metrics
+    @user_progression_metrics = {}
+    
+    @users.each do |user|
+      # Get counts for each status stage in the progression
+      pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
+      contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
+      
+      # Count deals created by this user
+      deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
+      
+      # Count won deals by this user
+      deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+      
+      # Store the data in our hash
+      @user_progression_metrics[user.id] = {
+        'Pending' => pending_count,
+        'Contact Established' => contact_established_count,
+        'Deals Created' => deals_created_count,
+        'Deals Won' => deals_won_count
+      }
+    end
   end
 end

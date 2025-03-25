@@ -45,6 +45,9 @@ gem "bootsnap", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
 
+# Charts and data visualization
+gem "chartkick", "~> 5.0"
+
 # Twilio for browser-based calling
 gem "twilio-ruby", "~> 6.0"
 
@@ -70,7 +73,7 @@ gem 'google-api-client', '~> 0.53.0'
 gem 'pundit'
 
 # Time-based grouping for ActiveRecord
-gem 'groupdate'
+gem 'groupdate', "~> 6.4"
 
 # Pagination
 gem 'kaminari'

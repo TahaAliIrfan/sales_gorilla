@@ -39,31 +39,124 @@
   </div>
 
   <% if @selected_user_id.blank? %>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Member</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Won Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <% @users.each do |user| %>
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                <a href="<%= reports_path(user_id: user.id, filter_range: @filter_range) %>" class="text-blue-600 hover:text-blue-800"><%= user.name %></a>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_deal_counts[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_active_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_won_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$<%= number_with_delimiter(@user_deal_values[user.id] || 0) %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
+    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-8">
+      <h3 class="text-lg font-medium mb-4">Customer & Deal Progression by User</h3>
+      <div class="h-96">
+        <% 
+          # Prepare data for horizontal stacked bar chart with specific order
+          series_data = [
+            { name: "Deals Won", color: "#10B981", data: {} },
+            { name: "Deals Created", color: "#8B5CF6", data: {} },
+            { name: "Contact Established", color: "#3B82F6", data: {} },
+            { name: "Pending", color: "#F59E0B", data: {} }
+          ]
+          
+          # Populate the data for each user and series
+          @users.each do |user|
+            series_data[0][:data][user.name] = @user_progression_metrics[user.id]['Deals Won']
+            series_data[1][:data][user.name] = @user_progression_metrics[user.id]['Deals Created']
+            series_data[2][:data][user.name] = @user_progression_metrics[user.id]['Contact Established']
+            series_data[3][:data][user.name] = @user_progression_metrics[user.id]['Pending']
+          end
+        %>
+        <%= bar_chart series_data,
+          stacked: true,
+          legend: true,
+          library: {
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.y}'
+                }
+              },
+              bar: {
+                horizontal: true
+              }
+            },
+            chart: {
+              type: 'bar',
+              height: 400
+            },
+            xAxis: {
+              title: {
+                text: 'Count'
+              }
+            },
+            yAxis: {
+              title: {
+                text: 'Users'
+              }
+            }
+          }
+        %>
+      </div>
+      <div class="mt-4 text-sm text-gray-600">
+        <p>This chart shows the progression of customers from initial status to deal won for each user.</p>
+        <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
+      </div>
+    </div>
+  <% else %>
+    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-8">
+      <h3 class="text-lg font-medium mb-4">Customer & Deal Progression</h3>
+      <div class="h-64">
+        <% 
+          # Prepare data for horizontal stacked bar chart with specific order
+          series_data = [
+            { name: "Deals Won", color: "#10B981", data: {} },
+            { name: "Deals Created", color: "#8B5CF6", data: {} },
+            { name: "Contact Established", color: "#3B82F6", data: {} },
+            { name: "Pending", color: "#F59E0B", data: {} }
+          ]
+          
+          # Populate the data for single user
+          series_data[0][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Won']
+          series_data[1][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Created']
+          series_data[2][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Contact Established']
+          series_data[3][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Pending']
+        %>
+        <%= bar_chart series_data,
+          stacked: true,
+          legend: true,
+          library: {
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  enabled: true,
+                  format: '{point.y}'
+                }
+              },
+              bar: {
+                horizontal: true
+              }
+            },
+            chart: {
+              type: 'bar',
+              height: 200
+            },
+            xAxis: {
+              title: {
+                text: 'Count'
+              }
+            },
+            yAxis: {
+              title: {
+                text: 'Status'
+              }
+            }
+          }
+        %>
+      </div>
+      <div class="mt-10 text-sm text-gray-600">
+        <p class="mb-2">This chart shows your progression of customers from initial status to deal won.</p>
+        <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
+      </div>
     </div>
   <% end %>
 </div>
@@ -95,31 +188,98 @@
     </div>
   </div>
   
+  <!-- Deal Status Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Won Deals</h3>
+      <p class="text-3xl font-bold text-green-600"><%= @total_won_deals %></p>
+      <p class="text-xl text-green-700 mt-2">$<%= number_with_delimiter(@total_won_deal_value) %></p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Lost Deals</h3>
+      <p class="text-3xl font-bold text-red-600"><%= @total_lost_deals %></p>
+      <p class="text-xl text-red-700 mt-2">$<%= number_with_delimiter(@total_lost_deal_value) %></p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Win Rate</h3>
+      <p class="text-3xl font-bold text-indigo-600"><%= @total_deals > 0 ? ((@total_won_deals.to_f / @total_deals) * 100).round(1) : 0 %>%</p>
+      <p class="text-sm text-gray-600 mt-2">(<%= @total_won_deals %> of <%= @total_deals %> deals)</p>
+    </div>
+  </div>
+  
+  <!-- Deal Value by Status Chart -->
+  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-8">
+    <h3 class="text-lg font-medium mb-4">Deal Value by Status</h3>
+    <div class="h-64">
+      <%= bar_chart({
+          "Active" => (@total_deal_value - @total_won_deal_value - @total_lost_deal_value),
+          "Won" => @total_won_deal_value,
+          "Lost" => @total_lost_deal_value
+        }, 
+        colors: ["#6366F1", "#10B981", "#EF4444"],
+        prefix: "$",
+        empty: "No deal data available",
+        xtitle: "Value ($)"
+      ) %>
+    </div>
+  </div>
+  
+  <!-- System Call Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">System Calls</h3>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">Total calls made from system:</p>
+          <p class="text-3xl font-bold text-blue-600"><%= @total_system_calls %></p>
+        </div>
+        <i class="fas fa-phone-alt text-blue-600 text-5xl"></i>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Monthly System Calls Chart -->
+  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-8">
+    <h3 class="text-lg font-medium mb-4">Monthly System Call Trend</h3>
+    <div class="h-64">
+      <%= line_chart @monthly_system_calls, 
+          colors: ["#4F46E5"],
+          curve: true,
+          title: "System Calls per Month",
+          legend: false,
+          empty: "No system call data available" %>
+    </div>
+  </div>
+  
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Lead Sources</h3>
-      <div class="h-64">
+      <div class="h-full">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @lead_source_distribution.each do |source, count| %>
-              <li><%= source || 'Unknown' %>: <%= count %> (<%= calculate_percentage(count, @total_assigned_leads) %>%)</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 rounded">
+          <%= pie_chart @lead_source_distribution, 
+              colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
+              donut: true, 
+              title: "Source Distribution",
+              legend: true,
+              empty: "No data available" %>
         </div>
       </div>
     </div>
     
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Deal Stages</h3>
-      <div class="h-64">
+      <div class="h-full">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @deal_stage_distribution.each do |stage, count| %>
-              <li><%= stage || 'Unknown' %>: <%= count %> (<%= calculate_percentage(count, @total_deals) %>%)</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 rounded">
+          <%= pie_chart @deal_stage_distribution, 
+              colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
+              donut: true, 
+              title: "Deal Stages",
+              legend: true,
+              empty: "No data available" %>
         </div>
       </div>
     </div>
@@ -158,12 +318,12 @@
       <h3 class="text-lg font-medium mb-2">Monthly Deals Trend</h3>
       <div class="h-64">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @monthly_deals.each do |month, count| %>
-              <li><%= month.strftime('%B %Y') %>: <%= count %> deals</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 h-full rounded">
+          <%= line_chart @monthly_deals, 
+              colors: ["#3B82F6"],
+              curve: true,
+              title: "Deals per Month",
+              empty: "No data available" %>
         </div>
       </div>
     </div>
