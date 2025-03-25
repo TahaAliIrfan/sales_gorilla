@@ -95,6 +95,44 @@
     </div>
   </div>
   
+  <!-- Deal Status Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Won Deals</h3>
+      <p class="text-3xl font-bold text-green-600"><%= @total_won_deals %></p>
+      <p class="text-xl text-green-700 mt-2">$<%= number_with_delimiter(@total_won_deal_value) %></p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Lost Deals</h3>
+      <p class="text-3xl font-bold text-red-600"><%= @total_lost_deals %></p>
+      <p class="text-xl text-red-700 mt-2">$<%= number_with_delimiter(@total_lost_deal_value) %></p>
+    </div>
+    
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">Win Rate</h3>
+      <p class="text-3xl font-bold text-indigo-600"><%= @total_deals > 0 ? ((@total_won_deals.to_f / @total_deals) * 100).round(1) : 0 %>%</p>
+      <p class="text-sm text-gray-600 mt-2">(<%= @total_won_deals %> of <%= @total_deals %> deals)</p>
+    </div>
+  </div>
+  
+  <!-- Deal Value by Status Chart -->
+  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-8">
+    <h3 class="text-lg font-medium mb-4">Deal Value by Status</h3>
+    <div class="h-64">
+      <%= bar_chart({
+          "Active" => (@total_deal_value - @total_won_deal_value - @total_lost_deal_value),
+          "Won" => @total_won_deal_value,
+          "Lost" => @total_lost_deal_value
+        }, 
+        colors: ["#6366F1", "#10B981", "#EF4444"],
+        prefix: "$",
+        empty: "No deal data available",
+        xtitle: "Value ($)"
+      ) %>
+    </div>
+  </div>
+  
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Lead Sources</h3>

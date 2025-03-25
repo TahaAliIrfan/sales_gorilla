@@ -296,6 +296,12 @@ class DashboardController < ApplicationController
     @deal_stage_distribution = date_filtered_deals.joins(:deal_stage).group('deal_stages.name').count
     @total_deal_value = date_filtered_deals.sum(:amount)
     
+    # Additional deal metrics - won and lost deals
+    @total_won_deals = date_filtered_deals.won.count
+    @total_won_deal_value = date_filtered_deals.won.sum(:amount)
+    @total_lost_deals = date_filtered_deals.lost.count
+    @total_lost_deal_value = date_filtered_deals.lost.sum(:amount)
+    
     # Customer status metrics
     @connection_established_percentage = view_context.calculate_percentage(date_filtered_customers.where(status: 'Contact Established').count, @total_assigned_leads)
     @not_interested_percentage = view_context.calculate_percentage(date_filtered_customers.where(status: 'Not Interested').count, @total_assigned_leads)
