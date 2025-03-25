@@ -218,6 +218,30 @@ class DashboardController < ApplicationController
     result
   end
   
+  # Manual implementation of group_by_month for recordings
+  def group_by_month_manual_for_recordings(scope, months_count)
+    result = {}
+    
+    # Get the last N months
+    end_date = Date.today.end_of_month
+    start_date = (end_date - (months_count - 1).months).beginning_of_month
+    
+    # Create a hash with all months initialized to 0
+    current_date = start_date
+    while current_date <= end_date
+      result[current_date] = 0
+      current_date = current_date.next_month
+    end
+    
+    # Count records for each month
+    scope.where(date: start_date.beginning_of_day..end_date.end_of_day).each do |record|
+      month_start = Date.new(record.date.year, record.date.month, 1)
+      result[month_start] += 1 if result.key?(month_start)
+    end
+    
+    result
+  end
+  
   def prepare_team_reports
     # Team performance metrics
     @user_deal_counts = {}
@@ -302,6 +326,10 @@ class DashboardController < ApplicationController
     @total_lost_deals = date_filtered_deals.lost.count
     @total_lost_deal_value = date_filtered_deals.lost.sum(:amount)
     
+    # System call metrics
+    recording_scope = user ? Recording.where(user: user) : Recording
+    @total_system_calls = recording_scope.where(date: @start_date..@end_date).count
+    
     # Customer status metrics
     @connection_established_percentage = view_context.calculate_percentage(date_filtered_customers.where(status: 'Contact Established').count, @total_assigned_leads)
     @not_interested_percentage = view_context.calculate_percentage(date_filtered_customers.where(status: 'Not Interested').count, @total_assigned_leads)
@@ -314,6 +342,18 @@ class DashboardController < ApplicationController
   def prepare_communication_metrics(user)
     customer_scope = user ? Customer.where(user_id: user.id) : Customer
     date_filtered_customers = customer_scope.where(created_at: @start_date..@end_date)
+    
+    # Recording scope for system calls
+    recording_scope = user ? Recording.where(user: user) : Recording
+    
+    # Monthly system calls data for charts
+    begin
+      # Try to use groupdate gem if available
+      @monthly_system_calls = recording_scope.where(date: @start_date..@end_date).group_by_month(:date, last: 6).count
+    rescue NoMethodError
+      # Fallback to manual grouping if groupdate gem is not available
+      @monthly_system_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date), 6)
+    end
     
     # Call metrics
     @total_calls_daily = {}

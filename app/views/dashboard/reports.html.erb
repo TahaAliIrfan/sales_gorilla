@@ -133,6 +133,33 @@
     </div>
   </div>
   
+  <!-- System Call Metrics -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+      <h3 class="text-lg font-medium mb-2">System Calls</h3>
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-600">Total calls made from system:</p>
+          <p class="text-3xl font-bold text-blue-600"><%= @total_system_calls %></p>
+        </div>
+        <i class="fas fa-phone-alt text-blue-600 text-5xl"></i>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Monthly System Calls Chart -->
+  <div class="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-8">
+    <h3 class="text-lg font-medium mb-4">Monthly System Call Trend</h3>
+    <div class="h-64">
+      <%= line_chart @monthly_system_calls, 
+          colors: ["#4F46E5"],
+          curve: true,
+          title: "System Calls per Month",
+          legend: false,
+          empty: "No system call data available" %>
+    </div>
+  </div>
+  
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Lead Sources</h3>
