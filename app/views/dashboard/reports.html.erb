@@ -48,7 +48,10 @@
             { name: "Deals Won", color: "#10B981", data: {} },
             { name: "Deals Created", color: "#8B5CF6", data: {} },
             { name: "Contact Established", color: "#3B82F6", data: {} },
-            { name: "Pending", color: "#F59E0B", data: {} }
+            { name: "Contact Not Established / Unresponsive", color: "#FFA500", data: {} },
+            { name: "Exhausted", color: "#FF0000", data: {} },
+            { name: "Invalid", color: "#6B7280", data: {} },
+            { name: "Pending", color: "#FFFA00", data: {} }
           ]
           
           # Populate the data for each user and series
@@ -56,7 +59,10 @@
             series_data[0][:data][user.name] = @user_progression_metrics[user.id]['Deals Won']
             series_data[1][:data][user.name] = @user_progression_metrics[user.id]['Deals Created']
             series_data[2][:data][user.name] = @user_progression_metrics[user.id]['Contact Established']
-            series_data[3][:data][user.name] = @user_progression_metrics[user.id]['Pending']
+            series_data[3][:data][user.name] = @user_progression_metrics[user.id]['Contact Not Established / Unresponsive']
+            series_data[4][:data][user.name] = @user_progression_metrics[user.id]['Exhausted']
+            series_data[5][:data][user.name] = @user_progression_metrics[user.id]['Invalid']
+            series_data[6][:data][user.name] = @user_progression_metrics[user.id]['Pending']
           end
         %>
         <%= bar_chart series_data,
@@ -95,6 +101,9 @@
         <p>This chart shows the progression of customers from initial status to deal won for each user.</p>
         <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #EF4444"></span> Contact Not Established / Unresponsive: Unable to establish contact</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #9333EA"></span> Exhausted: All contact attempts exhausted</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #6B7280"></span> Invalid: Invalid contact information</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
       </div>
@@ -109,6 +118,9 @@
             { name: "Deals Won", color: "#10B981", data: {} },
             { name: "Deals Created", color: "#8B5CF6", data: {} },
             { name: "Contact Established", color: "#3B82F6", data: {} },
+            { name: "Contact Not Established / Unresponsive", color: "#EF4444", data: {} },
+            { name: "Exhausted", color: "#9333EA", data: {} },
+            { name: "Invalid", color: "#6B7280", data: {} },
             { name: "Pending", color: "#F59E0B", data: {} }
           ]
           
@@ -116,7 +128,10 @@
           series_data[0][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Won']
           series_data[1][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Deals Created']
           series_data[2][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Contact Established']
-          series_data[3][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Pending']
+          series_data[3][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Contact Not Established / Unresponsive']
+          series_data[4][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Exhausted']
+          series_data[5][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Invalid']
+          series_data[6][:data][@selected_user.name] = @user_progression_metrics[@selected_user.id]['Pending']
         %>
         <%= bar_chart series_data,
           stacked: true,
@@ -154,6 +169,9 @@
         <p class="mb-2">This chart shows your progression of customers from initial status to deal won.</p>
         <p class="flex items-center mt-2"><span class="w-4 h-4 inline-block mr-2" style="background-color: #F59E0B"></span> Pending: Initial contact stage</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #3B82F6"></span> Contact Established: Initial communication established</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #EF4444"></span> Contact Not Established / Unresponsive: Unable to establish contact</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #9333EA"></span> Exhausted: All contact attempts exhausted</p>
+        <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #6B7280"></span> Invalid: Invalid contact information</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #8B5CF6"></span> Deals Created: Number of deals created</p>
         <p class="flex items-center mt-1"><span class="w-4 h-4 inline-block mr-2" style="background-color: #10B981"></span> Deals Won: Successfully closed deals</p>
       </div>

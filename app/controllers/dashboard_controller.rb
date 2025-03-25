@@ -297,12 +297,23 @@ class DashboardController < ApplicationController
     @user_progression_metrics = {}
     pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
     contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
+    
+    # Combined count for Contact Not Established and Unresponsive
+    contact_not_established_count = Customer.where(user_id: user.id, status: ['Contact Not Established', 'Unresponsive']).where(created_at: @start_date..@end_date).count
+    
+    # Get counts for additional statuses
+    exhausted_count = Customer.where(user_id: user.id, status: 'Exhausted').where(created_at: @start_date..@end_date).count
+    invalid_count = Customer.where(user_id: user.id, status: 'Invalid').where(created_at: @start_date..@end_date).count
+    
     deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
     deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
     
     @user_progression_metrics[user.id] = {
       'Pending' => pending_count,
       'Contact Established' => contact_established_count,
+      'Contact Not Established / Unresponsive' => contact_not_established_count,
+      'Exhausted' => exhausted_count,
+      'Invalid' => invalid_count,
       'Deals Created' => deals_created_count,
       'Deals Won' => deals_won_count
     }
@@ -410,6 +421,13 @@ class DashboardController < ApplicationController
       pending_count = Customer.where(user_id: user.id, status: 'Pending').where(created_at: @start_date..@end_date).count
       contact_established_count = Customer.where(user_id: user.id, status: 'Contact Established').where(created_at: @start_date..@end_date).count
       
+      # Combined count for Contact Not Established and Unresponsive
+      contact_not_established_count = Customer.where(user_id: user.id, status: ['Contact Not Established', 'Unresponsive']).where(created_at: @start_date..@end_date).count
+      
+      # Get counts for additional statuses
+      exhausted_count = Customer.where(user_id: user.id, status: 'Exhausted').where(created_at: @start_date..@end_date).count
+      invalid_count = Customer.where(user_id: user.id, status: 'Invalid').where(created_at: @start_date..@end_date).count
+      
       # Count deals created by this user
       deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
       
@@ -420,6 +438,9 @@ class DashboardController < ApplicationController
       @user_progression_metrics[user.id] = {
         'Pending' => pending_count,
         'Contact Established' => contact_established_count,
+        'Contact Not Established / Unresponsive' => contact_not_established_count,
+        'Exhausted' => exhausted_count,
+        'Invalid' => invalid_count,
         'Deals Created' => deals_created_count,
         'Deals Won' => deals_won_count
       }
