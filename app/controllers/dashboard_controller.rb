@@ -373,7 +373,7 @@ class DashboardController < ApplicationController
     end
     
     @calls_connected_count_monthly = date_filtered_customers.where(call_status: 'Connected').count
-    @total_calls_monthly = date_filtered_customers.where(call_status: ['Called', 'Connected']).count
+    @total_calls_monthly = date_filtered_customers.count
     @calls_connected_percentage_monthly = view_context.calculate_percentage(@calls_connected_count_monthly, @total_calls_monthly)
     
     # WhatsApp metrics
