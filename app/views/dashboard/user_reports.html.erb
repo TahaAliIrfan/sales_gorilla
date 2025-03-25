@@ -1,18 +1,11 @@
-<h1 class="text-2xl font-bold mb-6">Sales Reports</h1>
+<h1 class="text-2xl font-bold mb-6">Your Sales Reports</h1>
 
 <div class="bg-white rounded-lg shadow p-6 mb-8">
   <div class="flex items-center justify-between mb-6">
-    <h2 class="text-xl font-semibold">Team Performance Dashboard</h2>
+    <h2 class="text-xl font-semibold">Reports for <%= current_user.name %></h2>
     
     <div class="flex space-x-2">
-      <form action="<%= reports_path %>" method="get" class="flex space-x-2">
-        <select name="user_id" id="user_filter" class="rounded border border-gray-300 px-3 py-2 text-sm">
-          <option value="">All Team Members</option>
-          <% @users.each do |user| %>
-            <option value="<%= user.id %>" <%= @selected_user_id == user.id.to_s ? 'selected' : '' %>><%= user.name %></option>
-          <% end %>
-        </select>
-        
+      <form action="<%= my_reports_path %>" method="get" class="flex space-x-2">
         <select name="filter_range" id="filter_range" class="rounded border border-gray-300 px-3 py-2 text-sm" onchange="toggleCustomDateFields(this.value)">
           <option value="30" <%= @filter_range == '30' ? 'selected' : '' %>>Last 30 Days</option>
           <option value="90" <%= @filter_range == '90' ? 'selected' : '' %>>Last 90 Days</option>
@@ -31,52 +24,13 @@
   </div>
   
   <div class="text-sm text-gray-600 mb-4">
-    <% if @selected_user_id.present? %>
-      Showing data for <%= @selected_user.name %> from <%= @start_date.strftime('%B %d, %Y') %> to <%= @end_date.strftime('%B %d, %Y') %>
-    <% else %>
-      Showing team data from <%= @start_date.strftime('%B %d, %Y') %> to <%= @end_date.strftime('%B %d, %Y') %>
-    <% end %>
+    Showing data from <%= @start_date.strftime('%B %d, %Y') %> to <%= @end_date.strftime('%B %d, %Y') %>
   </div>
-
-  <% if @selected_user_id.blank? %>
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team Member</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Won Deals</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Value</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <% @users.each do |user| %>
-            <tr>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                <a href="<%= reports_path(user_id: user.id, filter_range: @filter_range) %>" class="text-blue-600 hover:text-blue-800"><%= user.name %></a>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_deal_counts[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_active_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= @user_won_deals[user.id] || 0 %></td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">$<%= number_with_delimiter(@user_deal_values[user.id] || 0) %></td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  <% end %>
 </div>
 
 <!-- Sales Rep Metrics -->
 <div class="bg-white rounded-lg shadow p-6 mb-8">
-  <h2 class="text-xl font-semibold mb-4">
-    <% if @selected_user_id.present? %>
-      Sales Rep Performance: <%= @selected_user.name %>
-    <% else %>
-      Team Sales Performance
-    <% end %>
-  </h2>
+  <h2 class="text-xl font-semibold mb-4">Sales Rep Performance</h2>
   
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
@@ -172,13 +126,7 @@
 
 <!-- Communication Metrics -->
 <div class="bg-white rounded-lg shadow p-6 mb-8">
-  <h2 class="text-xl font-semibold mb-4">
-    <% if @selected_user_id.present? %>
-      Communication Metrics: <%= @selected_user.name %>
-    <% else %>
-      Team Communication Metrics
-    <% end %>
-  </h2>
+  <h2 class="text-xl font-semibold mb-4">Communication Metrics</h2>
   
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
