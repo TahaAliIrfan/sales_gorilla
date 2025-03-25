@@ -2,3 +2,5 @@
 import "@hotwired/turbo-rails"
 import "controllers"
 import "sortable_setup"
+import "chartkick"
+import "Chart.js"

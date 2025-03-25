@@ -283,6 +283,14 @@ class DashboardController < ApplicationController
     # Lead sources distribution for pie chart
     @lead_source_distribution = date_filtered_customers.group(:lead_source).count
     
+    # Clean up the lead source data - replace blank/nil with "Unknown"
+    cleaned_lead_source_distribution = {}
+    @lead_source_distribution.each do |source, count|
+      key = source.presence || "Unknown"
+      cleaned_lead_source_distribution[key] = count
+    end
+    @lead_source_distribution = cleaned_lead_source_distribution
+    
     # Deal metrics
     @total_deals = date_filtered_deals.count
     @deal_stage_distribution = date_filtered_deals.joins(:deal_stage).group('deal_stages.name').count

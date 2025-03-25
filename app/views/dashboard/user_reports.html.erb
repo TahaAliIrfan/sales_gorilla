@@ -54,12 +54,13 @@
       <h3 class="text-lg font-medium mb-2">Lead Sources</h3>
       <div class="h-64">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @lead_source_distribution.each do |source, count| %>
-              <li><%= source || 'Unknown' %>: <%= count %> (<%= calculate_percentage(count, @total_assigned_leads) %>%)</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 h-full rounded">
+          <%= pie_chart @lead_source_distribution, 
+              colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
+              donut: true, 
+              title: "Source Distribution",
+              legend: true,
+              empty: "No data available" %>
         </div>
       </div>
     </div>
@@ -68,12 +69,13 @@
       <h3 class="text-lg font-medium mb-2">Deal Stages</h3>
       <div class="h-64">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @deal_stage_distribution.each do |stage, count| %>
-              <li><%= stage || 'Unknown' %>: <%= count %> (<%= calculate_percentage(count, @total_deals) %>%)</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 h-full rounded">
+          <%= pie_chart @deal_stage_distribution, 
+              colors: ["#4F46E5", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#3B82F6", "#6366F1"],
+              donut: true, 
+              title: "Deal Stages",
+              legend: true,
+              empty: "No data available" %>
         </div>
       </div>
     </div>
@@ -112,12 +114,12 @@
       <h3 class="text-lg font-medium mb-2">Monthly Deals Trend</h3>
       <div class="h-64">
         <!-- Chart placeholder - would be implemented with a JavaScript charting library -->
-        <div class="bg-gray-100 h-full rounded flex items-center justify-center">
-          <ul class="text-left">
-            <% @monthly_deals.each do |month, count| %>
-              <li><%= month.strftime('%B %Y') %>: <%= count %> deals</li>
-            <% end %>
-          </ul>
+        <div class="bg-gray-100 h-full rounded">
+          <%= line_chart @monthly_deals, 
+              colors: ["#3B82F6"],
+              curve: true,
+              title: "Deals per Month",
+              empty: "No data available" %>
         </div>
       </div>
     </div>
