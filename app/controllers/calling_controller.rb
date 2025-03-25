@@ -11,8 +11,12 @@ class CallingController < ApplicationController
     # Filter customers by current user unless they're an admin
     if current_user&.admin?
       @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
+      # Load all users for admin filter dropdown
+      @users = User.all.order(:name)
     else
       @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
+      # Non-admin can only see themselves in filter
+      @users = [current_user].compact
     end
 
     # Add search functionality
@@ -108,18 +112,31 @@ class CallingController < ApplicationController
 
   # Fetch list of recordings - Admin only
   def recordings
+    # Start with all recordings in the database
+    recordings = Recording.all.recent
+    
+    # Apply filters if provided
     if params[:customer_id].present?
-      # Get recordings for a specific customer
-      customer = Customer.find_by(id: params[:customer_id])
-      recordings = customer ? customer.recordings.recent.limit(20) : []
-      render json: recordings_to_json(recordings)
-    else
-      # Get all recordings from Twilio and match with our database
-      twilio_recordings = twilio_service.fetch_recordings
-
-      # Convert to JSON format for the frontend
-      render json: twilio_recordings
+      recordings = recordings.where(customer_id: params[:customer_id])
     end
+    
+    if params[:user_id].present?
+      recordings = recordings.where(user_id: params[:user_id])
+    end
+    
+    if params[:date_from].present?
+      recordings = recordings.where("date >= ?", Date.parse(params[:date_from]).beginning_of_day)
+    end
+    
+    if params[:date_to].present?
+      recordings = recordings.where("date <= ?", Date.parse(params[:date_to]).end_of_day)
+    end
+    
+    # Limit the number of recordings returned
+    recordings = recordings.limit(50)
+    
+    # Convert to JSON format for the frontend
+    render json: recordings_to_json(recordings)
   end
 
   # Play a specific recording - Admin only
@@ -183,8 +200,10 @@ class CallingController < ApplicationController
         date: recording.date,
         url: "#{request.base_url}/calling/play_recording/#{recording.sid}",
         call_sid: recording.call_sid,
-        customer_name: recording.customer&.name,
-        user_name: recording.user&.name
+        customer_name: recording.customer ? recording.customer.name : 'Unknown',
+        customer_id: recording.customer_id,
+        user_name: recording.user ? recording.user.name : 'Unknown',
+        user_id: recording.user_id
       }
     end
   end

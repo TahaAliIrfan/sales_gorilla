@@ -17,7 +17,11 @@ export default class extends Controller {
     "recordingsList",
     "recordingsTableBody",
     "recordingPlayer",
-    "audioPlayer"
+    "audioPlayer",
+    "customerFilter",
+    "userFilter",
+    "dateFromFilter",
+    "dateToFilter"
   ]
 
   connect() {
@@ -239,7 +243,12 @@ export default class extends Controller {
     this.recordingPlayerTarget.classList.add('hidden')
     
     try {
-      const response = await fetch('/calling/recordings')
+      // Get filter values
+      const filters = this.getFilterParams()
+      const queryParams = new URLSearchParams(filters).toString()
+      const url = `/calling/recordings${queryParams ? '?' + queryParams : ''}`
+      
+      const response = await fetch(url)
       
       // If redirected due to not being admin
       if (response.redirected) {
@@ -271,6 +280,58 @@ export default class extends Controller {
     }
   }
 
+  // Get filter parameters
+  getFilterParams() {
+    const filters = {}
+    
+    if (this.hasCustomerFilterTarget && this.customerFilterTarget.value) {
+      filters.customer_id = this.customerFilterTarget.value
+    }
+    
+    if (this.hasUserFilterTarget && this.userFilterTarget.value) {
+      filters.user_id = this.userFilterTarget.value
+    }
+    
+    if (this.hasDateFromFilterTarget && this.dateFromFilterTarget.value) {
+      filters.date_from = this.dateFromFilterTarget.value
+    }
+    
+    if (this.hasDateToFilterTarget && this.dateToFilterTarget.value) {
+      filters.date_to = this.dateToFilterTarget.value
+    }
+    
+    return filters
+  }
+  
+  // Apply filters to recordings
+  applyFilters(event) {
+    event.preventDefault()
+    this.fetchRecordings()
+  }
+  
+  // Reset all filters
+  resetFilters(event) {
+    event.preventDefault()
+    
+    if (this.hasCustomerFilterTarget) {
+      this.customerFilterTarget.value = ''
+    }
+    
+    if (this.hasUserFilterTarget) {
+      this.userFilterTarget.value = ''
+    }
+    
+    if (this.hasDateFromFilterTarget) {
+      this.dateFromFilterTarget.value = ''
+    }
+    
+    if (this.hasDateToFilterTarget) {
+      this.dateToFilterTarget.value = ''
+    }
+    
+    this.fetchRecordings()
+  }
+
   // Render recordings in the table
   renderRecordings(recordings) {
     recordings.forEach(recording => {
@@ -286,11 +347,19 @@ export default class extends Controller {
       const seconds = recording.duration % 60
       const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
       
+      // Customer info with tooltip
+      const customerName = recording.customer_name || 'Unknown'
+      const customerInfo = `<div class="font-medium">${customerName}</div>`
+      
+      // Agent info with tooltip
+      const agentName = recording.user_name || 'Unknown'
+      const agentInfo = `<div class="font-medium">${agentName}</div>`
+      
       row.innerHTML = `
         <td class="py-3 px-4">${formattedDate}</td>
-        <td class="py-3 px-4">${recording.customer_name || 'Unknown'}</td>
+        <td class="py-3 px-4">${customerInfo}</td>
         <td class="py-3 px-4">${formattedDuration}</td>
-        <td class="py-3 px-4">${recording.user_name || 'Unknown'}</td>
+        <td class="py-3 px-4">${agentInfo}</td>
         <td class="py-3 px-4">
           <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs play-recording" data-sid="${recording.sid}">
             <i class="fas fa-play"></i> Play
