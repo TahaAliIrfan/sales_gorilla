@@ -9,8 +9,12 @@ class TasksController < ApplicationController
     authorize Task
     @tasks = policy_scope(Task).includes(:user, :customer).order(due_date: :asc)
     
+    # Default to pending tasks if no status is specified
     if params[:status].present?
       @tasks = @tasks.where(status: params[:status])
+    else
+      @tasks = @tasks.pending
+      params[:status] = 'pending'
     end
     
     if params[:user_id].present?
@@ -36,8 +40,12 @@ class TasksController < ApplicationController
   def my_tasks
     @tasks = policy_scope(Task).includes(:customer).order(due_date: :asc)
     
+    # Default to pending tasks if no status is specified
     if params[:status].present?
       @tasks = @tasks.where(status: params[:status])
+    else
+      @tasks = @tasks.pending
+      params[:status] = 'pending'
     end
     
     if params[:priority].present?

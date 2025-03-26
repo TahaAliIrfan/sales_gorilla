@@ -41,6 +41,22 @@ class MyTasksDashboardController < ApplicationController
     
     # Count recently completed tasks (last 7 days)
     @recent_completions_count = current_user.tasks.completed.where('updated_at >= ?', 7.days.ago).count
+    
+    # Get filtered tasks based on selected tab
+    @filtered_tasks = case params[:tab]
+                      when 'pending'
+                        current_user.tasks.pending.order(due_date: :asc).limit(10)
+                      when 'in_progress'
+                        current_user.tasks.in_progress.order(due_date: :asc).limit(10)
+                      when 'completed'
+                        current_user.tasks.completed.order(updated_at: :desc).limit(10)
+                      when 'cancelled'
+                        current_user.tasks.cancelled.order(updated_at: :desc).limit(10)
+                      else
+                        # Default to pending tasks if no tab is specified
+                        params[:tab] = 'pending'
+                        current_user.tasks.pending.order(due_date: :asc).limit(10)
+                      end
   end
 
   private
