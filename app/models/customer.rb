@@ -392,11 +392,23 @@ class Customer < ApplicationRecord
     changes_to_track = self.changes.select { |field, _| tracked_fields.include?(field) }
     
     changes_to_track.each do |field, (old_value, new_value)|
-      customer_activities.build(
-        action: "#{field.humanize} changed",
-        details: "Changed from '#{old_value}' to '#{new_value}'",
-        user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
-      )
+      # For user_id field, get the actual user names instead of IDs
+      if field == 'user_id'
+        old_user_name = old_value.present? ? User.find_by(id: old_value)&.name || 'Unknown' : 'None'
+        new_user_name = new_value.present? ? User.find_by(id: new_value)&.name || 'Unknown' : 'None'
+        
+        customer_activities.build(
+          action: "User assigned",
+          details: "Changed from '#{old_user_name}' to '#{new_user_name}'",
+          user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
+        )
+      else
+        customer_activities.build(
+          action: "#{field.humanize} changed",
+          details: "Changed from '#{old_value}' to '#{new_value}'",
+          user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
+        )
+      end
     end
   end
   
