@@ -8,7 +8,20 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
   
+  before_action :set_tasks_notification_counts, if: :current_user
+  
   private
+  
+  def set_tasks_notification_counts
+    # Set pending tasks count
+    @pending_tasks_count = Task.where(user_id: current_user.id, status: 'pending').count
+    
+    # Set urgent tasks count (overdue or high priority)
+    @urgent_tasks_count = Task.where(user_id: current_user.id)
+                             .where("(status = 'pending' AND due_date < ?) OR (status = 'pending' AND priority = 'high')", 
+                                    Date.current)
+                             .count
+  end
   
   def current_user
     @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
