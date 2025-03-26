@@ -41,10 +41,6 @@ module Api
           begin
             # Get uploaded file details
             uploaded_file = params[:file]
-            original_filename = uploaded_file.original_filename
-            
-            # Get file extension
-            extension = File.extname(original_filename)
             
             # Create a descriptive filename with customer name and timestamp
             # Format customer name - remove special characters and replace spaces with underscores
@@ -52,7 +48,7 @@ module Api
             timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
             
             # New filename format: CustomerName_CCR_YYYYMMDD_HHMMSS.ext
-            new_filename = "#{customer_name}_CCR_#{timestamp}#{extension}"
+            new_filename = "#{customer_name}_CCR_#{timestamp}.pdf"
             
             # Attach the uploaded file with the new filename
             customer.file.attach(
