@@ -244,6 +244,11 @@ class DealsController < ApplicationController
             new_user = User.find_by(id: values[:new])&.name || 'Unknown'
             details = "Deal assigned from #{old_user} to #{new_user}"
             action = 'user_assignment'
+          when 'customer_id'
+            old_customer = Customer.find_by(id: values[:old])&.name || 'Unknown'
+            new_customer = Customer.find_by(id: values[:new])&.name || 'Unknown'
+            details = "Customer changed from \"#{old_customer}\" to \"#{new_customer}\""
+            action = 'field_update'
           when 'amount'
             old_amount = number_to_currency(values[:old]) rescue values[:old]
             new_amount = number_to_currency(values[:new]) rescue values[:new]
