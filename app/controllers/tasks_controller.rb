@@ -155,6 +155,18 @@ class TasksController < ApplicationController
           redirect_to dashboard_path, notice: 'Task marked as complete.'
         elsif params[:return_to] == 'my_tasks_dashboard' || params[:return_to] == 'my_tasks'
           redirect_to my_tasks_tasks_path(due_date: 'today'), notice: 'Task marked as complete.'
+        elsif params[:return_to] == 'current_page'
+          # Get the query parameters from the original request
+          redirect_params = params.permit!.except(:controller, :action, :id, :return_to)
+          
+          # Determine which path to redirect to based on the original action
+          redirect_path = if request.referer&.include?('my_tasks')
+            my_tasks_tasks_path(redirect_params)
+          else
+            tasks_path(redirect_params)
+          end
+          
+          redirect_to redirect_path, notice: 'Task marked as complete.'
         else
           redirect_to request.referer || tasks_url, notice: 'Task marked as complete.' 
         end

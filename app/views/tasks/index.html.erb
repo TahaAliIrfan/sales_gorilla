@@ -181,7 +181,7 @@
                 </div>
                 <div class="ml-5 flex-shrink-0 flex">
                   <% unless task.completed? %>
-                    <%= button_to complete_task_path(task, return_to: params[:action] == 'my_tasks' ? 'dashboard' : nil), method: :patch, class: "mr-2 rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
+                    <%= button_to complete_task_path(task, return_to: 'current_page'), method: :patch, class: "mr-2 rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
