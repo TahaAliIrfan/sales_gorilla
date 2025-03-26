@@ -15,6 +15,7 @@ module Api
         preferred_calling_time = params[:preferred_calling_time] || nil
         platform= params[:platform]
         project_scope = params[:project_scope]
+        ccr_link = params[:file_url]
         lead_source = 'CCR'
 
         customer = Customer.find_by(email: email)
@@ -32,7 +33,8 @@ module Api
             timezone: timezone,
             preferred_calling_time: preferred_calling_time,
             platform: platform,
-            project_scope: project_scope
+            project_scope: project_scope,
+            ccr_link: ccr_link
           )
         end
 
