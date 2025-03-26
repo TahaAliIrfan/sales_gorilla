@@ -15,8 +15,14 @@ Sidekiq.configure_server do |config|
     schedule_file = Rails.root.join('config', 'sidekiq_scheduler.yml')
     
     if File.exist?(schedule_file)
-      Sidekiq.schedule = YAML.load_file(schedule_file)
-      Sidekiq::Scheduler.reload_schedule!
+      schedule = YAML.load_file(schedule_file) || {}
+      
+      if schedule.is_a?(Hash)
+        Sidekiq.schedule = schedule
+        Sidekiq::Scheduler.reload_schedule!
+      else
+        Rails.logger.warn "Invalid sidekiq_scheduler.yml format. Expected a hash of jobs."
+      end
     end
   end
 end 
