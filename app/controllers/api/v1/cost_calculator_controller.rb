@@ -9,7 +9,6 @@ module Api
         email = params[:email]
         phone_number = params[:phone_number]
         country = params[:country]
-        file_data = params[:file]
         # to add from CCR
         description = params[:description] || nil
         timezone = params[:timezone] || nil
@@ -37,38 +36,32 @@ module Api
           )
         end
 
-        if file_data.present?
+        # Handle file upload via multipart form
+        if params[:file].present?
           begin
-            # Decode base64 data
-            content_type, encoded_file = file_data.match(/data:(.*);base64,(.*)/).captures
-            decoded_file = Base64.decode64(encoded_file)
+            # Get uploaded file details
+            uploaded_file = params[:file]
+            original_filename = uploaded_file.original_filename
             
-            # Determine file extension based on content type
-            extension = case content_type
-                        when 'application/pdf'
-                          '.pdf'
-                        when 'application/msword'
-                          '.doc'
-                        when 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-                          '.docx'
-                        when /^image\/(jpeg|jpg|png|gif)$/
-                          ".#{content_type.split('/').last}"
-                        else
-                          '.bin' # Default binary extension
-                        end
+            # Get file extension
+            extension = File.extname(original_filename)
             
-            # Create a temporary file
-            temp_file = Tempfile.new(['attachment', extension])
-            temp_file.binmode
-            temp_file.write(decoded_file)
-            temp_file.rewind
+            # Create a descriptive filename with customer name and timestamp
+            # Format customer name - remove special characters and replace spaces with underscores
+            customer_name = name.present? ? name.gsub(/[^0-9A-Za-z\s]/, '').gsub(/\s+/, '_') : "Unknown"
+            timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
             
-            # Attach the file directly to the customer
+            # New filename format: CustomerName_CCR_YYYYMMDD_HHMMSS.ext
+            new_filename = "#{customer_name}_CCR_#{timestamp}#{extension}"
+            
+            # Attach the uploaded file with the new filename
             customer.file.attach(
-              io: temp_file,
-              filename: "cost_calculator_attachment#{extension}",
-              content_type: content_type
+              io: uploaded_file.open,
+              filename: new_filename,
+              content_type: uploaded_file.content_type
             )
+            
+            Rails.logger.info("File attached successfully: #{new_filename}")
           rescue => e
             Rails.logger.error("File attachment error: #{e.message}")
             # Continue without the file if there's an error
@@ -76,11 +69,29 @@ module Api
         end
         
         # Save the customer with the attached file
+
         if customer.save
-          return render json: { 
+          response_data = { 
             success: true,
-          message: "Successfully added"
-          }, status: :ok
+            message: "Successfully added"
+          }
+          
+          # Add file info to response if a file was attached
+          if params[:file].present? && customer.file.attached?
+            response_data[:file] = {
+              filename: customer.file.filename.to_s,
+              content_type: customer.file.content_type,
+              stored: true
+            }
+          end
+          
+          return render json: response_data, status: :ok
+        else
+          return render json: { 
+            success: false,
+            message: "Failed to save customer",
+            errors: customer.errors.full_messages 
+          }, status: :unprocessable_entity
         end
       end
 

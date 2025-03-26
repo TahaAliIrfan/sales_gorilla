@@ -113,40 +113,28 @@
       responseDiv.textContent = '';
       loadingDiv.style.display = 'block';
       
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
-      const phone_number = document.getElementById('phone_number').value;
-      const country = document.getElementById('country').value;
-      const fileInput = document.getElementById('file');
+      // Create FormData object from the form
+      const formData = new FormData();
       
-      let fileData = null;
+      // Add form fields to FormData
+      formData.append('name', document.getElementById('name').value);
+      formData.append('email', document.getElementById('email').value);
+      formData.append('phone_number', document.getElementById('phone_number').value);
+      formData.append('country', document.getElementById('country').value);
+      
+      // Add file to FormData if selected
+      const fileInput = document.getElementById('file');
       if (fileInput.files.length > 0) {
-        try {
-          const file = fileInput.files[0];
-          fileData = await readFileAsBase64(file);
-        } catch (error) {
-          console.error('Error reading file:', error);
-        }
+        formData.append('file', fileInput.files[0]);
       }
       
-      const data = {
-        name,
-        email,
-        phone_number,
-        country,
-        file: fileData
-      };
-      
-      console.log('Sending data:', JSON.stringify(data));
+      console.log('Sending form data with file');
       
       try {
         const response = await fetch('/api/v1/cost_calculator', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(data)
+          // Don't set Content-Type header - browser will set it with boundary parameter for multipart/form-data
+          body: formData
         });
         
         loadingDiv.style.display = 'none';
@@ -176,19 +164,6 @@
         console.error('Error:', error);
       }
     });
-    
-    function readFileAsBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          resolve(reader.result);
-        };
-        reader.onerror = (error) => {
-          reject(error);
-        };
-        reader.readAsDataURL(file);
-      });
-    }
   </script>
 </body>
 </html> 
