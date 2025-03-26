@@ -210,6 +210,82 @@ class CustomersController < ApplicationController
     end
   end
 
+  def bulk_assign
+    authorize Customer
+    
+    if !params[:customer_ids].present? || !params[:user_id].present?
+      redirect_to customers_path, alert: 'Please select customers and a user to assign.'
+      return
+    end
+    
+    # Log the raw input for debugging
+    Rails.logger.info("Raw customer_ids input: #{params[:customer_ids].inspect}")
+    
+    # Find customers - ensure we're parsing the IDs correctly
+    customer_ids = params[:customer_ids].to_s.split(',').map(&:strip).reject(&:blank?).map(&:to_i).reject(&:zero?)
+    
+    if customer_ids.empty?
+      redirect_to customers_path, alert: 'No valid customers selected.'
+      return
+    end
+    
+    # Log for debugging
+    Rails.logger.info("Processed customer IDs: #{customer_ids.inspect}")
+    Rails.logger.info("Bulk assigning customers to user: #{params[:user_id]}")
+    
+    # Find customers
+    customers = Customer.where(id: customer_ids)
+    Rails.logger.info("Found #{customers.count} customers out of #{customer_ids.count} requested")
+    
+    # Verify all requested customers were found
+    if customers.count != customer_ids.count
+      missing_ids = customer_ids - customers.pluck(:id)
+      Rails.logger.warn("Missing customer IDs: #{missing_ids.inspect}")
+    end
+    
+    # Find user
+    user = User.find_by(id: params[:user_id])
+    
+    if !user
+      redirect_to customers_path, alert: 'Selected user not found.'
+      return
+    end
+    
+    # Check user
+    Rails.logger.info("Assigning to user: #{user.name} (ID: #{user.id})")
+    
+    # Assign customers to user
+    success_count = 0
+    failed_ids = []
+    
+    customers.each do |customer|
+      begin
+        Rails.logger.info("Assigning customer #{customer.id}: #{customer.name} to user #{user.id}")
+        if customer.update(user_id: user.id)
+          success_count += 1
+          Rails.logger.info("Successfully assigned customer #{customer.id}")
+        else
+          failed_ids << customer.id
+          Rails.logger.error("Failed to assign customer #{customer.id}: #{customer.errors.full_messages.join(', ')}")
+        end
+      rescue => e
+        failed_ids << customer.id
+        Rails.logger.error("Exception assigning customer #{customer.id}: #{e.message}")
+        Rails.logger.error(e.backtrace.join("\n"))
+      end
+    end
+    
+    Rails.logger.info("Bulk assign complete. Success: #{success_count}, Failed: #{failed_ids.count}")
+    
+    if success_count == customers.count
+      redirect_to customers_path, notice: "Successfully assigned #{success_count} #{'customer'.pluralize(success_count)} to #{user.name}."
+    elsif success_count > 0
+      redirect_to customers_path, notice: "Partially successful: Assigned #{success_count} of #{customers.count} customers to #{user.name}."
+    else
+      redirect_to customers_path, alert: 'Failed to assign customers.'
+    end
+  end
+
   private
 
   def set_customer

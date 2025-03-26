@@ -38,4 +38,8 @@ class CustomerPolicy < ApplicationPolicy
   def update_communication_status?
     user.admin? || record.user_id == user.id
   end
+  
+  def bulk_assign?
+    user.admin?
+  end
 end 

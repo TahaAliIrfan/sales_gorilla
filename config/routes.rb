@@ -40,6 +40,10 @@ Rails.application.routes.draw do
     
     # Add routes for follow-ups
     resources :followups, controller: 'customer_followups', only: [:new, :create]
+    
+    collection do
+      post 'bulk_assign'
+    end
   end
   resources :deal_stages
   resources :tasks do
