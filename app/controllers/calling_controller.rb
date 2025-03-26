@@ -99,8 +99,7 @@ class CallingController < ApplicationController
         customer: customer
       )
 
-      # Enqueue a background job to download and store the recording to S3
-      StoreRecordingJob.perform_later(recording.id)
+      RecordingStorageService.download_and_store(recording)
 
       customer.customer_activities.create(
         action: 'Call Recording',

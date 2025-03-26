@@ -1,4 +1,18 @@
 Rails.application.routes.draw do
+  # Sidekiq Web UI
+  require 'sidekiq/web'
+  
+  # Secure the Sidekiq UI with admin-only access
+  authenticate = lambda do |request|
+    user_id = request.session[:user_id]
+    user = User.find_by(id: user_id)
+    user&.admin?
+  end
+  
+  constraints authenticate do
+    mount Sidekiq::Web => '/sidekiq'
+  end
+
   get 'tasks/index'
   get 'tasks/show'
   get 'tasks/new'

@@ -1,0 +1,10 @@
+# Sidekiq Scheduler YAML configuration
+
+# Daily task reminders at 7:00 AM
+# task_reminder:
+#   cron: "0 7 * * *"  # Every day at 7:00 AM
+#   class: TaskReminderWorker
+#   queue: low
+#   description: "Sends reminder emails for tasks due today and overdue tasks"
+
+# You can add more scheduled jobs here as needed 
