@@ -4,7 +4,7 @@ class MyTasksDashboardController < ApplicationController
 
   def index
     # Redirect to the my_tasks page in tasks controller
-    redirect_to my_tasks_tasks_path(due_date: 'today')
+    redirect_to my_tasks_tasks_path(status: 'pending')
   end
 
   private
