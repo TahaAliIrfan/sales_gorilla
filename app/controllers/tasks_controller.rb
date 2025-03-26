@@ -40,27 +40,28 @@ class TasksController < ApplicationController
   def my_tasks
     @tasks = policy_scope(Task).includes(:customer).order(due_date: :asc)
     
-    # Default to pending tasks if no status is specified
+    # Default behavior: show all tasks for today (including completed and cancelled)
     if params[:status].present?
+      # If status is explicitly specified, filter by that status
       @tasks = @tasks.where(status: params[:status])
-    else
-      @tasks = @tasks.pending
-      params[:status] = 'pending'
-    end
-    
-    if params[:priority].present?
-      @tasks = @tasks.where(priority: params[:priority])
-    end
-    
-    if params[:due_date].present?
+    elsif params[:due_date].present?
+      # If due date is specified, filter by that date range
       case params[:due_date]
       when 'today'
         @tasks = @tasks.for_today
       when 'upcoming'
-        @tasks = @tasks.upcoming
+        @tasks = @tasks.upcoming 
       when 'overdue'
         @tasks = @tasks.overdue
       end
+    else
+      # Default: Show today's tasks including completed and cancelled
+      @tasks = @tasks.for_today
+      params[:due_date] = 'today'
+    end
+    
+    if params[:priority].present?
+      @tasks = @tasks.where(priority: params[:priority])
     end
     
     render :index
@@ -152,8 +153,8 @@ class TasksController < ApplicationController
       format.html { 
         if params[:return_to] == 'dashboard'
           redirect_to dashboard_path, notice: 'Task marked as complete.'
-        elsif params[:return_to] == 'my_tasks_dashboard'
-          redirect_to my_tasks_dashboard_path, notice: 'Task marked as complete.'
+        elsif params[:return_to] == 'my_tasks_dashboard' || params[:return_to] == 'my_tasks'
+          redirect_to my_tasks_tasks_path(due_date: 'today'), notice: 'Task marked as complete.'
         else
           redirect_to request.referer || tasks_url, notice: 'Task marked as complete.' 
         end

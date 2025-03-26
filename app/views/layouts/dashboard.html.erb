@@ -82,18 +82,11 @@
               Tasks
             <% end %>
 
-            <%= link_to my_tasks_tasks_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'tasks' && action_name == 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
+            <%= link_to my_tasks_tasks_path(due_date: 'today'), class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'tasks' && action_name == 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
               <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
               </svg>
               My Tasks
-            <% end %>
-
-            <%= link_to my_tasks_dashboard_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'my_tasks_dashboard' ? 'bg-gray-800 text-white' : ''}" do %>
-              <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
-              </svg>
-              My Tasks Dashboard
             <% end %>
 
             <% if current_user&.admin? %>
