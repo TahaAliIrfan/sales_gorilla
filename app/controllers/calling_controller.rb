@@ -89,7 +89,7 @@ class CallingController < ApplicationController
     customer = Customer.find_by(id: params[:customer_id])
     user = User.find_by(id: params[:user_id])
     if customer.present? && user.present?
-      Recording.create(
+      recording = Recording.create(
         sid: recording_sid,
         call_sid: call_sid,
         url: url,
@@ -98,6 +98,9 @@ class CallingController < ApplicationController
         user: user,
         customer: customer
       )
+
+      # Enqueue a background job to download and store the recording to S3
+      StoreRecordingJob.perform_later(recording.id)
 
       customer.customer_activities.create(
         action: 'Call Recording',
@@ -149,20 +152,32 @@ class CallingController < ApplicationController
         # Set cache headers for better performance
         expires_in 1.week, public: true
         
-        # Use the URL stored in our database
-        media_url = recording.url
-        
-        # Fetch the recording using Twilio credentials
-        response = HTTParty.get(
-          media_url,
-          basic_auth: {
-            username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
-            password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-          }
-        )
+        if recording.audio_file.attached?
+          # Stream the recording from S3
+          redirect_to rails_blob_url(recording.audio_file), allow_other_host: true
+        else
+          # If not in S3, try to download it and store for future use
+          RecordingStorageService.download_and_store(recording)
+          
+          if recording.audio_file.attached?
+            redirect_to rails_blob_url(recording.audio_file), allow_other_host: true
+          else
+            # Fallback: Fetch the recording using Twilio credentials
+            media_url = recording.url
+            
+            # Fetch the recording using Twilio credentials
+            response = HTTParty.get(
+              media_url,
+              basic_auth: {
+                username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
+                password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+              }
+            )
 
-        # Send the audio data directly to the browser
-        send_data response.body, type: 'audio/mpeg', disposition: 'inline'
+            # Send the audio data directly to the browser
+            send_data response.body, type: 'audio/mpeg', disposition: 'inline'
+          end
+        end
       else
         # Recording not found
         render plain: "Recording not found", status: :not_found
@@ -202,7 +217,9 @@ class CallingController < ApplicationController
         customer_name: recording.customer ? recording.customer.name : 'Unknown',
         customer_id: recording.customer_id,
         user_name: recording.user ? recording.user.name : 'Unknown',
-        user_id: recording.user_id
+        user_id: recording.user_id,
+        stored_in_s3: recording.audio_file.attached?,
+        filename: recording.audio_file.attached? ? recording.audio_file.filename.to_s : nil
       }
     end
   end
