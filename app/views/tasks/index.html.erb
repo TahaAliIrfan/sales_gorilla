@@ -30,7 +30,7 @@
         cancelled_url = params[:action] == 'my_tasks' ? my_tasks_tasks_path(status: 'cancelled') : tasks_path(status: 'cancelled')
       %>
       
-      <%= link_to "Pending", pending_url, class: "#{params[:status] == 'pending' || params[:status].blank? ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
+      <%= link_to "Pending", pending_url, class: "#{params[:status] == 'pending' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
       
       <%= link_to "In Progress", in_progress_url, class: "#{params[:status] == 'in_progress' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
       
@@ -40,41 +40,55 @@
     </nav>
   </div>
 
-  <!-- Filters Section -->
-  <div class="bg-white rounded-lg shadow p-4 mb-6">
-    <h3 class="text-lg font-medium text-gray-900 mb-4">Filters</h3>
-    
-    <%= form_with url: params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path, method: :get, data: { turbo_frame: "_top" }, class: "space-y-4 sm:flex sm:items-center sm:space-y-0 sm:space-x-6" do |f| %>
+  <!-- Sleek Filters Section -->
+  <div class="mb-6 flex flex-wrap items-center gap-3">
+    <%= form_with url: params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path, method: :get, data: { turbo_frame: "_top" }, class: "flex flex-wrap items-center gap-3" do |f| %>
       <% if params[:status].present? %>
         <%= f.hidden_field :status, value: params[:status] %>
       <% end %>
       
-      <div class="w-full sm:w-1/4">
-        <%= f.label :priority, "Priority", class: "block text-sm font-medium text-gray-700" %>
-        <%= f.select :priority, options_for_select(Task::PRIORITIES.map { |k, v| [v, k] }, params[:priority]), { include_blank: "All Priorities" }, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" %>
+      <div class="inline-flex items-center">
+        <%= f.select :priority, 
+                    options_for_select(Task::PRIORITIES.map { |k, v| [v, k] }, params[:priority]), 
+                    { include_blank: "Priority" }, 
+                    class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
       </div>
       
       <% if current_user.admin? && params[:action] == 'index' %>
-        <div class="w-full sm:w-1/4">
-          <%= f.label :user_id, "Assigned To", class: "block text-sm font-medium text-gray-700" %>
-          <%= f.select :user_id, options_from_collection_for_select(User.all, :id, :name, params[:user_id]), { include_blank: "All Users" }, class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" %>
+        <div class="inline-flex items-center">
+          <%= f.select :user_id, 
+                      options_from_collection_for_select(User.all, :id, :name, params[:user_id]), 
+                      { include_blank: "Assignee" }, 
+                      class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
         </div>
       <% end %>
       
-      <div class="w-full sm:w-1/4">
-        <%= f.label :due_date, "Due Date", class: "block text-sm font-medium text-gray-700" %>
-        <%= f.date_field :due_date, value: params[:due_date], class: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md" %>
+      <div class="inline-flex items-center">
+        <%= f.select :due_date, 
+                    options_for_select([
+                      ["Today", "today"],
+                      ["Upcoming", "upcoming"],
+                      ["Overdue", "overdue"]
+                    ], params[:due_date]), 
+                    { include_blank: "Due Date" }, 
+                    class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
       </div>
       
-      <div class="w-full sm:w-auto sm:self-end">
-        <%= f.submit "Apply Filters", class: "w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm" %>
-        
-        <% if params[:priority].present? || params[:user_id].present? || params[:due_date].present? %>
-          <%= link_to params[:status].present? ? (params[:action] == 'my_tasks' ? my_tasks_tasks_path(status: params[:status]) : tasks_path(status: params[:status])) : (params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path), class: "mt-3 sm:mt-0 sm:ml-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 sm:w-auto sm:text-sm" do %>
-            Clear Filters
-          <% end %>
+      <%= f.button type: "submit", class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+        </svg>
+        Filter
+      <% end %>
+      
+      <% if params[:priority].present? || params[:user_id].present? || params[:due_date].present? %>
+        <%= link_to params[:status].present? ? (params[:action] == 'my_tasks' ? my_tasks_tasks_path(status: params[:status]) : tasks_path(status: params[:status])) : (params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path), class: "inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Clear
         <% end %>
-      </div>
+      <% end %>
     <% end %>
   </div>
 
