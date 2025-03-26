@@ -99,7 +99,8 @@ class CallingController < ApplicationController
         customer: customer
       )
 
-      RecordingStorageService.download_and_store(recording)
+      # Queue the storage process to run in background
+      RecordingStorageWorker.perform_async(recording.id)
 
       customer.customer_activities.create(
         action: 'Call Recording',
@@ -155,27 +156,23 @@ class CallingController < ApplicationController
           # Stream the recording from S3
           redirect_to rails_blob_url(recording.audio_file), allow_other_host: true
         else
-          # If not in S3, try to download it and store for future use
-          RecordingStorageService.download_and_store(recording)
+          # If not in S3, queue downloading and storing for future use
+          RecordingStorageWorker.perform_async(recording.id)
           
-          if recording.audio_file.attached?
-            redirect_to rails_blob_url(recording.audio_file), allow_other_host: true
-          else
-            # Fallback: Fetch the recording using Twilio credentials
-            media_url = recording.url
-            
-            # Fetch the recording using Twilio credentials
-            response = HTTParty.get(
-              media_url,
-              basic_auth: {
-                username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
-                password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-              }
-            )
+          # Fallback: Fetch the recording using Twilio credentials
+          media_url = recording.url
+          
+          # Fetch the recording using Twilio credentials
+          response = HTTParty.get(
+            media_url,
+            basic_auth: {
+              username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
+              password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+            }
+          )
 
-            # Send the audio data directly to the browser
-            send_data response.body, type: 'audio/mpeg', disposition: 'inline'
-          end
+          # Send the audio data directly to the browser
+          send_data response.body, type: 'audio/mpeg', disposition: 'inline'
         end
       else
         # Recording not found

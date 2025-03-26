@@ -5,6 +5,7 @@
   - [default, 2]
   - [mailers, 2]
   - [followups, 1]
+  - [recordings, 1]
   - [low, 1]
 
 development:
