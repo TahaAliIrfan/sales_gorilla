@@ -57,6 +57,26 @@ class CallingController < ApplicationController
       response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
       render xml: response.to_s
     else
+
+      puts "PARAMS"
+      puts "------"
+      puts "------"
+      puts "------"
+      puts "------"
+      puts "------"
+      puts "------"
+      puts "Caller #{params[:Called]}"
+
+      puts "------"
+      puts "------"
+
+      puts params
+
+
+      puts "------"
+      puts "------"
+
+
       customer = Customer.find_by(phone: params[:Called])
       # DEFAULT NUMBER
       user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
