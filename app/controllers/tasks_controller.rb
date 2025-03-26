@@ -40,7 +40,7 @@ class TasksController < ApplicationController
   def my_tasks
     @tasks = policy_scope(Task).includes(:customer).order(due_date: :asc)
     
-    # Default behavior: show all tasks for today (including completed and cancelled)
+    # Default behavior: show pending tasks (same as main tasks page)
     if params[:status].present?
       # If status is explicitly specified, filter by that status
       @tasks = @tasks.where(status: params[:status])
@@ -55,9 +55,9 @@ class TasksController < ApplicationController
         @tasks = @tasks.overdue
       end
     else
-      # Default: Show today's tasks including completed and cancelled
-      @tasks = @tasks.for_today
-      params[:due_date] = 'today'
+      # Default: Show pending tasks
+      @tasks = @tasks.pending
+      params[:status] = 'pending'
     end
     
     if params[:priority].present?
@@ -154,7 +154,7 @@ class TasksController < ApplicationController
         if params[:return_to] == 'dashboard'
           redirect_to dashboard_path, notice: 'Task marked as complete.'
         elsif params[:return_to] == 'my_tasks_dashboard' || params[:return_to] == 'my_tasks'
-          redirect_to my_tasks_tasks_path(due_date: 'today'), notice: 'Task marked as complete.'
+          redirect_to my_tasks_tasks_path(status: 'pending'), notice: 'Task marked as complete.'
         elsif params[:return_to] == 'current_page'
           # Get the query parameters from the original request
           redirect_params = params.permit!.except(:controller, :action, :id, :return_to)
