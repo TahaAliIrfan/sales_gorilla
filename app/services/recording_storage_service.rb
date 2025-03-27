@@ -35,7 +35,8 @@ class RecordingStorageService
         # After successfully storing the recording, transcribe it using Deepgram
         if recording.audio_file.attached?
           # Call the Deepgram service to transcribe the audio
-          #  DeepgramService.transcribe_audio(recording)
+          response = DeepgramService.new.transcribe(recording.audio_file.url)
+          recording.update(transcription: response)
         end
       else
         Rails.logger.error "Failed to download recording #{recording.sid} from Twilio: #{response.code}"

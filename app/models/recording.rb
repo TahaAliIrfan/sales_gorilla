@@ -60,4 +60,13 @@ class Recording < ApplicationRecord
     return [] unless transcribed?
     transcription.dig('results', 'channels', 0, 'alternatives', 0, 'words') || []
   end
+
+  def formatted_transcript
+    return [] unless transcribed?
+    
+    words = transcription.dig('results', 'channels', 0, 'alternatives', 0, 'words') || []
+    words.group_by { |word| word['speaker'] }.map do |speaker, speaker_words|
+      "Speaker #{speaker}:- #{speaker_words.map { |w| w['punctuated_word'] }.join(' ')}"
+    end
+  end
 end

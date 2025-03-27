@@ -13,14 +13,12 @@ class DeepgramService
     end
 
     response_data = JSON.parse(response.body)
-    
-    # Log the response for debugging
-    Rails.logger.debug "Deepgram Response: #{response_data.inspect}"
-    
-    # Handle potential nil values and missing keys
+
+
+    puts response_data
+
     return { error: "Invalid response from Deepgram" } unless response_data.is_a?(Hash) && response_data['results'].is_a?(Hash)
-    
-    # Format the transcript data for JSONB storage
+
     {
       metadata: response_data['metadata'],
       results: {
