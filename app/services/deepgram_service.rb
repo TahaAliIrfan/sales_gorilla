@@ -5,8 +5,10 @@ class DeepgramService
     response = api_connection.post('/v1/listen') do |req|
       req.params['tier'] = 'nova'
       req.params['language'] = 'en'
-      req.params['model'] = 'general'
+      req.params['model'] = 'phonecall'
       req.params['punctuate'] = 'true'
+      req.params['diarize'] = true
+      req.params['utterances'] = true
       req.body = { url: recording_url }.to_json
     end
 
