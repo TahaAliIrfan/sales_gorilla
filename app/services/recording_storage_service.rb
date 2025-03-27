@@ -31,6 +31,12 @@ class RecordingStorageService
         )
         
         Rails.logger.info "Recording #{recording.sid} successfully stored in S3 as #{filename}"
+        
+        # After successfully storing the recording, transcribe it using Deepgram
+        if recording.audio_file.attached?
+          # Call the Deepgram service to transcribe the audio
+          DeepgramService.transcribe_audio(recording)
+        end
       else
         Rails.logger.error "Failed to download recording #{recording.sid} from Twilio: #{response.code}"
       end
