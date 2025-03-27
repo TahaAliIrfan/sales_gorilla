@@ -12,7 +12,47 @@ class DeepgramService
       req.body = { url: recording_url }.to_json
     end
 
-    JSON.parse(response.body)
+    response_data = JSON.parse(response.body)
+    
+    # Log the response for debugging
+    Rails.logger.debug "Deepgram Response: #{response_data.inspect}"
+    
+    # Handle potential nil values and missing keys
+    return { error: "Invalid response from Deepgram" } unless response_data.is_a?(Hash) && response_data['results'].is_a?(Hash)
+    
+    # Format the transcript data for JSONB storage
+    {
+      metadata: response_data['metadata'],
+      results: {
+        channels: (response_data.dig('results', 'channels') || []).map do |channel|
+          next unless channel.is_a?(Hash)
+          
+          {
+            alternatives: (channel['alternatives'] || []).map do |alt|
+              next unless alt.is_a?(Hash)
+              
+              {
+                transcript: alt['transcript'],
+                confidence: alt['confidence'],
+                words: (alt['words'] || []).map do |word|
+                  next unless word.is_a?(Hash)
+                  
+                  {
+                    word: word['word'],
+                    start: word['start'],
+                    end: word['end'],
+                    confidence: word['confidence'],
+                    speaker: word['speaker'],
+                    speaker_confidence: word['speaker_confidence'],
+                    punctuated_word: word['punctuated_word']
+                  }
+                end.compact
+              }
+            end.compact
+          }
+        end.compact
+      }
+    }
   end
 
   private
