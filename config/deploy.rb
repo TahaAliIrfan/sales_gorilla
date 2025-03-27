@@ -54,7 +54,17 @@ append :linked_files, "config/database.yml"
 # set :local_user, -> { `git config user.name`.chomp }
 
 # Default value for keep_releases is 5
-# set :keep_releases, 5
+set :keep_releases, 5
+
+# Sidekiq Configuration
+set :sidekiq_config, "config/sidekiq.yml"
+set :sidekiq_roles, :app
+set :sidekiq_default_hooks, true
+set :sidekiq_pid, File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+set :sidekiq_env, fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
+set :sidekiq_log, File.join(shared_path, 'log', 'sidekiq.log')
+set :sidekiq_timeout, 60
+set :sidekiq_processes, 1
 
 # Uncomment the following to require manually verifying the host key before first deploy.
 # set :ssh_options, verify_host_key: :secure

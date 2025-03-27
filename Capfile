@@ -31,11 +31,6 @@ require "capistrano/deploy"
 require 'capistrano/rails'
 require 'capistrano/passenger'
 require 'capistrano/rbenv'
-require 'capistrano/sidekiq'
-install_plugin Capistrano::Sidekiq  # Default sidekiq tasks
-
-# Uncomment if you also want to install the systemd integration
-# install_plugin Capistrano::Sidekiq::Systemd
 
 # require "capistrano/rvm"
 # require "capistrano/rbenv"
