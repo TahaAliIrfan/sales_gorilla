@@ -15,8 +15,13 @@ namespace :sidekiq do
     on roles(:app) do
       within current_path do
         with rails_env: fetch(:rails_env) do
-          execute :nohup, :bundle, :exec, :sidekiq,
-            "-e #{fetch(:rails_env)} -C #{current_path}/config/sidekiq.yml >> #{shared_path}/log/sidekiq.log 2>&1 &"
+          if fetch(:rails_env) == 'production'
+            execute :nohup, :bundle, :exec, :sidekiq,
+              "-e production -C config/sidekiq.yml >> #{shared_path}/log/sidekiq.log 2>&1 &"
+          else
+            execute :nohup, :bundle, :exec, :sidekiq,
+              "-e #{fetch(:rails_env)} -C config/sidekiq.yml >> #{shared_path}/log/sidekiq.log 2>&1 &"
+          end
         end
       end
     end

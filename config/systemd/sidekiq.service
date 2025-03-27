@@ -1,0 +1,16 @@
+[Unit]
+Description=Sidekiq service for CRM application
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/crm/current
+Environment=RAILS_ENV=production
+ExecStart=/usr/local/bin/bundle exec sidekiq -e production -C config/sidekiq.yml
+Restart=always
+StandardOutput=append:/home/ubuntu/crm/shared/log/sidekiq.log
+StandardError=append:/home/ubuntu/crm/shared/log/sidekiq.error.log
+
+[Install]
+WantedBy=multi-user.target 
