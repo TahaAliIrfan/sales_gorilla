@@ -1,7 +1,7 @@
 class DeepgramService
   BASE_URL = 'https://api.deepgram.com'
 
-  def transcribe(recording_url)
+  def transcribe(recording)
     response = api_connection.post('/v1/listen') do |req|
       req.params['tier'] = 'nova'
       req.params['language'] = 'en'
@@ -9,51 +9,42 @@ class DeepgramService
       req.params['punctuate'] = 'true'
       req.params['diarize'] = true
       req.params['utterances'] = true
-      req.body = { url: recording_url }.to_json
+      req.body = { url: recording.audio_file.url }.to_json
     end
 
-    response_data = JSON.parse(response.body)
+    result = JSON.parse(response.body)
 
-
-    puts response_data
-
-    return { error: "Invalid response from Deepgram" } unless response_data.is_a?(Hash) && response_data['results'].is_a?(Hash)
-
-    {
-      metadata: response_data['metadata'],
-      results: {
-        channels: (response_data.dig('results', 'channels') || []).map do |channel|
-          next unless channel.is_a?(Hash)
-          
-          {
-            alternatives: (channel['alternatives'] || []).map do |alt|
-              next unless alt.is_a?(Hash)
-              
-              {
-                transcript: alt['transcript'],
-                confidence: alt['confidence'],
-                words: (alt['words'] || []).map do |word|
-                  next unless word.is_a?(Hash)
-                  
-                  {
-                    word: word['word'],
-                    start: word['start'],
-                    end: word['end'],
-                    confidence: word['confidence'],
-                    speaker: word['speaker'],
-                    speaker_confidence: word['speaker_confidence'],
-                    punctuated_word: word['punctuated_word']
-                  }
-                end.compact
-              }
-            end.compact
-          }
-        end.compact
-      }
-    }
+    recording.update!(
+      transcription: condense_speaker_utterances(result['results']['utterances']).compact,
+      transcription_status: :completed
+    )
   end
 
   private
+
+
+  def utterance_mapping(utterance)
+    { speaker: utterance['speaker'] || utterance['channel'], transcript: utterance['transcript'],
+      start: utterance['start'], end: utterance['end'] }
+  end
+
+  def concat_speaker_utterances(left, right)
+    left[:transcript].concat(' ', right[:transcript])
+    left[:end] = right[:end]
+  end
+
+  def condense_speaker_utterances(utterances)
+    utterance_blocks = utterances.map { |utterance| utterance_mapping(utterance) }
+    utterance_blocks.drop(1).reduce([utterance_blocks.first]) do |memo, utterance|
+      if utterance[:speaker] == memo.last[:speaker]
+        memo.tap { |m| concat_speaker_utterances(m.last, utterance) }
+      else
+        memo << utterance
+      end
+    end
+  end
+
+
 
   def api_connection
     @api_connection ||= Faraday.new(
