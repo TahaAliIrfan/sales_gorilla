@@ -1,13 +1,8 @@
 class AiAnalysesController < ApplicationController
-  before_action :require_login
   layout 'dashboard'
   before_action :set_recording
   
-  after_action :verify_authorized
-  
   def create
-    authorize @recording, :update?
-    
     if !@recording.transcribed?
       redirect_to recording_path(@recording), alert: "Cannot analyze recording without a transcript"
       return
