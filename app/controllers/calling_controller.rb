@@ -1,77 +1,101 @@
 class CallingController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:voice, :recording_status]
   layout 'dashboard'
+  rescue_from StandardError, with: :handle_calling_error
 
   # Display the browser-based phone interface
   def index
-    @twilio_numbers = twilio_service.fetch_available_numbers
-    
-    # Filter customers by current user unless they're an admin
-    if current_user&.admin?
-      @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
-      # Load all users for admin filter dropdown
-      @users = User.all.order(:name)
-    else
-      @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
-      # Non-admin can only see themselves in filter
-      @users = [current_user].compact
-    end
+    begin
+      @twilio_numbers = twilio_service.fetch_available_numbers
+      
+      # Filter customers by current user unless they're an admin
+      if current_user&.admin?
+        @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
+        # Load all users for admin filter dropdown
+        @users = User.all.order(:name)
+      else
+        @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
+        # Non-admin can only see themselves in filter
+        @users = [current_user].compact
+      end
 
-    # Add search functionality
-    if params[:search].present?
-      @customers = @customers.search(params[:search])
-    end
+      # Add search functionality
+      if params[:search].present?
+        @customers = @customers.search(params[:search])
+      end
 
-    if params[:customer_id].present?
-      @selected_customer = Customer.find_by(id: params[:customer_id])
-      @phone_to_call = @selected_customer&.phone
-    elsif params[:phone].present?
-      @phone_to_call = params[:phone]
+      if params[:customer_id].present?
+        @selected_customer = Customer.find_by(id: params[:customer_id])
+        @phone_to_call = @selected_customer&.phone
+      elsif params[:phone].present?
+        @phone_to_call = params[:phone]
+      end
+    rescue => e
+      Rails.logger.error("Error in calling#index: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      flash.now[:alert] = "Unable to initialize calling service. Please try again later or contact support."
+      @customers = Customer.none # Empty relation
+      @twilio_numbers = []
     end
-
-    @auto_dial = @phone_to_call.present?
   end
 
-  # Generate a Twilio Client capability token
+  # Generate a capability token
   def token
-    token = twilio_service.generate_capability_token
-    render json: { token: token }
+    begin
+      token = twilio_service.generate_capability_token
+      render json: { token: token }
+    rescue => e
+      Rails.logger.error("Error generating token: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      render json: { error: "Unable to generate calling token. Please try again later." }, status: :service_unavailable
+    end
   end
 
   def voice
-    phone_number = params[:To]
-    caller_id = params[:caller_id]
+    begin
+      phone_number = params[:To]
+      caller_id = params[:caller_id]
 
-    if params[:controller] == 'calling' && params[:customer_id].present?
+      if params[:controller] == 'calling' && params[:customer_id].present?
 
-      customer = Customer.find_by(id: params[:customer_id])
+        customer = Customer.find_by(id: params[:customer_id])
 
-      if customer.present? && customer.user_id.nil?
-        user_id = User.find_by(email: 'sarmad.mansoor@tecaudex.com').id
-      else
-        user_id = customer.user_id
-      end
-
-      response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
-      render xml: response.to_s
-    else
-      customer = Customer.find_by(phone: params[:Caller])
-      # DEFAULT NUMBER
-      user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
-      user_phone_number = '+923246489818'
-      user_id = user.id
-      # DEFAULT NUMBER END
-
-      if customer.present?
-        if customer.user.present?
-          user_phone_number = customer.user.phone_number
+        if customer.present? && customer.user_id.nil?
+          user_id = User.first.try(:id)
+        else
           user_id = customer.user_id
         end
-      else
-        customer = Customer.create(name: 'Unknown Caller', phone: params[:Caller])
-      end
 
-      response = twilio_service.call_sales_rep(params[:Caller], user_phone_number, user_id, customer.id)
+        response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
+        render xml: response.to_s
+      else
+        customer = Customer.find_by(phone: params[:Caller])
+        # Default user
+        user = User.first
+        user_phone_number = user&.phone_number || '+447897021964'
+        user_id = user&.id
+
+        if customer.present?
+          if customer.user.present?
+            user_phone_number = customer.user.phone_number
+            user_id = customer.user_id
+          end
+        else
+          customer = Customer.create(name: 'Unknown Caller', phone: params[:Caller])
+        end
+
+        response = twilio_service.call_sales_rep(params[:Caller], user_phone_number, user_id, customer.id)
+        render xml: response.to_s
+      end
+    rescue => e
+      Rails.logger.error("Error in voice action: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      
+      # Provide a basic TwiML response that informs the caller of the error
+      response = Twilio::TwiML::VoiceResponse.new do |r|
+        r.say('We are sorry, but there was an error processing your call. Please try again later.', voice: 'alice')
+      end
+      
       render xml: response.to_s
     end
   end
@@ -116,16 +140,35 @@ class CallingController < ApplicationController
     render json: twilio_numbers
   end
 
-  # Store the current customer ID in the session
+  # Store customer ID in session for recording association
   def store_customer_id
-    session[:current_call_customer_id] = params[:customer_id]
-    head :ok
+    session[:current_customer_id] = params[:customer_id]
+    render json: { success: true }
   end
 
   private
 
   def twilio_service
     @twilio_service ||= TwilioService.new
+  end
+  
+  def handle_calling_error(exception)
+    Rails.logger.error("Unhandled exception in CallingController: #{exception.message}")
+    Rails.logger.error(exception.backtrace.join("\n"))
+    
+    respond_to do |format|
+      format.html { 
+        flash[:alert] = "An error occurred with the calling service. Please try again later."
+        redirect_to root_path 
+      }
+      format.json { render json: { error: "Calling service error" }, status: :internal_server_error }
+      format.xml { 
+        response = Twilio::TwiML::VoiceResponse.new do |r|
+          r.say('We are sorry, but there was an error processing your call. Please try again later.', voice: 'alice')
+        end
+        render xml: response.to_s
+      }
+    end
   end
   
   def require_admin
