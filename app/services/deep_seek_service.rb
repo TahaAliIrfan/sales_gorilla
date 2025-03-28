@@ -2,8 +2,13 @@ class DeepSeekService
   attr_reader :api_key, :model
 
   def initialize
-    @api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY)
+    # Try to get API key from credentials, fall back to environment variable
+    @api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY) || ENV['DEEPSEEK_API_KEY']
     @model = "deepseek-chat"
+    
+    if @api_key.blank?
+      Rails.logger.error("DeepSeek API key is not configured")
+    end
   end
 
   def analyze_recording(recording)
