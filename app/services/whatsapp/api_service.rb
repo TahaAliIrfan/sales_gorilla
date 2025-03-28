@@ -18,7 +18,7 @@ module Whatsapp
         page: page,
         limit: limit
       })
-      
+
       handle_response(response)
     end
     
@@ -135,17 +135,18 @@ module Whatsapp
       http.use_ssl = true
       
       request = Net::HTTP::Post.new(uri)
-      request['Authorization'] = "Bearer #{@api_token}"
-      request['Content-Type'] = 'application/json'
+      request["accept"] = 'application/json'
+      request["content-type"] = 'application/json'
+      request['authorization'] = "Bearer #{@api_token}"
       request.body = params.to_json
-      
+
       http.request(request)
     end
     
     def handle_response(response)
       parsed_response = JSON.parse(response.body, symbolize_names: true)
       
-      if response.code.to_i == 200 && parsed_response[:success]
+      if response.code.to_i == 200
         { success: true, data: parsed_response[:data] }
       else
         error_message = parsed_response[:message] || "Unknown error occurred"
