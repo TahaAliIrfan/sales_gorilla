@@ -121,5 +121,100 @@
         </div>
       <% end %>
     </div>
+    
+    <!-- AI Analysis Section -->
+    <div class="mt-8">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-medium text-gray-900">AI Analysis</h3>
+        <% if @recording.transcribed? && (@latest_analysis.nil? || @analyses.count < 3) %>
+          <%= button_to recording_ai_analyses_path(@recording), method: :post, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <%= @latest_analysis.nil? ? "Generate AI Analysis" : "Regenerate Analysis" %>
+          <% end %>
+        <% end %>
+      </div>
+      
+      <% if @latest_analysis.present? %>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <dt class="text-sm font-medium text-gray-500">Summary</dt>
+              <dd class="mt-1 text-sm text-gray-900"><%= @latest_analysis.summary %></dd>
+            </div>
+            
+            <div class="sm:col-span-1">
+              <dt class="text-sm font-medium text-gray-500">Interest Score</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                <div class="flex items-center">
+                  <% @latest_analysis.interest_score.to_i.times do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  <% end %>
+                  <% (5 - @latest_analysis.interest_score.to_i).times do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  <% end %>
+                  <span class="ml-2"><%= @latest_analysis.interest_score %>/5</span>
+                </div>
+              </dd>
+            </div>
+            
+            <div class="sm:col-span-2">
+              <dt class="text-sm font-medium text-gray-500">Improvement Points</dt>
+              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line"><%= @latest_analysis.improvement_points %></dd>
+            </div>
+            
+            <div class="sm:col-span-2">
+              <dt class="text-sm font-medium text-gray-500">Next Steps</dt>
+              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line"><%= @latest_analysis.next_steps %></dd>
+            </div>
+            
+            <div class="sm:col-span-2">
+              <dt class="text-sm font-medium text-gray-500">Follow-up Message (WhatsApp/Text)</dt>
+              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line bg-white p-3 border border-gray-200 rounded">
+                <%= @latest_analysis.followup_message %>
+              </dd>
+            </div>
+            
+            <div class="sm:col-span-2">
+              <dt class="text-sm font-medium text-gray-500">Follow-up Email</dt>
+              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line bg-white p-3 border border-gray-200 rounded">
+                <%= @latest_analysis.followup_email %>
+              </dd>
+            </div>
+          </dl>
+          
+          <% if @analyses.count > 1 %>
+            <div class="mt-6 border-t border-gray-200 pt-4">
+              <h4 class="text-sm font-medium text-gray-500">Previous Analyses</h4>
+              <ul class="mt-2 space-y-2">
+                <% @analyses.offset(1).each do |analysis| %>
+                  <li>
+                    <%= link_to recording_ai_analysis_path(@recording, analysis), class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
+                      Analysis from <%= analysis.created_at.strftime("%b %d, %Y %H:%M") %> 
+                      (Interest Score: <%= analysis.interest_score %>/5)
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="bg-gray-50 p-4 rounded-lg">
+          <p class="text-sm text-gray-500 text-center py-6">
+            <% if @recording.transcribed? %>
+              No AI analysis has been generated yet. Click the "Generate AI Analysis" button to create one.
+            <% else %>
+              AI analysis requires a transcript. Once the transcript is available, you can generate an AI analysis.
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div> 

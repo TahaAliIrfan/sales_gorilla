@@ -55,7 +55,8 @@ class RecordingsController < ApplicationController
   
   def show
     authorize @recording
-    # Show recording details
+    @latest_analysis = @recording.latest_ai_analysis
+    @analyses = @recording.ai_analyses.order(created_at: :desc)
   end
   
   def download

@@ -120,5 +120,7 @@ Rails.application.routes.draw do
     collection do
       get :my_recordings
     end
+    
+    resources :ai_analyses, only: [:create, :show]
   end
 end

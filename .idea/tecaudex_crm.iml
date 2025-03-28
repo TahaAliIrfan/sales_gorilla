@@ -41,6 +41,7 @@
     <orderEntry type="library" scope="PROVIDED" name="mail (v2.8.1, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="marcel (v1.0.4, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="mini_mime (v1.1.5, rbenv: 2.7.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="multi_json (v1.15.0, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-pop (v0.1.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-protocol (v0.2.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="net-sftp (v4.0.0, rbenv: 2.7.8) [gem]" level="application" />
@@ -48,6 +49,7 @@
     <orderEntry type="library" scope="PROVIDED" name="omniauth (v2.1.2, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="omniauth-google-oauth2 (v1.1.1, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="omniauth-oauth2 (v1.8.0, rbenv: 2.7.8) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="os (v1.1.4, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rails-dom-testing (v2.2.0, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rake (v13.2.1, rbenv: 2.7.8) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="snaky_hash (v2.0.1, rbenv: 2.7.8) [gem]" level="application" />
