@@ -6,7 +6,6 @@ class RecordingsController < ApplicationController
 
   def transcript
     if @recording.transcribed?
-      # Parse the string into JSON if it's stored as a string
       transcript_data = begin
         if @recording.transcription.is_a?(String)
           ruby_array = eval(@recording.transcription)
