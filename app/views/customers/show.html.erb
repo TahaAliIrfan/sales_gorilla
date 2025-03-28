@@ -685,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   window.showTranscript = function(recordingId) {
-    console.log('Opening transcript for recording:', recordingId); // Debug log
+    console.log('Opening transcript for recording:', recordingId);
     
     const transcriptContent = document.getElementById('transcript-content');
     transcriptContent.innerHTML = '<div class="flex justify-center items-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
@@ -695,18 +695,38 @@ document.addEventListener('DOMContentLoaded', function() {
     
     fetch(`/recordings/${recordingId}/transcript`)
       .then(response => {
-        console.log('Transcript API response:', response.status); // Debug log
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
+        console.log('Transcript API response:', response.status);
+        return response.json().then(data => ({
+          status: response.status,
+          body: data
+        }));
       })
-      .then(data => {
-        console.log('Transcript data received:', data); // Debug log
-        transcriptData = data;
+      .then(({ status, body }) => {
+        console.log('Transcript data received:', body);
+        
+        if (status !== 200) {
+          throw new Error(body.error || 'Failed to load transcript');
+        }
+        
+        // Ensure body is an array
+        if (!Array.isArray(body)) {
+          console.log('Received data type:', typeof body);
+          if (typeof body === 'string') {
+            try {
+              body = JSON.parse(body);
+            } catch (e) {
+              console.error('Failed to parse transcript string:', e);
+              throw new Error('Invalid transcript format');
+            }
+          } else {
+            throw new Error('Invalid transcript format');
+          }
+        }
+        
+        transcriptData = body;
         transcriptContent.innerHTML = '';
         
-        data.forEach((item, index) => {
+        body.forEach((item, index) => {
           const div = document.createElement('div');
           div.id = `transcript-${index}`;
           div.className = 'p-3 rounded transition-colors duration-200';
@@ -721,7 +741,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Error fetching transcript:', error);
         transcriptContent.innerHTML = `
           <div class="text-center text-red-600 py-4">
-            Error loading transcript: ${error.message}
+            <p>Error loading transcript: ${error.message}</p>
+            <p class="text-sm mt-2">Please try again or contact support if the issue persists.</p>
           </div>
         `;
       });
