@@ -1,3 +1,5 @@
+require 'json'
+
 class RecordingsController < ApplicationController
   before_action :require_login
   before_action :set_recording, only: [:transcript]
@@ -7,7 +9,8 @@ class RecordingsController < ApplicationController
       # Parse the string into JSON if it's stored as a string
       transcript_data = begin
         if @recording.transcription.is_a?(String)
-          JSON.parse(@recording.transcription)
+          ruby_array = eval(@recording.transcription)
+          JSON.parse(ruby_array.to_json)
         else
           @recording.transcription
         end
