@@ -138,5 +138,8 @@ Rails.application.routes.draw do
       get :transcript
       get :download
     end
+    collection do
+      get :my_recordings
+    end
   end
 end
