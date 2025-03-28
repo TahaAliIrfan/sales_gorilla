@@ -523,13 +523,13 @@
       </div>
       
       <!-- Customer Call Recordings -->
-      <div class="mt-8">
+      <div class="mt-8" data-controller="recording">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-bold text-gray-900">Call Recordings</h2>
           <%= link_to "Make a Call", calling_path(deal_id: @customer.deals.first&.id), class: "bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" if @customer.deals.any? %>
         </div>
         
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="bg-white shadow-md rounded-lg overflow-hidden" data-controller="transcript">
           <% if @recordings.any? %>
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
@@ -554,11 +554,14 @@
                         <%= recording.user&.name || 'Unknown' %>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button onclick="playRecording('<%= calling_play_recording_path(sid: recording.sid) %>', <%= recording.id %>)" class="text-blue-600 hover:text-blue-900 mr-3">
+                        <button data-action="recording#play" 
+                                data-url="<%= calling_play_recording_path(sid: recording.sid) %>" 
+                                data-recording-id="<%= recording.id %>" 
+                                class="text-blue-600 hover:text-blue-900 mr-3">
                           <i class="fas fa-play"></i> Play
                         </button>
                         <% if recording.transcribed? %>
-                          <button onclick="showTranscript(<%= recording.id %>)" class="text-green-600 hover:text-green-900 mr-3">
+                          <button data-action="transcript#show" data-recording-id="<%= recording.id %>" class="text-green-600 hover:text-green-900 mr-3">
                             <i class="fas fa-file-alt"></i> Transcript
                           </button>
                         <% end %>
@@ -572,15 +575,56 @@
               </table>
             </div>
             
-            <div id="recording-player" class="hidden p-4 bg-gray-100">
+            <div id="recording-player" data-recording-target="player" class="hidden p-4 bg-gray-100">
               <h4 class="font-bold mb-2">Playing Recording</h4>
-              <audio id="audio-player" controls class="w-full" data-recording-id=""></audio>
+              <audio id="audio-player" 
+                     data-recording-target="audio" 
+                     data-transcript-target="audioPlayer" 
+                     data-action="timeupdate->transcript#updateHighlight" 
+                     controls 
+                     class="w-full"></audio>
             </div>
           <% else %>
             <div class="text-center py-8">
               <p class="text-gray-500">No call recordings found for this customer.</p>
             </div>
           <% end %>
+        
+          <!-- Transcript Modal -->
+          <div id="transcript-modal" data-transcript-target="modal" data-action="click->transcript#closeWithClick keydown@window->transcript#closeWithEscape" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
+            <div class="min-h-screen px-4 text-center">
+              <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+
+              <!-- Modal panel -->
+              <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative">
+                <div class="absolute top-0 right-0 pt-4 pr-4">
+                  <button type="button" data-action="transcript#close" class="text-gray-400 hover:text-gray-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                      <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Call Transcript</h3>
+                      <div id="transcript-content" data-transcript-target="content" class="mt-2 space-y-4 max-h-[60vh] overflow-y-auto">
+                        <!-- Transcript content will be inserted here -->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button type="button" data-action="transcript#close" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -664,180 +708,6 @@
 <!-- Add Font Awesome for icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-<!-- JavaScript for playing recordings -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  let currentRecordingId = null;
-  let transcriptData = null;
-  const modal = document.getElementById('transcript-modal');
-  
-  window.playRecording = function(url, recordingId) {
-    const recordingPlayer = document.getElementById('recording-player');
-    const audioPlayer = document.getElementById('audio-player');
-    
-    recordingPlayer.classList.remove('hidden');
-    audioPlayer.src = url;
-    audioPlayer.dataset.recordingId = recordingId;
-    currentRecordingId = recordingId;
-    audioPlayer.play().catch(error => {
-      console.error('Error playing audio:', error);
-    });
-  };
-
-  window.showTranscript = function(recordingId) {
-    console.log('Opening transcript for recording:', recordingId);
-    
-    const transcriptContent = document.getElementById('transcript-content');
-    transcriptContent.innerHTML = '<div class="flex justify-center items-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
-    
-    // Show modal
-    modal.classList.remove('hidden');
-    
-    fetch(`/recordings/${recordingId}/transcript`)
-      .then(response => {
-        console.log('Transcript API response:', response.status);
-        return response.json().then(data => ({
-          status: response.status,
-          body: data
-        }));
-      })
-      .then(({ status, body }) => {
-        console.log('Transcript data received:', body);
-        
-        if (status !== 200) {
-          throw new Error(body.error || 'Failed to load transcript');
-        }
-        
-        // Ensure body is an array
-        if (!Array.isArray(body)) {
-          console.log('Received data type:', typeof body);
-          if (typeof body === 'string') {
-            try {
-              body = JSON.parse(body);
-            } catch (e) {
-              console.error('Failed to parse transcript string:', e);
-              throw new Error('Invalid transcript format');
-            }
-          } else {
-            throw new Error('Invalid transcript format');
-          }
-        }
-        
-        transcriptData = body;
-        transcriptContent.innerHTML = '';
-        
-        body.forEach((item, index) => {
-          const div = document.createElement('div');
-          div.id = `transcript-${index}`;
-          div.className = 'p-3 rounded transition-colors duration-200';
-          div.innerHTML = `
-            <p class="text-sm text-gray-500 mb-1">Speaker ${item.speaker === 0 ? 'Customer' : 'Agent'} (${formatTime(item.start)})</p>
-            <p class="text-gray-900">${item.transcript}</p>
-          `;
-          transcriptContent.appendChild(div);
-        });
-      })
-      .catch(error => {
-        console.error('Error fetching transcript:', error);
-        transcriptContent.innerHTML = `
-          <div class="text-center text-red-600 py-4">
-            <p>Error loading transcript: ${error.message}</p>
-            <p class="text-sm mt-2">Please try again or contact support if the issue persists.</p>
-          </div>
-        `;
-      });
-  };
-
-  window.closeTranscriptModal = function() {
-    modal.classList.add('hidden');
-    transcriptData = null;
-  };
-
-  window.formatTime = function(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.floor(seconds % 60);
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  // Add timeupdate event listener to audio player
-  const audioPlayer = document.getElementById('audio-player');
-  if (audioPlayer) {
-    audioPlayer.addEventListener('timeupdate', function(e) {
-      if (!transcriptData) return;
-      
-      const currentTime = e.target.currentTime;
-      const previousHighlight = document.querySelector('.bg-blue-50');
-      if (previousHighlight) {
-        previousHighlight.classList.remove('bg-blue-50');
-      }
-      
-      const currentSegment = transcriptData.find(item => 
-        currentTime >= item.start && currentTime <= item.end
-      );
-      
-      if (currentSegment) {
-        const index = transcriptData.indexOf(currentSegment);
-        const element = document.getElementById(`transcript-${index}`);
-        if (element) {
-          element.classList.add('bg-blue-50');
-          element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
-    });
-  }
-
-  // Close modal when clicking outside
-  modal.addEventListener('click', function(event) {
-    if (event.target === modal) {
-      closeTranscriptModal();
-    }
-  });
-
-  // Close modal with Escape key
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-      closeTranscriptModal();
-    }
-  });
-});
-</script>
-
 <div id="followup-modal-wrapper" data-controller="followup-modal">
   <%= render partial: 'customer_followups/modal' %>
-</div>
-
-<!-- Transcript Modal -->
-<div id="transcript-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 overflow-y-auto">
-  <div class="min-h-screen px-4 text-center">
-    <div class="fixed inset-0 transition-opacity" aria-hidden="true">
-      <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
-    </div>
-
-    <!-- Modal panel -->
-    <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full relative">
-      <div class="absolute top-0 right-0 pt-4 pr-4">
-        <button type="button" onclick="closeTranscriptModal()" class="text-gray-400 hover:text-gray-500">
-          <span class="sr-only">Close</span>
-          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-      <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-        <div class="sm:flex sm:items-start">
-          <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Call Transcript</h3>
-            <div id="transcript-content" class="mt-2 space-y-4 max-h-[60vh] overflow-y-auto">
-              <!-- Transcript content will be inserted here -->
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-        <button type="button" onclick="closeTranscriptModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
 </div>
