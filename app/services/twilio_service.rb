@@ -150,18 +150,18 @@ class TwilioService
       numbers = incoming_numbers.map do |number|
         {
           phone_number: number.phone_number,
-          friendly_name: 'Virtual Phone'
+          friendly_name: number.phone_number
         }
       end
       
       return numbers unless numbers.empty?
       
       # Return default number if no numbers found
-      [{ phone_number: @default_caller_id, friendly_name: 'Company Caller' }]
+      [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
     rescue => e
       Rails.logger.error("Error fetching available phone numbers: #{e.message}")
       # Return just the default number as a fallback
-      [{ phone_number: @default_caller_id, friendly_name: 'Default Number' }]
+      [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
     end
   end
 end 

@@ -95,11 +95,17 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <% if recording.transcribed? %>
                   <button data-controller="transcript-modal" data-transcript-modal-id-value="<%= recording.id %>" data-action="click->transcript-modal#open" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200">
-                    Available
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    View Transcript
                   </button>
                 <% else %>
                   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Unavailable
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Not Available
                   </span>
                 <% end %>
               </td>
@@ -165,24 +171,111 @@
 </div>
 
 <!-- Transcript Modal -->
-<div id="transcript-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" data-controller="modal" data-action="click@window->modal#closeBackground keyup@window->modal#closeWithKeyboard">
+<div id="transcript-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" data-controller="modal" data-action="click->modal#closeBackground keyup@window->modal#closeWithKeyboard">
   <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6" data-modal-target="container">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-medium text-gray-900">Transcript</h3>
-      <button data-action="modal#close" class="text-gray-400 hover:text-gray-500">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      <h3 class="text-lg font-medium text-gray-900 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-      </button>
-    </div>
-    <div id="transcript-content" class="max-h-96 overflow-y-auto">
-      <div class="text-center py-8">
-        <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p class="mt-2 text-sm text-gray-500">Loading transcript...</p>
+        Call Transcript
+      </h3>
+
+      <div class="flex items-center space-x-2">
+        <button id="toggle-debug" class="text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100" title="Toggle Debugging Info">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+        </button>
+        <button id="copy-transcript" class="text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100" title="Copy transcript to clipboard">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
+        </button>
+        <button data-action="modal#close" class="text-gray-400 hover:text-gray-500 p-2">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
+    
+    <div id="debug-section" class="mb-4 hidden">
+      <div class="bg-gray-800 text-white p-4 rounded-md overflow-auto max-h-40">
+        <h4 class="text-sm font-medium mb-2">Debug Information:</h4>
+        <pre id="debug-content" class="text-xs whitespace-pre-wrap"></pre>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-200 pt-4">
+      <div id="transcript-content" class="max-h-96 overflow-y-auto space-y-4 p-4">
+        <div class="text-center py-8">
+          <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="mt-2 text-sm text-gray-500">Loading transcript...</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-200 mt-4 pt-4 flex justify-end">
+      <button data-action="modal#close" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+        Close
+      </button>
+    </div>
   </div>
-</div> 
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Debug toggle functionality
+    document.getElementById('toggle-debug').addEventListener('click', function() {
+      const debugSection = document.getElementById('debug-section');
+      debugSection.classList.toggle('hidden');
+      
+      // Fetch and display the data if debug section becomes visible
+      if (!debugSection.classList.contains('hidden')) {
+        const recordingId = document.querySelector('[data-transcript-modal-id-value]')?.dataset.transcriptModalIdValue;
+        if (recordingId) {
+          fetch(`/recordings/${recordingId}/transcript`)
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('debug-content').textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+              document.getElementById('debug-content').textContent = `Error: ${error.message}`;
+            });
+        } else {
+          document.getElementById('debug-content').textContent = 'No recording ID found';
+        }
+      }
+    });
+    
+    // Add functionality to copy transcript button
+    document.getElementById('copy-transcript').addEventListener('click', function() {
+      const transcriptContent = document.getElementById('transcript-content');
+      
+      // Create a temporary element to hold text content
+      const tempElement = document.createElement('div');
+      tempElement.innerHTML = transcriptContent.innerHTML;
+      
+      // Extract just the text content without HTML
+      const text = Array.from(tempElement.querySelectorAll('p'))
+        .map(p => p.textContent.trim())
+        .join('\n\n');
+      
+      // Copy to clipboard
+      navigator.clipboard.writeText(text).then(
+        function() {
+          // Success message
+          alert('Transcript copied to clipboard!');
+        }, 
+        function() {
+          // Error message
+          alert('Could not copy transcript');
+        }
+      );
+    });
+  });
+</script> 

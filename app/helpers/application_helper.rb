@@ -34,4 +34,18 @@ module ApplicationHelper
             { sort: column, direction: direction, search: params[:search], user_id: params[:user_id] },
             class: "hover:text-gray-900"
   end
+  
+  # Determine country label based on phone number prefix
+  def get_country_label(phone_number)
+    case phone_number
+    when /^\+1/ 
+      "US Number"
+    when /^\+44/
+      "UK Number"
+    when /^\+61/
+      "AUS Number"
+    else
+      "Other Number"
+    end
+  end
 end

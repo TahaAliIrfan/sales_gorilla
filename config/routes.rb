@@ -23,27 +23,6 @@ Rails.application.routes.draw do
   get 'tasks/complete'
   get 'settings/edit'
   get 'settings/update'
-  # Remove auto-generated routes
-  # get 'deal_stages/index'
-  # get 'deal_stages/new'
-  # get 'deal_stages/create'
-  # get 'deal_stages/edit'
-  # get 'deal_stages/update'
-  # get 'deal_stages/destroy'
-  # get 'deals/index'
-  # get 'deals/show'
-  # get 'deals/new'
-  # get 'deals/create'
-  # get 'deals/edit'
-  # get 'deals/update'
-  # get 'deals/destroy'
-  # get 'customers/index'
-  # get 'customers/show'
-  # get 'customers/new'
-  # get 'customers/create'
-  # get 'customers/edit'
-  # get 'customers/update'
-  # get 'customers/destroy'
   
   # Add RESTful routes for our models
   resources :customers do

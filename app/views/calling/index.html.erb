@@ -84,10 +84,11 @@
               <select data-calling-target="callerId" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none bg-white transition duration-150">
                 <% if @twilio_numbers.present? %>
                   <% @twilio_numbers.each do |number| %>
-                    <option value="<%= number[:phone_number] %>">Company Caller (<%= number[:phone_number] %>)</option>
+                    <% country_label = get_country_label(number[:phone_number]) %>
+                    <option value="<%= number[:phone_number] %>"><%= country_label %> (<%= number[:phone_number] %>)</option>
                   <% end %>
                 <% else %>
-                  <option value="+447897021964">Company Caller (+447897021964)</option>
+                  <option value="+447897021964">UK Number (+447897021964)</option>
                 <% end %>
               </select>
               <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
