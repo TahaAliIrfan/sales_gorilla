@@ -5,6 +5,7 @@ class User < ApplicationRecord
   has_many :customers
   has_many :recordings
   has_many :tasks, dependent: :nullify
+  has_many :messages, dependent: :nullify
   
   # Validate phone number format
   validates :phone_number, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }

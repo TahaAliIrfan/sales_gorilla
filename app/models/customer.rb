@@ -4,6 +4,7 @@ class Customer < ApplicationRecord
   has_many :recordings, dependent: :destroy
   has_many :customer_activities, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :messages, dependent: :destroy
   
   # Add file attachment capability
   has_one_attached :file
