@@ -542,7 +542,8 @@
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                  <% @recordings.each do |recording| %>
+                <% @recordings.each do |recording| %>
+                  <% if recording.audio_file.attached? %>
                     <tr>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <%= recording.date.strftime("%B %d, %Y %I:%M %p") %>
@@ -554,9 +555,9 @@
                         <%= recording.user&.name || 'Unknown' %>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button data-action="recording#play" 
-                                data-url="<%= calling_play_recording_path(sid: recording.sid) %>" 
-                                data-recording-id="<%= recording.id %>" 
+                        <button data-action="recording#play"
+                                data-url="<%= recording.audio_file.url %>"
+                                data-recording-id="<%= recording.id %>"
                                 class="text-blue-600 hover:text-blue-900 mr-3">
                           <i class="fas fa-play"></i> Play
                         </button>
@@ -565,12 +566,13 @@
                             <i class="fas fa-file-alt"></i> Transcript
                           </button>
                         <% end %>
-                        <a href="<%= calling_play_recording_path(sid: recording.sid) %>" download class="text-gray-600 hover:text-gray-900">
+                        <a href="<%= recording.audio_file.url %>" download class="text-gray-600 hover:text-gray-900">
                           <i class="fas fa-download"></i> Download
                         </a>
                       </td>
                     </tr>
                   <% end %>
+                <% end %>
                 </tbody>
               </table>
             </div>
