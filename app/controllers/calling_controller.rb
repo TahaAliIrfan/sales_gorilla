@@ -1,8 +1,6 @@
 class CallingController < ApplicationController
-  # Skip CSRF protection for Twilio webhooks
   skip_before_action :verify_authenticity_token, only: [:voice, :recording_status]
   layout 'dashboard'
-  before_action :require_admin, only: [:recordings, :play_recording]
 
   # Display the browser-based phone interface
   def index
@@ -112,78 +110,6 @@ class CallingController < ApplicationController
     head :ok
   end
 
-  # Fetch list of recordings - Admin only
-  def recordings
-    # Start with all recordings in the database
-    recordings = Recording.all.recent
-    
-    # Apply filters if provided
-    if params[:customer_id].present?
-      recordings = recordings.where(customer_id: params[:customer_id])
-    end
-    
-    if params[:user_id].present?
-      recordings = recordings.where(user_id: params[:user_id])
-    end
-    
-    if params[:date_from].present?
-      recordings = recordings.where("date >= ?", Date.parse(params[:date_from]).beginning_of_day)
-    end
-    
-    if params[:date_to].present?
-      recordings = recordings.where("date <= ?", Date.parse(params[:date_to]).end_of_day)
-    end
-    
-    # Limit the number of recordings returned
-    recordings = recordings.limit(50)
-    
-    # Convert to JSON format for the frontend
-    render json: recordings_to_json(recordings)
-  end
-
-  # Play a specific recording - Admin only
-  def play_recording
-    recording_sid = params[:sid]
-
-    begin
-      recording = Recording.find_by(sid: recording_sid)
-
-      if recording.present?
-        # Set cache headers for better performance
-        expires_in 1.week, public: true
-        
-        if recording.audio_file.attached?
-          # Stream the recording from S3
-          redirect_to rails_blob_url(recording.audio_file), allow_other_host: true
-        else
-          # If not in S3, queue downloading and storing for future use
-          RecordingStorageWorker.perform_async(recording.id)
-          
-          # Fallback: Fetch the recording using Twilio credentials
-          media_url = recording.url
-          
-          # Fetch the recording using Twilio credentials
-          response = HTTParty.get(
-            media_url,
-            basic_auth: {
-              username: Rails.application.credentials.dig(:twilio, :account_sid) || Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID),
-              password: Rails.application.credentials.dig(:twilio, :auth_token) || Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-            }
-          )
-
-          # Send the audio data directly to the browser
-          send_data response.body, type: 'audio/mpeg', disposition: 'inline'
-        end
-      else
-        # Recording not found
-        render plain: "Recording not found", status: :not_found
-      end
-    rescue => e
-      Rails.logger.error "Error fetching recording: #{e.message}"
-      render plain: "Error fetching recording: #{e.message}", status: :internal_server_error
-    end
-  end
-
   # Fetch available Twilio phone numbers
   def available_numbers
     twilio_numbers = twilio_service.fetch_available_numbers
@@ -200,24 +126,6 @@ class CallingController < ApplicationController
 
   def twilio_service
     @twilio_service ||= TwilioService.new
-  end
-
-  def recordings_to_json(recordings)
-    recordings.map do |recording|
-      {
-        sid: recording.sid,
-        duration: recording.duration,
-        date: recording.date,
-        url: "#{request.base_url}/calling/play_recording/#{recording.sid}",
-        call_sid: recording.call_sid,
-        customer_name: recording.customer ? recording.customer.name : 'Unknown',
-        customer_id: recording.customer_id,
-        user_name: recording.user ? recording.user.name : 'Unknown',
-        user_id: recording.user_id,
-        stored_in_s3: recording.audio_file.attached?,
-        filename: recording.audio_file.attached? ? recording.audio_file.filename.to_s : nil
-      }
-    end
   end
   
   def require_admin

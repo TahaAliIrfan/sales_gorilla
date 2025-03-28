@@ -133,9 +133,10 @@ Rails.application.routes.draw do
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resources :recordings, only: [] do
+  resources :recordings, only: [:index, :show] do
     member do
       get :transcript
+      get :download
     end
   end
 end

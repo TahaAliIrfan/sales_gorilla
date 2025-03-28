@@ -15,7 +15,7 @@
   <body class="h-full">
     <div class="min-h-full">
       <!-- Sidebar - hidden by default on mobile -->
-      <div class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out -translate-x-full lg:translate-x-0">
+      <div class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0">
         <!-- Logo section -->
         <div class="flex h-16 items-center justify-start px-6 bg-gray-800">
           <span class="text-xl font-bold text-white">Tecaudex CRM</span>
@@ -96,6 +96,13 @@
                 </svg>
                 Deal Stages
               <% end %>
+
+              <%= link_to recordings_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'recordings' ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+                Recordings
+              <% end %>
             <% end %>
 
             <%= link_to calling_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_page?(calling_path) ? 'bg-gray-800 text-white' : ''}" do %>
@@ -138,6 +145,8 @@
                 </h1>
               <% elsif controller_name == 'deal_stages' %>
                 <h1 class="text-2xl font-semibold text-gray-900">Deal Stages</h1>
+              <% elsif controller_name == 'recordings' %>
+                <h1 class="text-2xl font-semibold text-gray-900">Recordings</h1>
               <% else %>
                 <h1 class="text-2xl font-semibold text-gray-900">Tecaudex CRM</h1>
               <% end %>
