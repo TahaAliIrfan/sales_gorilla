@@ -12,12 +12,20 @@ module Whatsapp
       @base_url = "https://waapi.app/api/v1/instances/#{@instance_id}"
     end
     
+    # Check if the API credentials are configured
+    def credentials_configured?
+      @instance_id.present? && @api_token.present?
+    end
+    
+    # Get client status (connected/disconnected)
+    def get_client_status
+      response = get_request("client/status")
+      handle_response(response)
+    end
+    
     # Get all chats from WhatsApp instance
-    def get_chats(page: 1, limit: 20)
-      response = post_request("client/action/get-chats", {
-        page: page,
-        limit: limit
-      })
+    def get_chats()
+      response = post_request("client/action/get-chats")
 
       handle_response(response)
     end
@@ -139,6 +147,18 @@ module Whatsapp
       request["content-type"] = 'application/json'
       request['authorization'] = "Bearer #{@api_token}"
       request.body = params.to_json
+
+      http.request(request)
+    end
+    
+    def get_request(endpoint)
+      uri = URI.parse("#{@base_url}/#{endpoint}")
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      
+      request = Net::HTTP::Get.new(uri)
+      request["accept"] = 'application/json'
+      request['authorization'] = "Bearer #{@api_token}"
 
       http.request(request)
     end

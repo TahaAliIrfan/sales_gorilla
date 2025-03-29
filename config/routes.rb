@@ -123,4 +123,11 @@ Rails.application.routes.draw do
     
     resources :ai_analyses, only: [:create, :show]
   end
+
+  # Chat routes
+  resources :chats, only: [:index] do
+    collection do
+      get 'get_chat_id'
+    end
+  end
 end
