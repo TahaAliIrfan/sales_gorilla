@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_28_225700) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_29_224046) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -102,6 +102,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_28_225700) do
     t.string "google_calendar_event_link"
     t.string "whatsapp_chat_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
+    t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
 
   create_table "deal_activities", force: :cascade do |t|

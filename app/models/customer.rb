@@ -22,6 +22,7 @@ class Customer < ApplicationRecord
   before_validation :set_default_values
   before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
   before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
+  before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
   before_save :record_activity_changes
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   
@@ -382,6 +383,12 @@ class Customer < ApplicationRecord
   
   def sync_whatsapp_status
     self.whatsapp_status = 'Incorrect Number' if call_status == 'Incorrect Number'
+  end
+  
+  def sync_whatsapp_chat_id
+    # Format the phone number for WhatsApp chat ID
+    phone_without_plus = phone.gsub(/\A\+/, '')
+    self.whatsapp_chat_id = "#{phone_without_plus}@c.us"
   end
   
   def record_activity_changes
