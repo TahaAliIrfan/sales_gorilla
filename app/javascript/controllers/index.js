@@ -36,3 +36,6 @@ application.register("followup-modal", FollowupModalController)
 
 import BulkAssignController from "./bulk_assign_controller"
 application.register("bulk-assign", BulkAssignController)
+
+import WhatsappChatController from "./whatsapp_chat_controller"
+application.register("whatsapp-chat", WhatsappChatController)

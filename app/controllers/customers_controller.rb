@@ -286,6 +286,24 @@ class CustomersController < ApplicationController
     end
   end
 
+  def whatsapp_messages
+    @customer = Customer.find(params[:id])
+    authorize @customer
+
+    if @customer.whatsapp_chat_id.blank?
+      render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
+      return
+    end
+
+    # Create a new instance of the WhatsApp API service
+    whatsapp_service = Whatsapp::ApiService.new
+    
+    # Get the messages for this chat
+    response = whatsapp_service.get_chat_room(@customer.whatsapp_chat_id)
+    
+    render json: response
+  end
+
   private
 
   def set_customer

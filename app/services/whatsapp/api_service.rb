@@ -32,7 +32,7 @@ module Whatsapp
 
     def get_chat_room(chat_id)
       response = post_request("client/action/fetch-messages", {
-        chatId: chat_id,i
+        chatId: chat_id
       })
 
       handle_response(response)
