@@ -290,6 +290,11 @@ class CustomersController < ApplicationController
     @customer = Customer.find(params[:id])
     authorize @customer
 
+    # Set cache control headers to prevent caching
+    response.headers["Cache-Control"] = "no-cache, no-store, max-age=0, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "Fri, 01 Jan 1990 00:00:00 GMT"
+
     if @customer.whatsapp_chat_id.blank?
       render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
       return
@@ -297,13 +302,23 @@ class CustomersController < ApplicationController
     
     # Check if we should force refresh from API
     force_refresh = params[:force_refresh].present? && params[:force_refresh] == 'true'
-    
-    # Get messages (from DB or API depending on force_refresh)
-    messages = @customer.get_whatsapp_messages(force_refresh: force_refresh)
-    
-    if messages.empty? && !force_refresh
-      # Try API if DB is empty
+    # Check if this is an auto-refresh request
+    is_auto_refresh = params[:auto_refresh].present? && params[:auto_refresh] == 'true'
+
+    # For auto-refresh or manual refresh, always fetch from API
+    if force_refresh || is_auto_refresh
+      Rails.logger.info("Fetching WhatsApp messages from API for customer #{@customer.id} (#{force_refresh ? 'manual refresh' : 'auto-refresh'})")
       messages = @customer.fetch_and_store_whatsapp_messages
+    else
+      # For initial load, try from DB first
+      Rails.logger.info("Trying to fetch WhatsApp messages from DB for customer #{@customer.id}")
+      messages = @customer.get_whatsapp_messages(force_refresh: false)
+      
+      # If no messages in DB, fetch from API
+      if messages.empty?
+        Rails.logger.info("No messages in DB, fetching from API for customer #{@customer.id}")
+        messages = @customer.fetch_and_store_whatsapp_messages
+      end
     end
     
     if messages.empty?
@@ -321,6 +336,7 @@ class CustomersController < ApplicationController
       }
     end
     
+    Rails.logger.info("Returning #{formatted_messages.length} WhatsApp messages for customer #{@customer.id}")
     render json: { success: true, data: { data: formatted_messages } }
   end
 
@@ -366,7 +382,8 @@ class CustomersController < ApplicationController
       }
       
       # Import the message to the database
-      #  WhatsappMessage.import_from_api(@customer, formatted_data)
+      Rails.logger.info("Storing sent WhatsApp text message to database: #{message_text}")
+      WhatsappMessage.import_from_api(@customer, formatted_data)
       
       render json: { 
         success: true, 
@@ -374,6 +391,7 @@ class CustomersController < ApplicationController
         data: message_data 
       }
     else
+      Rails.logger.error("Failed to send WhatsApp text message: #{response[:error]}")
       render json: { 
         success: false, 
         error: response[:error] || "Failed to send message" 

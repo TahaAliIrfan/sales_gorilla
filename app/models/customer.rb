@@ -334,14 +334,28 @@ class Customer < ApplicationRecord
     # Skip if credentials not configured
     return [] unless whatsapp_service.credentials_configured?
     
+    Rails.logger.info("Fetching WhatsApp messages from API for customer #{id} (#{name})")
+    
     # Get the messages for this chat
     response = whatsapp_service.get_chat_room(whatsapp_chat_id)
     
     # Return empty array if API call was not successful
-    return [] unless response[:success] && response[:data] && response[:data][:data]
+    if !response[:success] || !response[:data] || !response[:data][:data]
+      Rails.logger.error("API call to get WhatsApp messages failed for customer #{id}: #{response[:error]}")
+      return []
+    end
+    
+    # Log the number of messages received
+    message_count = response[:data][:data].size
+    Rails.logger.info("Received #{message_count} WhatsApp messages from API for customer #{id}")
     
     # Import messages into the database
-    WhatsappMessage.import_messages(self, response[:data][:data])
+    stored_messages = WhatsappMessage.import_messages(self, response[:data][:data])
+    
+    Rails.logger.info("Successfully stored #{stored_messages.size} WhatsApp messages in database for customer #{id}")
+    
+    # Return the WhatsApp messages from the database to ensure we're using the stored versions
+    whatsapp_messages.ordered
   end
   
   # Get all WhatsApp messages for this customer from the database

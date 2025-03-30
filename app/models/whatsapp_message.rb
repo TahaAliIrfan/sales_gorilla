@@ -29,10 +29,13 @@ class WhatsappMessage < ApplicationRecord
     # Determine direction
     direction = data[:fromMe] ? 'outbound' : 'inbound'
     
+    Rails.logger.info("Processing WhatsApp message - ID: #{message_id}, Direction: #{direction}")
+    
     # Create or update the message
     message = WhatsappMessage.find_by(message_id: message_id) 
     
     if message.nil?
+      Rails.logger.info("Creating new WhatsApp message in database")
       message = WhatsappMessage.new(
         customer: customer,
         message_id: message_id,
@@ -43,7 +46,16 @@ class WhatsappMessage < ApplicationRecord
         status: data[:status] || 'received',
         metadata: data
       )
-      message.save!
+      
+      begin
+        message.save!
+        Rails.logger.info("Successfully saved WhatsApp message ID: #{message_id}")
+      rescue => e
+        Rails.logger.error("Failed to save WhatsApp message: #{e.message}")
+        Rails.logger.error(e.backtrace.join("\n"))
+      end
+    else
+      Rails.logger.info("WhatsApp message ID: #{message_id} already exists in database")
     end
     
     message

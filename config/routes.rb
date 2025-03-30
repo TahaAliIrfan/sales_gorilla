@@ -30,6 +30,8 @@ Rails.application.routes.draw do
       patch 'update_status'
       patch 'update_communication_status'
       get 'whatsapp_messages'
+      post 'send_whatsapp_text'
+      post 'send_whatsapp_media'
     end
     
     # Add routes for follow-ups

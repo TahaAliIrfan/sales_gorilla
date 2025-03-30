@@ -57,10 +57,12 @@ export default class extends Controller {
       // Only refresh if not currently sending a message
       if (!this.isSending) {
         this.fetchMessages(false, true)
+      } else {
+        console.log("Skipping auto-refresh because a message is being sent")
       }
     }, 5000)
     
-    console.log("WhatsApp Chat: Auto-refresh started")
+    console.log("WhatsApp Chat: Auto-refresh started with interval ID:", this.refreshInterval)
   }
   
   stopAutoRefresh() {
@@ -87,12 +89,28 @@ export default class extends Controller {
       }
     }
     
-    // Build URL with refresh parameter if needed
-    const url = forceRefresh ? 
-      `${this.urlValue}?force_refresh=true` : 
-      this.urlValue
-      
-    fetch(url)
+    // Build URL with appropriate parameters
+    let url = this.urlValue
+    
+    // Add force_refresh parameter if needed
+    if (forceRefresh) {
+      url = `${url}${url.includes('?') ? '&' : '?'}force_refresh=true`
+    }
+    
+    // Add auto_refresh parameter if this is an auto-refresh
+    if (isAutoRefresh) {
+      url = `${url}${url.includes('?') ? '&' : '?'}auto_refresh=true`
+    }
+    
+    // Add a timestamp parameter to prevent caching
+    const timestamp = new Date().getTime()
+    const urlWithTimestamp = `${url}${url.includes('?') ? '&' : '?'}t=${timestamp}`
+    
+    if (isAutoRefresh) {
+      console.log(`Auto-refreshing from: ${urlWithTimestamp}`)
+    }
+    
+    fetch(urlWithTimestamp)
       .then(response => response.json())
       .then(data => {
         // If this isn't an auto-refresh, show/hide the loader
@@ -121,6 +139,8 @@ export default class extends Controller {
         
         if (!isAutoRefresh) {
           console.log("WhatsApp Messages received:", data.data.data)
+        } else {
+          console.log(`Auto-refresh completed, received ${data.data.data.length} messages`)
         }
         
         // Process and display the messages
@@ -137,12 +157,15 @@ export default class extends Controller {
           if (this.hasRefreshButtonTarget) {
             this.refreshButtonTarget.disabled = false
           }
+        } else {
+          console.error("Error during auto-refresh:", error)
         }
       })
   }
   
   refresh(event) {
     event.preventDefault()
+    console.log("Manual refresh triggered")
     this.fetchMessages(true)
   }
   
@@ -150,6 +173,9 @@ export default class extends Controller {
     // Store scrollTop and scrollHeight to check if we were at the bottom
     const messagesElement = this.messagesTarget
     const wasAtBottom = messagesElement.scrollTop + messagesElement.clientHeight >= messagesElement.scrollHeight - 20
+    
+    // Store current messages count to see if we got new messages
+    const oldMessagesCount = this.messageContainerTarget.children.length
     
     // Clear the container
     this.messageContainerTarget.innerHTML = ""
@@ -178,12 +204,6 @@ export default class extends Controller {
       // Skip system messages or messages without content
       if (data.type === "e2e_notification" || !messageData.body) return
       
-      // Extract from and to information for debugging
-      const fromInfo = data.from ? `${data.from.user}@${data.from.server}` : 'unknown'
-      const toInfo = data.to ? `${data.to.user}@${data.to.server}` : 'unknown'
-      
-      console.log(`Message ${index}: From=${fromInfo}, To=${toInfo}, Body=${messageData.body.substring(0, 30)}...`)
-      
       // Determine if message is from the system
       let isFromSystem = false
       
@@ -197,8 +217,6 @@ export default class extends Controller {
         // fromMe is the most reliable indicator
         isFromSystem = true
       }
-      
-      console.log(`Message ${index} is ${isFromSystem ? 'from SYSTEM' : 'from CUSTOMER'}`)
       
       const messageBody = messageData.body || "No content"
       const timestamp = data.t ? new Date(data.t * 1000).toLocaleString() : "Unknown time"
@@ -230,9 +248,21 @@ export default class extends Controller {
       this.messageContainerTarget.appendChild(messageElement)
     })
     
-    // If user was at the bottom before refreshing, scroll to bottom again
-    if (wasAtBottom) {
+    // Check if we got new messages
+    const newMessagesCount = this.messageContainerTarget.children.length
+    if (newMessagesCount > oldMessagesCount) {
+      console.log(`✅ Auto-refresh success! ${newMessagesCount - oldMessagesCount} new message(s) detected`)
+      // If we got new messages, always scroll to bottom
       this.scrollToBottom()
+    } else if (newMessagesCount < oldMessagesCount) {
+      console.log(`⚠️ Message count decreased from ${oldMessagesCount} to ${newMessagesCount}`)
+      // Scroll to bottom if message count changed
+      this.scrollToBottom()
+    } else if (wasAtBottom) {
+      // Otherwise, only scroll to bottom if user was already at the bottom
+      this.scrollToBottom()
+    } else {
+      console.log("No new messages detected, maintaining scroll position")
     }
   }
   
@@ -293,6 +323,8 @@ export default class extends Controller {
       return
     }
     
+    console.log(`Sending text message to customer ${customerId}: ${content}`)
+    
     // Send the text message
     fetch(`/customers/${customerId}/send_whatsapp_text`, {
       method: 'POST',
@@ -311,6 +343,8 @@ export default class extends Controller {
         this.showSendError(data.error || "Failed to send message")
         return
       }
+      
+      console.log("Message sent successfully:", data)
       
       // Clear the input field
       this.messageInputTarget.value = ''
@@ -348,6 +382,8 @@ export default class extends Controller {
       return
     }
     
+    console.log(`Sending media message to customer ${customerId}: ${mediaType} from ${mediaUrl}`)
+    
     // Send the media message
     fetch(`/customers/${customerId}/send_whatsapp_media`, {
       method: 'POST',
@@ -370,6 +406,8 @@ export default class extends Controller {
         this.showSendError(data.error || "Failed to send media message")
         return
       }
+      
+      console.log("Media message sent successfully:", data)
       
       // Clear the input fields
       this.mediaUrlTarget.value = ''
