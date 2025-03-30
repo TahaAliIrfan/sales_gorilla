@@ -29,7 +29,14 @@ module Whatsapp
 
       handle_response(response)
     end
-    
+
+    def get_chat_room(chat_id)
+      response = post_request("client/action/fetch-messages", {
+        chatId: chat_id,i
+      })
+
+      handle_response(response)
+    end
     # Get messages for a specific chat
     def get_chat_messages(chat_id, limit: 50)
       response = post_request("message/action/fetch-messages", {
