@@ -294,14 +294,34 @@ class CustomersController < ApplicationController
       render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
       return
     end
-
-    # Create a new instance of the WhatsApp API service
-    whatsapp_service = Whatsapp::ApiService.new
     
-    # Get the messages for this chat
-    response = whatsapp_service.get_chat_room(@customer.whatsapp_chat_id)
+    # Check if we should force refresh from API
+    force_refresh = params[:force_refresh].present? && params[:force_refresh] == 'true'
     
-    render json: response
+    # Get messages (from DB or API depending on force_refresh)
+    messages = @customer.get_whatsapp_messages(force_refresh: force_refresh)
+    
+    if messages.empty? && !force_refresh
+      # Try API if DB is empty
+      messages = @customer.fetch_and_store_whatsapp_messages
+    end
+    
+    if messages.empty?
+      render json: { success: true, data: { data: [] }, message: "No messages found" }
+      return
+    end
+    
+    # Convert DB messages to API format for the UI
+    formatted_messages = messages.map do |msg|
+      {
+        message: {
+          _data: msg.metadata,
+          body: msg.body
+        }
+      }
+    end
+    
+    render json: { success: true, data: { data: formatted_messages } }
   end
 
   private

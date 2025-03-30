@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["messages", "messageContainer", "loader", "noMessages", "error", "errorMessage"]
+  static targets = ["messages", "messageContainer", "loader", "noMessages", "error", "errorMessage", "refreshButton"]
   static values = { url: String, systemNumber: String }
 
   connect() {
@@ -15,11 +15,33 @@ export default class extends Controller {
     }
   }
 
-  fetchMessages() {
-    fetch(this.urlValue)
+  fetchMessages(forceRefresh = false) {
+    // Show loader
+    this.loaderTarget.classList.remove('hidden')
+    
+    // Hide other content
+    this.noMessagesTarget.classList.add('hidden')
+    this.errorTarget.classList.add('hidden')
+    
+    // Disable refresh button during load
+    if (this.hasRefreshButtonTarget) {
+      this.refreshButtonTarget.disabled = true
+    }
+    
+    // Build URL with refresh parameter if needed
+    const url = forceRefresh ? 
+      `${this.urlValue}?force_refresh=true` : 
+      this.urlValue
+      
+    fetch(url)
       .then(response => response.json())
       .then(data => {
         this.loaderTarget.classList.add('hidden')
+        
+        // Re-enable refresh button
+        if (this.hasRefreshButtonTarget) {
+          this.refreshButtonTarget.disabled = false
+        }
         
         if (!data.success) {
           this.showError(data.error || "Failed to load WhatsApp messages")
@@ -40,7 +62,17 @@ export default class extends Controller {
         console.error("Error fetching WhatsApp messages:", error)
         this.showError("An error occurred while loading messages.")
         this.loaderTarget.classList.add('hidden')
+        
+        // Re-enable refresh button
+        if (this.hasRefreshButtonTarget) {
+          this.refreshButtonTarget.disabled = false
+        }
       })
+  }
+  
+  refresh(event) {
+    event.preventDefault()
+    this.fetchMessages(true)
   }
   
   displayMessages(messages) {

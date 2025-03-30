@@ -5,6 +5,7 @@ class Customer < ApplicationRecord
   has_many :customer_activities, dependent: :destroy
   has_many :tasks, dependent: :destroy
   has_many :messages, dependent: :destroy
+  has_many :whatsapp_messages, dependent: :destroy
   
   # Add file attachment capability
   has_one_attached :file
@@ -319,6 +320,38 @@ class Customer < ApplicationRecord
   
   def has_pending_followup?
     followup_date.present? && followup_date > Time.current
+  end
+  
+  # WhatsApp methods
+  
+  # Fetch and store WhatsApp messages
+  def fetch_and_store_whatsapp_messages
+    return [] if whatsapp_chat_id.blank?
+    
+    # Create a new instance of the WhatsApp API service
+    whatsapp_service = Whatsapp::ApiService.new
+    
+    # Skip if credentials not configured
+    return [] unless whatsapp_service.credentials_configured?
+    
+    # Get the messages for this chat
+    response = whatsapp_service.get_chat_room(whatsapp_chat_id)
+    
+    # Return empty array if API call was not successful
+    return [] unless response[:success] && response[:data] && response[:data][:data]
+    
+    # Import messages into the database
+    WhatsappMessage.import_messages(self, response[:data][:data])
+  end
+  
+  # Get all WhatsApp messages for this customer from the database
+  # If force_refresh is true, it will fetch from API first
+  def get_whatsapp_messages(force_refresh: false)
+    if force_refresh || whatsapp_messages.count == 0
+      fetch_and_store_whatsapp_messages
+    end
+    
+    whatsapp_messages.ordered
   end
   
   private

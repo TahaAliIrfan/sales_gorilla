@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_29_224046) do
+ActiveRecord::Schema[7.1].define(version: 2025_03_30_003657) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -221,6 +221,23 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_29_224046) do
     t.datetime "google_token_expires_at"
   end
 
+  create_table "whatsapp_messages", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "message_id", null: false
+    t.string "remote_id"
+    t.text "body"
+    t.datetime "timestamp"
+    t.string "direction"
+    t.string "status"
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "timestamp"], name: "index_whatsapp_messages_on_customer_id_and_timestamp"
+    t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
+    t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
+    t.index ["timestamp"], name: "index_whatsapp_messages_on_timestamp"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_analyses", "recordings"
@@ -241,4 +258,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_29_224046) do
   add_foreign_key "recordings", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
+  add_foreign_key "whatsapp_messages", "customers"
 end
