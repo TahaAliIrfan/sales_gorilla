@@ -49,9 +49,9 @@ module Whatsapp
     
     # Send text message
     def send_text_message(chat_id, content)
-      response = post_request("message/action/send-text", {
+      response = post_request("client/action/send-message", {
         chatId: chat_id,
-        text: content
+        message: content
       })
       
       handle_response(response)

@@ -779,6 +779,89 @@
             <p class="text-red-500">Error loading WhatsApp messages.</p>
             <p class="text-gray-500" data-whatsapp-chat-target="errorMessage"></p>
           </div>
+          
+          <!-- Message Input Form -->
+          <div class="border-t border-gray-200 p-4 bg-gray-50" data-whatsapp-chat-target="messageForm">
+            <div data-whatsapp-chat-target="sendingIndicator" class="mb-2 text-center hidden">
+              <div class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-full">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sending message...
+              </div>
+            </div>
+            
+            <div data-whatsapp-chat-target="sendError" class="mb-2 text-center hidden">
+              <p class="text-red-500 text-sm" data-whatsapp-chat-target="sendErrorMessage"></p>
+            </div>
+            
+            <div class="flex items-start">
+              <div class="flex-grow mr-2">
+                <textarea 
+                  data-whatsapp-chat-target="messageInput"
+                  data-action="keydown->whatsapp-chat#handleKeyPress"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  placeholder="Type a message..."
+                  rows="2"
+                ></textarea>
+                
+                <div class="flex items-center mt-2">
+                  <label class="flex items-center cursor-pointer mr-4">
+                    <input type="radio" name="message_type" value="text" class="hidden" data-whatsapp-chat-target="textRadio" data-action="change->whatsapp-chat#toggleMessageType" checked>
+                    <div class="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center mr-2 radio-button">
+                      <div class="w-2 h-2 rounded-full bg-green-500 hidden radio-dot"></div>
+                    </div>
+                    <span class="text-sm text-gray-700">Text</span>
+                  </label>
+                  
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="message_type" value="media" class="hidden" data-whatsapp-chat-target="mediaRadio" data-action="change->whatsapp-chat#toggleMessageType">
+                    <div class="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center mr-2 radio-button">
+                      <div class="w-2 h-2 rounded-full bg-green-500 hidden radio-dot"></div>
+                    </div>
+                    <span class="text-sm text-gray-700">Media</span>
+                  </label>
+                </div>
+                
+                <div class="hidden mt-2" data-whatsapp-chat-target="mediaInputs">
+                  <div class="flex flex-col space-y-2">
+                    <input 
+                      type="text" 
+                      data-whatsapp-chat-target="mediaUrl" 
+                      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                      placeholder="Media URL (must be a public accessible URL)"
+                    >
+                    <input 
+                      type="text" 
+                      data-whatsapp-chat-target="mediaCaption" 
+                      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" 
+                      placeholder="Caption (optional)"
+                    >
+                    <select 
+                      data-whatsapp-chat-target="mediaType" 
+                      class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    >
+                      <option value="image">Image</option>
+                      <option value="video">Video</option>
+                      <option value="audio">Audio</option>
+                      <option value="document">Document</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <button 
+                data-whatsapp-chat-target="sendButton"
+                data-action="click->whatsapp-chat#sendMessage"
+                class="inline-flex items-center px-4 py-2 border border-transparent rounded-full shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -791,3 +874,9 @@
 <div id="followup-modal-wrapper" data-controller="followup-modal">
   <%= render partial: 'customer_followups/modal' %>
 </div>
+
+<style>
+  .radio-button:has(+ input:checked) .radio-dot {
+    display: block;
+  }
+</style>

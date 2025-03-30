@@ -43,6 +43,14 @@ class CustomerPolicy < ApplicationPolicy
     user.admin? || record.user_id == user.id
   end
   
+  def send_whatsapp_text?
+    user.admin? || record.user_id == user.id
+  end
+  
+  def send_whatsapp_media?
+    user.admin? || record.user_id == user.id
+  end
+  
   def bulk_assign?
     user.admin?
   end
