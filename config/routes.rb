@@ -133,4 +133,7 @@ Rails.application.routes.draw do
       get 'get_chat_id'
     end
   end
+  
+  # Webhook routes
+  post '/chats/messaged_recieve', to: 'webhooks#message_received'
 end
