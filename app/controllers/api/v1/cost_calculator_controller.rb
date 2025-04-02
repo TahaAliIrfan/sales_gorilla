@@ -73,6 +73,15 @@ module Api
             success: true,
             message: "Successfully added"
           }
+
+          phone_without_plus = customer.phone.gsub(/\A\+/, '')
+
+          # Create WhatsApp chat ID in the required format
+          whatsapp_chat_id = "#{phone_without_plus}@c.us"
+
+          # Update the customer record
+          customer.update!(whatsapp_chat_id: whatsapp_chat_id)
+
           
           # Add file info to response if a file was attached
           if params[:file].present? && customer.file.attached?
