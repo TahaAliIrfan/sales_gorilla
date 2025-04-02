@@ -62,6 +62,16 @@ Rails.application.routes.draw do
     end
   end
   
+  # Notification routes
+  resources :notifications, only: [:index, :show] do
+    member do
+      post 'mark_as_read'
+    end
+    collection do
+      post 'mark_all_as_read'
+    end
+  end
+  
   # Root path route ("/")
   root "home#index"
 

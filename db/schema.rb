@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_30_003657) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -173,6 +173,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_30_003657) do
     t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "content"
+    t.boolean "read", default: false
+    t.string "notification_type"
+    t.string "resource_type"
+    t.bigint "resource_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_notifications_on_resource"
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "recordings", force: :cascade do |t|
     t.string "sid"
     t.integer "duration"
@@ -254,6 +269,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_30_003657) do
   add_foreign_key "deals", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
+  add_foreign_key "notifications", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
   add_foreign_key "tasks", "customers"

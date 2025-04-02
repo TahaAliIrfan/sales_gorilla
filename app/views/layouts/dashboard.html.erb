@@ -201,6 +201,73 @@
                     </a>
                   </div>
                   
+                  <!-- Messages/Notifications dropdown -->
+                  <div class="relative mr-4" data-controller="dropdown">
+                    <button type="button" data-action="dropdown#toggle" class="flex items-center">
+                      <span class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-600">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                        </svg>
+                      </span>
+                      <% if @unread_notifications_count && @unread_notifications_count > 0 %>
+                        <span id="notification-count" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          <%= @unread_notifications_count %>
+                        </span>
+                      <% else %>
+                        <span id="notification-count" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">
+                          0
+                        </span>
+                      <% end %>
+                    </button>
+                    
+                    <!-- Notifications dropdown -->
+                    <div data-dropdown-target="menu" class="hidden absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                      <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-sm font-medium text-gray-700">Notifications</h3>
+                        <% if @unread_notifications_count && @unread_notifications_count > 0 %>
+                          <button id="mark-all-read-btn" class="text-xs text-blue-600 hover:text-blue-800">Mark all as read</button>
+                        <% end %>
+                      </div>
+                      
+                      <div id="notifications-list" class="max-h-96 overflow-y-auto">
+                        <% if current_user.recent_notifications(5).any? %>
+                          <% current_user.recent_notifications(5).each do |notification| %>
+                            <div class="block px-4 py-2 hover:bg-gray-50 border-b border-gray-100 <%= notification.read? ? 'bg-white' : 'bg-blue-50' %>" data-notification-id="<%= notification.id %>">
+                              <div class="flex items-start">
+                                <div class="flex-1">
+                                  <p class="text-sm text-gray-700"><%= notification.content %></p>
+                                  <p class="text-xs text-gray-500 mt-1"><%= time_ago_in_words(notification.created_at) %> ago</p>
+                                  <div class="mt-1 flex items-center justify-end">
+                                    <% if notification.resource.present? %>
+                                      <a href="<%= notification_path(notification) %>" class="text-xs text-blue-600 hover:text-blue-800">
+                                        View
+                                      </a>
+                                    <% end %>
+                                    <% unless notification.read? %>
+                                      <%= button_to mark_as_read_notification_path(notification), method: :post, class: "ml-3 text-xs text-gray-500 hover:text-gray-700", form: { class: 'inline-block' } do %>
+                                        Mark as read
+                                      <% end %>
+                                    <% end %>
+                                  </div>
+                                </div>
+                                <% unless notification.read? %>
+                                  <div class="h-2 w-2 bg-blue-500 rounded-full mt-1"></div>
+                                <% end %>
+                              </div>
+                            </div>
+                          <% end %>
+                        <% else %>
+                          <div class="px-4 py-6 text-center text-sm text-gray-500">
+                            No notifications yet
+                          </div>
+                        <% end %>
+                      </div>
+                      
+                      <div class="border-t border-gray-100 px-4 py-2">
+                        <a href="<%= notifications_path %>" class="text-xs text-gray-600 hover:text-gray-800">View all notifications</a>
+                      </div>
+                    </div>
+                  </div>
                   <%= link_to settings_path, class: "mr-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" do %>
                     Settings
                   <% end %>

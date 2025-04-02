@@ -25,8 +25,8 @@ class WebhooksController < ApplicationController
     end
 
     begin
-      WhatsappMessage.import_from_api(customer, message_data)
-      
+      whatsapp_message = WhatsappMessage.import_from_api(customer, message_data)
+
       ActionCable.server.broadcast(
         "chat_#{chat_id}",
         { 
@@ -35,12 +35,33 @@ class WebhooksController < ApplicationController
         }
       )
       
+      # Create notification for assigned user if exists
+      create_notification_for_message(customer, whatsapp_message) if whatsapp_message.present?
+      
       # Return success response
       render json: { success: true }, status: :ok
     rescue => e
       Rails.logger.error("Failed to process WhatsApp message: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       render json: { success: false, error: e.message }, status: :internal_server_error
+    end
+  end
+  
+  private
+  
+  def create_notification_for_message(customer, message)
+    # If customer has an assigned user, create a notification
+    if customer.user.present?
+      # Create notification for the assigned user
+      message_preview = message.body.truncate(50) # Limit message preview to 50 chars
+      
+      Notification.create!(
+        user: customer.user,
+        content: "New message from #{customer.name}: #{message_preview}",
+        notification_type: 'message',
+        resource: message,
+        read: false
+      )
     end
   end
 end 

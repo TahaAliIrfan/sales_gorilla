@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
   
   before_action :set_tasks_notification_counts, if: :current_user
+  before_action :set_notification_counts, if: :current_user
   
   private
   
@@ -21,6 +22,11 @@ class ApplicationController < ActionController::Base
                              .where("(status = 'pending' AND due_date < ?) OR (status = 'pending' AND priority = 'high')", 
                                     Date.current)
                              .count
+  end
+  
+  def set_notification_counts
+    # Set unread notifications count
+    @unread_notifications_count = current_user.unread_notifications_count
   end
   
   def current_user
