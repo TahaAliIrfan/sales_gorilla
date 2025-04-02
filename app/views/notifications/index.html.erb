@@ -1,0 +1,69 @@
+<div class="bg-white shadow sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+    <div>
+      <h3 class="text-lg font-medium leading-6 text-gray-900">Notifications</h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">Your notification history</p>
+    </div>
+    <div class="flex space-x-2">
+      <%= link_to 'All', notifications_path(filter: 'all'), class: "px-3 py-2 rounded-md text-sm font-medium #{@filter == 'all' ? 'bg-blue-600 text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}" %>
+      <%= link_to 'Unread', notifications_path(filter: 'unread'), class: "px-3 py-2 rounded-md text-sm font-medium #{@filter == 'unread' ? 'bg-blue-600 text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}" %>
+      <%= link_to 'Read', notifications_path(filter: 'read'), class: "px-3 py-2 rounded-md text-sm font-medium #{@filter == 'read' ? 'bg-blue-600 text-white' : 'text-gray-700 bg-gray-100 hover:bg-gray-200'}" %>
+      
+      <% if @unread_notifications.any? %>
+        <%= button_to mark_all_as_read_notifications_path, method: :post, class: "px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" do %>
+          Mark all as read
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+  
+  <div class="border-t border-gray-200">
+    <% if @notifications.empty? %>
+      <div class="py-12 text-center">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
+        <p class="mt-1 text-sm text-gray-500">
+          You don't have any <%= @filter == 'all' ? '' : @filter %> notifications yet.
+        </p>
+      </div>
+    <% else %>
+      <ul role="list" class="divide-y divide-gray-200">
+        <% @notifications.each do |notification| %>
+          <li class="px-4 py-4 sm:px-6 <%= notification.read? ? 'bg-white' : 'bg-blue-50' %>">
+            <div class="flex items-start space-x-4">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate"><%= notification.notification_type.capitalize %></p>
+                <p class="text-sm text-gray-700"><%= notification.content %></p>
+                <div class="mt-2 flex items-center">
+                  <div class="flex items-center text-sm text-gray-500">
+                    <svg class="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <%= time_ago_in_words(notification.created_at) %> ago
+                  </div>
+                </div>
+              </div>
+              <div class="flex-shrink-0 flex space-x-2">
+                <% if notification.resource.present? %>
+                  <%= link_to 'View', notification_path(notification), class: "inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+                <% end %>
+                
+                <% unless notification.read? %>
+                  <%= button_to mark_as_read_notification_path(notification), method: :post, class: "inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500" do %>
+                    Mark as read
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+      
+      <div class="px-4 py-4 border-t border-gray-200">
+        <%= paginate @notifications %>
+      </div>
+    <% end %>
+  </div>
+</div> 
