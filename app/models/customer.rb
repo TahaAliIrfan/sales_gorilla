@@ -26,6 +26,7 @@ class Customer < ApplicationRecord
   before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
   before_save :record_activity_changes
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
+  after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   
   # Constants for dropdown fields
   LEAD_SOURCES = {
@@ -478,5 +479,24 @@ class Customer < ApplicationRecord
       user_id: user_id,
       customer_id: id
     )
+  end
+  
+  # Create a notification and send an email when a customer is assigned to a user
+  def notify_user_of_assignment
+    # Create notification
+    Notification.create!(
+      user_id: user_id,
+      content: "You have been assigned a new lead: #{name}",
+      notification_type: 'system',
+      resource: self,
+      read: false
+    )
+    
+    # Send email notification
+    begin
+      UserMailer.customer_assignment_notification(user, self).deliver_now
+    rescue => e
+      Rails.logger.error "Failed to send assignment email to user #{user.email}: #{e.message}"
+    end
   end
 end

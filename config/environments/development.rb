@@ -36,12 +36,27 @@ Rails.application.configure do
   config.hosts << "6547-185-141-119-111.ngrok-free.app"
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :amazon
+  config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
 
   config.action_mailer.perform_caching = false
+
+  # Configure mail delivery for development
+  config.action_mailer.delivery_method = :smtp
+  config.action_mailer.smtp_settings = {
+    address:              'smtp.mailersend.net',
+    port:                 587,
+    domain:               'tecaudex.com',
+    user_name:            'ms-6ba83d@tecaudex.com',
+    password:             Rails.application.credentials.dig(:MAIL_API_KEY),
+    authentication:       'plain',
+    enable_starttls_auto: true
+  }
+
+  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
@@ -75,7 +90,4 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
-
-  # Configure default URL options for URL helpers
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
 end
