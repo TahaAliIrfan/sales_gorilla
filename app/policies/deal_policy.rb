@@ -12,7 +12,7 @@ class DealPolicy < ApplicationPolicy
   end
   
   def index?
-    true # All authenticated users can list deals
+    user.admin?
   end
   
   def my_deals?

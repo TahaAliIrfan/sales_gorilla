@@ -286,6 +286,185 @@ class CustomersController < ApplicationController
     end
   end
 
+  def whatsapp_messages
+    @customer = Customer.find(params[:id])
+    authorize @customer
+
+    # Set cache control headers to prevent caching
+    response.headers["Cache-Control"] = "no-cache, no-store, max-age=0, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "Fri, 01 Jan 1990 00:00:00 GMT"
+
+    if @customer.whatsapp_chat_id.blank?
+      render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
+      return
+    end
+    
+    # Check if we should force refresh from API
+    force_refresh = params[:force_refresh].present? && params[:force_refresh] == 'true'
+    # Check if this is an auto-refresh request
+    is_auto_refresh = params[:auto_refresh].present? && params[:auto_refresh] == 'true'
+
+    # For auto-refresh or manual refresh, always fetch from API
+    if force_refresh || is_auto_refresh
+      Rails.logger.info("Fetching WhatsApp messages from API for customer #{@customer.id} (#{force_refresh ? 'manual refresh' : 'auto-refresh'})")
+      messages = @customer.fetch_and_store_whatsapp_messages
+    else
+      # For initial load, try from DB first
+      Rails.logger.info("Trying to fetch WhatsApp messages from DB for customer #{@customer.id}")
+      messages = @customer.get_whatsapp_messages(force_refresh: false)
+      
+      # If no messages in DB, fetch from API
+      if messages.empty?
+        Rails.logger.info("No messages in DB, fetching from API for customer #{@customer.id}")
+        messages = @customer.fetch_and_store_whatsapp_messages
+      end
+    end
+    
+    if messages.empty?
+      render json: { success: true, data: { data: [] }, message: "No messages found" }
+      return
+    end
+    
+    # Convert DB messages to API format for the UI
+    formatted_messages = messages.map do |msg|
+      {
+        message: {
+          _data: msg.metadata,
+          body: msg.body
+        }
+      }
+    end
+    
+    Rails.logger.info("Returning #{formatted_messages.length} WhatsApp messages for customer #{@customer.id}")
+    render json: { success: true, data: { data: formatted_messages } }
+  end
+
+  def send_whatsapp_text
+    @customer = Customer.find(params[:id])
+    authorize @customer
+
+    if @customer.whatsapp_chat_id.blank?
+      render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
+      return
+    end
+    
+    message_text = params[:message]
+    
+    if message_text.blank?
+      render json: { success: false, error: "Message text is required" }
+      return
+    end
+    
+    # Initialize the WhatsApp API service
+    api_service = Whatsapp::ApiService.new
+    
+    # Send the message
+    response = api_service.send_text_message(@customer.whatsapp_chat_id, message_text)
+    
+    if response[:success]
+      # Save the message to the database
+      message_data = response[:data]
+      
+      # Create a format similar to what the API returns for received messages
+      # So we can use the import_from_api method
+      formatted_data = {
+        message: {
+          _data: {
+            id: { _serialized: message_data[:id] },
+            t: Time.current.to_i,
+            fromMe: true,
+            status: 'sent',
+            type: 'text'
+          },
+          body: message_text
+        }
+      }
+      
+      # Import the message to the database
+      Rails.logger.info("Storing sent WhatsApp text message to database: #{message_text}")
+      WhatsappMessage.import_from_api(@customer, formatted_data)
+      
+      render json: { 
+        success: true, 
+        message: "Message sent successfully", 
+        data: message_data 
+      }
+    else
+      Rails.logger.error("Failed to send WhatsApp text message: #{response[:error]}")
+      render json: { 
+        success: false, 
+        error: response[:error] || "Failed to send message" 
+      }
+    end
+  end
+  
+  def send_whatsapp_media
+    @customer = Customer.find(params[:id])
+    authorize @customer
+
+    if @customer.whatsapp_chat_id.blank?
+      render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
+      return
+    end
+    
+    media_url = params[:media_url]
+    caption = params[:caption]
+    media_type = params[:media_type] || 'image'
+    
+    if media_url.blank?
+      render json: { success: false, error: "Media URL is required" }
+      return
+    end
+    
+    # Validate media type
+    unless ['image', 'video', 'audio', 'document'].include?(media_type)
+      render json: { success: false, error: "Invalid media type. Must be image, video, audio, or document" }
+      return
+    end
+    
+    # Initialize the WhatsApp API service
+    api_service = Whatsapp::ApiService.new
+    
+    # Send the media message
+    response = api_service.send_media_message(@customer.whatsapp_chat_id, media_url, caption, media_type)
+    
+    if response[:success]
+      # Save the message to the database
+      message_data = response[:data]
+      
+      # Create a format similar to what the API returns for received messages
+      # So we can use the import_from_api method
+      formatted_data = {
+        message: {
+          _data: {
+            id: { _serialized: message_data[:id] },
+            t: Time.current.to_i,
+            fromMe: true,
+            status: 'sent',
+            type: media_type,
+            caption: caption
+          },
+          body: caption || "Media: #{media_type}"
+        }
+      }
+      
+      # Import the message to the database
+      WhatsappMessage.import_from_api(@customer, formatted_data)
+      
+      render json: { 
+        success: true, 
+        message: "Media message sent successfully", 
+        data: message_data 
+      }
+    else
+      render json: { 
+        success: false, 
+        error: response[:error] || "Failed to send media message" 
+      }
+    end
+  end
+
   private
 
   def set_customer

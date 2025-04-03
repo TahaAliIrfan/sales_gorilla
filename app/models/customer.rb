@@ -4,6 +4,8 @@ class Customer < ApplicationRecord
   has_many :recordings, dependent: :destroy
   has_many :customer_activities, dependent: :destroy
   has_many :tasks, dependent: :destroy
+  has_many :messages, dependent: :destroy
+  has_many :whatsapp_messages, dependent: :destroy
   
   # Add file attachment capability
   has_one_attached :file
@@ -21,6 +23,7 @@ class Customer < ApplicationRecord
   before_validation :set_default_values
   before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
   before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
+  before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
   before_save :record_activity_changes
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   
@@ -319,6 +322,52 @@ class Customer < ApplicationRecord
     followup_date.present? && followup_date > Time.current
   end
   
+  # WhatsApp methods
+  
+  # Fetch and store WhatsApp messages
+  def fetch_and_store_whatsapp_messages
+    return [] if whatsapp_chat_id.blank?
+    
+    # Create a new instance of the WhatsApp API service
+    whatsapp_service = Whatsapp::ApiService.new
+    
+    # Skip if credentials not configured
+    return [] unless whatsapp_service.credentials_configured?
+    
+    Rails.logger.info("Fetching WhatsApp messages from API for customer #{id} (#{name})")
+    
+    # Get the messages for this chat
+    response = whatsapp_service.get_chat_room(whatsapp_chat_id)
+    
+    # Return empty array if API call was not successful
+    if !response[:success] || !response[:data] || !response[:data][:data]
+      Rails.logger.error("API call to get WhatsApp messages failed for customer #{id}: #{response[:error]}")
+      return []
+    end
+    
+    # Log the number of messages received
+    message_count = response[:data][:data].size
+    Rails.logger.info("Received #{message_count} WhatsApp messages from API for customer #{id}")
+    
+    # Import messages into the database
+    stored_messages = WhatsappMessage.import_messages(self, response[:data][:data])
+    
+    Rails.logger.info("Successfully stored #{stored_messages.size} WhatsApp messages in database for customer #{id}")
+    
+    # Return the WhatsApp messages from the database to ensure we're using the stored versions
+    whatsapp_messages.ordered
+  end
+  
+  # Get all WhatsApp messages for this customer from the database
+  # If force_refresh is true, it will fetch from API first
+  def get_whatsapp_messages(force_refresh: false)
+    if force_refresh || whatsapp_messages.count == 0
+      fetch_and_store_whatsapp_messages
+    end
+    
+    whatsapp_messages.ordered
+  end
+  
   private
   
   def acceptable_file
@@ -381,6 +430,12 @@ class Customer < ApplicationRecord
   
   def sync_whatsapp_status
     self.whatsapp_status = 'Incorrect Number' if call_status == 'Incorrect Number'
+  end
+  
+  def sync_whatsapp_chat_id
+    # Format the phone number for WhatsApp chat ID
+    phone_without_plus = phone.gsub(/\A\+/, '')
+    self.whatsapp_chat_id = "#{phone_without_plus}@c.us"
   end
   
   def record_activity_changes

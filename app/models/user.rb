@@ -5,6 +5,8 @@ class User < ApplicationRecord
   has_many :customers
   has_many :recordings
   has_many :tasks, dependent: :nullify
+  has_many :messages, dependent: :nullify
+  has_many :notifications, dependent: :destroy
   
   # Validate phone number format
   validates :phone_number, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
@@ -40,6 +42,19 @@ class User < ApplicationRecord
   
   def overdue_tasks
     tasks.overdue
+  end
+  
+  # Notification methods
+  def unread_notifications_count
+    notifications.unread.count
+  end
+  
+  def recent_notifications(limit = 10)
+    notifications.recent.limit(limit)
+  end
+  
+  def mark_all_notifications_as_read!
+    notifications.unread.update_all(read: true)
   end
   
   # Google Calendar methods

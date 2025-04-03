@@ -38,6 +38,18 @@ class CustomerPolicy < ApplicationPolicy
   def update_communication_status?
     user.admin? || record.user_id == user.id
   end
+
+  def whatsapp_messages?
+    user.admin? || record.user_id == user.id
+  end
+  
+  def send_whatsapp_text?
+    user.admin? || record.user_id == user.id
+  end
+  
+  def send_whatsapp_media?
+    user.admin? || record.user_id == user.id
+  end
   
   def bulk_assign?
     user.admin?

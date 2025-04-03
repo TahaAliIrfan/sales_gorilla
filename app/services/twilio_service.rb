@@ -4,6 +4,13 @@ class TwilioService
     @auth_token = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
     @application_sid = Rails.application.credentials.dig(:TWILIO_APP_SID)
     @default_caller_id = '+447897021964'
+    
+    # Verify credentials are present
+    unless @account_sid && @auth_token && @application_sid
+      Rails.logger.error("Missing required phone service credentials")
+      raise "Phone service credentials not properly configured"
+    end
+    
     @client = Twilio::REST::Client.new(@account_sid, @auth_token)
     @app_url = 'https://crm.tecaudex.com'
 
@@ -15,16 +22,22 @@ class TwilioService
   end
 
   def generate_capability_token
-    capability = Twilio::JWT::ClientCapability.new(
-      @account_sid,
-      @auth_token
-    )
-    
-    capability.add_scope(
-      Twilio::JWT::ClientCapability::OutgoingClientScope.new(@application_sid)
-    )
+    begin
+      capability = Twilio::JWT::ClientCapability.new(
+        @account_sid,
+        @auth_token
+      )
+      
+      capability.add_scope(
+        Twilio::JWT::ClientCapability::OutgoingClientScope.new(@application_sid)
+      )
 
-    capability.to_s
+      capability.to_s
+    rescue => e
+      Rails.logger.error("Error generating capability token: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      raise "Unable to initialize phone service. Please try again later."
+    end
   end
 
   def generate_voice_response(phone_number, caller_id = nil, customer_id, user_id)
@@ -39,8 +52,16 @@ class TwilioService
           d.number(phone_number)
         end
       else
-        r.say('Thanks for calling our team. We will reach out to you shortly.', voice: 'alice')
+        r.say('Thanks for calling. We will reach out to you shortly.', voice: 'alice')
       end
+    end
+  rescue => e
+    Rails.logger.error("Error generating voice response: #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    
+    # Return a basic response if we encounter an error
+    Twilio::TwiML::VoiceResponse.new do |r|
+      r.say('We are experiencing technical difficulties. Please try again later.', voice: 'alice')
     end
   end
 
@@ -54,8 +75,16 @@ class TwilioService
           d.number(phone_number)
         end
       else
-        r.say('Thanks for calling our team. We will reach out to you shortly.', voice: 'alice')
+        r.say('Thanks for calling. We will reach out to you shortly.', voice: 'alice')
       end
+    end
+  rescue => e
+    Rails.logger.error("Error generating response for inbound call: #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    
+    # Return a basic response if we encounter an error
+    Twilio::TwiML::VoiceResponse.new do |r|
+      r.say('We are experiencing technical difficulties. Please try again later.', voice: 'alice')
     end
   end
 
@@ -74,7 +103,7 @@ class TwilioService
     
     return recordings_data
   rescue Twilio::REST::RestError => e
-    Rails.logger.error "Twilio Error fetching recordings: #{e.message}"
+    Rails.logger.error "Error fetching recordings: #{e.message}"
     []
   end
 
@@ -90,7 +119,7 @@ class TwilioService
       media_url: recording.media_url.to_s
     }
   rescue Twilio::REST::RestError => e
-    Rails.logger.error "Twilio Error fetching recording metadata #{recording_sid}: #{e.message}"
+    Rails.logger.error "Error fetching recording metadata #{recording_sid}: #{e.message}"
     raise e
   end
 
@@ -110,22 +139,29 @@ class TwilioService
       }
     }
   rescue Twilio::REST::RestError => e
-    Rails.logger.error "Twilio Error fetching recording #{recording_sid}: #{e.message}"
+    Rails.logger.error "Error fetching recording #{recording_sid}: #{e.message}"
     raise e
   end
 
   def fetch_available_numbers
-    incoming_numbers = @client.incoming_phone_numbers.list
-    
-    numbers = incoming_numbers.map do |number|
-      {
-        phone_number: number.phone_number,
-        friendly_name: number.friendly_name
-      }
+    begin
+      incoming_numbers = @client.incoming_phone_numbers.list
+      
+      numbers = incoming_numbers.map do |number|
+        {
+          phone_number: number.phone_number,
+          friendly_name: number.phone_number
+        }
+      end
+      
+      return numbers unless numbers.empty?
+      
+      # Return default number if no numbers found
+      [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
+    rescue => e
+      Rails.logger.error("Error fetching available phone numbers: #{e.message}")
+      # Return just the default number as a fallback
+      [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
     end
-    
-    return numbers unless numbers.empty?
-    
-    [{ phone_number: @default_caller_id, friendly_name: 'Default Number' }]
   end
 end 

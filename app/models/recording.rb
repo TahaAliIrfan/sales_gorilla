@@ -1,6 +1,7 @@
 class Recording < ApplicationRecord
   belongs_to :user
   belongs_to :customer
+  has_many :ai_analyses, dependent: :destroy
   
   validates :sid, presence: true, uniqueness: true
   validates :call_sid, presence: true
@@ -17,5 +18,9 @@ class Recording < ApplicationRecord
   
   def transcribed?
     transcription.present? && transcription_status == "completed"
+  end
+  
+  def latest_ai_analysis
+    ai_analyses.order(created_at: :desc).first
   end
 end

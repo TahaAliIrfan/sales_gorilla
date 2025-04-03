@@ -15,7 +15,7 @@
   <body class="h-full">
     <div class="min-h-full">
       <!-- Sidebar - hidden by default on mobile -->
-      <div class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out -translate-x-full lg:translate-x-0">
+      <div class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-200 ease-in-out lg:translate-x-0">
         <!-- Logo section -->
         <div class="flex h-16 items-center justify-start px-6 bg-gray-800">
           <span class="text-xl font-bold text-white">Tecaudex CRM</span>
@@ -61,32 +61,52 @@
               Customers
             <% end %>
 
-            <%= link_to deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deals' ? 'bg-gray-800 text-white' : ''}" do %>
-              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              Deals
+            <% if current_user&.admin? %>
+              <%= link_to deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deals' && action_name != 'my_deals' ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Deals
+              <% end %>
             <% end %>
 
-            <%= link_to my_deals_deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'deals' && action_name == 'my_deals' ? 'bg-gray-800 text-white' : ''}" do %>
+            <%= link_to my_deals_deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_user&.admin? ? 'ml-6 text-sm' : ''} #{controller_name == 'deals' && action_name == 'my_deals' ? 'bg-gray-800 text-white' : ''}" do %>
               <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
               </svg>
               My Deals
             <% end %>
 
-            <%= link_to tasks_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'tasks' && action_name != 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
-              <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
-              </svg>
-              Tasks
+            <% if current_user&.admin? %>
+              <%= link_to tasks_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'tasks' && action_name != 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
+                </svg>
+                Tasks
+              <% end %>
             <% end %>
 
-            <%= link_to my_tasks_tasks_path(due_date: 'today'), class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md ml-6 #{controller_name == 'tasks' && action_name == 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
+            <%= link_to my_tasks_tasks_path(status: 'pending'), class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_user&.admin? ? 'ml-6 text-sm' : ''} #{controller_name == 'tasks' && action_name == 'my_tasks' ? 'bg-gray-800 text-white' : ''}" do %>
               <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 12l2 2 4-4" />
               </svg>
               My Tasks
+            <% end %>
+
+            <% if current_user&.admin? %>
+              <%= link_to recordings_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'recordings' && action_name != 'my_recordings' ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+                Recordings
+              <% end %>
+            <% end %>
+            
+            <%= link_to my_recordings_recordings_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_user&.admin? ? 'ml-6 text-sm' : ''} #{controller_name == 'recordings' && action_name == 'my_recordings' ? 'bg-gray-800 text-white' : ''}" do %>
+              <svg class="mr-3 h-5 w-5 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+              </svg>
+              My Recordings
             <% end %>
 
             <% if current_user&.admin? %>
@@ -130,14 +150,18 @@
                 <h1 class="text-2xl font-semibold text-gray-900">Customers</h1>
               <% elsif controller_name == 'deals' %>
                 <h1 class="text-2xl font-semibold text-gray-900">
-                  <%= action_name == 'my_deals' ? 'My Deals' : 'Deals' %>
+                  <%= current_user&.admin? ? (action_name == 'my_deals' ? 'My Deals' : 'Deals') : 'My Deals' %>
                 </h1>
               <% elsif controller_name == 'tasks' %>
                 <h1 class="text-2xl font-semibold text-gray-900">
-                  <%= action_name == 'my_tasks' ? 'My Tasks' : 'Tasks' %>
+                  <%= current_user&.admin? ? (action_name == 'my_tasks' ? 'My Tasks' : 'Tasks') : 'My Tasks' %>
                 </h1>
               <% elsif controller_name == 'deal_stages' %>
                 <h1 class="text-2xl font-semibold text-gray-900">Deal Stages</h1>
+              <% elsif controller_name == 'recordings' %>
+                <h1 class="text-2xl font-semibold text-gray-900">
+                  <%= current_user&.admin? ? (action_name == 'my_recordings' ? 'My Recordings' : 'Recordings') : 'My Recordings' %>
+                </h1>
               <% else %>
                 <h1 class="text-2xl font-semibold text-gray-900">Tecaudex CRM</h1>
               <% end %>
@@ -177,6 +201,74 @@
                     </a>
                   </div>
                   
+                  <!-- Messages/Notifications dropdown -->
+                  <div class="relative mr-4" data-controller="dropdown">
+                    <button type="button" data-action="dropdown#toggle" class="flex items-center">
+                      <span class="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-600">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                        </svg>
+                      </span>
+                      <% if @unread_notifications_count && @unread_notifications_count > 0 %>
+                        <span id="notification-count" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                          <%= @unread_notifications_count %>
+                        </span>
+                      <% else %>
+                        <span id="notification-count" class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center hidden">
+                          0
+                        </span>
+                      <% end %>
+                    </button>
+                    
+                    <!-- Notifications dropdown -->
+                    <div data-dropdown-target="menu" class="hidden absolute right-0 z-10 mt-2 w-80 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                      <div class="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-sm font-medium text-gray-700">Notifications</h3>
+                        <% if @unread_notifications_count && @unread_notifications_count > 0 %>
+                          <%= button_to mark_all_as_read_notifications_path, method: :post, class: "text-xs text-blue-600 hover:text-blue-800", id: "mark-all-read-btn", data: { turbo: false } do %>
+                            Mark all as read
+                          <% end %>
+                        <% end %>
+                      </div>
+                      
+                      <div id="notifications-list" class="max-h-96 overflow-y-auto">
+                        <% unread_notifications = current_user.notifications.unread.recent.limit(5) %>
+                        <% if unread_notifications.any? %>
+                          <% unread_notifications.each do |notification| %>
+                            <div class="block px-4 py-2 hover:bg-gray-50 border-b border-gray-100 bg-blue-50" data-notification-id="<%= notification.id %>">
+                              <div class="flex items-start">
+                                <div class="flex-1">
+                                  <p class="text-sm text-gray-700"><%= notification.content %></p>
+                                  <p class="text-xs text-gray-500 mt-1"><%= time_ago_in_words(notification.created_at) %> ago</p>
+                                  <div class="mt-1 flex items-center justify-end">
+                                    <% if notification.resource.present? %>
+                                      <a href="<%= notification_path(notification) %>" class="text-xs text-blue-600 hover:text-blue-800">
+                                        View
+                                      </a>
+                                    <% end %>
+                                    <%= button_to mark_as_read_notification_path(notification), method: :post, class: "ml-3 text-xs text-gray-500 hover:text-gray-700", form: { class: 'inline-block' }, data: { turbo: false } do %>
+                                      Mark as read
+                                    <% end %>
+                                  </div>
+                                </div>
+                                <div class="h-2 w-2 bg-blue-500 rounded-full mt-1"></div>
+                              </div>
+                            </div>
+                          <% end %>
+                        <% else %>
+                          <div class="px-4 py-6 text-center text-sm text-gray-500">
+                            No unread notifications
+                          </div>
+                        <% end %>
+                      </div>
+                      
+                      <div class="border-t border-gray-100 px-4 py-2">
+                        <a href="<%= notifications_path %>" class="block w-full text-center py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-md transition-colors">
+                          View all notifications
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                   <%= link_to settings_path, class: "mr-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600" do %>
                     Settings
                   <% end %>

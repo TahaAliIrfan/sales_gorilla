@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -40,6 +40,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "ai_analyses", force: :cascade do |t|
+    t.bigint "recording_id", null: false
+    t.text "summary"
+    t.integer "interest_score"
+    t.text "improvement_points"
+    t.text "next_steps"
+    t.text "followup_message"
+    t.text "followup_email"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recording_id"], name: "index_ai_analyses_on_recording_id"
   end
 
   create_table "customer_activities", force: :cascade do |t|
@@ -87,7 +100,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
     t.text "followup_notes"
     t.string "google_calendar_event_id"
     t.string "google_calendar_event_link"
+    t.string "whatsapp_chat_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
+    t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
 
   create_table "deal_activities", force: :cascade do |t|
@@ -139,6 +154,40 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
     t.index ["user_id"], name: "index_deals_on_user_id"
   end
 
+  create_table "messages", force: :cascade do |t|
+    t.text "content"
+    t.string "message_type"
+    t.string "status"
+    t.string "message_id"
+    t.string "direction"
+    t.bigint "user_id"
+    t.bigint "customer_id"
+    t.string "whatsapp_chat_id"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_messages_on_customer_id"
+    t.index ["direction"], name: "index_messages_on_direction"
+    t.index ["message_id"], name: "index_messages_on_message_id"
+    t.index ["user_id"], name: "index_messages_on_user_id"
+    t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
+  end
+
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "content"
+    t.boolean "read", default: false
+    t.string "notification_type"
+    t.string "resource_type"
+    t.bigint "resource_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["resource_type", "resource_id"], name: "index_notifications_on_resource"
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "recordings", force: :cascade do |t|
     t.string "sid"
     t.integer "duration"
@@ -187,8 +236,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
     t.datetime "google_token_expires_at"
   end
 
+  create_table "whatsapp_messages", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "message_id", null: false
+    t.string "remote_id"
+    t.text "body"
+    t.datetime "timestamp"
+    t.string "direction"
+    t.string "status"
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "timestamp"], name: "index_whatsapp_messages_on_customer_id_and_timestamp"
+    t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
+    t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
+    t.index ["timestamp"], name: "index_whatsapp_messages_on_timestamp"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "ai_analyses", "recordings"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
   add_foreign_key "customers", "users"
@@ -200,8 +267,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_03_26_172603) do
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
+  add_foreign_key "messages", "customers"
+  add_foreign_key "messages", "users"
+  add_foreign_key "notifications", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
+  add_foreign_key "whatsapp_messages", "customers"
 end

@@ -23,33 +23,15 @@ Rails.application.routes.draw do
   get 'tasks/complete'
   get 'settings/edit'
   get 'settings/update'
-  # Remove auto-generated routes
-  # get 'deal_stages/index'
-  # get 'deal_stages/new'
-  # get 'deal_stages/create'
-  # get 'deal_stages/edit'
-  # get 'deal_stages/update'
-  # get 'deal_stages/destroy'
-  # get 'deals/index'
-  # get 'deals/show'
-  # get 'deals/new'
-  # get 'deals/create'
-  # get 'deals/edit'
-  # get 'deals/update'
-  # get 'deals/destroy'
-  # get 'customers/index'
-  # get 'customers/show'
-  # get 'customers/new'
-  # get 'customers/create'
-  # get 'customers/edit'
-  # get 'customers/update'
-  # get 'customers/destroy'
   
   # Add RESTful routes for our models
   resources :customers do
     member do
       patch 'update_status'
       patch 'update_communication_status'
+      get 'whatsapp_messages'
+      post 'send_whatsapp_text'
+      post 'send_whatsapp_media'
     end
     
     # Add routes for follow-ups
@@ -77,6 +59,16 @@ Rails.application.routes.draw do
       patch 'mark_as_won'
       patch 'mark_as_lost'
       patch 'assign_user'
+    end
+  end
+  
+  # Notification routes
+  resources :notifications, only: [:index, :show] do
+    member do
+      post 'mark_as_read'
+    end
+    collection do
+      post 'mark_all_as_read'
     end
   end
   
@@ -133,9 +125,25 @@ Rails.application.routes.draw do
   # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
-  resources :recordings, only: [] do
+  resources :recordings, only: [:index, :show] do
     member do
       get :transcript
+      get :download
+    end
+    collection do
+      get :my_recordings
+    end
+    
+    resources :ai_analyses, only: [:create, :show]
+  end
+
+  # Chat routes
+  resources :chats, only: [:index] do
+    collection do
+      get 'get_chat_id'
     end
   end
+  
+  # Webhook routes
+  post '/chats/messaged_recieve', to: 'webhooks#message_received'
 end

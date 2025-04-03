@@ -51,6 +51,41 @@ export default class extends Controller {
     }
   }
 
+  // Filter customers based on search input
+  filterCustomers(event) {
+    const searchTerm = event.target.value.trim().toLowerCase()
+    const options = this.customerSelectTarget.options
+    
+    // Show all options if search term is empty
+    if (!searchTerm) {
+      for (let i = 0; i < options.length; i++) {
+        options[i].style.display = ''
+      }
+      return
+    }
+    
+    // Hide options that don't match the search term
+    let visibleCount = 0
+    for (let i = 0; i < options.length; i++) {
+      const option = options[i]
+      const customerName = option.dataset.customerName || ''
+      
+      if (i === 0 || customerName.includes(searchTerm)) {
+        option.style.display = ''
+        visibleCount++
+      } else {
+        option.style.display = 'none'
+      }
+    }
+    
+    // Show a message if no customers match the search
+    if (visibleCount <= 1) {
+      this.showStatus(`No customers found matching "${searchTerm}"`, 'info')
+    } else {
+      this.callStatusTarget.classList.add('hidden')
+    }
+  }
+
   // Update call button state based on phone number
   updateCallButtonState() {
     const phoneNumber = this.phoneNumberTarget.value.trim()
@@ -71,7 +106,7 @@ export default class extends Controller {
 
   // Initialize the Twilio Device
   async setupDevice() {
-    this.showStatus('Requesting access token...')
+    this.showStatus('Initializing phone service...')
     
     try {
       const response = await fetch('/calling/token')
@@ -84,7 +119,7 @@ export default class extends Controller {
         throw new Error('No token received from server')
       }
       
-      this.showStatus('Initializing device...')
+      this.showStatus('Setting up phone service...')
       console.log('Token received, initializing device...')
       
       this.device = new Twilio.Device(data.token, {
@@ -95,41 +130,41 @@ export default class extends Controller {
       
       this.setupDeviceListeners()
       
-      this.showStatus('Ready to make calls')
+      this.showStatus('Phone service configured successfully. Ready to make calls.', 'success')
       setTimeout(() => {
         this.callStatusTarget.classList.add('hidden')
       }, 3000)
     } catch (error) {
-      console.error('Error setting up Twilio device:', error)
-      this.showError(`Error initializing device: ${error.message}`)
+      console.error('Error setting up device:', error)
+      this.showError(`Unable to initialize phone service: ${error.message}. Please refresh the page or contact support.`)
     }
   }
 
   // Set up event listeners for the Twilio Device
   setupDeviceListeners() {
     this.device.on('ready', () => {
-      console.log('Twilio Device is ready')
+      console.log('Phone device is ready')
     })
     
     this.device.on('error', (error) => {
-      console.error('Twilio Device Error:', error)
+      console.error('Phone Device Error:', error)
       let errorMessage = 'Error: '
       
       switch(error.code) {
         case 31000:
-          errorMessage += 'Missing or invalid WebRTC requirements'
+          errorMessage += 'Missing or invalid browser requirements for making calls'
           break
         case 31002:
-          errorMessage += 'Error with capability token. Check your Twilio credentials and TwiML app configuration.'
+          errorMessage += 'Authentication error. Please refresh the page or contact support.'
           break
         case 31003:
-          errorMessage += 'Error registering with Twilio. Check your network connection.'
+          errorMessage += 'Error connecting to phone service. Check your network connection.'
           break
         case 31005:
-          errorMessage += 'Microphone access denied. Please allow microphone access.'
+          errorMessage += 'Microphone access denied. Please allow microphone access in your browser settings.'
           break
         case 31008:
-          errorMessage += 'Connection to Twilio failed. Check your network connection.'
+          errorMessage += 'Connection to phone service failed. Check your network connection.'
           break
         case 31009:
           errorMessage += 'Call failed - the number may be invalid or unreachable.'
@@ -172,45 +207,51 @@ export default class extends Controller {
       return
     }
     
-    this.showStatus(`Calling ${phoneNumber} from ${callerId}...`, 'info')
+    this.showStatus(`Calling ${phoneNumber}...`, 'info')
     
-    // Store the customer ID in the session for recording association
-    fetch('/calling/store_customer_id', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-      },
-      body: JSON.stringify({ customer_id: customerId })
-    }).catch(error => {
-      console.error('Error storing customer ID:', error)
-    })
-    
-    const params = {
-      To: phoneNumber,
-      caller_id: callerId,
-      customer_id: customerId
-    }
-    
-    console.log('Making call with params:', params)
-    
-    if (this.device) {
-      try {
-        this.currentConnection = this.device.connect(params)
-        
-        this.currentConnection.on('accept', () => {
-          console.log('Call accepted')
-        })
-        
-        this.currentConnection.on('error', (error) => {
-          console.error('Call connection error:', error)
-        })
-      } catch (error) {
-        console.error('Error connecting call:', error)
-        this.showError('Error connecting call: ' + error.message)
+    try {
+      // Store the customer ID in the session for recording association
+      fetch('/calling/store_customer_id', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ customer_id: customerId })
+      }).catch(error => {
+        console.error('Error storing customer ID:', error)
+      })
+      
+      const params = {
+        To: phoneNumber,
+        caller_id: callerId,
+        customer_id: customerId
       }
-    } else {
-      this.showError('Device not initialized. Please refresh the page.')
+      
+      console.log('Making call with params:', params)
+      
+      if (this.device) {
+        try {
+          this.currentConnection = this.device.connect(params)
+          
+          this.currentConnection.on('accept', () => {
+            console.log('Call accepted')
+          })
+          
+          this.currentConnection.on('error', (error) => {
+            console.error('Call connection error:', error)
+            this.showError(`Call failed: ${error.message || 'Unknown error'}. Please try again.`)
+          })
+        } catch (error) {
+          console.error('Error connecting call:', error)
+          this.showError('Error connecting call: ' + error.message)
+        }
+      } else {
+        this.showError('Phone service not initialized. Please refresh the page and try again.')
+      }
+    } catch (error) {
+      console.error('Unexpected error during call setup:', error)
+      this.showError('Unexpected error occurred. Please refresh the page and try again.')
     }
   }
 
@@ -388,29 +429,48 @@ export default class extends Controller {
     this.audioPlayerTarget.play()
   }
 
-  // Show status message
+  // Display status messages with appropriate styling
   showStatus(message, type = 'info') {
-    this.callStatusTarget.classList.remove('hidden', 'bg-gray-100', 'bg-red-100', 'bg-green-100', 'bg-blue-100', 'bg-yellow-100')
-    this.statusMessageTarget.textContent = message
+    this.statusMessageTarget.innerHTML = ''
     
-    switch (type) {
-      case 'error':
-        this.callStatusTarget.classList.add('bg-red-100', 'text-red-800')
-        break
+    // Create icon based on status type
+    let iconSvg = ''
+    let bgColor = ''
+    let textColor = ''
+    
+    switch(type) {
       case 'success':
-        this.callStatusTarget.classList.add('bg-green-100', 'text-green-800')
+        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        bgColor = 'bg-green-50'
+        textColor = 'text-green-800'
         break
       case 'warning':
-        this.callStatusTarget.classList.add('bg-yellow-100', 'text-yellow-800')
+        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>'
+        bgColor = 'bg-yellow-50'
+        textColor = 'text-yellow-800'
         break
-      case 'info':
-      default:
-        this.callStatusTarget.classList.add('bg-blue-100', 'text-blue-800')
+      case 'error':
+        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        bgColor = 'bg-red-50'
+        textColor = 'text-red-800'
         break
+      default: // info
+        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        bgColor = 'bg-indigo-50'
+        textColor = 'text-indigo-800'
     }
+    
+    // Set status message with icon
+    this.statusMessageTarget.innerHTML = `${iconSvg}${message}`
+    
+    // Update the status container styling
+    this.callStatusTarget.className = `${bgColor} ${textColor} p-4 rounded-lg mb-5 shadow-sm flex items-center`
+    
+    // Show the status message
+    this.callStatusTarget.classList.remove('hidden')
   }
 
-  // Show error message
+  // Show error message (convenience method)
   showError(message) {
     this.showStatus(message, 'error')
   }

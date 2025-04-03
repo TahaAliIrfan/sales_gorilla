@@ -75,3 +75,37 @@ Configure scheduled jobs in `config/sidekiq_scheduler.yml`
 ## Deployment
 
 The application is configured to deploy using Capistrano with support for Sidekiq.
+
+## WhatsApp Integration
+
+### WhatsApp Chat IDs
+
+The system supports WhatsApp messaging through the WhatsApp API. For this to work properly, customer records need to have a properly formatted WhatsApp chat ID stored in the `whatsapp_chat_id` field.
+
+The WhatsApp chat ID format is: `<countrycode_short>@c.us`
+
+For example, if a customer's phone number is `+491234567890`, their WhatsApp chat ID would be `491234567890@c.us` (without the + sign).
+
+#### Rake Tasks for WhatsApp Chat IDs
+
+There are several rake tasks available to help manage WhatsApp chat IDs:
+
+1. **Add WhatsApp chat IDs to all customers**:
+   ```bash
+   rails customers:add_whatsapp_chat_ids
+   ```
+   This task adds WhatsApp chat IDs in the correct format to all customers with phone numbers.
+
+2. **Synchronize missing WhatsApp chat IDs**:
+   ```bash
+   rails customers:sync_missing_whatsapp_chat_ids
+   ```
+   This task will only update customers who have a phone number but no WhatsApp chat ID.
+
+3. **Setup WhatsApp chat ID synchronization**:
+   ```bash
+   rails customers:setup_whatsapp_chat_id_sync
+   ```
+   This task provides instructions for setting up automatic WhatsApp chat ID synchronization.
+
+Note: The system automatically keeps the WhatsApp chat ID in sync with the phone number through a model callback.
