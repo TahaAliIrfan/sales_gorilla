@@ -129,6 +129,14 @@ module Api
         end
 
         if customer.save
+
+          if customer.phone.present?
+            phone_without_plus = customer.phone.gsub(/\A\+/, '')
+            whatsapp_chat_id = "#{phone_without_plus}@c.us"
+            customer.update!(whatsapp_chat_id: whatsapp_chat_id)
+          end
+
+
           return render json: { success: true, message: "Successfully added" }, status: :ok
         end
       end
