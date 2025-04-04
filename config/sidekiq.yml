@@ -1,6 +1,7 @@
 ---
 :concurrency: 5
 :queues:
+  - notifications
   - recordings
   - followups
   - default
