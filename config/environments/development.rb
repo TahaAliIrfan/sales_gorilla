@@ -48,12 +48,12 @@ Rails.application.configure do
   config.action_mailer.smtp_settings = {
     address:              'smtp.mailersend.net',
     port:                 587,
-    domain:               'tecaudex.com',
-    user_name:            'ms-6ba83d@tecaudex.com',
+    user_name:            'MS_zBm5Jr@tecaudex.com',
     password:             Rails.application.credentials.dig(:MAIL_API_KEY),
     authentication:       'plain',
     enable_starttls_auto: true
   }
+
 
   config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
   config.action_mailer.perform_deliveries = true

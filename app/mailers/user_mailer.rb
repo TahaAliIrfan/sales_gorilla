@@ -1,5 +1,5 @@
 class UserMailer < ApplicationMailer
-  default from: 'connect@tecaudex.com'
+  default from: 'crm@tecaudex.com'
 
   # Send an email to a user when they are assigned a customer/lead
   def customer_assignment_notification(user, customer)

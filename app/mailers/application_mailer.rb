@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "connect@tecaudex.com"
+  default from: "crm@tecaudex.com"
   layout "mailer"
 end
