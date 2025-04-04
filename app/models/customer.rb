@@ -483,20 +483,10 @@ class Customer < ApplicationRecord
   
   # Create a notification and send an email when a customer is assigned to a user
   def notify_user_of_assignment
-    # Create notification
-    Notification.create!(
-      user_id: user_id,
-      content: "You have been assigned a new lead: #{name}",
-      notification_type: 'system',
-      resource: self,
-      read: false
-    )
+    # Skip if no user is assigned
+    return unless user_id.present?
     
-    # Send email notification
-    begin
-      UserMailer.customer_assignment_notification(user, self).deliver_now
-    rescue => e
-      Rails.logger.error "Failed to send assignment email to user #{user.email}: #{e.message}"
-    end
+    # Queue the notification job
+    CustomerAssignmentNotificationWorker.perform_async(user_id, id)
   end
 end
