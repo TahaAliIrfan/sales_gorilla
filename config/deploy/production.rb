@@ -9,7 +9,7 @@
 
 set :stage, :production
 set :rails_env, :production
-set :branch, "wapi_implementation"
+set :branch, "master"
 set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
