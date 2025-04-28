@@ -11,12 +11,59 @@ class DealsController < ApplicationController
 
   def index
     @deals = policy_scope(Deal)
+    # Set default filter_range to '30' (affects only won/lost deals)
+    params[:filter_range] ||= '30'
+    apply_filters
     @deal_stages = DealStage.all
+    @users = User.all
+    @filter_range = params[:filter_range] || 'all'
+    
+    # Set date range based on filter (for won/lost deals)
+    if @filter_range != 'all'
+      @custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+      @custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+      
+      case @filter_range
+      when '30'
+        @start_date = 30.days.ago.beginning_of_day
+        @end_date = Time.current.end_of_day
+      when '90'
+        @start_date = 90.days.ago.beginning_of_day
+        @end_date = Time.current.end_of_day
+      when 'custom'
+        @start_date = @custom_start_date.beginning_of_day if @custom_start_date
+        @end_date = @custom_end_date.end_of_day if @custom_end_date
+      end
+    end
   end
 
   def my_deals
     @deals = policy_scope(Deal).assigned_to(current_user)
+    # Set default filter_range to '30' (affects only won/lost deals)
+    params[:filter_range] ||= '30'
+    apply_filters
     @deal_stages = DealStage.all
+    @users = User.all
+    @filter_range = params[:filter_range] || 'all'
+    
+    # Set date range based on filter (for won/lost deals)
+    if @filter_range != 'all'
+      @custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+      @custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+      
+      case @filter_range
+      when '30'
+        @start_date = 30.days.ago.beginning_of_day
+        @end_date = Time.current.end_of_day
+      when '90'
+        @start_date = 90.days.ago.beginning_of_day
+        @end_date = Time.current.end_of_day
+      when 'custom'
+        @start_date = @custom_start_date.beginning_of_day if @custom_start_date
+        @end_date = @custom_end_date.end_of_day if @custom_end_date
+      end
+    end
+    
     render :index
   end
 
@@ -358,12 +405,14 @@ class DealsController < ApplicationController
 
   def mark_as_won
     authorize @deal
-    if @deal.update(status: 'won', closing_date: @deal.closing_date || Date.today)
+    closing_date_value = params[:closing_date].present? ? Date.parse(params[:closing_date]) : (Date.today)
+    
+    if @deal.update(status: 'won', closing_date: closing_date_value)
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
         action: 'status_update',
-        details: "Deal marked as Won",
+        details: "Deal marked as Won with closing date #{closing_date_value.strftime('%b %d, %Y')}",
         user_id: current_user.id
       )
       redirect_to @deal, notice: 'Deal was marked as Won.'
@@ -374,12 +423,14 @@ class DealsController < ApplicationController
 
   def mark_as_lost
     authorize @deal
-    if @deal.update(status: 'lost', closing_date: @deal.closing_date || Date.today)
+    closing_date_value = params[:closing_date].present? ? Date.parse(params[:closing_date]) : (Date.today)
+    
+    if @deal.update(status: 'lost', closing_date: closing_date_value)
       # Create activity
       DealActivity.create(
         deal_id: @deal.id,
         action: 'status_update',
-        details: "Deal marked as Lost",
+        details: "Deal marked as Lost with closing date #{closing_date_value.strftime('%b %d, %Y')}",
         user_id: current_user.id
       )
       redirect_to @deal, notice: 'Deal was marked as Lost.'
@@ -407,5 +458,50 @@ class DealsController < ApplicationController
   
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
+  end
+
+  def apply_filters
+    # Filter by status
+    if params[:status].present? && %w[active won lost].include?(params[:status])
+      @deals = @deals.where(status: params[:status])
+    end
+    
+    # Filter by deal stage
+    if params[:deal_stage_id].present?
+      @deals = @deals.where(deal_stage_id: params[:deal_stage_id])
+    end
+    
+    # Filter by user
+    if params[:user_id].present? && params[:user_id] != current_user.id.to_s
+      @deals = @deals.where(user_id: params[:user_id])
+    end
+    
+    # Filter by closing date (only applies to won and lost deals)
+    if params[:filter_range].present? && params[:filter_range] != 'all'
+      # Calculate date range
+      case params[:filter_range]
+      when '30'
+        start_date = 30.days.ago.beginning_of_day
+        end_date = Time.current.end_of_day
+      when '90'
+        start_date = 90.days.ago.beginning_of_day
+        end_date = Time.current.end_of_day
+      when 'custom'
+        start_date = params[:start_date].present? ? Date.parse(params[:start_date]).beginning_of_day : nil
+        end_date = params[:end_date].present? ? Date.parse(params[:end_date]).end_of_day : nil
+      end
+      
+      # Apply filter based on closing date (only to won/lost deals)
+      if start_date && end_date
+        if params[:status].present? && %w[won lost].include?(params[:status])
+          # If status filter is explicitly set to won or lost, apply closing date filter
+          @deals = @deals.where(closing_date: start_date..end_date)
+        else
+          # Otherwise, filter won/lost deals by closing date but keep all active deals
+          @deals = @deals.where("(status = 'active') OR (status IN ('won', 'lost') AND closing_date BETWEEN ? AND ?)", 
+                               start_date, end_date)
+        end
+      end
+    end
   end
 end

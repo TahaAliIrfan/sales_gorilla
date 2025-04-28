@@ -1,4 +1,40 @@
 Rails.application.routes.draw do
+  get 'manager/dashboard', to: 'manager#dashboard', as: 'manager_dashboard'
+  get 'manager/team_hierarchy', to: 'manager#team_hierarchy', as: 'team_hierarchy'
+  get 'users/index'
+  get 'users/show'
+  get 'users/associates'
+  get 'users/managers'
+  # Remove auto-generated routes
+  # get 'role_assignments/create'
+  # get 'role_assignments/destroy'
+  # get 'roles/index'
+  # get 'roles/new'
+  # get 'roles/create'
+  # get 'roles/edit'
+  # get 'roles/update'
+  # get 'roles/destroy'
+  
+  # Add proper resources for roles and role assignments
+  resources :roles
+  resources :role_assignments, only: [:create, :destroy]
+  
+  # Add a route for user management with role assignment
+  resources :users, only: [:index, :show] do
+    member do
+      post :assign_role
+      delete :remove_role
+      get :manage_associates
+      post :assign_associate
+      delete :remove_associate
+    end
+    
+    collection do
+      get :associates
+      get :managers
+    end
+  end
+  
   # Sidekiq Web UI
   require 'sidekiq/web'
   
@@ -32,10 +68,21 @@ Rails.application.routes.draw do
       get 'whatsapp_messages'
       post 'send_whatsapp_text'
       post 'send_whatsapp_media'
+      post 'analyze_phone'
     end
     
     # Add routes for follow-ups
     resources :followups, controller: 'customer_followups', only: [:new, :create]
+    
+    # Add routes for emails
+    resources :emails do
+      collection do
+        get 'fetch'
+      end
+      member do
+        post 'mark_as_read'
+      end
+    end
     
     collection do
       post 'bulk_assign'

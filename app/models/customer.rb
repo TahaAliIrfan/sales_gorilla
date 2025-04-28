@@ -6,7 +6,8 @@ class Customer < ApplicationRecord
   has_many :tasks, dependent: :destroy
   has_many :messages, dependent: :destroy
   has_many :whatsapp_messages, dependent: :destroy
-  
+  has_many :emails, dependent: :destroy
+
   # Add file attachment capability
   has_one_attached :file
   
@@ -27,6 +28,7 @@ class Customer < ApplicationRecord
   before_save :record_activity_changes
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
+  after_save :analyze_phone_number, if: -> { phone.present? }
   
   # Constants for dropdown fields
   LEAD_SOURCES = {
@@ -36,7 +38,11 @@ class Customer < ApplicationRecord
     'Social Media Platforms' => 'Social Media Platforms',
     'Website' => 'Website',
     'CCR' => 'CCR',
-    'Inbound' => 'Inbound'
+    'Inbound' => 'Inbound',
+    'Inbound_1' => 'Inbound_1',
+    'Inbound_2' => 'Inbound_2',
+    'Inbound_3' => 'Inbound_3',
+    'WA' => 'WA'
   }.freeze
   
   PROJECT_TYPES = {
@@ -294,6 +300,29 @@ class Customer < ApplicationRecord
     nil
   end
   
+  # Analyze the customer's phone number using DeepSeek to identify country, timezone, and preferred calling time
+  def analyze_phone_number
+    return false unless phone.present?
+
+    return false if preferred_calling_time.present? && preferred_calling_time.downcase != 'not applicable'
+    
+    Rails.logger.info("Queuing phone analysis for customer #{id} (#{name}) with phone #{phone}")
+    
+    # Enqueue the background job to analyze the phone number
+    job_id = CustomerPhoneAnalysisWorker.perform_async(id)
+    
+    if job_id
+      Rails.logger.info("Successfully queued phone analysis job #{job_id} for customer #{id}")
+      true
+    else
+      Rails.logger.error("Failed to queue phone analysis job for customer #{id}")
+      false
+    end
+  rescue => e
+    Rails.logger.error("Error queueing phone analysis for customer #{id}: #{e.message}")
+    false
+  end
+  
   # Follow-up methods
   def schedule_followup(followup_date, notes, user, add_to_calendar = true)
     return false unless user.present?
@@ -323,7 +352,105 @@ class Customer < ApplicationRecord
     followup_date.present? && followup_date > Time.current
   end
   
-  # WhatsApp methods
+  # Check if current time matches the preferred calling time
+  def is_preferred_calling_time?
+    return false unless preferred_calling_time.present? && preferred_calling_time != 'Not Applicable'
+    return false unless current_time = current_time_in_timezone
+    
+    # Current time details
+    current_hour = current_time.hour
+    current_day = current_time.strftime("%A").downcase # "monday", "tuesday", etc.
+    current_weekday = !current_time.saturday? && !current_time.sunday? # Is it a weekday?
+    
+    # Extract days of week if specified in parentheses
+    day_constraints = []
+    if preferred_calling_time =~ /\(([^)]+)\)/
+      day_part = $1.downcase
+      # Check for common day patterns
+      if day_part.include?("weekday") || day_part.include?("week day")
+        day_constraints = %w[monday tuesday wednesday thursday friday]
+      elsif day_part.include?("weekend")
+        day_constraints = %w[saturday sunday]
+      elsif day_part.include?("monday to friday") || day_part.include?("mon to fri")
+        day_constraints = %w[monday tuesday wednesday thursday friday]
+      elsif day_part =~ /([a-zA-Z]+)\s+to\s+([a-zA-Z]+)/i
+        start_day = $1.downcase
+        end_day = $2.downcase
+        all_days = %w[monday tuesday wednesday thursday friday saturday sunday]
+        start_idx = all_days.index(start_day)
+        end_idx = all_days.index(end_day)
+        if start_idx && end_idx
+          # Handle both normal ranges (mon-fri) and wrap-around ranges (fri-tue)
+          if start_idx <= end_idx
+            day_constraints = all_days[start_idx..end_idx]
+          else
+            day_constraints = all_days[start_idx..-1] + all_days[0..end_idx]
+          end
+        end
+      else
+        # Check for individual days mentioned
+        %w[monday tuesday wednesday thursday friday saturday sunday].each do |day|
+          day_constraints << day if day_part.include?(day)
+        end
+      end
+    end
+    
+    # If day constraints exist and current day doesn't match, return false
+    if day_constraints.any? && !day_constraints.include?(current_day)
+      return false
+    end
+    
+    # Clean the time part by removing day constraints if they exist
+    time_part = preferred_calling_time.gsub(/\s*\([^)]+\)/, '').strip
+    
+    # Case 1: Range like "10 AM - 6 PM PKT" or "9AM-11AM"
+    if time_part =~ /(\d{1,2})\s*([AaPp][Mm])(?:\s*(?:[-–—])\s*)(\d{1,2})\s*([AaPp][Mm])(?:\s*([A-Za-z]{3,})?)?/
+      start_hour = $1.to_i
+      start_ampm = $2.upcase
+      end_hour = $3.to_i
+      end_ampm = $4.upcase
+      
+      # Convert to 24-hour format
+      start_hour = start_hour % 12
+      start_hour += 12 if start_ampm == "PM"
+      
+      end_hour = end_hour % 12
+      end_hour += 12 if end_ampm == "PM"
+      
+      # Check if current hour is within range
+      if start_hour <= end_hour
+        return current_hour >= start_hour && current_hour <= end_hour
+      else
+        # Handle overnight ranges like "10 PM - 2 AM"
+        return current_hour >= start_hour || current_hour <= end_hour
+      end
+    
+    # Case 2: Morning, Afternoon, Evening, Night
+    elsif time_part =~ /morning/i
+      return current_hour >= 7 && current_hour < 12
+    elsif time_part =~ /afternoon/i
+      return current_hour >= 12 && current_hour < 17
+    elsif time_part =~ /evening/i
+      return current_hour >= 17 && current_hour < 21
+    elsif time_part =~ /night/i
+      return current_hour >= 21 || current_hour < 7
+      
+    # Case 3: Simple time like "9 AM PKT" or "9 PM"
+    elsif time_part =~ /(\d{1,2})\s*([AaPp][Mm])(?:\s*([A-Za-z]{3,})?)?/
+      hour = $1.to_i
+      ampm = $2.upcase
+      
+      # Convert to 24-hour format
+      hour = hour % 12
+      hour += 12 if ampm == "PM"
+      
+      # Allow a 1-hour window around the specified time
+      return (current_hour >= hour - 1) && (current_hour <= hour)
+    end
+    
+    # Default: no match found
+    false
+  end
   
   # Fetch and store WhatsApp messages
   def fetch_and_store_whatsapp_messages
@@ -488,5 +615,10 @@ class Customer < ApplicationRecord
     
     # Queue the notification job
     CustomerAssignmentNotificationWorker.perform_async(user_id, id)
+  end
+  
+  # Queue phone analysis when phone number is added or changed
+  def queue_phone_analysis
+    analyze_phone_number
   end
 end

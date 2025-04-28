@@ -469,4 +469,62 @@
       </div>
     </div>
   </div>
+
+  <!-- Call success statistics -->
+  <div class="col-span-12 md:col-span-4 bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+      <h3 class="font-medium">Call Success Rate</h3>
+      <p class="text-xs text-blue-100 mt-1">Success: Calls ≥ 60 seconds</p>
+    </div>
+    
+    <div class="p-5">
+      <!-- Call Success/Failed Stats -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="text-center p-3 bg-blue-50 rounded-lg">
+          <div class="text-xs text-blue-700 font-medium">Successful</div>
+          <div class="text-2xl font-bold text-blue-600"><%= @my_successful_calls || 0 %></div>
+          <div class="text-xs text-blue-400">≥ 60 seconds</div>
+        </div>
+        
+        <div class="text-center p-3 bg-red-50 rounded-lg">
+          <div class="text-xs text-red-700 font-medium">Failed</div>
+          <div class="text-2xl font-bold text-red-600"><%= @my_failed_calls || 0 %></div>
+          <div class="text-xs text-red-400">< 60 seconds</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-span-12 md:col-span-4 bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="p-5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white">
+      <h3 class="font-medium">Team Call Performance</h3>
+      <p class="text-xs text-indigo-100 mt-1">Team average vs your performance</p>
+    </div>
+    
+    <div class="p-5">
+      <!-- Team vs My Performance -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div class="text-center p-3 bg-indigo-50 rounded-lg">
+          <div class="text-xs text-indigo-700 font-medium">Team Success</div>
+          <div class="text-2xl font-bold text-indigo-600"><%= @team_success_rate || 0 %>%</div>
+          <div class="text-xs text-indigo-400">Calls ≥ 60s</div>
+        </div>
+        
+        <div class="text-center p-3 bg-indigo-50 rounded-lg relative">
+          <div class="text-xs text-indigo-700 font-medium">Your Success</div>
+          <div class="text-2xl font-bold <%= @my_success_rate.to_i >= @team_success_rate.to_i ? 'text-green-600' : 'text-red-600' %>">
+            <%= @my_success_rate || 0 %>%
+          </div>
+          <div class="text-xs text-indigo-400">Calls ≥ 60s</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center text-xs text-gray-500 mb-4">
+      <div class="w-3 h-3 rounded-full bg-blue-500 mr-1"></div>
+      <span class="mr-4">Success (≥ 60s)</span>
+      <div class="w-3 h-3 rounded-full bg-red-500 mr-1"></div>
+      <span>Failed (< 60s)</span>
+    </div>
+  </div>
 </div> 

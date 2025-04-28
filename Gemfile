@@ -66,8 +66,8 @@ gem 'omniauth'
 gem 'omniauth-rails_csrf_protection'
 gem 'aws-sdk-s3'
 
-# Google API client for Calendar integration
-gem 'google-api-client', '~> 0.53.0'
+# Google API client for Calendar and Gmail integration
+gem 'google-api-client', '~> 0.53.0', require: ['google/apis/gmail_v1', 'google/apis/calendar_v3']
 
 # Authorization
 gem 'pundit'
@@ -81,6 +81,9 @@ gem 'kaminari'
 # Background job processing
 gem "sidekiq", "~> 7.2"
 gem "sidekiq-scheduler", "~> 5.0"
+
+# Mail gem for email processing
+gem 'mail'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

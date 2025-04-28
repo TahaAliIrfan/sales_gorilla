@@ -458,6 +458,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kaminari
+  mail
   omniauth
   omniauth-google-oauth2
   omniauth-rails_csrf_protection

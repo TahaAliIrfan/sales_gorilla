@@ -3,6 +3,8 @@
 :queues:
   - notifications
   - recordings
+  - emails
+  - whatsapp_analysis
   - followups
   - default
   - mailers

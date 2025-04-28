@@ -5,6 +5,10 @@ class CustomerPolicy < ApplicationPolicy
     def resolve
       if user.admin?
         scope.all
+      elsif user.manager?
+        # Managers can see their own customers and customers of their associates
+        associate_ids = user.associates.pluck(:id)
+        scope.where(user_id: [user.id] + associate_ids)
       else
         scope.where(user_id: user.id)
       end
@@ -16,7 +20,8 @@ class CustomerPolicy < ApplicationPolicy
   end
   
   def show?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def create?
@@ -24,34 +29,45 @@ class CustomerPolicy < ApplicationPolicy
   end
   
   def update?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
-  
+
+  def analyze_phone?
+    user.admin? || record.user_id == user.id ||
+      (user.manager? && user.associates.pluck(:id).include?(record.user_id))
+  end
+
   def destroy?
     user.admin?
   end
-  
+
   def update_status?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id ||
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 
   def update_communication_status?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id ||
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 
   def whatsapp_messages?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id ||
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
-  
+
   def send_whatsapp_text?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id ||
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
-  
+
   def send_whatsapp_media?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def bulk_assign?
-    user.admin?
+    user.admin? || user.manager?
   end
 end 

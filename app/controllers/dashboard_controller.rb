@@ -280,12 +280,12 @@ class DashboardController < ApplicationController
     begin
       # Try to use groupdate gem if available
       @monthly_deals = Deal.assigned_to(user).where(created_at: @start_date..@end_date).group_by_month(:created_at, last: 6).count
-      @monthly_won_deals = Deal.assigned_to(user).won.where(created_at: @start_date..@end_date).group_by_month(:created_at, last: 6).count
+      @monthly_won_deals = Deal.assigned_to(user).won.where(closing_date: @start_date.to_date..@end_date.to_date).group_by_month(:closing_date, last: 6).count
       @monthly_deal_values = Deal.assigned_to(user).where(created_at: @start_date..@end_date).group_by_month(:created_at, last: 6).sum(:amount)
     rescue NoMethodError
       # Fallback to manual grouping if groupdate gem is not available
       @monthly_deals = group_by_month_manual(Deal.assigned_to(user).where(created_at: @start_date..@end_date), 6)
-      @monthly_won_deals = group_by_month_manual(Deal.assigned_to(user).won.where(created_at: @start_date..@end_date), 6)
+      @monthly_won_deals = group_by_month_manual(Deal.assigned_to(user).won.where(closing_date: @start_date.to_date..@end_date.to_date), 6)
       @monthly_deal_values = group_by_month_manual_sum(Deal.assigned_to(user).where(created_at: @start_date..@end_date), :amount, 6)
     end
     
@@ -306,7 +306,7 @@ class DashboardController < ApplicationController
     invalid_count = Customer.where(user_id: user.id, status: 'Invalid').where(created_at: @start_date..@end_date).count
     
     deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
-    deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+    deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', closing_date: @start_date.to_date..@end_date.to_date }).count
     
     @user_progression_metrics[user.id] = {
       'Pending' => pending_count,
@@ -346,11 +346,11 @@ class DashboardController < ApplicationController
     @deal_stage_distribution = date_filtered_deals.joins(:deal_stage).group('deal_stages.name').count
     @total_deal_value = date_filtered_deals.sum(:amount)
     
-    # Additional deal metrics - won and lost deals
-    @total_won_deals = date_filtered_deals.won.count
-    @total_won_deal_value = date_filtered_deals.won.sum(:amount)
-    @total_lost_deals = date_filtered_deals.lost.count
-    @total_lost_deal_value = date_filtered_deals.lost.sum(:amount)
+    # Additional deal metrics - won and lost deals (filter by closing_date instead of created_at)
+    @total_won_deals = deal_scope.won.where(closing_date: @start_date.to_date..@end_date.to_date).count
+    @total_won_deal_value = deal_scope.won.where(closing_date: @start_date.to_date..@end_date.to_date).sum(:amount)
+    @total_lost_deals = deal_scope.lost.where(closing_date: @start_date.to_date..@end_date.to_date).count
+    @total_lost_deal_value = deal_scope.lost.where(closing_date: @start_date.to_date..@end_date.to_date).sum(:amount)
     
     # System call metrics
     recording_scope = user ? Recording.where(user: user) : Recording
@@ -371,14 +371,24 @@ class DashboardController < ApplicationController
     
     # Recording scope for system calls
     recording_scope = user ? Recording.where(user: user) : Recording
+    date_filtered_recordings = recording_scope.where(date: @start_date..@end_date)
+    
+    # Calculate successful and failed communications based on call duration
+    @successful_calls_count = date_filtered_recordings.where("duration >= ?", 40).count
+    @failed_calls_count = date_filtered_recordings.where("duration < ?", 40).count
+    @successful_calls_percentage = view_context.calculate_percentage(@successful_calls_count, (@successful_calls_count + @failed_calls_count))
     
     # Monthly system calls data for charts
     begin
       # Try to use groupdate gem if available
       @monthly_system_calls = recording_scope.where(date: @start_date..@end_date).group_by_month(:date, last: 6).count
+      @monthly_successful_calls = recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 40).group_by_month(:date, last: 6).count
+      @monthly_failed_calls = recording_scope.where(date: @start_date..@end_date).where("duration < ?", 40).group_by_month(:date, last: 6).count
     rescue NoMethodError
       # Fallback to manual grouping if groupdate gem is not available
       @monthly_system_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date), 6)
+      @monthly_successful_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 40), 6)
+      @monthly_failed_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date).where("duration < ?", 40), 6)
     end
     
     # Call metrics
@@ -410,6 +420,59 @@ class DashboardController < ApplicationController
     
     # LinkedIn metrics
     @linkedin_conversations_monthly = date_filtered_customers.where(linkedin_status: ['Message Sent', 'Conversation Initiated']).count
+    
+    # User calls report based on Recording model
+    @user_call_reports = {}
+    
+    # If we have a specific user, just get their data
+    if user
+      # Last day calls
+      last_day_recordings = Recording.where(user: user, date: 1.day.ago.beginning_of_day..Time.current.end_of_day)
+      last_day_calls = last_day_recordings.count
+      last_day_successful_calls = last_day_recordings.where("duration >= ?", 40).count
+      last_day_failed_calls = last_day_recordings.where("duration < ?", 40).count
+      
+      # Last month calls
+      last_month_recordings = Recording.where(user: user, date: 1.month.ago.beginning_of_day..Time.current.end_of_day)
+      last_month_calls = last_month_recordings.count
+      last_month_successful_calls = last_month_recordings.where("duration >= ?", 40).count
+      last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
+      
+      @user_call_reports[user.id] = {
+        name: user.name,
+        last_day_calls: last_day_calls,
+        last_month_calls: last_month_calls,
+        last_day_successful_calls: last_day_successful_calls,
+        last_day_failed_calls: last_day_failed_calls,
+        last_month_successful_calls: last_month_successful_calls,
+        last_month_failed_calls: last_month_failed_calls
+      }
+    else
+      # Get data for all users
+      User.all.each do |u|
+        # Last day calls
+        last_day_recordings = Recording.where(user: u, date: 1.day.ago.beginning_of_day..Time.current.end_of_day)
+        last_day_calls = last_day_recordings.count
+        last_day_successful_calls = last_day_recordings.where("duration >= ?", 40).count
+        last_day_failed_calls = last_day_recordings.where("duration < ?", 40).count
+        
+        # Last month calls
+        last_month_recordings = Recording.where(user: u, date: 1.month.ago.beginning_of_day..Time.current.end_of_day)
+        last_month_calls = last_month_recordings.count
+        last_month_successful_calls = last_month_recordings.where("duration >= ?", 40).count
+        last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
+        
+        @user_call_reports[u.id] = {
+          name: u.name,
+          last_day_calls: last_day_calls,
+          last_month_calls: last_month_calls,
+          last_day_successful_calls: last_day_successful_calls,
+          last_day_failed_calls: last_day_failed_calls,
+          last_month_successful_calls: last_month_successful_calls,
+          last_month_failed_calls: last_month_failed_calls
+        }
+      end
+    end
   end
   
   def prepare_user_progression_metrics
@@ -431,8 +494,8 @@ class DashboardController < ApplicationController
       # Count deals created by this user
       deals_created_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { created_at: @start_date..@end_date }).count
       
-      # Count won deals by this user
-      deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', created_at: @start_date..@end_date }).count
+      # Count won deals by this user - filter by closing_date
+      deals_won_count = Deal.joins(:customer).where(customers: { user_id: user.id }).where(deals: { status: 'won', closing_date: @start_date.to_date..@end_date.to_date }).count
       
       # Store the data in our hash
       @user_progression_metrics[user.id] = {

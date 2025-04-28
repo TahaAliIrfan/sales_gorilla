@@ -35,16 +35,62 @@
         </div>
         <div class="flex space-x-2">
           <% if @deal.status == 'active' %>
-            <%= button_to mark_as_won_deal_path(@deal), method: :patch, class: "bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded" do %>
+            <!-- Mark as Won button with modal trigger -->
+            <button type="button" class="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded" onclick="openModal('won')">
               Mark as Won
-            <% end %>
-            <%= button_to mark_as_lost_deal_path(@deal), method: :patch, class: "bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded" do %>
+            </button>
+            
+            <!-- Mark as Lost button with modal trigger -->
+            <button type="button" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded" onclick="openModal('lost')">
               Mark as Lost
-            <% end %>
+            </button>
+            
+            <!-- Won Deal Modal -->
+            <div id="wonDealModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+              <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-lg font-bold mb-4">Mark Deal as Won</h3>
+                <%= form_with url: mark_as_won_deal_path(@deal), method: :patch do |form| %>
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Closing Date</label>
+                    <%= form.date_field :closing_date, class: "w-full rounded-md border-gray-300 shadow-sm p-2", value: Date.today.strftime('%Y-%m-%d') %>
+                  </div>
+                  <div class="flex justify-end space-x-3">
+                    <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onclick="closeModal('won')">
+                      Cancel
+                    </button>
+                    <%= form.submit "Mark as Won", class: "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <!-- Lost Deal Modal -->
+            <div id="lostDealModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+              <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+                <h3 class="text-lg font-bold mb-4">Mark Deal as Lost</h3>
+                <%= form_with url: mark_as_lost_deal_path(@deal), method: :patch do |form| %>
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Closing Date</label>
+                    <%= form.date_field :closing_date, class: "w-full rounded-md border-gray-300 shadow-sm p-2", value: Date.today.strftime('%Y-%m-%d') %>
+                  </div>
+                  <div class="flex justify-end space-x-3">
+                    <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" onclick="closeModal('lost')">
+                      Cancel
+                    </button>
+                    <%= form.submit "Mark as Lost", class: "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
           <% else %>
             <span class="px-4 py-2 rounded text-white <%= @deal.status == 'won' ? 'bg-green-500' : 'bg-red-500' %>">
               <%= @deal.status&.capitalize %>
             </span>
+            <% if @deal.closing_date %>
+              <span class="px-4 py-2 text-gray-600">
+                Closed on: <%= @deal.closing_date.strftime("%B %d, %Y") %>
+              </span>
+            <% end %>
           <% end %>
         </div>
       </div>
@@ -225,3 +271,13 @@
     </div>
   </div>
 </div>
+
+<script>
+  function openModal(type) {
+    document.getElementById(type + 'DealModal').classList.remove('hidden');
+  }
+  
+  function closeModal(type) {
+    document.getElementById(type + 'DealModal').classList.add('hidden');
+  }
+</script>

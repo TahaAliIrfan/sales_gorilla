@@ -111,7 +111,7 @@ module Api
         description = params[:description] || nil
         #    timezone = extract_timezone_from_timestamp(params[:timezone])
         preferred_calling_time = params[:preferred_calling_time] || nil
-        lead_source = params[:lead_source]
+        lead_source = params[:lead_source] || 'Inbound'
 
         customer = Customer.find_by(email: email)
 
@@ -121,7 +121,7 @@ module Api
             email: email,
             phone: phone_number,
             country: country,
-            lead_source: 'Inbound',
+            lead_source: lead_source,
             status: 'Pending',
             idea_description: description,
             preferred_calling_time: preferred_calling_time
