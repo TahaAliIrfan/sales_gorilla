@@ -13,6 +13,108 @@
       <%= link_to "New Deal", new_deal_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   </div>
+  
+  <!-- Filters Section -->
+  <div class="bg-white shadow rounded-lg p-6 mb-6">
+    <%= form_with url: action_name == 'my_deals' ? my_deals_deals_path : deals_path, method: :get, class: "space-y-6" do |form| %>
+      <!-- Required Filters Section -->
+      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <h3 class="text-md font-medium mb-3">Filters</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Filter by User -->
+          <% if current_user.admin? && action_name != 'my_deals' %>
+            <div>
+              <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
+              <%= form.select :user_id, 
+                  options_for_select([['All Users', '']] + @users.map { |u| [u.name, u.id] }, params[:user_id]), 
+                  {}, 
+                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "user_id" } 
+              %>
+            </div>
+          <% end %>
+          
+          <!-- Filter by Deal Stage -->
+          <div>
+            <label for="deal_stage_id" class="block text-sm font-medium text-gray-700 mb-1">Deal Stage</label>
+            <%= form.select :deal_stage_id, 
+                options_for_select([['All Stages', '']] + @deal_stages.map { |s| [s.name, s.id] }, params[:deal_stage_id]), 
+                {}, 
+                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "deal_stage_id" } 
+            %>
+          </div>
+          
+          <!-- Filter by Closing Date (only for Won/Lost deals) -->
+          <div>
+            <label for="filter_range" class="block text-sm font-medium text-gray-700 mb-1">Closing Date <span class="text-xs text-gray-500">(for Won/Lost deals)</span></label>
+            <%= form.select :filter_range, 
+                options_for_select([
+                  ['Last 30 Days', '30'], 
+                  ['Last 90 Days', '90'], 
+                  ['Custom Range', 'custom'],
+                  ['All Dates', 'all']
+                ], params[:filter_range] || '30'), 
+                {}, 
+                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
+                  id: "filter_range",
+                  onchange: "toggleCustomDateFields(this.value)" } 
+            %>
+          </div>
+          
+          <!-- Hidden field to maintain filtering for won/lost status when needed -->
+          <%= form.hidden_field :status, value: params[:status] %>
+        </div>
+      </div>
+      
+      <!-- Custom date fields - only shown when custom range is selected -->
+      <div id="custom_date_fields" class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> bg-blue-50 rounded-lg p-4 border border-blue-200">
+        <h3 class="text-md font-medium mb-3 text-blue-800">Custom Date Range</h3>
+        <div class="flex items-center space-x-3">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+            <%= form.date_field :start_date, value: @custom_start_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+            <%= form.date_field :end_date, value: @custom_end_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3 pt-4">
+        <%= link_to action_name == 'my_deals' ? my_deals_deals_path : deals_path, class: "px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" do %>
+          Clear Filters
+        <% end %>
+        <%= form.submit "Apply Filters", class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" %>
+      </div>
+    <% end %>
+    
+    <% if !params.except(:controller, :action).empty? %>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <span class="text-sm text-gray-600">Active filters:</span>
+        <% params.except(:controller, :action).each do |key, value| %>
+          <% next if value.blank? %>
+          <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+            <% if key == 'filter_range' && value != 'custom' %>
+              <% case value 
+                 when '30' %> Last 30 Days
+              <% when '90' %> Last 90 Days
+              <% when 'all' %> All Dates
+              <% end %>
+            <% elsif key.include?('_id') %>
+              <%= key.humanize %>: <%= key == 'deal_stage_id' ? DealStage.find_by(id: value)&.name : User.find_by(id: value)&.name %>
+            <% elsif key == 'start_date' || key == 'end_date' %>
+              <%= key.humanize %>: <%= value %>
+            <% else %>
+              <%= key.humanize %>: <%= value %>
+            <% end %>
+          </span>
+        <% end %>
+        <%= link_to action_name == 'my_deals' ? my_deals_deals_path : deals_path, class: "text-xs text-red-600 hover:text-red-800 ml-2" do %>
+          Clear All
+        <% end %>
+      </div>
+    <% end %>
+  </div>
 
   <% if @deals.any? %>
     <div class="flex overflow-x-auto pb-4 space-x-4" data-controller="drag">
@@ -142,3 +244,28 @@
     </div>
   <% end %>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Get the filter range select element
+    const filterRangeSelect = document.getElementById('filter_range');
+    
+    // Set initial state for custom date fields
+    toggleCustomDateFields(filterRangeSelect.value);
+    
+    // Add event listener for changes
+    filterRangeSelect.addEventListener('change', function() {
+      toggleCustomDateFields(this.value);
+    });
+  });
+  
+  // Toggle custom date fields visibility
+  function toggleCustomDateFields(value) {
+    const customFields = document.getElementById('custom_date_fields');
+    if (value === 'custom') {
+      customFields.classList.remove('hidden');
+    } else {
+      customFields.classList.add('hidden');
+    }
+  }
+</script>

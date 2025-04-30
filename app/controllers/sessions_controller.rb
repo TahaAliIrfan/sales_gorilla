@@ -8,10 +8,12 @@ class SessionsController < ApplicationController
     user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
       u.name = auth.info.name
       u.email = auth.info.email
-      
-      # Make specific users admins by default
-      admin_emails = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
-      u.is_admin = admin_emails.include?(u.email.downcase)
+    end
+    
+    # Assign admin role to specific users if not already assigned
+    admin_emails = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
+    if admin_emails.include?(user.email.downcase) && !user.admin?
+      user.make_admin!
     end
 
     # Save Google OAuth tokens if they exist

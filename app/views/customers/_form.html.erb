@@ -90,7 +90,26 @@
 
       <div>
         <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :timezone, ActiveSupport::TimeZone.all.map { |tz| [tz.to_s, tz.name] }, { include_blank: "Auto-detect from country" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :timezone, 
+          [
+            ["Auto-detect from country", ""],
+            ["Common Timezones", [
+              ["US Eastern Time (New York)", "America/New_York"],
+              ["US Central Time (Chicago)", "America/Chicago"],
+              ["US Mountain Time (Denver)", "America/Denver"],
+              ["US Pacific Time (Los Angeles)", "America/Los_Angeles"],
+              ["UK (London)", "Europe/London"],
+              ["Central European Time (Paris, Berlin)", "Europe/Paris"],
+              ["India (New Delhi)", "Asia/Kolkata"],
+              ["China (Beijing)", "Asia/Shanghai"],
+              ["Japan (Tokyo)", "Asia/Tokyo"],
+              ["Australia (Sydney)", "Australia/Sydney"]
+            ]],
+            ["All Timezones", ActiveSupport::TimeZone.all.map { |tz| ["#{tz.formatted_offset} #{tz.name.gsub('_', ' ')}", tz.name] }]
+          ], 
+          {}, 
+          class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+        %>
         <p class="mt-1 text-xs text-gray-500">If not selected, timezone will be determined based on country</p>
       </div>
 

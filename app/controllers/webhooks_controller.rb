@@ -21,7 +21,11 @@ class WebhooksController < ApplicationController
     customer = Customer.find_by(whatsapp_chat_id: chat_id)
 
     if customer.nil?
-      return render json: { success: false, error: "Customer not found" }, status: :not_found
+      # Initiate background job for customer analysis
+      message_body = message_data.dig(:message, :body).to_s
+      WhatsappMessageAnalysisWorker.perform_async(chat_id, message_body)
+
+      customer = Customer.create(whatsapp_chat_id: chat_id, name: 'Not Applicable', phone: chat_id.gsub(/@c\.us$/, ''), lead_source: 'WA')
     end
 
     begin

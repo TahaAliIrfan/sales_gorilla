@@ -10,6 +10,8 @@ class Recording < ApplicationRecord
   # Add ActiveStorage attachment for recording file
   has_one_attached :audio_file
   
+  after_create :set_called_at_prefered_time
+  
   scope :recent, -> { order(date: :desc) }
   
   # Transcription-related scopes
@@ -22,5 +24,14 @@ class Recording < ApplicationRecord
   
   def latest_ai_analysis
     ai_analyses.order(created_at: :desc).first
+  end
+  
+  private
+  
+  # Sets whether the call was made during the customer's preferred calling time
+  def set_called_at_prefered_time
+    if customer.present? && customer.respond_to?(:is_preferred_calling_time?)
+      update_column(:called_at_prefered_time, customer.is_preferred_calling_time?)
+    end
   end
 end

@@ -39,3 +39,6 @@ application.register("bulk-assign", BulkAssignController)
 
 import WhatsappChatController from "./whatsapp_chat_controller"
 application.register("whatsapp-chat", WhatsappChatController)
+
+import DropdownController from "./dropdown_controller"
+application.register("dropdown", DropdownController)

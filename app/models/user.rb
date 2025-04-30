@@ -8,27 +8,163 @@ class User < ApplicationRecord
   has_many :messages, dependent: :nullify
   has_many :notifications, dependent: :destroy
   
+  # Role relationships
+  has_many :role_assignments, dependent: :destroy
+  has_many :roles, through: :role_assignments
+  has_many :assigned_roles, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
+  
+  # Associate relationships 
+  has_many :manager_assignments, -> { where(role: Role.associate) }, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
+  has_many :associates, through: :manager_assignments, source: :user
+
   # Validate phone number format
   validates :phone_number, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
-  
+
   # Check if phone number is set
   def phone_number_set?
     phone_number.present?
   end
 
-  # Admin methods
+  # Role methods
+
+  # Assign a role to user
+  def assign_role(role_key, assigned_by: nil, resource: nil)
+    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
+    return false unless role
+
+    role_assignments.create(
+      role: role,
+      assigned_by: assigned_by,
+      resource: resource
+    )
+  end
+
+  # Remove a role from user
+  def remove_role(role_key, resource: nil)
+    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
+    return false unless role
+
+    assignment = role_assignments.find_by(role: role, resource: resource)
+    assignment&.destroy.present?
+  end
+
+  # Check if user has a specific role
+  def has_role?(role_key, resource: nil)
+    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
+    return false unless role
+
+    if resource
+      role_assignments.exists?(role: role, resource: resource)
+    else
+      role_assignments.exists?(role: role)
+    end
+  end
+
+  # Get highest role based on hierarchy_level
+  def highest_role
+    roles.order(hierarchy_level: :desc).first
+  end
+
+  # Admin methods - based solely on roles
   def admin?
-    is_admin
+    has_role?(:admin)
   end
-  
+
   # Method to make a user an admin
-  def make_admin!
-    update(is_admin: true)
+  def make_admin!(assigned_by: nil)
+    assign_role(:admin, assigned_by: assigned_by)
   end
-  
+
   # Method to revoke admin privileges
   def revoke_admin!
-    update(is_admin: false)
+    remove_role(:admin)
+  end
+
+  # Manager methods
+  def manager?
+    has_role?(:manager)
+  end
+
+  # Make user a manager
+  def make_manager!(assigned_by: nil)
+    assign_role(:manager, assigned_by: assigned_by)
+  end
+
+  # Revoke manager role
+  def revoke_manager!
+    remove_role(:manager)
+  end
+
+  # Associate-Manager Assignment methods
+
+  # Assign an associate to a manager
+  # This method is used by admins to establish manager-associate relationships
+  def assign_associate(associate, assigned_by: nil)
+    return false unless manager?
+    return false unless associate.is_a?(User)
+
+    # Ensure the user has associate role
+    unless associate.has_role?(:associate)
+      associate.assign_role(:associate, assigned_by: assigned_by || self)
+    end
+
+    # Create the relationship by assigning the associate role with the manager as assigned_by
+    associate_role = Role.associate
+
+    # Check if this manager is already managing this associate
+    existing = RoleAssignment.where(
+      user: associate,
+      role: associate_role,
+      assigned_by: self
+    ).first
+
+    # If relationship exists, return true
+    return true if existing.present?
+
+    # Create new relationship
+    existing_role =  RoleAssignment.find_by(user: associate, role: associate_role)
+
+    if existing_role.present?
+      existing_role.update(assigned_by: self)
+    else
+      RoleAssignment.create(
+        user: associate,
+        role: associate_role,
+        assigned_by: self
+      )
+    end
+  end
+
+  # Remove an associate from a manager
+  def remove_associate(associate)
+    return false unless manager?
+    return false unless associate.is_a?(User)
+    
+    # Find and destroy the role assignment
+    assignment = RoleAssignment.find_by(
+      user: associate,
+      role: Role.associate,
+      assigned_by: self
+    )
+    
+    assignment&.destroy.present?
+  end
+  
+  # Associate methods - get all users who are associates of this manager
+  def managed_associates
+    return User.none unless manager? || admin?
+    User.joins(:role_assignments)
+        .where(role_assignments: { role: Role.associate })
+  end
+  
+  # Get all managers of this user
+  def managers
+    User.joins(:role_assignments)
+        .where(role_assignments: { 
+          role: Role.manager,
+          assigned_by_id: RoleAssignment.where(user: self, role: Role.associate).select(:assigned_by_id)
+        })
+        .distinct
   end
   
   # Task methods
@@ -92,5 +228,31 @@ class User < ApplicationRecord
     else
       false
     end
+  end
+  
+  # Resource access methods for role-based authorization
+  
+  # Can user access recordings for a given user?
+  def can_access_recordings_for?(target_user)
+    return true if admin?
+    return true if self == target_user
+    return true if manager? && associates.include?(target_user)
+    false
+  end
+  
+  # Can user access customers for a given user?
+  def can_access_customers_for?(target_user)
+    return true if admin?
+    return true if self == target_user
+    return true if manager? && associates.include?(target_user)
+    false
+  end
+  
+  # Can user assign roles?
+  def can_assign_role?(role_key)
+    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
+    return false unless role
+    
+    admin? || (highest_role && highest_role.outranks?(role))
   end
 end

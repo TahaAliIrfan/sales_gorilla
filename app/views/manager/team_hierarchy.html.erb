@@ -1,0 +1,172 @@
+<!-- Team Hierarchy Visualization -->
+<div class="container mx-auto px-4 py-6">
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Team Hierarchy</h1>
+    <div class="flex space-x-2">
+      <% if current_user.admin? %>
+        <%= link_to "Manage Managers", managers_users_path, class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded" %>
+      <% end %>
+      <%= link_to "Back to Dashboard", manager_dashboard_path, class: "bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded" %>
+    </div>
+  </div>
+
+  <% if notice.present? %>
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      <%= notice %>
+    </div>
+  <% end %>
+  
+  <% if alert.present? %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+    <p class="font-medium">Note:</p>
+    <p>Only administrators can assign or remove associates to managers. The "+ Add" buttons on manager cards are only visible to administrators.</p>
+  </div>
+
+  <!-- Organization Chart -->
+  <div class="bg-white shadow-md rounded-lg p-6 mb-6" data-controller="org-chart">
+    <div class="flex justify-center mb-8">
+      <!-- Chart Controls -->
+      <div class="flex space-x-4 mb-4">
+        <button class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-action="org-chart#zoomIn">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+          Zoom In
+        </button>
+        <button class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-action="org-chart#zoomOut">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
+          </svg>
+          Zoom Out
+        </button>
+        <button class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200" data-action="org-chart#resetZoom">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Reset
+        </button>
+      </div>
+    </div>
+
+    <!-- The chart container with overflow handling -->
+    <div class="overflow-auto relative" style="min-height: 600px;" data-org-chart-target="container">
+      <div class="org-chart-zoom-container transform origin-top transition-transform duration-200" data-org-chart-target="zoomContainer">
+        <div class="flex flex-col items-center">
+          <!-- Admin Node(s) -->
+          <% if @admins.present? %>
+            <div class="flex flex-wrap justify-center mb-16 gap-6">
+              <% @admins.each do |admin| %>
+                <div class="bg-indigo-100 border-2 border-indigo-500 rounded-lg p-4 shadow-md w-64 text-center">
+                  <div class="font-bold text-indigo-800"><%= admin.name %></div>
+                  <div class="text-sm text-indigo-600 mb-2"><%= admin.email %></div>
+                  <div class="text-xs font-semibold bg-indigo-200 text-indigo-800 rounded-full px-2 py-1 inline-block">
+                    Admin
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+
+          <!-- Managers -->
+          <div class="flex flex-wrap justify-center gap-10 mb-16">
+            <% @managers.each do |manager| %>
+              <div class="relative group">
+                <div class="bg-blue-100 border-2 border-blue-500 rounded-lg p-4 shadow-md w-64 text-center relative">
+                  <% if current_user.admin? %>
+                    <div class="absolute top-0 right-0 mt-1 mr-1">
+                      <%= link_to manage_associates_user_path(manager), class: "text-blue-700 hover:text-blue-900" do %>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                        </svg>
+                      <% end %>
+                    </div>
+                  <% end %>
+                  <div class="font-bold text-blue-800"><%= manager.name %></div>
+                  <div class="text-sm text-blue-600 mb-2"><%= manager.email %></div>
+                  <div class="text-xs font-semibold bg-blue-200 text-blue-800 rounded-full px-2 py-1 inline-block">
+                    Manager
+                  </div>
+                  <div class="mt-2 text-xs text-blue-600">
+                    <%= pluralize(manager.associates.count, 'associate') %>
+                  </div>
+                </div>
+
+                <!-- Lines connecting manager to their associates -->
+                <% if manager.associates.any? %>
+                  <div class="h-10 w-0.5 bg-gray-300 mx-auto"></div>
+                <% end %>
+
+                <!-- Associates for this manager -->
+                <div class="flex flex-wrap justify-center gap-4 mt-2">
+                  <% manager.associates.each do |associate| %>
+                    <div class="bg-green-100 border border-green-500 rounded-lg p-3 shadow w-48 text-center">
+                      <div class="font-medium text-green-800"><%= associate.name %></div>
+                      <div class="text-xs text-green-600 mb-1 truncate"><%= associate.email %></div>
+                      <div class="text-xs font-semibold bg-green-200 text-green-800 rounded-full px-2 py-0.5 inline-block">
+                        Associate
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Team Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-sm uppercase text-gray-500 font-medium">Total Managers</h3>
+      <p class="mt-2 text-2xl font-bold text-gray-800"><%= @managers.count %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-sm uppercase text-gray-500 font-medium">Total Associates</h3>
+      <p class="mt-2 text-2xl font-bold text-gray-800"><%= @associates.count %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-sm uppercase text-gray-500 font-medium">Unassigned Associates</h3>
+      <p class="mt-2 text-2xl font-bold text-gray-800"><%= @unassigned_associates.count %></p>
+    </div>
+  </div>
+</div>
+<!-- Include the Stimulus controller for the org chart -->
+<%= javascript_tag do %>
+  if (window.Stimulus) {
+    window.Stimulus.register("org-chart", class extends window.Stimulus.Controller {
+      static targets = [ "container", "zoomContainer" ]
+      
+      connect() {
+        this.scale = 1;
+      }
+      
+      zoomIn() {
+        this.scale = Math.min(this.scale + 0.1, 2);
+        this.updateZoom();
+      }
+      
+      zoomOut() {
+        this.scale = Math.max(this.scale - 0.1, 0.5);
+        this.updateZoom();
+      }
+      
+      resetZoom() {
+        this.scale = 1;
+        this.updateZoom();
+      }
+      
+      updateZoom() {
+        this.zoomContainerTarget.style.transform = `scale(${this.scale})`;
+      }
+    });
+  }
+<% end %> 

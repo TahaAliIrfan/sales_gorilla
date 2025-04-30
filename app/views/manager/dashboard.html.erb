@@ -1,0 +1,120 @@
+<div class="container mx-auto px-4 py-6">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold">Manager Dashboard</h1>
+    <p class="text-gray-600">Overview of your associates' performance</p>
+  </div>
+
+  <% if @associates.empty? %>
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6 text-center">
+      <p class="text-gray-600">You don't have any associates assigned yet.</p>
+      <% if current_user.admin? %>
+        <p class="mt-2">
+          <%= link_to "Manage Users", users_path, class: "text-blue-600 hover:text-blue-800" %> to assign associates to managers.
+        </p>
+      <% end %>
+    </div>
+  <% else %>
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Associates</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @associates.count %></p>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Customers</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_customers %></p>
+        <p class="text-sm text-green-600">+<%= @total_new_customers %> in 30 days</p>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Recordings</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_recordings %></p>
+        <p class="text-sm text-gray-500">Last 30 days</p>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Active Deals</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_active_deals %></p>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Won Deals</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_won_deals %></p>
+        <p class="text-sm text-gray-500">Last 30 days</p>
+      </div>
+      
+      <div class="bg-white shadow-md rounded-lg p-4">
+        <h3 class="text-xs uppercase text-gray-500 font-medium">Deal Value</h3>
+        <p class="mt-2 text-2xl font-bold text-gray-800">$<%= number_with_delimiter(@total_deal_value.to_i) %></p>
+        <p class="text-sm text-gray-500">Last 30 days</p>
+      </div>
+    </div>
+    
+    <!-- Associates Performance Table -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-lg font-semibold">Associates Performance</h2>
+        <p class="text-sm text-gray-600">Key metrics for each associate in the last 30 days</p>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associate</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customers</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activities</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recordings</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals</th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @associates.each do |associate| %>
+              <% metrics = @associate_metrics[associate.id] %>
+              <tr>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div>
+                      <div class="text-sm font-medium text-gray-900">
+                        <%= link_to associate.name, user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
+                      </div>
+                      <div class="text-sm text-gray-500"><%= associate.email %></div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><%= metrics[:customers_count] %> total</div>
+                  <div class="text-sm text-green-600">+<%= metrics[:new_customers] %> new</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= metrics[:recent_activities] %> activities
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <%= metrics[:recordings_count] %> calls
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><%= metrics[:completed_tasks] %> completed</div>
+                  <div class="text-sm text-yellow-600"><%= metrics[:pending_tasks] %> pending</div>
+                  <div class="text-sm text-red-600"><%= metrics[:overdue_tasks] %> overdue</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900"><%= metrics[:active_deals] %> active</div>
+                  <div class="text-sm text-green-600"><%= metrics[:won_deals] %> won ($<%= number_with_delimiter(metrics[:deal_value].to_i) %>)</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div class="space-x-2">
+                    <%= link_to "View", user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
+                    <%= link_to "Manage Roles", user_path(associate), class: "text-indigo-600 hover:text-indigo-900" %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+</div>

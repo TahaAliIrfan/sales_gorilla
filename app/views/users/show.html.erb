@@ -1,0 +1,211 @@
+<div class="container mx-auto px-4 py-6">
+  <div class="mb-6 flex justify-between items-center">
+    <h1 class="text-2xl font-bold">User: <%= @user.name %></h1>
+    <div>
+      <%= link_to "Back to Users", users_path, class: "bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded" %>
+    </div>
+  </div>
+
+  <% if notice.present? %>
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      <%= notice %>
+    </div>
+  <% end %>
+  
+  <% if alert.present? %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <%= alert %>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <!-- User Information Card -->
+    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h2 class="text-xl font-semibold">User Information</h2>
+      </div>
+      <div class="p-6">
+        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Name</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @user.name %></dd>
+          </div>
+          
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Email</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @user.email %></dd>
+          </div>
+          
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+            <dd class="mt-1 text-sm text-gray-900"><%= @user.phone_number || "Not set" %></dd>
+          </div>
+          
+          <div class="sm:col-span-1">
+            <dt class="text-sm font-medium text-gray-500">Admin Status</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <% if @user.admin? %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  Admin
+                </span>
+              <% else %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Not Admin
+                </span>
+              <% end %>
+            </dd>
+          </div>
+          
+          <div class="sm:col-span-2">
+            <dt class="text-sm font-medium text-gray-500">Highest Role</dt>
+            <dd class="mt-1 text-sm text-gray-900">
+              <% if @user.highest_role %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                  <%= case @user.highest_role.key
+                    when 'admin' then 'bg-red-100 text-red-800'
+                    when 'manager' then 'bg-blue-100 text-blue-800'
+                    when 'associate' then 'bg-green-100 text-green-800'
+                    else 'bg-gray-100 text-gray-800'
+                    end %>">
+                  <%= @user.highest_role.name %> (Level: <%= @user.highest_role.hierarchy_level %>)
+                </span>
+              <% else %>
+                <span class="text-gray-400">No role assigned</span>
+              <% end %>
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <!-- Role Assignment Card -->
+    <% if current_user.admin? || (current_user.manager? && current_user.associates.include?(@user)) %>
+      <div class="bg-white shadow-md rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-xl font-semibold">Assign Role</h2>
+        </div>
+        <div class="p-6">
+          <%= form_with(url: role_assignments_path, method: :post, class: "space-y-4") do |form| %>
+            <%= form.hidden_field :user_id, value: @user.id %>
+
+            <div>
+              <%= form.label :role_id, "Role", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.select :role_id, 
+                  @available_roles
+                    .select { |r| current_user.can_assign_role?(r) }
+                    .map { |r| [r.name, r.id] }, 
+                  { include_blank: "Select a role" }, 
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
+            </div>
+
+            <div>
+              <%= form.label :resource_type, "Scope (Optional)", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.select :resource_type, 
+                  [["Global (No Scope)", ""], ["User", "User"]], 
+                  { include_blank: false }, 
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50",
+                  id: "resource_type_select" %>
+            </div>
+
+            <div id="resource_user_section" class="hidden">
+              <%= form.label :resource_id, "User", class: "block text-sm font-medium text-gray-700" %>
+              <%= form.select :resource_id, 
+                  @resources.map { |r| [r.name, r.id] }, 
+                  { include_blank: "Select a user" }, 
+                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
+            </div>
+
+            <div class="pt-5">
+              <%= form.submit "Assign Role", class: "w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+            </div>
+          <% end %>
+          
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              const resourceTypeSelect = document.getElementById('resource_type_select');
+              const resourceUserSection = document.getElementById('resource_user_section');
+              
+              function updateResourceSections() {
+                const selectedValue = resourceTypeSelect.value;
+                resourceUserSection.classList.add('hidden');
+                
+                if (selectedValue === 'User') {
+                  resourceUserSection.classList.remove('hidden');
+                }
+              }
+              
+              resourceTypeSelect.addEventListener('change', updateResourceSections);
+              updateResourceSections();
+            });
+          </script>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Current Roles Card -->
+  <div class="mt-6 bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-200">
+      <h2 class="text-xl font-semibold">Current Roles</h2>
+    </div>
+    
+    <% if @role_assignments.any? %>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scope</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned By</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned At</th>
+            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @role_assignments.each do |assignment| %>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                  <%= case assignment.role.key
+                    when 'admin' then 'bg-red-100 text-red-800'
+                    when 'manager' then 'bg-blue-100 text-blue-800'
+                    when 'associate' then 'bg-green-100 text-green-800'
+                    else 'bg-gray-100 text-gray-800'
+                    end %>">
+                  <%= assignment.role.name %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <% if assignment.resource.present? %>
+                  <%= assignment.resource_type %>: <%= assignment.resource.name %>
+                <% else %>
+                  <span class="text-gray-400">Global</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <% if assignment.assigned_by %>
+                  <%= link_to assignment.assigned_by.name, user_path(assignment.assigned_by), class: "text-blue-600 hover:text-blue-900" %>
+                <% else %>
+                  <span class="text-gray-400">System</span>
+                <% end %>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <%= time_ago_in_words(assignment.created_at) %> ago
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <% if current_user.admin? || assignment.assigned_by == current_user %>
+                  <%= link_to "Remove", role_assignment_path(assignment), 
+                      data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to remove this role assignment?" }, 
+                      class: "text-red-600 hover:text-red-900" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <div class="px-6 py-4 text-gray-500">
+        No roles have been assigned to this user yet.
+      </div>
+    <% end %>
+  </div>
+</div>

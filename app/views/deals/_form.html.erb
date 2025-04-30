@@ -48,11 +48,13 @@
       <div>
         <%= form.label :expected_close_date, class: "block text-sm font-medium text-gray-700" %>
         <%= form.date_field :expected_close_date, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <p class="mt-1 text-xs text-gray-500">The date when you expect this deal to close</p>
       </div>
 
       <div>
-        <%= form.label :closing_date, "Closing Date", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.label :closing_date, "Actual Closing Date", class: "block text-sm font-medium text-gray-700" %>
         <%= form.date_field :closing_date, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <p class="mt-1 text-xs text-gray-500">Set this date when a deal is won or lost</p>
       </div>
 
       <div>

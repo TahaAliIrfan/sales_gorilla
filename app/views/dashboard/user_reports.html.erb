@@ -26,6 +26,45 @@
   <div class="text-sm text-gray-600 mb-4">
     Showing data from <%= @start_date.strftime('%B %d, %Y') %> to <%= @end_date.strftime('%B %d, %Y') %>
   </div>
+  
+  <!-- New section for Deal Performance by Closing Date -->
+  <div class="bg-gray-50 rounded-lg p-6 border border-gray-200 mb-8">
+    <h3 class="text-lg font-medium mb-4">Deal Performance by Closing Date</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-lg p-4 border border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-md font-medium">Won Deals</h4>
+          <p class="text-sm text-gray-500">Based on closing date</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-3xl font-bold text-green-600"><%= @total_won_deals %></p>
+            <p class="text-xl text-green-700 mt-2">$<%= number_with_delimiter(@total_won_deal_value) %></p>
+          </div>
+          <div class="text-sm text-gray-600">
+            <p>Filtered by: <%= @filter_range == '30' ? 'Last 30 Days' : (@filter_range == '90' ? 'Last 90 Days' : 'Custom Range') %></p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg p-4 border border-gray-200">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="text-md font-medium">Lost Deals</h4>
+          <p class="text-sm text-gray-500">Based on closing date</p>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-3xl font-bold text-red-600"><%= @total_lost_deals %></p>
+            <p class="text-xl text-red-700 mt-2">$<%= number_with_delimiter(@total_lost_deal_value) %></p>
+          </div>
+          <div class="text-sm text-gray-600">
+            <p>Filtered by: <%= @filter_range == '30' ? 'Last 30 Days' : (@filter_range == '90' ? 'Last 90 Days' : 'Custom Range') %></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Sales Rep Metrics -->
@@ -51,18 +90,6 @@
   
   <!-- Deal Status Metrics -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h3 class="text-lg font-medium mb-2">Won Deals</h3>
-      <p class="text-3xl font-bold text-green-600"><%= @total_won_deals %></p>
-      <p class="text-xl text-green-700 mt-2">$<%= number_with_delimiter(@total_won_deal_value) %></p>
-    </div>
-    
-    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <h3 class="text-lg font-medium mb-2">Lost Deals</h3>
-      <p class="text-3xl font-bold text-red-600"><%= @total_lost_deals %></p>
-      <p class="text-xl text-red-700 mt-2">$<%= number_with_delimiter(@total_lost_deal_value) %></p>
-    </div>
-    
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Win Rate</h3>
       <p class="text-3xl font-bold text-indigo-600"><%= @total_deals > 0 ? ((@total_won_deals.to_f / @total_deals) * 100).round(1) : 0 %>%</p>
@@ -195,6 +222,134 @@
 <div class="bg-white rounded-lg shadow p-6 mb-8">
   <h2 class="text-xl font-semibold mb-4">Communication Metrics</h2>
   
+  <!-- User Call Recording Reports -->
+  <div class="bg-blue-50 rounded-lg p-6 border border-blue-200 mb-6">
+    <h3 class="text-lg font-bold text-blue-800 mb-3">Your Call Activity</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
+        <span class="text-sm uppercase text-gray-500 tracking-wide">Calls in Last 24 Hours</span>
+        <span class="text-4xl font-bold mt-3 <%= @user_call_reports[current_user.id][:last_day_calls] > 0 ? 'text-green-600' : 'text-gray-400' %>">
+          <%= @user_call_reports[current_user.id][:last_day_calls] %>
+        </span>
+        <span class="text-xs mt-2 text-gray-500">
+          <% if @user_call_reports[current_user.id][:last_day_calls] == 0 %>
+            No calls today
+          <% elsif @user_call_reports[current_user.id][:last_day_calls] == 1 %>
+            1 call today
+          <% else %>
+            <%= @user_call_reports[current_user.id][:last_day_calls] %> calls today
+          <% end %>
+        </span>
+        
+        <% if @user_call_reports[current_user.id][:last_day_calls] > 0 %>
+          <div class="flex justify-between w-full mt-3 text-xs">
+            <div class="text-center">
+              <span class="block text-green-600 font-semibold"><%= @user_call_reports[current_user.id][:last_day_successful_calls] %></span>
+              <span class="text-gray-500">Successful</span>
+              <span class="block text-blue-600 text-xxs">(≥ 10s)</span>
+            </div>
+            <div class="text-center">
+              <span class="block text-red-600 font-semibold"><%= @user_call_reports[current_user.id][:last_day_failed_calls] %></span>
+              <span class="text-gray-500">Failed</span>
+              <span class="block text-blue-600 text-xxs">(< 10s)</span>
+            </div>
+            <div class="text-center">
+              <span class="block font-semibold <%= @user_call_reports[current_user.id][:last_day_successful_calls] > (@user_call_reports[current_user.id][:last_day_calls]/2) ? 'text-green-600' : 'text-amber-600' %>">
+                <%= (@user_call_reports[current_user.id][:last_day_successful_calls].to_f / @user_call_reports[current_user.id][:last_day_calls].to_f * 100).round %>%
+              </span>
+              <span class="text-gray-500">Success Rate</span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      
+      <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex flex-col items-center justify-center">
+        <span class="text-sm uppercase text-gray-500 tracking-wide">Calls in Last Month</span>
+        <span class="text-4xl font-bold mt-3 <%= @user_call_reports[current_user.id][:last_month_calls] > 0 ? 'text-blue-600' : 'text-gray-400' %>">
+          <%= @user_call_reports[current_user.id][:last_month_calls] %>
+        </span>
+        <span class="text-xs mt-2 text-gray-500">
+          <% if @user_call_reports[current_user.id][:last_month_calls] == 0 %>
+            No calls this month
+          <% elsif @user_call_reports[current_user.id][:last_month_calls] == 1 %>
+            1 call this month
+          <% else %>
+            <%= @user_call_reports[current_user.id][:last_month_calls] %> calls this month
+          <% end %>
+        </span>
+        
+        <% if @user_call_reports[current_user.id][:last_month_calls] > 0 %>
+          <div class="flex justify-between w-full mt-3 text-xs">
+            <div class="text-center">
+              <span class="block text-green-600 font-semibold"><%= @user_call_reports[current_user.id][:last_month_successful_calls] %></span>
+              <span class="text-gray-500">Successful</span>
+              <span class="block text-blue-600 text-xxs">(≥ 10s)</span>
+            </div>
+            <div class="text-center">
+              <span class="block text-red-600 font-semibold"><%= @user_call_reports[current_user.id][:last_month_failed_calls] %></span>
+              <span class="text-gray-500">Failed</span>
+              <span class="block text-blue-600 text-xxs">(< 10s)</span>
+            </div>
+            <div class="text-center">
+              <span class="block font-semibold <%= @user_call_reports[current_user.id][:last_month_successful_calls] > (@user_call_reports[current_user.id][:last_month_calls]/2) ? 'text-green-600' : 'text-amber-600' %>">
+                <%= (@user_call_reports[current_user.id][:last_month_successful_calls].to_f / @user_call_reports[current_user.id][:last_month_calls].to_f * 100).round %>%
+              </span>
+              <span class="text-gray-500">Success Rate</span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <!-- Call Success Analysis Section -->
+    <div class="bg-white rounded-lg border border-blue-100 p-4 mb-4">
+      <h4 class="text-sm font-semibold text-blue-800 mb-2">Call Success Analysis - This Period</h4>
+      <p class="text-xs text-gray-600 mb-3">Calls lasting 10 seconds or more are considered successful communications</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-green-50 rounded p-3 text-center border border-green-100">
+          <span class="text-sm text-green-700">Successful Calls</span>
+          <span class="block text-2xl font-bold text-green-600 mt-1"><%= @successful_calls_count %></span>
+          <span class="text-xs text-green-500 mt-1">≥ 10 seconds</span>
+        </div>
+        
+        <div class="bg-red-50 rounded p-3 text-center border border-red-100">
+          <span class="text-sm text-red-700">Failed Calls</span>
+          <span class="block text-2xl font-bold text-red-600 mt-1"><%= @failed_calls_count %></span>
+          <span class="text-xs text-red-500 mt-1">< 10 seconds</span>
+        </div>
+        
+        <div class="bg-blue-50 rounded p-3 text-center border border-blue-100">
+          <span class="text-sm text-blue-700">Success Rate</span>
+          <span class="block text-2xl font-bold <%= @successful_calls_percentage > 50 ? 'text-green-600' : 'text-amber-600' %> mt-1"><%= @successful_calls_percentage %>%</span>
+          <span class="text-xs text-blue-500 mt-1">Your effectiveness</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Call Success Rate Trend -->
+    <div class="bg-white rounded-lg border border-blue-100 p-4">
+      <h4 class="text-sm font-semibold text-blue-800 mb-2">Call Success Trend</h4>
+      <div class="h-48">
+        <%= area_chart [
+          {name: "Successful Calls (≥ 10s)", data: @monthly_successful_calls},
+          {name: "Failed Calls (< 10s)", data: @monthly_failed_calls}
+        ], 
+        stacked: true,
+        colors: ["#10B981", "#EF4444"],
+        curve: true,
+        library: {
+          plotOptions: {
+            area: {
+              stacking: 'normal'
+            }
+          }
+        } %>
+      </div>
+    </div>
+  </div>
+  
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <h3 class="text-lg font-medium mb-2">Calls</h3>
@@ -245,6 +400,12 @@
     </div>
   </div>
 </div>
+
+<style>
+.text-xxs {
+  font-size: 0.65rem;
+}
+</style>
 
 <script>
   function toggleCustomDateFields(value) {

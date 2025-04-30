@@ -39,6 +39,9 @@ class UserDashboardController < ApplicationController
     @pending_tasks_count = current_user.pending_tasks.count
     @today_tasks_count = current_user.tasks_for_today.count
     @overdue_tasks_count = current_user.overdue_tasks.count
+    
+    # Call success rate calculations
+    calculate_call_success_rates
   end
 
   private
@@ -52,6 +55,23 @@ class UserDashboardController < ApplicationController
   
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
+  end
+  
+  def calculate_call_success_rates
+    # Get recordings for the current user
+    my_recordings = Recording.where(user: current_user)
+    @my_successful_calls = my_recordings.where("duration >= ?", 60).count
+    @my_failed_calls = my_recordings.where("duration < ?", 60).count
+    
+    # Calculate success rate for the current user
+    total_my_calls = @my_successful_calls + @my_failed_calls
+    @my_success_rate = total_my_calls.zero? ? 0 : ((@my_successful_calls.to_f / total_my_calls) * 100).round
+    
+    # Calculate team success rate
+    all_recordings = Recording.all
+    team_successful_calls = all_recordings.where("duration >= ?", 60).count
+    total_team_calls = all_recordings.count
+    @team_success_rate = total_team_calls.zero? ? 0 : ((team_successful_calls.to_f / total_team_calls) * 100).round
   end
   
   def deals_needing_attention

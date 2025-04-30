@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
+ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -101,6 +101,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
     t.string "google_calendar_event_id"
     t.string "google_calendar_event_link"
     t.string "whatsapp_chat_id"
+    t.datetime "last_email_fetched_at"
     t.index ["user_id"], name: "index_customers_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
@@ -154,6 +155,44 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
     t.index ["user_id"], name: "index_deals_on_user_id"
   end
 
+  create_table "email_attachments", force: :cascade do |t|
+    t.bigint "email_id", null: false
+    t.string "filename"
+    t.string "content_type"
+    t.string "attachment_id"
+    t.integer "size"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email_id"], name: "index_email_attachments_on_email_id"
+  end
+
+  create_table "emails", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "user_id", null: false
+    t.string "message_id"
+    t.string "gmail_thread_id"
+    t.string "subject"
+    t.text "body_html"
+    t.text "body_text"
+    t.string "from_email"
+    t.string "from_name"
+    t.string "to_email"
+    t.string "to_name"
+    t.string "status"
+    t.datetime "sent_at"
+    t.datetime "received_at"
+    t.datetime "read_at"
+    t.boolean "has_attachments"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "snippet"
+    t.string "label_ids"
+    t.index ["customer_id"], name: "index_emails_on_customer_id"
+    t.index ["label_ids"], name: "index_emails_on_label_ids"
+    t.index ["message_id"], name: "index_emails_on_message_id"
+    t.index ["user_id"], name: "index_emails_on_user_id"
+  end
+
   create_table "messages", force: :cascade do |t|
     t.text "content"
     t.string "message_type"
@@ -171,6 +210,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
     t.index ["message_id"], name: "index_messages_on_message_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
+  end
+
+  create_table "ndas", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "project_name"
+    t.text "project_description"
+    t.date "effective_date"
+    t.text "signature"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_ndas_on_customer_id"
+    t.index ["user_id"], name: "index_ndas_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -200,8 +252,36 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
     t.datetime "updated_at", null: false
     t.jsonb "transcription"
     t.string "transcription_status"
+    t.boolean "called_at_prefered_time", default: false, null: false
+    t.index ["called_at_prefered_time"], name: "index_recordings_on_called_at_prefered_time"
     t.index ["customer_id"], name: "index_recordings_on_customer_id"
     t.index ["user_id"], name: "index_recordings_on_user_id"
+  end
+
+  create_table "role_assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "role_id", null: false
+    t.bigint "assigned_by_id"
+    t.string "resource_type"
+    t.bigint "resource_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_by_id"], name: "index_role_assignments_on_assigned_by_id"
+    t.index ["resource_type", "resource_id"], name: "index_role_assignments_on_resource"
+    t.index ["role_id"], name: "index_role_assignments_on_role_id"
+    t.index ["user_id", "role_id", "resource_type", "resource_id"], name: "index_role_assignments_on_user_role_and_resource", unique: true
+    t.index ["user_id"], name: "index_role_assignments_on_user_id"
+  end
+
+  create_table "roles", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "key", null: false
+    t.integer "hierarchy_level", default: 0
+    t.index ["hierarchy_level"], name: "index_roles_on_hierarchy_level"
+    t.index ["key"], name: "index_roles_on_key", unique: true
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -229,7 +309,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
     t.string "email"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "is_admin", default: false
     t.string "phone_number"
     t.string "google_token"
     t.string "google_refresh_token"
@@ -267,11 +346,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_02_225728) do
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
+  add_foreign_key "email_attachments", "emails"
+  add_foreign_key "emails", "customers"
+  add_foreign_key "emails", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
+  add_foreign_key "ndas", "customers"
+  add_foreign_key "ndas", "users"
   add_foreign_key "notifications", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
+  add_foreign_key "role_assignments", "roles"
+  add_foreign_key "role_assignments", "users"
+  add_foreign_key "role_assignments", "users", column: "assigned_by_id"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
   add_foreign_key "whatsapp_messages", "customers"

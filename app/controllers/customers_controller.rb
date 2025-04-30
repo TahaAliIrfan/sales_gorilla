@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -62,6 +62,15 @@ class CustomersController < ApplicationController
     @activities = @customer.customer_activities.recent.limit(10)
     @recordings = @customer.recordings.recent.limit(20)
     @tasks = @customer.tasks.order(due_date: :asc)
+    @emails = @customer.emails.recent.limit(5)
+
+    if @customer.email.present?
+      CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
+
+      Rails.cache.write("customer_#{@customer.id}_email_count_before", @customer.emails.count)
+
+      @email_fetching_active = true
+    end
   end
 
   def new
@@ -462,6 +471,30 @@ class CustomersController < ApplicationController
         success: false, 
         error: response[:error] || "Failed to send media message" 
       }
+    end
+  end
+
+  def analyze_phone
+    authorize @customer
+    
+    if @customer.phone.blank?
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Customer does not have a phone number.' }
+        format.json { render json: { success: false, error: 'Customer does not have a phone number.' }, status: :unprocessable_entity }
+      end
+      return
+    end
+    
+    if @customer.analyze_phone_number
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Phone analysis has been queued.' }
+        format.json { render json: { success: true } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Failed to queue phone analysis.' }
+        format.json { render json: { success: false, error: 'Failed to queue phone analysis.' }, status: :unprocessable_entity }
+      end
     end
   end
 
