@@ -6,7 +6,12 @@ class CustomersController < ApplicationController
   after_action :verify_policy_scoped, only: :index
 
   def index
-    @users = User.all if current_user&.admin?
+    @users = if current_user&.admin?
+      User.all
+    elsif current_user&.manager?
+      # Managers can assign to themselves and their associates
+      [current_user] + current_user.associates
+    end
     
     # Check if this is an AJAX request for client-side filtering
     if request.xhr?
@@ -26,7 +31,7 @@ class CustomersController < ApplicationController
     @customers = policy_scope(Customer)
     
     # Apply filters using scopes
-    if params[:user_id].present? && current_user&.admin?
+    if params[:user_id].present? && (current_user&.admin? || current_user&.manager?)
       if params[:user_id] == 'unassigned'
         @customers = @customers.where(user_id: nil)
       else
@@ -258,6 +263,18 @@ class CustomersController < ApplicationController
     if !user
       redirect_to customers_path, alert: 'Selected user not found.'
       return
+    end
+    
+    # Check if current user is a manager and is trying to assign to someone other than themselves or their associates
+    if current_user.manager? && !current_user.admin?
+      # Get the list of valid assignees for this manager (self + associates)
+      valid_assignee_ids = [current_user.id] + current_user.associates.pluck(:id)
+      
+      # Check if the target user is in the valid assignees list
+      unless valid_assignee_ids.include?(user.id)
+        redirect_to customers_path, alert: 'You can only assign customers to yourself or your team members.'
+        return
+      end
     end
     
     # Check user
