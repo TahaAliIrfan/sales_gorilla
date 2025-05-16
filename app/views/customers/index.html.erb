@@ -215,7 +215,7 @@
           </thead>
           <tbody class="bg-white" data-customer-filter-target="customersList">
             <% @customers.each do |customer| %>
-              <tr class="customer-row <%= customer_status_border_class(customer) %> <%= customer.is_preferred_calling_time? ? 'bg-green-50 preferred-calling-time' : '' %>"
+              <tr class="customer-row <%= customer_status_border_class(customer) %>"
                   data-name="<%= customer.name.downcase %>"
                   data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>"
@@ -402,29 +402,6 @@
 </div>
 
 <style>
-  .preferred-calling-time {
-    position: relative;
-    border-left: 4px solid #22c55e !important; /* green-500 */
-    animation: pulse-border 2s infinite;
-    background-color: rgba(34, 197, 94, 0.05) !important; /* Light green background */
-  }
-
-  .preferred-calling-time:hover {
-    background-color: rgba(34, 197, 94, 0.1) !important; /* Slightly darker on hover */
-  }
-
-  @keyframes pulse-border {
-    0% {
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-    }
-    70% {
-      box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
-    }
-    100% {
-      box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-    }
-  }
-
   .animate-pulse {
     animation: pulse 2s infinite;
   }
