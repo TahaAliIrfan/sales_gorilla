@@ -64,7 +64,7 @@
           </tr>
         <% else %>
           <% @recordings.each do |recording| %>
-            <tr class="<%= recording.called_at_prefered_time? ? 'bg-green-50' : '' %>">
+            <tr class="<%= recording.duration.to_i >= 40 ? 'bg-green-50' : '' %>">
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <%= recording.date&.strftime("%b %d, %Y %H:%M") %>
               </td>
