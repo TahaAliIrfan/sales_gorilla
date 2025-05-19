@@ -61,7 +61,7 @@ class CallingController < ApplicationController
         customer = Customer.find_by(id: params[:customer_id])
 
         if customer.present? && customer.user_id.nil?
-          user_id = User.first.try(:id)
+          user_id = User.find_by(email: 'sarmad.mansoor@tecaudex.com').id
         else
           user_id = customer.user_id
         end
@@ -71,7 +71,7 @@ class CallingController < ApplicationController
       else
         customer = Customer.find_by(phone: params[:Caller])
         # Default user
-        user = User.first
+        user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
         user_phone_number = user&.phone_number || '+447897021964'
         user_id = user&.id
 
