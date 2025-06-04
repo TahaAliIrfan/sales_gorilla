@@ -14,6 +14,21 @@ module CustomersHelper
     end
   end
   
+  def customer_status_color_class(status)
+    case status
+    when 'Pending' then 'bg-yellow-100 text-yellow-800'
+    when 'Contact Established' then 'bg-green-100 text-green-800'
+    when 'Contact Not Established' then 'bg-red-100 text-red-800'
+    when 'Unresponsive' then 'bg-orange-100 text-orange-800'
+    when 'Converted' then 'bg-blue-100 text-blue-800'
+    when 'Proposal Sent' then 'bg-indigo-100 text-indigo-800'
+    when 'Not Interested' then 'bg-gray-100 text-gray-800'
+    when 'Exhausted' then 'bg-purple-100 text-purple-800'
+    when 'Invalid' then 'bg-purple-100 text-purple-800'
+    else 'bg-gray-100 text-gray-800'
+    end
+  end
+  
   def format_preferred_calling_time(time_str, current_customer_time)
     return time_str unless time_str.present? && current_customer_time
     
