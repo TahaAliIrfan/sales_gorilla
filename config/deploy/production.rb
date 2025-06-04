@@ -14,9 +14,9 @@ set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
   user: 'ubuntu',
-  keys: %w[./Desktop/tec_crm.pem]
+  keys: %w[./Desktop/tec_01.pem]
 }
-server '3.86.182.97', port: 22, roles: [:web, :app, :db], primary: true
+server '3.82.141.0', port: 22, roles: [:web, :app, :db], primary: true
 
 # role-based syntax
 # ==================
