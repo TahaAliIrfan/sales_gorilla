@@ -189,7 +189,7 @@ class CustomersController < ApplicationController
     status_value = params[:status_value]
     
     # Validate status type and value before updating
-    valid_status_types = ['call_status', 'email_status', 'whatsapp_status', 'linkedin_status']
+    valid_status_types = ['call_status', 'email_status', 'whatsapp_status', 'linkedin_status', 'customer_type']
     valid_status_values = case status_type
                           when 'call_status'
                             Customer::CALL_STATUSES.values
@@ -199,6 +199,8 @@ class CustomersController < ApplicationController
                             Customer::WHATSAPP_STATUSES.values
                           when 'linkedin_status'
                             Customer::LINKEDIN_STATUSES.values
+                          when 'customer_type'
+                            Customer::CUSTOMER_TYPES.values
                           else
                             []
                           end

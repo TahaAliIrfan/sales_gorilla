@@ -177,6 +177,12 @@ export default class extends Controller {
   
   getBaseClass(statusType, statusValue) {
     switch(statusType) {
+      case 'customer_type':
+        switch(statusValue) {
+          case 'High Value': return 'bg-amber-50 text-amber-700'
+          default: return 'bg-yellow-900/10 text-yellow-900'
+        }
+
       case 'call_status':
         switch(statusValue) {
           case 'Called': return 'bg-green-50 text-green-700'
@@ -223,6 +229,12 @@ export default class extends Controller {
   
   getActiveClass(statusType, statusValue) {
     switch(statusType) {
+      case 'customer_type':
+        switch(statusValue) {
+          case 'High Value': return 'bg-amber-100 text-amber-800 ring-2 ring-amber-300'
+          default: return 'bg-yellow-900/20 text-yellow-900 ring-2 ring-yellow-900/30'
+        }
+
       case 'call_status':
         switch(statusValue) {
           case 'Called': return 'bg-green-100 text-green-800 ring-2 ring-green-300'

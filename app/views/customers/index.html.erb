@@ -215,7 +215,7 @@
           </thead>
           <tbody class="bg-white" data-customer-filter-target="customersList">
             <% @customers.each do |customer| %>
-              <tr class="customer-row <%= customer_status_border_class(customer) %>"
+              <tr class="customer-row <%= customer_status_border_class(customer) %> <%= customer.customer_type == 'High Value' ? 'bg-amber-100' : '' %>"
                   data-name="<%= customer.name.downcase %>"
                   data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>"

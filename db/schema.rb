@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -102,6 +102,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
     t.string "google_calendar_event_link"
     t.string "whatsapp_chat_id"
     t.datetime "last_email_fetched_at"
+    t.string "customer_type", default: "Standard"
     t.index ["user_id"], name: "index_customers_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
@@ -193,6 +194,32 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
 
+  create_table "google_meets", force: :cascade do |t|
+    t.string "title", null: false
+    t.string "meeting_link", null: false
+    t.datetime "start_time", null: false
+    t.datetime "end_time"
+    t.integer "status", default: 0
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["start_time"], name: "index_google_meets_on_start_time"
+    t.index ["status"], name: "index_google_meets_on_status"
+    t.index ["user_id"], name: "index_google_meets_on_user_id"
+  end
+
+  create_table "meeting_participants", force: :cascade do |t|
+    t.bigint "google_meet_id", null: false
+    t.bigint "user_id", null: false
+    t.integer "role", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["google_meet_id", "user_id"], name: "index_meeting_participants_on_google_meet_id_and_user_id", unique: true
+    t.index ["google_meet_id"], name: "index_meeting_participants_on_google_meet_id"
+    t.index ["role"], name: "index_meeting_participants_on_role"
+    t.index ["user_id"], name: "index_meeting_participants_on_user_id"
+  end
+
   create_table "messages", force: :cascade do |t|
     t.text "content"
     t.string "message_type"
@@ -276,12 +303,46 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
     t.string "key", null: false
     t.integer "hierarchy_level", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["hierarchy_level"], name: "index_roles_on_hierarchy_level"
     t.index ["key"], name: "index_roles_on_key", unique: true
+  end
+
+  create_table "sms", force: :cascade do |t|
+    t.string "from_number"
+    t.string "to_number"
+    t.text "body"
+    t.string "direction"
+    t.string "status"
+    t.string "message_sid"
+    t.bigint "customer_id"
+    t.bigint "user_id"
+    t.string "message_type"
+    t.string "media_url"
+    t.integer "num_media", default: 0
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_sms_on_created_at"
+    t.index ["customer_id"], name: "index_sms_on_customer_id"
+    t.index ["direction"], name: "index_sms_on_direction"
+    t.index ["from_number"], name: "index_sms_on_from_number"
+    t.index ["message_sid"], name: "index_sms_on_message_sid", unique: true
+    t.index ["status"], name: "index_sms_on_status"
+    t.index ["to_number"], name: "index_sms_on_to_number"
+    t.index ["user_id"], name: "index_sms_on_user_id"
+  end
+
+  create_table "system_settings", force: :cascade do |t|
+    t.string "key", null: false
+    t.text "value"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["key"], name: "index_system_settings_on_key", unique: true
   end
 
   create_table "tasks", force: :cascade do |t|
@@ -326,6 +387,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
     t.jsonb "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "read", default: false
     t.index ["customer_id", "timestamp"], name: "index_whatsapp_messages_on_customer_id_and_timestamp"
     t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
     t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
@@ -349,6 +411,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
   add_foreign_key "email_attachments", "emails"
   add_foreign_key "emails", "customers"
   add_foreign_key "emails", "users"
+  add_foreign_key "google_meets", "users"
+  add_foreign_key "meeting_participants", "google_meets"
+  add_foreign_key "meeting_participants", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
   add_foreign_key "ndas", "customers"
@@ -359,6 +424,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_04_26_003020) do
   add_foreign_key "role_assignments", "roles"
   add_foreign_key "role_assignments", "users"
   add_foreign_key "role_assignments", "users", column: "assigned_by_id"
+  add_foreign_key "sms", "customers"
+  add_foreign_key "sms", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
   add_foreign_key "whatsapp_messages", "customers"

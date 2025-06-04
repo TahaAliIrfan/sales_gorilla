@@ -31,6 +31,11 @@ class Customer < ApplicationRecord
   after_save :analyze_phone_number, if: -> { phone.present? }
   
   # Constants for dropdown fields
+  CUSTOMER_TYPES = {
+    'Standard' => 'Standard',
+    'High Value' => 'High Value'
+  }.freeze
+
   LEAD_SOURCES = {
     'Upwork' => 'Upwork',
     'LinkedIn' => 'LinkedIn',
@@ -133,6 +138,7 @@ class Customer < ApplicationRecord
   }.freeze
   
   # Validations for dropdown fields
+  validates :customer_type, inclusion: { in: CUSTOMER_TYPES.values }
   validates :lead_source, inclusion: { in: LEAD_SOURCES.values }, allow_blank: true
   validates :project_type, inclusion: { in: PROJECT_TYPES.values }, allow_blank: true
   validates :status, inclusion: { in: STATUSES.values }, allow_blank: true
@@ -539,6 +545,7 @@ class Customer < ApplicationRecord
   end
   
   def set_default_values
+    self.customer_type ||= 'Standard'
     self.exhaust_status ||= 'NA'
     self.status ||= 'Pending'
     self.call_status ||= 'Pending'
