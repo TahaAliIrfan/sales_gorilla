@@ -135,7 +135,22 @@ export default class extends Controller {
     upload.create((error, blob) => {
       if (error) {
         console.error('Error uploading file:', error)
-        this.showError(`Failed to upload ${file.name}: ${error.message || 'Unknown error'}`)
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          response: error.response
+        })
+        
+        let errorMessage = 'Unknown error'
+        if (error.message) {
+          errorMessage = error.message
+        } else if (error.status) {
+          errorMessage = `HTTP ${error.status} error`
+        } else if (error.response) {
+          errorMessage = `Server error: ${error.response}`
+        }
+        
+        this.showError(`Failed to upload ${file.name}: ${errorMessage}`)
         this.updateFileProgress(file.name, 'error')
       } else {
         // Store the signed blob ID
@@ -206,6 +221,17 @@ export default class extends Controller {
       const progress = event.loaded / event.total * 100
       this.uploadProgress[event.target.upload.file.name] = progress
       this.updateTotalProgress()
+    })
+    
+    // Add error handling for network issues
+    xhr.addEventListener("error", event => {
+      console.error("XHR Error during upload:", event)
+      console.error("XHR status:", xhr.status)
+      console.error("XHR response:", xhr.responseText)
+    })
+    
+    xhr.addEventListener("timeout", event => {
+      console.error("XHR Timeout during upload:", event)
     })
   }
 

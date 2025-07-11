@@ -100,6 +100,14 @@ Rails.application.configure do
   }
 
   config.action_mailer.default_url_options = { host: 'crm.tecaudex.com', protocol: 'https' }
+  
+  config.active_storage.routes_prefix = '/rails/active_storage'
+  config.active_storage.replace_on_assign_to_many = true
+  
+  # Configure Active Storage for direct uploads
+  config.active_storage.variant_processor = :mini_magick
+  config.active_storage.service_urls_expire_in = 1.hour
+
   config.action_mailer.perform_deliveries = true
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
