@@ -156,6 +156,8 @@ export default class extends Controller {
       case 'Proposal Sent': return 'bg-indigo-50 text-indigo-700'
       case 'Not Interested': return 'bg-gray-50 text-gray-700'
       case 'Invalid': return 'bg-purple-50 text-purple-700'
+      case 'Retarget': return 'bg-amber-50 text-amber-700'
+      case 'Exhausted_1': return 'bg-pink-50 text-pink-700'
       default: return 'bg-blue-50 text-blue-700'
     }
   }
@@ -171,6 +173,8 @@ export default class extends Controller {
       case 'Proposal Sent': return 'bg-indigo-100 text-indigo-800 ring-2 ring-indigo-300'
       case 'Not Interested': return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
       case 'Invalid': return 'bg-purple-100 text-purple-800 ring-2 ring-purple-300'
+      case 'Retarget': return 'bg-amber-100 text-amber-800 ring-2 ring-amber-300'
+      case 'Exhausted_1': return 'bg-pink-100 text-pink-800 ring-2 ring-pink-300'
       default: return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
     }
   }

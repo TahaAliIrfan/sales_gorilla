@@ -10,6 +10,8 @@ module CustomersHelper
     when 'Not Interested' then 'border-l-4 border-gray-400'
     when 'Exhausted' then 'border-l-4 border-purple-400'
     when 'Invalid' then 'border-l-4 border-purple-400'
+    when 'Retarget' then 'border-l-4 border-amber-400'
+    when 'Exhausted_1' then 'border-l-4 border-pink-400'
     else 'border-l-4 border-gray-200'
     end
   end
@@ -25,6 +27,8 @@ module CustomersHelper
     when 'Not Interested' then 'bg-gray-100 text-gray-800'
     when 'Exhausted' then 'bg-purple-100 text-purple-800'
     when 'Invalid' then 'bg-purple-100 text-purple-800'
+    when 'Retarget' then 'bg-amber-100 text-amber-800'
+    when 'Exhausted_1' then 'bg-pink-100 text-pink-800'
     else 'bg-gray-100 text-gray-800'
     end
   end

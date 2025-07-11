@@ -85,7 +85,9 @@ class Customer < ApplicationRecord
     'Proposal Sent' => 'Proposal Sent',
     'Not Interested' => 'Not Interested',
     'Exhausted' => 'Exhausted',
-    'Invalid' => 'Invalid'
+    'Invalid' => 'Invalid',
+    'Retarget' => 'Retarget',
+    'Exhausted_1' => 'Exhausted_1'
   }.freeze
   
   CALL_STATUSES = {
