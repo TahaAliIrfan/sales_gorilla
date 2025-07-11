@@ -15,7 +15,13 @@ class DealsController < ApplicationController
     params[:filter_range] ||= '30'
     apply_filters
     @deal_stages = DealStage.all
-    @users = User.all
+    @users = if current_user&.admin?
+      User.all
+    elsif current_user&.manager?
+      [current_user] + current_user.associates
+    else
+      [current_user]
+    end
     @filter_range = params[:filter_range] || 'all'
     
     # Set date range based on filter (for won/lost deals)
@@ -43,7 +49,13 @@ class DealsController < ApplicationController
     params[:filter_range] ||= '30'
     apply_filters
     @deal_stages = DealStage.all
-    @users = User.all
+    @users = if current_user&.admin?
+      User.all
+    elsif current_user&.manager?
+      [current_user] + current_user.associates
+    else
+      [current_user]
+    end
     @filter_range = params[:filter_range] || 'all'
     
     # Set date range based on filter (for won/lost deals)
@@ -95,6 +107,11 @@ class DealsController < ApplicationController
     if current_user&.admin?
       @customers = Customer.all
       @users = User.all
+    elsif current_user&.manager?
+      # Managers can create deals for their own customers and their associates' customers
+      associate_ids = current_user.associates.pluck(:id)
+      @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+      @users = [current_user] + current_user.associates
     else
       @customers = Customer.where(user_id: current_user.id)
       @users = [current_user]
@@ -158,6 +175,11 @@ class DealsController < ApplicationController
       if current_user&.admin?
         @customers = Customer.all
         @users = User.all
+      elsif current_user&.manager?
+        # Managers can create deals for their own customers and their associates' customers
+        associate_ids = current_user.associates.pluck(:id)
+        @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+        @users = [current_user] + current_user.associates
       else
         @customers = Customer.where(user_id: current_user.id)
         @users = [current_user]
@@ -211,6 +233,11 @@ class DealsController < ApplicationController
       if current_user&.admin?
         @customers = Customer.all
         @users = User.all
+      elsif current_user&.manager?
+        # Managers can create deals for their own customers and their associates' customers
+        associate_ids = current_user.associates.pluck(:id)
+        @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+        @users = [current_user] + current_user.associates
       else
         @customers = Customer.where(user_id: current_user.id)
         @users = [current_user]
@@ -228,6 +255,11 @@ class DealsController < ApplicationController
     if current_user&.admin?
       @customers = Customer.all
       @users = User.all
+    elsif current_user&.manager?
+      # Managers can edit deals with their own customers and their associates' customers
+      associate_ids = current_user.associates.pluck(:id)
+      @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+      @users = [current_user] + current_user.associates
     else
       @customers = Customer.where(user_id: current_user.id)
       @users = [current_user]
@@ -327,6 +359,11 @@ class DealsController < ApplicationController
       if current_user&.admin?
         @customers = Customer.all
         @users = User.all
+      elsif current_user&.manager?
+        # Managers can edit deals with their own customers and their associates' customers
+        associate_ids = current_user.associates.pluck(:id)
+        @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+        @users = [current_user] + current_user.associates
       else
         @customers = Customer.where(user_id: current_user.id)
         @users = [current_user]
@@ -342,6 +379,11 @@ class DealsController < ApplicationController
       if current_user&.admin?
         @customers = Customer.all
         @users = User.all
+      elsif current_user&.manager?
+        # Managers can edit deals with their own customers and their associates' customers
+        associate_ids = current_user.associates.pluck(:id)
+        @customers = Customer.where(user_id: [current_user.id] + associate_ids)
+        @users = [current_user] + current_user.associates
       else
         @customers = Customer.where(user_id: current_user.id)
         @users = [current_user]

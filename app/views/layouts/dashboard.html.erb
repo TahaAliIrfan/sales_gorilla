@@ -187,7 +187,7 @@
               Customers
             <% end %>
 
-            <% if current_user&.admin? %>
+            <% if current_user&.admin? || current_user&.manager? %>
               <%= link_to deals_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{controller_name == 'deals' && action_name != 'my_deals' ? 'bg-gray-800 text-white' : ''}" do %>
                 <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -305,7 +305,7 @@
                 <h1 class="text-2xl font-semibold text-gray-900">Customers</h1>
               <% elsif controller_name == 'deals' %>
                 <h1 class="text-2xl font-semibold text-gray-900">
-                  <%= current_user&.admin? ? (action_name == 'my_deals' ? 'My Deals' : 'Deals') : 'My Deals' %>
+                  <%= (current_user&.admin? || current_user&.manager?) ? (action_name == 'my_deals' ? 'My Deals' : 'Deals') : 'My Deals' %>
                 </h1>
               <% elsif controller_name == 'tasks' %>
                 <h1 class="text-2xl font-semibold text-gray-900">

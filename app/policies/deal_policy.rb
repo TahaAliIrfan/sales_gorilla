@@ -5,6 +5,10 @@ class DealPolicy < ApplicationPolicy
     def resolve
       if user.admin?
         scope.all
+      elsif user.manager?
+        # Managers can see their own deals and deals of their associates
+        associate_ids = user.associates.pluck(:id)
+        scope.where(user_id: [user.id] + associate_ids)
       else
         scope.where(user_id: user.id)
       end
@@ -12,7 +16,7 @@ class DealPolicy < ApplicationPolicy
   end
   
   def index?
-    user.admin?
+    user.admin? || user.manager?
   end
   
   def my_deals?
@@ -20,7 +24,8 @@ class DealPolicy < ApplicationPolicy
   end
   
   def show?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def create?
@@ -28,7 +33,8 @@ class DealPolicy < ApplicationPolicy
   end
   
   def update?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def destroy?
@@ -36,7 +42,8 @@ class DealPolicy < ApplicationPolicy
   end
   
   def update_stage?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def assign_user?
@@ -44,10 +51,12 @@ class DealPolicy < ApplicationPolicy
   end
   
   def mark_as_won?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
   
   def mark_as_lost?
-    user.admin? || record.user_id == user.id
+    user.admin? || record.user_id == user.id || 
+    (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 end 

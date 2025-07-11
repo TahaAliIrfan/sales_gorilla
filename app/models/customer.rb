@@ -10,7 +10,7 @@ class Customer < ApplicationRecord
   has_many_attached :documents
 
   # Remove single file attachment as we're using documents now
-  # has_one_attached :file
+  #has_one_attached :file
   
   validates :name, presence: { message: "is required" }
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
