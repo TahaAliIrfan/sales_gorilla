@@ -565,8 +565,24 @@ class CustomersController < ApplicationController
   end
 
   def customer_params
-    params.require(:customer).permit(:name, :email, :phone, :company, :country, :notes, :lead_source, :status, :customer_type,
-                                   :preferred_calling_time, :timezone, :platform, :project_scope, :file, documents: [])
+
+    # Only permit parameters that are actually in the form
+    permitted_params = [
+      :name, :email, :phone, :address, :company, :notes,
+      :lead_source, :linkedin_url, :ccr_link, :project_estimated_cost,
+      :project_type, :idea_description, :country, :status, :call_status,
+      :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status,
+      :preferred_calling_time, :platform, :project_scope, :file
+    ]
+
+    permitted_params += [documents: []]
+
+    # Only admins can assign customers to users
+    if current_user&.admin?
+      permitted_params << :user_id
+    end
+
+    params.require(:customer).permit(permitted_params)
   end
   
   def require_login
