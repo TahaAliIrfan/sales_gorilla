@@ -42,3 +42,6 @@ application.register("whatsapp-chat", WhatsappChatController)
 
 import DropdownController from "./dropdown_controller"
 application.register("dropdown", DropdownController)
+
+import CustomerDocumentsController from "./customer_documents_controller"
+application.register("customer-documents", CustomerDocumentsController)

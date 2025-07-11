@@ -130,23 +130,25 @@
             </div>
           <% end %>
           
-          <% if @customer.file.attached? %>
+          <% if @customer.documents.attached? %>
             <div>
-              <h3 class="text-sm font-medium text-gray-500">Attachment</h3>
-              <div class="mt-2">
-                <% if @customer.file.content_type.start_with?('image/') %>
-                  <%= link_to rails_blob_path(@customer.file, disposition: "attachment"), target: "_blank", class: "inline-block" do %>
-                    <%= image_tag rails_blob_path(@customer.file), class: "max-h-48 w-auto object-cover rounded border border-gray-200" %>
-                  <% end %>
-                <% else %>
-                  <%= link_to rails_blob_path(@customer.file, disposition: "attachment"), target: "_blank", class: "inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" do %>
-                    <svg class="mr-1.5 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
-                    </svg>
-                    <%= @customer.file.filename %>
-                    <span class="ml-1 text-xs text-gray-500">
-                      (<%= number_to_human_size(@customer.file.byte_size) %>)
-                    </span>
+              <h3 class="text-sm font-medium text-gray-500">Documents</h3>
+              <div class="mt-2 space-y-2">
+                <% @customer.documents.each do |document| %>
+                  <% if document.content_type.start_with?('image/') %>
+                    <%= link_to rails_blob_path(document, disposition: "attachment"), target: "_blank", class: "inline-block" do %>
+                      <%= image_tag rails_blob_path(document), class: "max-h-48 w-auto object-cover rounded border border-gray-200" %>
+                    <% end %>
+                  <% else %>
+                    <%= link_to rails_blob_path(document, disposition: "attachment"), target: "_blank", class: "inline-flex items-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200" do %>
+                      <svg class="mr-1.5 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
+                      </svg>
+                      <%= document.filename %>
+                      <span class="ml-1 text-xs text-gray-500">
+                        (<%= number_to_human_size(document.byte_size) %>)
+                      </span>
+                    <% end %>
                   <% end %>
                 <% end %>
               </div>

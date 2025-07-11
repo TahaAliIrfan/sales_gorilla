@@ -125,8 +125,15 @@ class CustomersController < ApplicationController
     Rails.logger.debug("Original phone number: #{@customer.phone}")
     Rails.logger.debug("New phone number from params: #{customer_params[:phone]}")
     
+    # Handle document attachments
+    if params[:customer][:documents].present?
+      params[:customer][:documents].each do |document|
+        @customer.documents.attach(document)
+      end
+    end
+    
     # Assign attributes but don't save yet
-    @customer.assign_attributes(customer_params)
+    @customer.assign_attributes(customer_params.except(:documents))
     
     # Log the phone number after assignment
     Rails.logger.debug("Phone number after assignment: #{@customer.phone}")
@@ -158,9 +165,16 @@ class CustomersController < ApplicationController
   end
 
   def destroy
-    authorize @customer
-    @customer.destroy
-    redirect_to customers_path, notice: 'Customer was successfully deleted.'
+    @customer = Customer.find(params[:id])
+    
+    if params[:remove_document].present?
+      document = @customer.documents.find_signed(params[:remove_document])
+      document.purge if document
+      redirect_to @customer, notice: 'Document was successfully removed.'
+    else
+      @customer.destroy
+      redirect_to customers_url, notice: 'Customer was successfully deleted.'
+    end
   end
 
   def update_status
@@ -524,21 +538,8 @@ class CustomersController < ApplicationController
   end
 
   def customer_params
-    # Only permit parameters that are actually in the form
-    permitted_params = [
-      :name, :email, :phone, :address, :company, :notes,
-      :lead_source, :linkedin_url, :ccr_link, :project_estimated_cost,
-      :project_type, :idea_description, :country, :status, :call_status,
-      :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status,
-      :preferred_calling_time, :platform, :project_scope, :file
-    ]
-    
-    # Only admins can assign customers to users
-    if current_user&.admin?
-      permitted_params << :user_id
-    end
-    
-    params.require(:customer).permit(permitted_params)
+    params.require(:customer).permit(:name, :email, :phone, :company, :country, :notes, :lead_source, :status, :customer_type,
+                                   :preferred_calling_time, :timezone, :platform, :project_scope, :file, documents: [])
   end
   
   def require_login

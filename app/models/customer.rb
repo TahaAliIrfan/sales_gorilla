@@ -7,17 +7,18 @@ class Customer < ApplicationRecord
   has_many :messages, dependent: :destroy
   has_many :whatsapp_messages, dependent: :destroy
   has_many :emails, dependent: :destroy
+  has_many_attached :documents
 
-  # Add file attachment capability
-  has_one_attached :file
+  # Remove single file attachment as we're using documents now
+  # has_one_attached :file
   
   validates :name, presence: { message: "is required" }
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
             format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
   validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
   
-  # Validate file type
-  validate :acceptable_file
+  # Validate document types
+  validate :acceptable_documents
   
   before_validation :normalize_email
   before_validation :normalize_phone
@@ -504,22 +505,41 @@ class Customer < ApplicationRecord
     whatsapp_messages.ordered
   end
   
+  def document_types
+    documents.map do |doc|
+      case doc.content_type
+      when /pdf/i then :pdf
+      when /word|docx|doc/i then :doc
+      when /excel|xlsx|xls|csv/i then :spreadsheet
+      when /image/i then :image
+      else :other
+      end
+    end
+  end
+  
   private
   
-  def acceptable_file
-    return unless file.attached?
-    
-    unless file.blob.content_type.in?(%w[
-      image/jpeg image/jpg image/png image/gif
-      application/pdf
-      application/msword
-      application/vnd.openxmlformats-officedocument.wordprocessingml.document
-    ])
-      errors.add(:file, 'must be a JPEG, PNG, GIF, PDF, DOC or DOCX file')
-    end
-    
-    if file.blob.byte_size > 10.megabytes
-      errors.add(:file, 'size cannot exceed 10MB')
+  def acceptable_documents
+    return unless documents.attached?
+
+    documents.each do |document|
+      unless document.content_type.in?(%w[
+        application/pdf
+        application/msword
+        application/vnd.openxmlformats-officedocument.wordprocessingml.document
+        application/vnd.ms-excel
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+        text/csv
+        image/jpeg
+        image/png
+        image/gif
+      ])
+        errors.add(:documents, "must be a PDF, Word, Excel, CSV, or image file")
+      end
+
+      if document.byte_size > 10.megabytes
+        errors.add(:documents, "size should be less than 10MB")
+      end
     end
   end
   
