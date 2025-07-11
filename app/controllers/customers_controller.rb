@@ -168,10 +168,37 @@ class CustomersController < ApplicationController
     @customer = Customer.find(params[:id])
     
     if params[:remove_document].present?
-      document = @customer.documents.find_signed(params[:remove_document])
-      document.purge if document
-      redirect_to @customer, notice: 'Document was successfully removed.'
+      authorize @customer, :remove_document?
+      
+      # Debug logging
+      Rails.logger.info "Attempting to remove document with signed_id: #{params[:remove_document]}"
+      Rails.logger.info "Customer has #{@customer.documents.count} documents"
+      
+      begin
+        # Find the blob
+        blob = ActiveStorage::Blob.find_signed(params[:remove_document])
+        Rails.logger.info "Found blob: #{blob.id} - #{blob.filename}"
+        
+        # Find the attachment that uses this blob
+        attachment = @customer.documents.find { |doc| doc.blob.id == blob.id }
+        
+        if attachment
+          Rails.logger.info "Found attachment, purging..."
+          attachment.purge
+          redirect_to @customer, notice: 'Document was successfully removed.'
+        else
+          Rails.logger.error "Attachment not found for blob #{blob.id}"
+          redirect_to @customer, alert: 'Document not found.'
+        end
+      rescue ActiveStorage::InvalidSignature => e
+        Rails.logger.error "Invalid signed ID: #{e.message}"
+        redirect_to @customer, alert: 'Invalid document reference.'
+      rescue => e
+        Rails.logger.error "Error removing document: #{e.message}"
+        redirect_to @customer, alert: 'Failed to remove document.'
+      end
     else
+      authorize @customer, :destroy?
       @customer.destroy
       redirect_to customers_url, notice: 'Customer was successfully deleted.'
     end
