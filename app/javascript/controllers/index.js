@@ -45,3 +45,6 @@ application.register("dropdown", DropdownController)
 
 import CustomerDocumentsController from "./customer_documents_controller"
 application.register("customer-documents", CustomerDocumentsController)
+
+import DocumentDeleteController from "./document_delete_controller"
+application.register("document-delete", DocumentDeleteController)
