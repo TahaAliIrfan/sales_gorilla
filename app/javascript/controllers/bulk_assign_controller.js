@@ -46,6 +46,13 @@ export default class extends Controller {
       console.error("Bulk assign button not found")
     }
     
+    const bulkStatusChangeButton = document.getElementById("bulk-status-change-btn")
+    if (bulkStatusChangeButton) {
+      bulkStatusChangeButton.addEventListener("click", this.openBulkStatusChangeModal.bind(this))
+    } else {
+      console.error("Bulk status change button not found")
+    }
+    
     // Add event listeners for the bulk assign modal
     const closeModalButton = document.getElementById("close-modal")
     if (closeModalButton) {
@@ -56,6 +63,17 @@ export default class extends Controller {
     if (cancelBulkAssignButton) {
       cancelBulkAssignButton.addEventListener("click", this.closeBulkAssignModal.bind(this))
     }
+    
+    // Add event listeners for the bulk status change modal
+    const closeStatusModalButton = document.getElementById("close-status-modal")
+    if (closeStatusModalButton) {
+      closeStatusModalButton.addEventListener("click", this.closeBulkStatusChangeModal.bind(this))
+    }
+    
+    const cancelBulkStatusChangeButton = document.getElementById("cancel-bulk-status-change")
+    if (cancelBulkStatusChangeButton) {
+      cancelBulkStatusChangeButton.addEventListener("click", this.closeBulkStatusChangeModal.bind(this))
+    }
 
     // Ensure form submission captures all selected items
     const bulkAssignForm = document.getElementById("bulk-assign-form")
@@ -64,6 +82,15 @@ export default class extends Controller {
       bulkAssignForm.addEventListener("submit", this.handleFormSubmit.bind(this))
     } else {
       console.error("Bulk assign form not found")
+    }
+    
+    // Ensure form submission captures all selected items for status change
+    const bulkStatusChangeForm = document.getElementById("bulk-status-change-form")
+    if (bulkStatusChangeForm) {
+      console.log("Found bulk status change form:", bulkStatusChangeForm)
+      bulkStatusChangeForm.addEventListener("submit", this.handleStatusChangeFormSubmit.bind(this))
+    } else {
+      console.error("Bulk status change form not found")
     }
   }
   
@@ -96,21 +123,34 @@ export default class extends Controller {
   }
   
   updateHiddenFields() {
-    // Update customer IDs directly on the form input element
+    // Update customer IDs directly on the form input elements
     const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
     const bulkCustomerIdsInput = document.getElementById("bulk-customer-ids")
+    const bulkStatusCustomerIdsInput = document.getElementById("bulk-status-customer-ids")
     
-    if (selectedCustomerCheckboxes.length > 0 && bulkCustomerIdsInput) {
+    if (selectedCustomerCheckboxes.length > 0) {
       const selectedCustomerIds = Array.from(selectedCustomerCheckboxes)
           .map(checkbox => checkbox.getAttribute("data-id"))
           .filter(id => id && id !== "")
       
       if (selectedCustomerIds.length > 0) {
-        console.log(`Setting customer IDs: ${selectedCustomerIds.join(',')}`)
-        bulkCustomerIdsInput.value = selectedCustomerIds.join(",")
+        const customerIdsString = selectedCustomerIds.join(",")
+        console.log(`Setting customer IDs: ${customerIdsString}`)
+        
+        if (bulkCustomerIdsInput) {
+          bulkCustomerIdsInput.value = customerIdsString
+        }
+        if (bulkStatusCustomerIdsInput) {
+          bulkStatusCustomerIdsInput.value = customerIdsString
+        }
       }
-    } else if (bulkCustomerIdsInput) {
-      bulkCustomerIdsInput.value = ""
+    } else {
+      if (bulkCustomerIdsInput) {
+        bulkCustomerIdsInput.value = ""
+      }
+      if (bulkStatusCustomerIdsInput) {
+        bulkStatusCustomerIdsInput.value = ""
+      }
     }
   }
   
@@ -217,6 +257,67 @@ export default class extends Controller {
     const bulkAssignModal = document.getElementById("bulk-assign-modal")
     if (bulkAssignModal) {
       bulkAssignModal.classList.add("hidden")
+    }
+  }
+  
+  handleStatusChangeFormSubmit(event) {
+    // Prevent default form submission to ensure we can set field values
+    event.preventDefault()
+    console.log("Status change form submission intercepted")
+    
+    // Get all selected IDs just before submission
+    this.updateHiddenFields()
+    
+    // Double check if we actually have values in the hidden fields
+    let proceed = false
+    const statusCustomerIdsField = document.getElementById("bulk-status-customer-ids")
+    
+    if (statusCustomerIdsField && statusCustomerIdsField.value) {
+      console.log(`Submitting status change with customer IDs: ${statusCustomerIdsField.value}`)
+      proceed = true
+    }
+    
+    if (!proceed) {
+      console.error("No customers selected for bulk status change")
+      alert("Please select at least one customer to change status.")
+      return
+    }
+    
+    // Now submit the form
+    console.log("Manually submitting status change form")
+    event.target.submit()
+  }
+  
+  openBulkStatusChangeModal(event) {
+    event.preventDefault()
+    
+    // Double check the selection count
+    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
+    const totalSelected = selectedCustomerCheckboxes.length
+    
+    if (totalSelected === 0) {
+      console.error("No customers selected for bulk status change")
+      alert("Please select at least one customer to change status.")
+      return
+    }
+    
+    // Update hidden fields with current selection just before opening modal
+    this.updateHiddenFields()
+    
+    // Show the bulk status change modal
+    const bulkStatusChangeModal = document.getElementById("bulk-status-change-modal")
+    if (bulkStatusChangeModal) {
+      bulkStatusChangeModal.classList.remove("hidden")
+    }
+  }
+  
+  closeBulkStatusChangeModal(event) {
+    event.preventDefault()
+    
+    // Hide the bulk status change modal
+    const bulkStatusChangeModal = document.getElementById("bulk-status-change-modal")
+    if (bulkStatusChangeModal) {
+      bulkStatusChangeModal.classList.add("hidden")
     }
   }
 } 

@@ -75,4 +75,8 @@ class CustomerPolicy < ApplicationPolicy
   def bulk_assign?
     user.admin? || user.manager?
   end
+  
+  def bulk_status_change?
+    user.admin? || user.manager?
+  end
 end 

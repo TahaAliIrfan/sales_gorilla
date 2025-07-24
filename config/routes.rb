@@ -86,6 +86,7 @@ Rails.application.routes.draw do
     
     collection do
       post 'bulk_assign'
+      post 'bulk_status_change'
     end
   end
   resources :deal_stages

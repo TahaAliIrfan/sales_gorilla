@@ -355,6 +355,62 @@ class CustomersController < ApplicationController
     end
   end
 
+  def bulk_status_change
+    authorize Customer
+    
+    if !params[:customer_ids].present? || !params[:status].present?
+      redirect_to customers_path, alert: 'Please select customers and a status to change.'
+      return
+    end
+    
+    # Find customers - ensure we're parsing the IDs correctly
+    customer_ids = params[:customer_ids].to_s.split(',').map(&:strip).reject(&:blank?).map(&:to_i).reject(&:zero?)
+    
+    if customer_ids.empty?
+      redirect_to customers_path, alert: 'No valid customers selected.'
+      return
+    end
+    
+    # Validate status
+    unless Customer::STATUSES.values.include?(params[:status])
+      redirect_to customers_path, alert: 'Invalid status selected.'
+      return
+    end
+    
+    # Find customers
+    customers = Customer.where(id: customer_ids)
+    
+    if customers.empty?
+      redirect_to customers_path, alert: 'No customers found with the selected IDs.'
+      return
+    end
+    
+    # Update status for all customers
+    success_count = 0
+    failed_ids = []
+    
+    customers.each do |customer|
+      begin
+        if customer.update(status: params[:status])
+          success_count += 1
+        else
+          failed_ids << customer.id
+        end
+      rescue => e
+        failed_ids << customer.id
+        Rails.logger.error("Exception updating customer #{customer.id} status: #{e.message}")
+      end
+    end
+    
+    if success_count == customers.count
+      redirect_to customers_path, notice: "Successfully updated status to '#{params[:status]}' for #{success_count} #{'customer'.pluralize(success_count)}."
+    elsif success_count > 0
+      redirect_to customers_path, notice: "Partially successful: Updated #{success_count} of #{customers.count} customers to '#{params[:status]}'."
+    else
+      redirect_to customers_path, alert: 'Failed to update customer statuses.'
+    end
+  end
+
   def whatsapp_messages
     @customer = Customer.find(params[:id])
     authorize @customer
