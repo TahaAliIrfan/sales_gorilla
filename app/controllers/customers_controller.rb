@@ -98,19 +98,41 @@ class CustomersController < ApplicationController
     end
     
     if @customer.errors.any?
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: { errors: @customer.errors }, status: :unprocessable_entity }
+      end
       return
     end
 
     begin
-      # Use save! to raise an exception on validation failure
       @customer.save!
-      redirect_to @customer, notice: 'Customer was successfully created.'
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Customer was successfully created.' }
+        format.json { 
+          # Ensure we render JSON with proper headers
+          response.headers['Content-Type'] = 'application/json'
+          render json: { id: @customer.id, name: @customer.name, phone: @customer.phone }, status: :created 
+        }
+      end
     rescue ActiveRecord::RecordInvalid
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { 
+          response.headers['Content-Type'] = 'application/json'
+          render json: { errors: @customer.errors }, status: :unprocessable_entity 
+        }
+      end
     rescue => e
       @customer.errors.add(:base, "An unexpected error occurred: #{e.message}")
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { 
+          response.headers['Content-Type'] = 'application/json'
+          render json: { errors: @customer.errors }, status: :unprocessable_entity 
+        }
+      end
     end
   end
 

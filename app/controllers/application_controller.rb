@@ -40,8 +40,13 @@ class ApplicationController < ActionController::Base
   
   def require_login
     unless current_user
-      flash[:error] = "You must be logged in to access this section"
-      redirect_to root_path
+      respond_to do |format|
+        format.html do
+          flash[:error] = "You must be logged in to access this section"
+          redirect_to root_path
+        end
+        format.json { render json: { error: "Authentication required" }, status: :unauthorized }
+      end
     end
   end
   
@@ -66,7 +71,13 @@ class ApplicationController < ActionController::Base
   
   def user_not_authorized(exception)
     policy_name = exception.policy.class.to_s.underscore
-    flash[:error] = "You are not authorized to perform this action."
-    redirect_to(request.referrer || root_path)
+    
+    respond_to do |format|
+      format.html do
+        flash[:error] = "You are not authorized to perform this action."
+        redirect_to(request.referrer || root_path)
+      end
+      format.json { render json: { error: "Not authorized" }, status: :forbidden }
+    end
   end
 end

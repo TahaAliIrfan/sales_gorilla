@@ -51,6 +51,20 @@ export default class extends Controller {
     }
   }
 
+  // Handle direct phone number input
+  onPhoneNumberInput(event) {
+    const phoneNumber = event.target.value.trim()
+    
+    // When user types in phone number, clear customer selection and make field editable
+    if (phoneNumber && this.customerSelectTarget.value) {
+      this.customerSelectTarget.value = ''
+    }
+    this.phoneNumberTarget.readOnly = false
+    
+    // Update call button state
+    this.updateCallButtonState()
+  }
+
   // Filter customers based on search input
   filterCustomers(event) {
     const searchTerm = event.target.value.trim().toLowerCase()
@@ -91,9 +105,11 @@ export default class extends Controller {
     const phoneNumber = this.phoneNumberTarget.value.trim()
     const customerSelected = this.customerSelectTarget.value !== ''
     
-    if (phoneNumber && customerSelected) {
+    // Allow calling with just phone number OR with customer selection
+    if (phoneNumber && (customerSelected || this.isValidPhoneNumber(phoneNumber))) {
       this.callButtonTarget.disabled = false
       this.callButtonTarget.classList.remove('opacity-50', 'cursor-not-allowed')
+      this.callStatusTarget.classList.add('hidden')
     } else {
       this.callButtonTarget.disabled = true
       this.callButtonTarget.classList.add('opacity-50', 'cursor-not-allowed')
@@ -102,6 +118,11 @@ export default class extends Controller {
         this.showStatus('Unable to call customer as it has no phone number. Please add a number to the customer profile.', 'warning')
       }
     }
+  }
+
+  // Basic phone number validation (country code format)
+  isValidPhoneNumber(phoneNumber) {
+    return /^\+\d{6,15}$/.test(phoneNumber)
   }
 
   // Initialize the Twilio Device
@@ -196,15 +217,37 @@ export default class extends Controller {
   }
 
   // Make an outgoing call
-  makeCall(event) {
+  async makeCall(event) {
     event.preventDefault()
     const phoneNumber = this.phoneNumberTarget.value.trim()
     const callerId = this.callerIdTarget.value
-    const customerId = this.customerSelectTarget.value
+    let customerId = this.customerSelectTarget.value
     
-    if (!phoneNumber || !customerId) {
-      this.showStatus('Please select a customer and ensure phone number is entered', 'warning')
+    if (!phoneNumber) {
+      this.showStatus('Please enter a phone number', 'warning')
       return
+    }
+
+    // If no customer is selected, create one automatically
+    if (!customerId) {
+      if (!this.isValidPhoneNumber(phoneNumber)) {
+        this.showStatus('Please enter a valid phone number with country code (e.g. +923001234567)', 'warning')
+        return
+      }
+      
+      this.showStatus('Creating customer and calling...', 'info')
+      
+      try {
+        customerId = await this.createCustomerFromPhoneNumber(phoneNumber)
+        if (!customerId) {
+          this.showError('Failed to create customer. Please try again.')
+          return
+        }
+      } catch (error) {
+        console.error('Error creating customer:', error)
+        this.showError('Failed to create customer: ' + error.message)
+        return
+      }
     }
     
     this.showStatus(`Calling ${phoneNumber}...`, 'info')
@@ -252,6 +295,59 @@ export default class extends Controller {
     } catch (error) {
       console.error('Unexpected error during call setup:', error)
       this.showError('Unexpected error occurred. Please refresh the page and try again.')
+    }
+  }
+
+  // Create a customer from phone number
+  async createCustomerFromPhoneNumber(phoneNumber) {
+    try {
+      const response = await fetch('/customers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          customer: {
+            name: phoneNumber,
+            phone: phoneNumber
+          }
+        })
+      })
+      
+      console.log('Response status:', response.status)
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()))
+      
+      // Get the response text first to debug what we're receiving
+      const responseText = await response.text()
+      console.log('Response text:', responseText.substring(0, 200))
+      
+      if (!response.ok) {
+        let errorMessage = `HTTP error! Status: ${response.status}`
+        
+        try {
+          const errorData = JSON.parse(responseText)
+          if (errorData.error) {
+            errorMessage = errorData.error
+          } else if (errorData.errors) {
+            errorMessage = Object.values(errorData.errors).flat().join(', ')
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response as JSON:', parseError)
+          errorMessage = response.statusText || errorMessage
+        }
+        
+        throw new Error(errorMessage)
+      }
+      
+      // Parse the response as JSON
+      const customer = JSON.parse(responseText)
+      console.log('Parsed customer:', customer)
+      return customer.id
+    } catch (error) {
+      console.error('Error creating customer:', error)
+      throw error
     }
   }
 
