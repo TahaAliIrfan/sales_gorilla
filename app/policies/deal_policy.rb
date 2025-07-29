@@ -24,6 +24,7 @@ class DealPolicy < ApplicationPolicy
   end
   
   def show?
+    return false unless user.can_access_pipeline?(record.pipeline)
     user.admin? || record.user_id == user.id || 
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
@@ -33,6 +34,7 @@ class DealPolicy < ApplicationPolicy
   end
   
   def update?
+    return false unless user.can_access_pipeline?(record.pipeline)
     user.admin? || record.user_id == user.id || 
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
@@ -42,6 +44,7 @@ class DealPolicy < ApplicationPolicy
   end
   
   def update_stage?
+    return false unless user.can_access_pipeline?(record.pipeline)
     user.admin? || record.user_id == user.id || 
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end

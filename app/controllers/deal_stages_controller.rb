@@ -7,22 +7,36 @@ class DealStagesController < ApplicationController
 
   def index
     @deal_stages = policy_scope(DealStage)
+    @pipelines = policy_scope(Pipeline).includes(:deal_stages)
     authorize DealStage
   end
 
   def new
-    @deal_stage = DealStage.new
+    @pipeline = Pipeline.find(params[:pipeline_id]) if params[:pipeline_id]
+    @deal_stage = @pipeline ? @pipeline.deal_stages.build : DealStage.new
     authorize @deal_stage
+    
+    # Set next position for the pipeline
+    if @pipeline
+      @deal_stage.position = @pipeline.deal_stages.maximum(:position).to_i + 1
+    end
   end
 
   def create
-    @deal_stage = DealStage.new(deal_stage_params)
+    if params[:pipeline_id]
+      @pipeline = Pipeline.find(params[:pipeline_id])
+      @deal_stage = @pipeline.deal_stages.build(deal_stage_params)
+    else
+      @deal_stage = DealStage.new(deal_stage_params)
+    end
+    
     authorize @deal_stage
 
     if @deal_stage.save
-      redirect_to deal_stages_path, notice: 'Deal stage was successfully created.'
+      redirect_path = @pipeline || deal_stages_path
+      redirect_to redirect_path, notice: 'Deal stage was successfully created.'
     else
-      render :new
+      render :new, status: :unprocessable_entity
     end
   end
 
@@ -33,19 +47,21 @@ class DealStagesController < ApplicationController
   def update
     authorize @deal_stage
     if @deal_stage.update(deal_stage_params)
-      redirect_to deal_stages_path, notice: 'Deal stage was successfully updated.'
+      redirect_to @deal_stage.pipeline, notice: 'Deal stage was successfully updated.'
     else
-      render :edit
+      render :edit, status: :unprocessable_entity
     end
   end
 
   def destroy
     authorize @deal_stage
+    pipeline = @deal_stage.pipeline
+    
     if @deal_stage.deals.any?
-      redirect_to deal_stages_path, alert: 'Cannot delete a stage that has deals assigned to it.'
+      redirect_to pipeline, alert: 'Cannot delete a stage that has deals assigned to it.'
     else
       @deal_stage.destroy
-      redirect_to deal_stages_path, notice: 'Deal stage was successfully deleted.'
+      redirect_to pipeline, notice: 'Deal stage was successfully deleted.'
     end
   end
 
@@ -56,7 +72,7 @@ class DealStagesController < ApplicationController
   end
 
   def deal_stage_params
-    params.require(:deal_stage).permit(:name, :position, :description)
+    params.require(:deal_stage).permit(:name, :position, :description, :active, :pipeline_id)
   end
   
   def require_login

@@ -89,7 +89,13 @@ Rails.application.routes.draw do
       post 'bulk_status_change'
     end
   end
-  resources :deal_stages
+  resources :pipelines do
+    member do
+      patch 'assign_users'
+    end
+    resources :deal_stages, except: [:index]
+  end
+  resources :deal_stages, only: [:index]
   resources :tasks do
     member do
       patch 'complete'
@@ -194,4 +200,10 @@ Rails.application.routes.draw do
   
   # Webhook routes
   post '/chats/messaged_recieve', to: 'webhooks#message_received'
+  
+  # Development login gateway (only available in development)
+  if Rails.env.development?
+    get '/dev_login', to: 'dev_login#show', as: :dev_login
+    post '/dev_login', to: 'dev_login#create'
+  end
 end

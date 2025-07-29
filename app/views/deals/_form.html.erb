@@ -84,7 +84,17 @@
 
       <div>
         <%= form.label :deal_stage_id, "Deal Stage", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.collection_select :deal_stage_id, @deal_stages, :id, :name, { prompt: "Select a stage" }, { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+        <% if @deal_stages.any? %>
+          <%= form.collection_select :deal_stage_id, @deal_stages, :id, :name, { prompt: "Select a stage" }, { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+        <% else %>
+          <div class="mt-1 block w-full rounded-md border-red-300 bg-red-50 p-3 text-sm text-red-600">
+            <% if current_user.admin? %>
+              No deal stages available. <%= link_to "Create pipeline stages", pipelines_path, class: "text-red-700 underline" %> first.
+            <% else %>
+              No deal stages available. Contact your administrator to set up pipelines and stages.
+            <% end %>
+          </div>
+        <% end %>
       </div>
 
       <div>

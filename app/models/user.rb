@@ -8,6 +8,10 @@ class User < ApplicationRecord
   has_many :messages, dependent: :nullify
   has_many :notifications, dependent: :destroy
   
+  # Pipeline assignments
+  has_many :user_pipeline_assignments, dependent: :destroy
+  has_many :assigned_pipelines, through: :user_pipeline_assignments, source: :pipeline
+  
   # Role relationships
   has_many :role_assignments, dependent: :destroy
   has_many :roles, through: :role_assignments
@@ -254,5 +258,30 @@ class User < ApplicationRecord
     return false unless role
     
     admin? || (highest_role && highest_role.outranks?(role))
+  end
+  
+  # Pipeline access methods
+  def assigned_pipeline_ids
+    assigned_pipelines.pluck(:id)
+  end
+  
+  def can_access_pipeline?(pipeline)
+    return true if admin?
+    assigned_pipelines.include?(pipeline)
+  end
+  
+  def accessible_deals
+    return Deal.all if admin?
+    Deal.for_user_pipeline(self)
+  end
+  
+  def accessible_deal_stages
+    return DealStage.all if admin?
+    
+    # If user has no pipeline assignments, return empty relation
+    pipeline_ids = assigned_pipeline_ids
+    return DealStage.none if pipeline_ids.empty?
+    
+    DealStage.joins(:pipeline).where(pipelines: { id: pipeline_ids, active: true })
   end
 end

@@ -5,8 +5,19 @@
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
     <div class="p-6 border-b border-gray-200">
-      <h1 class="text-2xl font-bold text-gray-900">New Deal</h1>
-      <p class="text-gray-600 mt-1">Create a new sales opportunity</p>
+      <h1 class="text-2xl font-bold text-gray-900">
+        New Deal
+        <% if current_user.admin? && @selected_pipeline %>
+          <span class="text-blue-600">· <%= @selected_pipeline.name %></span>
+        <% end %>
+      </h1>
+      <p class="text-gray-600 mt-1">
+        <% if current_user.admin? && @selected_pipeline %>
+          Create a new deal in <%= @selected_pipeline.name %>
+        <% else %>
+          Create a new sales opportunity
+        <% end %>
+      </p>
     </div>
 
     <div class="p-6">

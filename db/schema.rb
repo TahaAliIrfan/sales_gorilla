@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
+ActiveRecord::Schema[7.1].define(version: 2025_07_29_220928) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -137,6 +137,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
     t.text "description"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "pipeline_id", null: false
+    t.boolean "active", default: true
+    t.index ["pipeline_id"], name: "index_deal_stages_on_pipeline_id"
   end
 
   create_table "deals", force: :cascade do |t|
@@ -267,6 +270,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "pipelines", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["active"], name: "index_pipelines_on_active"
+    t.index ["name"], name: "index_pipelines_on_name", unique: true
+  end
+
   create_table "recordings", force: :cascade do |t|
     t.string "sid"
     t.integer "duration"
@@ -363,6 +376,16 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
+  create_table "user_pipeline_assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "pipeline_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["pipeline_id"], name: "index_user_pipeline_assignments_on_pipeline_id"
+    t.index ["user_id", "pipeline_id"], name: "index_user_pipeline_assignments_on_user_id_and_pipeline_id", unique: true
+    t.index ["user_id"], name: "index_user_pipeline_assignments_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "provider"
     t.string "uid"
@@ -405,6 +428,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
   add_foreign_key "deal_recordings", "deal_stages"
   add_foreign_key "deal_recordings", "deals"
   add_foreign_key "deal_recordings", "users"
+  add_foreign_key "deal_stages", "pipelines"
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
@@ -428,5 +452,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_04_115127) do
   add_foreign_key "sms", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
+  add_foreign_key "user_pipeline_assignments", "pipelines"
+  add_foreign_key "user_pipeline_assignments", "users"
   add_foreign_key "whatsapp_messages", "customers"
 end

@@ -6,7 +6,7 @@ class DealStagePolicy < ApplicationPolicy
       if user.admin?
         scope.all
       else
-        scope.none # No deal stages for non-admin users
+        scope.joins(:pipeline).where(pipelines: { id: user.assigned_pipeline_ids })
       end
     end
   end
@@ -16,7 +16,7 @@ class DealStagePolicy < ApplicationPolicy
   end
   
   def show?
-    user.admin? # Only admins can view deal stages
+    user.admin? || user.can_access_pipeline?(record.pipeline)
   end
   
   def create?

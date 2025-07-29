@@ -11,10 +11,37 @@ class DealsController < ApplicationController
 
   def index
     @deals = policy_scope(Deal)
+    
+    # Handle pipeline selection for admins
+    if current_user&.admin?
+      @pipelines = Pipeline.active.order(:name)
+      @selected_pipeline = nil
+      
+      # If admin selected a pipeline, filter accordingly
+      if params[:pipeline_id].present?
+        @selected_pipeline = Pipeline.find(params[:pipeline_id])
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      else
+        # Default: show first pipeline or no deals if no pipelines exist
+        @selected_pipeline = @pipelines.first
+        if @selected_pipeline
+          @deals = @deals.by_pipeline(@selected_pipeline)
+          @deal_stages = @selected_pipeline.deal_stages.active.ordered
+        else
+          @deals = @deals.none
+          @deal_stages = DealStage.none
+        end
+      end
+    else
+      # Filter deals by user's assigned pipelines for non-admin users
+      @deals = @deals.for_user_pipeline(current_user)
+      @deal_stages = current_user.accessible_deal_stages
+    end
+    
     # Set default filter_range to '30' (affects only won/lost deals)
     params[:filter_range] ||= '30'
     apply_filters
-    @deal_stages = DealStage.all
     @users = if current_user&.admin?
       User.all
     elsif current_user&.manager?
@@ -45,10 +72,37 @@ class DealsController < ApplicationController
 
   def my_deals
     @deals = policy_scope(Deal).assigned_to(current_user)
+    
+    # Handle pipeline selection for admins
+    if current_user&.admin?
+      @pipelines = Pipeline.active.order(:name)
+      @selected_pipeline = nil
+      
+      # If admin selected a pipeline, filter accordingly
+      if params[:pipeline_id].present?
+        @selected_pipeline = Pipeline.find(params[:pipeline_id])
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      else
+        # Default: show first pipeline or no deals if no pipelines exist
+        @selected_pipeline = @pipelines.first
+        if @selected_pipeline
+          @deals = @deals.by_pipeline(@selected_pipeline)
+          @deal_stages = @selected_pipeline.deal_stages.active.ordered
+        else
+          @deals = @deals.none
+          @deal_stages = DealStage.none
+        end
+      end
+    else
+      # Filter deals by user's assigned pipelines for non-admin users
+      @deals = @deals.for_user_pipeline(current_user)
+      @deal_stages = current_user.accessible_deal_stages
+    end
+    
     # Set default filter_range to '30' (affects only won/lost deals)
     params[:filter_range] ||= '30'
     apply_filters
-    @deal_stages = DealStage.all
     @users = if current_user&.admin?
       User.all
     elsif current_user&.manager?
@@ -117,16 +171,36 @@ class DealsController < ApplicationController
       @users = [current_user]
     end
     
-    # Get all deal stages for dropdown - always available for deal forms
-    @deal_stages = DealStage.all
+    # Get deal stages for dropdown - based on user's pipeline access or selected pipeline
+    if current_user&.admin? && params[:pipeline_id].present?
+      @selected_pipeline = Pipeline.find(params[:pipeline_id])
+      @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      @pipelines = Pipeline.active.order(:name)
+    else
+      @deal_stages = current_user.accessible_deal_stages
+    end
     
     # If no deal stages exist, create some defaults (only admins can create stages)
     if @deal_stages.empty? && current_user&.admin?
-      stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
-      stages.each_with_index do |name, index|
-        DealStage.create(name: name, position: index + 1)
+      # Get or create a default pipeline first
+      default_pipeline = Pipeline.find_or_create_by(name: 'Default Pipeline') do |pipeline|
+        pipeline.description = 'Default sales pipeline'
+        pipeline.active = true
       end
-      @deal_stages = DealStage.all
+      
+      # Create default stages for the pipeline if it doesn't have any
+      if default_pipeline.deal_stages.empty?
+        stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
+        stages.each_with_index do |name, index|
+          default_pipeline.deal_stages.create!(
+            name: name, 
+            position: index + 1,
+            active: true
+          )
+        end
+      end
+      
+      @deal_stages = current_user.accessible_deal_stages
     end
   end
 
@@ -185,8 +259,14 @@ class DealsController < ApplicationController
         @users = [current_user]
       end
       
-      # Get all deal stages for dropdown
-      @deal_stages = DealStage.all
+      # Get deal stages for dropdown
+      if current_user&.admin? && params[:pipeline_id].present?
+        @selected_pipeline = Pipeline.find(params[:pipeline_id])
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+        @pipelines = Pipeline.active.order(:name)
+      else
+        @deal_stages = current_user.accessible_deal_stages
+      end
       
       render :new, status: :unprocessable_entity
       return
@@ -222,7 +302,7 @@ class DealsController < ApplicationController
         @users = [current_user]
       end
       
-      @deal_stages = DealStage.all
+      set_deal_stages_for_form
       render :new, status: :unprocessable_entity
     rescue => e
       # Log unexpected errors
@@ -243,7 +323,7 @@ class DealsController < ApplicationController
         @users = [current_user]
       end
       
-      @deal_stages = DealStage.all
+      set_deal_stages_for_form
       render :new, status: :unprocessable_entity
     end
   end
@@ -265,8 +345,14 @@ class DealsController < ApplicationController
       @users = [current_user]
     end
     
-    # Get all deal stages for dropdown - always available for deal forms
-    @deal_stages = DealStage.all
+    # Get deal stages for dropdown - based on user's pipeline access or selected pipeline
+    if current_user&.admin? && params[:pipeline_id].present?
+      @selected_pipeline = Pipeline.find(params[:pipeline_id])
+      @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      @pipelines = Pipeline.active.order(:name)
+    else
+      @deal_stages = current_user.accessible_deal_stages
+    end
   end
 
   def update
@@ -369,7 +455,7 @@ class DealsController < ApplicationController
         @users = [current_user]
       end
       
-      @deal_stages = DealStage.all
+      set_deal_stages_for_form
       render :edit, status: :unprocessable_entity
     rescue => e
       Rails.logger.error("Error updating deal: #{e.message}")
@@ -389,7 +475,7 @@ class DealsController < ApplicationController
         @users = [current_user]
       end
       
-      @deal_stages = DealStage.all
+      set_deal_stages_for_form
       render :edit, status: :unprocessable_entity
     end
   end
@@ -489,6 +575,40 @@ class DealsController < ApplicationController
 
   def deal_params
     params.require(:deal).permit(:title, :description, :amount, :customer_id, :user_id, :deal_stage_id, :expected_close_date, :status, :created_at, :closing_date)
+  end
+  
+  def set_deal_stages_for_form
+    # Get deal stages for dropdown - based on user's pipeline access or selected pipeline
+    if current_user&.admin? && params[:pipeline_id].present?
+      @selected_pipeline = Pipeline.find(params[:pipeline_id])
+      @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      @pipelines = Pipeline.active.order(:name)
+    else
+      @deal_stages = current_user.accessible_deal_stages
+    end
+    
+    # If no deal stages are accessible and user is admin, ensure there's a default pipeline
+    if @deal_stages.empty? && current_user&.admin?
+      # Get or create a default pipeline first
+      default_pipeline = Pipeline.find_or_create_by(name: 'Default Pipeline') do |pipeline|
+        pipeline.description = 'Default sales pipeline'
+        pipeline.active = true
+      end
+      
+      # Create default stages for the pipeline if it doesn't have any
+      if default_pipeline.deal_stages.empty?
+        stages = ['Discovery', 'Qualification', 'Proposal', 'Negotiation', 'Closed Won', 'Closed Lost']
+        stages.each_with_index do |name, index|
+          default_pipeline.deal_stages.create!(
+            name: name, 
+            position: index + 1,
+            active: true
+          )
+        end
+      end
+      
+      @deal_stages = current_user.accessible_deal_stages
+    end
   end
   
   def require_login
