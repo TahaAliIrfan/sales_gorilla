@@ -5,7 +5,7 @@
       <p class="text-gray-600 mt-1">Configure and manage your sales pipeline stages</p>
     </div>
     <div>
-      <%= link_to "New Deal Stage", new_deal_stage_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+      <p class="text-sm text-gray-600">Manage stages through <%= link_to "Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-800" %></p>
     </div>
   </div>
 
@@ -57,7 +57,7 @@
         </div>
       <% else %>
         <div class="text-center py-8 text-gray-500">
-          <p>No deal stages defined yet. <%= link_to "Create your first stage", new_deal_stage_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+          <p>No deal stages defined yet. <%= link_to "Create stages through Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
         </div>
       <% end %>
     </div>
