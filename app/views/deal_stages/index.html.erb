@@ -4,14 +4,36 @@
       <h1 class="text-2xl font-bold">Deal Stages Management</h1>
       <p class="text-gray-600 mt-1">Configure and manage your sales pipeline stages</p>
     </div>
-    <div>
+    <div class="flex items-center space-x-4">
+      <% if @pipelines.count > 1 %>
+        <div class="flex items-center space-x-2">
+          <label for="pipeline_selector" class="text-sm font-medium text-gray-700">Pipeline:</label>
+          <%= form_with url: deal_stages_path, method: :get, class: "flex items-center" do |form| %>
+            <% 
+              options = []
+              options << ["All Pipelines", ""] if current_user.admin?
+              options += @pipelines.map { |p| [p.name, p.id] }
+            %>
+            <%= form.select :pipeline_id, 
+                options_for_select(options, @selected_pipeline_id),
+                { include_blank: false }, 
+                { id: "pipeline_selector", class: "rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm", onchange: "this.form.submit()" } %>
+          <% end %>
+        </div>
+      <% end %>
       <p class="text-sm text-gray-600">Manage stages through <%= link_to "Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-800" %></p>
     </div>
   </div>
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden mb-8">
     <div class="p-6 border-b border-gray-200">
-      <h2 class="text-lg font-medium text-gray-900">Current Pipeline Stages</h2>
+      <h2 class="text-lg font-medium text-gray-900">
+        <% if @selected_pipeline_id.present? && @selected_pipeline_id != "" %>
+          <%= @pipelines.find(@selected_pipeline_id).name %> - Pipeline Stages
+        <% else %>
+          Current Pipeline Stages
+        <% end %>
+      </h2>
       <p class="text-sm text-gray-600 mt-1">Drag to reorder stages (coming soon)</p>
     </div>
     <div class="p-6">
@@ -66,8 +88,14 @@
   <!-- Kanban View of All Deals by Stage -->
   <div class="mb-6 flex justify-between items-center">
     <div>
-      <h2 class="text-xl font-bold">Pipeline Overview</h2>
-      <p class="text-gray-600 mt-1">View and manage all deals across stages</p>
+      <h2 class="text-xl font-bold">
+        <% if @selected_pipeline_id.present? && @selected_pipeline_id != "" %>
+          <%= @pipelines.find(@selected_pipeline_id).name %> - Pipeline Overview
+        <% else %>
+          Pipeline Overview
+        <% end %>
+      </h2>
+      <p class="text-gray-600 mt-1">View and manage deals across pipeline stages</p>
     </div>
     <div class="flex space-x-4">
       <%= link_to "New Deal", new_deal_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>

@@ -12,31 +12,41 @@ class DealsController < ApplicationController
   def index
     @deals = policy_scope(Deal)
     
-    # Handle pipeline selection for admins
-    if current_user&.admin?
-      @pipelines = Pipeline.active.order(:name)
-      @selected_pipeline = nil
-      
-      # If admin selected a pipeline, filter accordingly
-      if params[:pipeline_id].present?
-        @selected_pipeline = Pipeline.find(params[:pipeline_id])
+    # Get user's accessible pipelines
+    @pipelines = current_user.admin? ? Pipeline.active.order(:name) : current_user.assigned_pipelines.active.order(:name)
+    @selected_pipeline = nil
+    
+    # Handle pipeline selection for all users (admin and non-admin)
+    if params[:pipeline_id].present? && params[:pipeline_id] != ""
+      @selected_pipeline = @pipelines.find_by(id: params[:pipeline_id])
+      if @selected_pipeline
         @deals = @deals.by_pipeline(@selected_pipeline)
         @deal_stages = @selected_pipeline.deal_stages.active.ordered
       else
-        # Default: show first pipeline or no deals if no pipelines exist
-        @selected_pipeline = @pipelines.first
-        if @selected_pipeline
-          @deals = @deals.by_pipeline(@selected_pipeline)
-          @deal_stages = @selected_pipeline.deal_stages.active.ordered
-        else
-          @deals = @deals.none
-          @deal_stages = DealStage.none
-        end
+        @deals = @deals.none
+        @deal_stages = DealStage.none
       end
     else
-      # Filter deals by user's assigned pipelines for non-admin users
-      @deals = @deals.for_user_pipeline(current_user)
-      @deal_stages = current_user.accessible_deal_stages
+      # Default behavior based on user type and pipeline count
+      if current_user.admin? && (params[:pipeline_id] == "" || params[:pipeline_id].blank?)
+        # Admin with "All Pipelines" selected or no filter
+        @deal_stages = policy_scope(DealStage)
+        @selected_pipeline_id = ""
+      elsif @pipelines.count == 1
+        # User has only one pipeline
+        @selected_pipeline = @pipelines.first
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      elsif @pipelines.count > 1
+        # User has multiple pipelines - default to first one
+        @selected_pipeline = @pipelines.first
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      else
+        # No pipelines accessible
+        @deals = @deals.none
+        @deal_stages = DealStage.none
+      end
     end
     
     # Set default filter_range to '30' (affects only won/lost deals)
@@ -73,31 +83,41 @@ class DealsController < ApplicationController
   def my_deals
     @deals = policy_scope(Deal).assigned_to(current_user)
     
-    # Handle pipeline selection for admins
-    if current_user&.admin?
-      @pipelines = Pipeline.active.order(:name)
-      @selected_pipeline = nil
-      
-      # If admin selected a pipeline, filter accordingly
-      if params[:pipeline_id].present?
-        @selected_pipeline = Pipeline.find(params[:pipeline_id])
+    # Get user's accessible pipelines
+    @pipelines = current_user.admin? ? Pipeline.active.order(:name) : current_user.assigned_pipelines.active.order(:name)
+    @selected_pipeline = nil
+    
+    # Handle pipeline selection for all users (admin and non-admin)
+    if params[:pipeline_id].present? && params[:pipeline_id] != ""
+      @selected_pipeline = @pipelines.find_by(id: params[:pipeline_id])
+      if @selected_pipeline
         @deals = @deals.by_pipeline(@selected_pipeline)
         @deal_stages = @selected_pipeline.deal_stages.active.ordered
       else
-        # Default: show first pipeline or no deals if no pipelines exist
-        @selected_pipeline = @pipelines.first
-        if @selected_pipeline
-          @deals = @deals.by_pipeline(@selected_pipeline)
-          @deal_stages = @selected_pipeline.deal_stages.active.ordered
-        else
-          @deals = @deals.none
-          @deal_stages = DealStage.none
-        end
+        @deals = @deals.none
+        @deal_stages = DealStage.none
       end
     else
-      # Filter deals by user's assigned pipelines for non-admin users
-      @deals = @deals.for_user_pipeline(current_user)
-      @deal_stages = current_user.accessible_deal_stages
+      # Default behavior based on user type and pipeline count
+      if current_user.admin? && (params[:pipeline_id] == "" || params[:pipeline_id].blank?)
+        # Admin with "All Pipelines" selected or no filter
+        @deal_stages = policy_scope(DealStage)
+        @selected_pipeline_id = ""
+      elsif @pipelines.count == 1
+        # User has only one pipeline
+        @selected_pipeline = @pipelines.first
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      elsif @pipelines.count > 1
+        # User has multiple pipelines - default to first one
+        @selected_pipeline = @pipelines.first
+        @deals = @deals.by_pipeline(@selected_pipeline)
+        @deal_stages = @selected_pipeline.deal_stages.active.ordered
+      else
+        # No pipelines accessible
+        @deals = @deals.none
+        @deal_stages = DealStage.none
+      end
     end
     
     # Set default filter_range to '30' (affects only won/lost deals)
@@ -621,6 +641,8 @@ class DealsController < ApplicationController
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
   end
+  
+  helper_method :current_user
 
   def apply_filters
     # Filter by status

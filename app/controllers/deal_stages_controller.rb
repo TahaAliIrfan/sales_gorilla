@@ -6,8 +6,29 @@ class DealStagesController < ApplicationController
   after_action :verify_policy_scoped, only: :index
 
   def index
-    @deal_stages = policy_scope(DealStage)
     @pipelines = policy_scope(Pipeline).includes(:deal_stages)
+    
+    # Allow filtering by specific pipeline
+    if params[:pipeline_id].present? && params[:pipeline_id] != ""
+      selected_pipeline = @pipelines.find_by(id: params[:pipeline_id])
+      @deal_stages = selected_pipeline ? selected_pipeline.deal_stages.active : []
+      @selected_pipeline_id = params[:pipeline_id].to_i
+    else
+      # Show all stages when "All Pipelines" is selected or no filter
+      if current_user.admin? && (params[:pipeline_id] == "" || params[:pipeline_id].blank?)
+        @deal_stages = policy_scope(DealStage)
+        @selected_pipeline_id = ""
+      elsif @pipelines.count == 1
+        @deal_stages = @pipelines.first.deal_stages.active
+        @selected_pipeline_id = @pipelines.first.id
+      else
+        # For non-admin users with multiple pipelines, default to first pipeline
+        first_pipeline = @pipelines.first
+        @deal_stages = first_pipeline&.deal_stages&.active || []
+        @selected_pipeline_id = first_pipeline&.id
+      end
+    end
+    
     authorize DealStage
   end
 
@@ -92,4 +113,6 @@ class DealStagesController < ApplicationController
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
   end
+  
+  helper_method :current_user
 end
