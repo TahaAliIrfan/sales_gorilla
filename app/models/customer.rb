@@ -309,7 +309,7 @@ class Customer < ApplicationRecord
     nil
   end
   
-  # Analyze the customer's phone number using DeepSeek to identify country, timezone, and preferred calling time
+  # Analyze the customer's phone number using Gemini to identify country, timezone, and preferred calling time
   def analyze_phone_number
     return false unless phone.present?
 

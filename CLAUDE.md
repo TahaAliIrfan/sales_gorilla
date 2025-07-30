@@ -62,7 +62,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **AWS S3**: Document and recording storage
 - **Twilio**: Browser-based calling functionality
 - **WhatsApp API**: Message retrieval and analysis
-- **DeepSeek/AI Services**: Customer phone analysis and content analysis
+- **Gemini AI**: Customer phone analysis and content analysis
 
 ### Key Features
 - **Multi-channel CRM**: Manage customers across phone, email, WhatsApp, LinkedIn

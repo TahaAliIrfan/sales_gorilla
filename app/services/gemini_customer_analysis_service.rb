@@ -1,12 +1,15 @@
-class DeepSeekCustomerAnalysisService
+require 'net/http'
+require 'json'
+
+class GeminiCustomerAnalysisService
   attr_reader :api_key, :model
 
   def initialize
-    @api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY)
-    @model = "deepseek-chat"
+    @api_key = Rails.application.credentials.dig(:GEMINI_API_KEY) || ENV['GEMINI_API_KEY']
+    @model = "gemini-1.5-flash"
     
     if @api_key.blank?
-      Rails.logger.error("DeepSeek API key is not configured")
+      Rails.logger.error("Gemini API key is not configured")
     end
   end
 
@@ -21,7 +24,6 @@ class DeepSeekCustomerAnalysisService
     return nil if @api_key.blank? || phone_number.blank?
 
     content = "Phone Number: #{phone_number}"
-
     analyze_with_prompt(content, phone_timezone_prompt)
   end
 
@@ -29,18 +31,16 @@ class DeepSeekCustomerAnalysisService
     return nil if @api_key.blank? || content.blank? || system_prompt.blank?
 
     begin
-      # Make API request to DeepSeek
       response = make_analysis_request(content, system_prompt, temperature)
       
       if response && response['success']
-        # Return the data from the response
         response['data']
       else
-        Rails.logger.error("DeepSeek API error: #{response['error'] if response}")
+        Rails.logger.error("Gemini API error: #{response['error'] if response}")
         nil
       end
     rescue => e
-      Rails.logger.error("DeepSeek analysis error: #{e.message}")
+      Rails.logger.error("Gemini analysis error: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
       nil
     end
@@ -53,23 +53,28 @@ class DeepSeekCustomerAnalysisService
   end
 
   def make_analysis_request(content, system_prompt, temperature = 0.7)
-    uri = URI.parse("https://api.deepseek.com/v1/chat/completions")
+    uri = URI.parse("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
 
-    req = Net::HTTP::Post.new(uri.path, {
-      'Content-Type' => 'application/json',
-      'Authorization' => "Bearer #{api_key}"
+    req = Net::HTTP::Post.new("#{uri.path}?#{uri.query}", {
+      'Content-Type' => 'application/json'
     })
 
     req.body = {
-      model: model,
-      messages: [
-        { role: "system", content: system_prompt },
-        { role: "user", content: content }
+      contents: [
+        {
+          parts: [
+            {
+              text: "#{system_prompt}\n\n#{content}"
+            }
+          ]
+        }
       ],
-      temperature: temperature,
-      response_format: { type: "json_object" }
+      generationConfig: {
+        temperature: temperature,
+        responseMimeType: "application/json"
+      }
     }.to_json
 
     response = http.request(req)
@@ -79,16 +84,18 @@ class DeepSeekCustomerAnalysisService
   def parse_response(response)
     if response.code == '200'
       body = JSON.parse(response.body)
-      content = body['choices'][0]['message']['content']
+      content = body.dig('candidates', 0, 'content', 'parts', 0, 'text')
       
-      begin
-        # Parse the JSON response from DeepSeek
-        json_data = JSON.parse(content)
-        # Convert to symbolized hash for easier access
-        json_data = symbolize_keys(json_data)
-        { 'success' => true, 'data' => json_data }
-      rescue JSON::ParserError => e
-        { 'success' => false, 'error' => "Failed to parse JSON response: #{e.message}" }
+      if content
+        begin
+          json_data = JSON.parse(content)
+          json_data = symbolize_keys(json_data)
+          { 'success' => true, 'data' => json_data }
+        rescue JSON::ParserError => e
+          { 'success' => false, 'error' => "Failed to parse JSON response: #{e.message}" }
+        end
+      else
+        { 'success' => false, 'error' => "No content in response" }
       end
     else
       { 'success' => false, 'error' => "API error: #{response.code} - #{response.body}" }
@@ -116,10 +123,10 @@ class DeepSeekCustomerAnalysisService
     6. Idea description: Extract any description of app or software the customer might be interested in, otherwise write 'N/A'
     
     For phone number analysis:
-    - Consider country codes (e.g., +1 for US/Canada, +44 for UK, +91 for India, etc.)
+    - Consider country codes (e.g., +1 for US/Canada, +44 for UK, +91 for India, +92 for Pakistan, etc.)
     - For countries with multiple timezones, suggest the most populous timezone
     - Consider cultural factors when suggesting preferred calling times
-    - Be specific about timezone abbreviations (e.g., EST, GMT, IST)
+    - Be specific about timezone abbreviations (e.g., EST, GMT, IST, PKT)
     
     Return your analysis as a valid JSON object with these fields. Be concise and extract only what's clearly indicated.
     
@@ -144,7 +151,7 @@ class DeepSeekCustomerAnalysisService
     1. Country: Identify the country associated with the phone number's country code.
     
     2. Timezone: Determine the most likely timezone for that country/region.
-       - Use standard timezone identifiers (e.g., America/New_York, Europe/London, Asia/Tokyo)
+       - Use standard timezone identifiers (e.g., America/New_York, Europe/London, Asia/Tokyo, Asia/Karachi)
        - For countries with multiple timezones, suggest the most populous timezone
        - Be as precise as possible with the timezone
     
@@ -152,9 +159,10 @@ class DeepSeekCustomerAnalysisService
        - Consider cultural and business norms in the customer's region
        - Be specific about the time range and include the timezone abbreviation
        - Format as: "9 AM - 5 PM EST (Monday to Friday)" or similar
+       - For Pakistan, consider "10 AM - 6 PM PKT (Monday to Friday)" as standard business hours
     
     For phone number analysis:
-    - Analyze country codes thoroughly (e.g., +1 for US/Canada, +44 for UK, +91 for India, etc.)
+    - Analyze country codes thoroughly (e.g., +1 for US/Canada, +44 for UK, +91 for India, +92 for Pakistan, etc.)
     - Consider number formatting patterns to identify specific regions within countries
     - For countries with multiple timezones (like the US, Russia, Australia), try to determine the specific region based on area codes if possible
     - Consider regional business customs when suggesting calling times
@@ -162,12 +170,12 @@ class DeepSeekCustomerAnalysisService
     
     Return your analysis as a valid JSON object with ONLY these fields:
     {
-      "country": "United States",
-      "timezone": "America/New_York",
-      "preferred_calling_time": "9 AM - 5 PM EST (Monday to Friday)"
+      "country": "Pakistan",
+      "timezone": "Asia/Karachi",
+      "preferred_calling_time": "10 AM - 6 PM PKT (Monday to Friday)"
     }
     
     Be concise, accurate, and focus only on extracting timezone and calling time information from the phone number pattern.
     PROMPT
   end
-end 
+end

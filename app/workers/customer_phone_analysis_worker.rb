@@ -9,8 +9,8 @@ class CustomerPhoneAnalysisWorker
     # Extract the phone number without the + prefix
     phone_number = customer.phone.gsub(/\A\+/, '')
     
-    # Use the DeepSeekCustomerAnalysisService to analyze the phone number
-    analysis_service = DeepSeekCustomerAnalysisService.new
+    # Use the GeminiCustomerAnalysisService to analyze the phone number
+    analysis_service = GeminiCustomerAnalysisService.new
     
     # Use the specialized method for timezone and preferred calling time analysis
     results = analysis_service.analyze_phone_for_timezone(phone_number)

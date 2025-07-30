@@ -10,10 +10,10 @@ class WhatsappMessageAnalysisWorker
     # Extract the phone number from the chat_id
     phone_number = extract_phone_number(chat_id)
     
-    # Create the DeepSeek analysis service
-    analysis_service = DeepSeekCustomerAnalysisService.new
+    # Create the Gemini analysis service
+    analysis_service = GeminiCustomerAnalysisService.new
     
-    # Get customer info from DeepSeek
+    # Get customer info from Gemini
     customer_info = analysis_service.analyze_customer_message(chat_id, message_body, phone_number)
     
     # Return early if analysis failed

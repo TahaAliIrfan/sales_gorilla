@@ -1,13 +1,15 @@
-class DeepSeekService
+require 'net/http'
+require 'json'
+
+class GeminiService
   attr_reader :api_key, :model
 
   def initialize
-    # Try to get API key from credentials, fall back to environment variable
-    @api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY) || ENV['DEEPSEEK_API_KEY']
-    @model = "deepseek-chat"
+    @api_key = Rails.application.credentials.dig(:GEMINI_API_KEY) || ENV['GEMINI_API_KEY']
+    @model = "gemini-1.5-flash"
     
     if @api_key.blank?
-      Rails.logger.error("DeepSeek API key is not configured")
+      Rails.logger.error("Gemini API key is not configured")
     end
   end
 
@@ -18,11 +20,11 @@ class DeepSeekService
     if response && response['success']
       create_ai_analysis(recording, response['data'])
     else
-      Rails.logger.error("DeepSeek API error: #{response['error'] if response}")
+      Rails.logger.error("Gemini API error: #{response['error'] if response}")
       nil
     end
   rescue => e
-    Rails.logger.error("DeepSeek service error: #{e.message}")
+    Rails.logger.error("Gemini service error: #{e.message}")
     nil
   end
 
@@ -40,26 +42,28 @@ class DeepSeekService
   end
 
   def make_analysis_request(recording)
-    uri = URI.parse("https://api.deepseek.com/v1/chat/completions")
+    uri = URI.parse("https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{api_key}")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
 
-    req = Net::HTTP::Post.new(uri.path, {
-      'Content-Type' => 'application/json',
-      'Authorization' => "Bearer #{api_key}"
+    req = Net::HTTP::Post.new("#{uri.path}?#{uri.query}", {
+      'Content-Type' => 'application/json'
     })
 
     req.body = {
-      model: model,
-      messages: [
-        { role: "system", content: system_prompt },
-        { 
-          role: "user", 
-          content: "Here is a transcript of a sales call for a tech agency selling services:\n\n#{recording.transcription.to_s}"
+      contents: [
+        {
+          parts: [
+            {
+              text: "#{system_prompt}\n\nHere is a transcript of a sales call for a tech agency selling services:\n\n#{recording.transcription.to_s}"
+            }
+          ]
         }
       ],
-      temperature: 0.7,
-      response_format: { type: "json_object" }
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: "application/json"
+      }
     }.to_json
 
     response = http.request(req)
@@ -69,13 +73,17 @@ class DeepSeekService
   def parse_response(response)
     if response.code == '200'
       body = JSON.parse(response.body)
-      content = body['choices'][0]['message']['content']
+      content = body.dig('candidates', 0, 'content', 'parts', 0, 'text')
       
-      begin
-        analysis = JSON.parse(content)
-        { 'success' => true, 'data' => analysis }
-      rescue JSON::ParserError => e
-        { 'success' => false, 'error' => "Failed to parse JSON response: #{e.message}" }
+      if content
+        begin
+          analysis = JSON.parse(content)
+          { 'success' => true, 'data' => analysis }
+        rescue JSON::ParserError => e
+          { 'success' => false, 'error' => "Failed to parse JSON response: #{e.message}" }
+        end
+      else
+        { 'success' => false, 'error' => "No content in response" }
       end
     else
       { 'success' => false, 'error' => "API error: #{response.code} - #{response.body}" }
@@ -109,4 +117,4 @@ class DeepSeekService
     }
     PROMPT
   end
-end 
+end
