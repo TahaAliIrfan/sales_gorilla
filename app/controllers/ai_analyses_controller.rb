@@ -8,7 +8,7 @@ class AiAnalysesController < ApplicationController
       return
     end
     
-    service = GeminiService.new
+    service = DeepSeekRecordingService.new
     analysis = service.analyze_recording(@recording)
     
     if analysis
