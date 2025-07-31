@@ -263,10 +263,15 @@
             <h3>🔐 Authentication</h3>
             <div class="auth-form">
                 <div class="form-group">
-                    <label for="email">Email:</label>
+                    <label for="email">Email Login:</label>
                     <input type="email" id="email" placeholder="Enter your email" value="taha.irfan@tecaudex.com">
                 </div>
-                <button onclick="login()">Login & Get Token</button>
+                <button onclick="login()">Email Login & Get Token</button>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="googleIdToken">Google ID Token (Mock):</label>
+                    <input type="text" id="googleIdToken" placeholder="Enter Google ID token or use mock" value="mock_google_token_for_testing">
+                </div>
+                <button onclick="googleSignIn()" style="background: #4285f4;">Google Sign-In</button>
                 <button onclick="logout()" style="background: #dc3545;">Logout</button>
             </div>
             <div id="tokenDisplay" class="token-display hidden">
@@ -279,11 +284,71 @@
             <!-- Authentication Endpoints -->
             <div class="endpoint-card">
                 <div class="endpoint-header">
+                    <div class="endpoint-title">Google Sign-In</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/auth/google_sign_in</div>
+                <div class="params-section">
+                    <h4>Request Body:</h4>
+                    <textarea rows="3" data-body="true">{
+  "id_token": "mock_google_token_for_testing"
+}</textarea>
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/auth/google_sign_in', getBody(this), this)">Test Google Sign-In</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Email Login</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/auth/login</div>
+                <div class="params-section">
+                    <h4>Request Body:</h4>
+                    <textarea rows="3" data-body="true">{
+  "email": "taha.irfan@tecaudex.com"
+}</textarea>
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/auth/login', getBody(this), this)">Test Email Login</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
                     <div class="endpoint-title">Get Profile</div>
                     <div class="method-badge method-get">GET</div>
                 </div>
                 <div class="endpoint-url">/api/v2/auth/profile</div>
                 <button onclick="testEndpoint('GET', '/api/v2/auth/profile', null, this)">Test Profile</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Logout</div>
+                    <div class="method-badge method-delete">DELETE</div>
+                </div>
+                <div class="endpoint-url">/api/v2/auth/logout</div>
+                <button onclick="testEndpoint('DELETE', '/api/v2/auth/logout', null, this)">Test Logout</button>
                 <div class="response-section" style="display: none;">
                     <div class="response-header">
                         <h4>Response:</h4>
@@ -630,6 +695,38 @@
             }
         }
 
+        async function googleSignIn() {
+            const idToken = document.getElementById('googleIdToken').value;
+            
+            if (!idToken) {
+                alert('Please enter a Google ID token');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v2/auth/google_sign_in', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id_token: idToken })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentToken = data.data.token;
+                    document.getElementById('tokenValue').textContent = currentToken;
+                    document.getElementById('tokenDisplay').classList.remove('hidden');
+                    showMessage('Google sign-in successful! User: ' + data.data.user.name, 'success');
+                } else {
+                    showMessage('Google sign-in failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Google sign-in error: ' + error.message, 'error');
+            }
+        }
+
         async function logout() {
             if (!currentToken) {
                 showMessage('No active session', 'error');
@@ -656,7 +753,7 @@
         }
 
         async function testEndpoint(method, url, data, buttonElement) {
-            if (!currentToken && !url.includes('/auth/login')) {
+            if (!currentToken && !url.includes('/auth/login') && !url.includes('/auth/google_sign_in')) {
                 showMessage('Please login first to get a token', 'error');
                 return;
             }
@@ -676,7 +773,7 @@
                     'Content-Type': 'application/json',
                 };
 
-                if (currentToken && !url.includes('/auth/login')) {
+                if (currentToken && !url.includes('/auth/login') && !url.includes('/auth/google_sign_in')) {
                     headers['Authorization'] = `Bearer ${currentToken}`;
                 }
 
