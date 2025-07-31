@@ -457,6 +457,7 @@ DEPENDENCIES
   httparty (~> 0.21.0)
   importmap-rails
   jbuilder
+  jwt
   kaminari
   mail
   omniauth

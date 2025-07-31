@@ -171,6 +171,56 @@ Rails.application.routes.draw do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'inbound_lead', to: 'cost_calculator#inbound_lead'
     end
+    
+    namespace :v2 do
+      # Authentication routes
+      post 'auth/login', to: 'authentication#login'
+      delete 'auth/logout', to: 'authentication#logout'
+      get 'auth/profile', to: 'authentication#profile'
+      
+      # Resource routes
+      resources :customers do
+        member do
+          patch 'update_status'
+          patch 'update_communication_status' 
+          get 'whatsapp_messages'
+          post 'send_whatsapp_text'
+          post 'send_whatsapp_media'
+          post 'analyze_phone'
+          get 'recordings'
+        end
+        collection do
+          post 'bulk_assign'
+          post 'bulk_status_change'
+        end
+      end
+      
+      resources :deals do
+        collection do
+          get 'my_deals'
+        end
+        member do
+          patch 'update_stage'
+          patch 'mark_as_won'
+          patch 'mark_as_lost'
+          patch 'assign_user'
+        end
+      end
+      
+      resources :tasks do
+        member do
+          patch 'mark_as_completed'
+          patch 'mark_as_pending'
+        end
+      end
+      
+      resources :users
+      resources :recordings
+      resources :pipelines
+      resources :deal_stages
+      resources :notifications
+      resources :emails
+    end
   end
   
   # Test routes

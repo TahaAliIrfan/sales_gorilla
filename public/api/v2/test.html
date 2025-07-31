@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TecAudex CRM API v2 Testing Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .auth-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .auth-section h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        
+        .auth-form {
+            display: flex;
+            gap: 1rem;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        
+        button:hover {
+            background: #5a6fd8;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+        
+        .endpoint-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .endpoint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .endpoint-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .method-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .method-get { background: #e8f5e8; color: #2d7d2d; }
+        .method-post { background: #e8f4fd; color: #1565c0; }
+        .method-patch { background: #fff3e0; color: #ef6c00; }
+        .method-delete { background: #ffebee; color: #c62828; }
+        
+        .endpoint-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            word-break: break-all;
+        }
+        
+        .params-section {
+            margin-bottom: 1rem;
+        }
+        
+        .params-section h4 {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+        
+        .param-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+        
+        .param-row input {
+            flex: 1;
+        }
+        
+        .response-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #f0f0f0;
+        }
+        
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-success { background: #e8f5e8; color: #2d7d2d; }
+        .status-error { background: #ffebee; color: #c62828; }
+        
+        .response-body {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        
+        .token-display {
+            background: #e8f5e8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            word-break: break-all;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        
+        .success-message {
+            background: #e8f5e8;
+            color: #2d7d2d;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 TecAudex CRM API v2</h1>
+            <p>Interactive Testing Interface with JWT Authentication</p>
+        </div>
+
+        <div class="auth-section">
+            <h3>🔐 Authentication</h3>
+            <div class="auth-form">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="Enter your email" value="taha.irfan@tecaudex.com">
+                </div>
+                <button onclick="login()">Login & Get Token</button>
+                <button onclick="logout()" style="background: #dc3545;">Logout</button>
+            </div>
+            <div id="tokenDisplay" class="token-display hidden">
+                <strong>JWT Token:</strong><br>
+                <span id="tokenValue"></span>
+            </div>
+        </div>
+
+        <div class="endpoints">
+            <!-- Authentication Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Profile</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/auth/profile</div>
+                <button onclick="testEndpoint('GET', '/api/v2/auth/profile', null, this)">Test Profile</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Customers Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Customers</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/customers</div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="search" data-param="search">
+                        <input type="text" placeholder="status" data-param="status">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/customers', getParams(this), this)">Test List Customers</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Create Customer</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/customers</div>
+                <div class="params-section">
+                    <h4>Request Body:</h4>
+                    <textarea rows="8" data-body="true">{
+  "customer": {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+1234567890",
+    "company": "Test Company",
+    "address": "123 Main St",
+    "lead_source": "",
+    "notes": "Test customer created via API"
+  }
+}</textarea>
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/customers', getBody(this), this)">Test Create Customer</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Customer</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/customers/{id}</div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="id">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/customers/' + getPathParam(this, 'id'), null, this)">Test Get Customer</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Customer Recordings</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/customers/{id}/recordings</div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="id">
+                    </div>
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                        <input type="text" placeholder="per_page" data-param="per_page" value="20">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/customers/' + getPathParam(this, 'id') + '/recordings', getParams(this), this)">Test Customer Recordings</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Deals Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Deals</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/deals</div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="status" data-param="status">
+                        <input type="text" placeholder="pipeline_id" data-param="pipeline_id">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/deals', getParams(this), this)">Test List Deals</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Create Deal</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/deals</div>
+                <div class="params-section">
+                    <h4>Request Body:</h4>
+                    <textarea rows="6" data-body="true">{
+  "deal": {
+    "title": "Test Deal",
+    "description": "A test deal",
+    "amount": 5000,
+    "customer_id": 1,
+    "pipeline_id": 1
+  }
+}</textarea>
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/deals', getBody(this), this)">Test Create Deal</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Tasks Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Tasks</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/tasks</div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="status" data-param="status">
+                        <input type="text" placeholder="priority" data-param="priority">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/tasks', getParams(this), this)">Test List Tasks</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Create Task</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/tasks</div>
+                <div class="params-section">
+                    <h4>Request Body:</h4>
+                    <textarea rows="6" data-body="true">{
+  "task": {
+    "title": "Test Task",
+    "description": "A test task",
+    "priority": "medium",
+    "due_date": "2025-12-31",
+    "customer_id": 1,
+    "status": "pending"
+  }
+}</textarea>
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/tasks', getBody(this), this)">Test Create Task</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Users Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Users</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/users</div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="role" data-param="role">
+                        <input type="text" placeholder="search" data-param="search">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/users', getParams(this), this)">Test List Users</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Pipelines Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Pipelines</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/pipelines</div>
+                <button onclick="testEndpoint('GET', '/api/v2/pipelines', null, this)">Test List Pipelines</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <!-- Recordings Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">List Recordings</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/recordings</div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer_id" data-param="customer_id">
+                        <input type="text" placeholder="user_id" data-param="user_id">
+                        <input type="text" placeholder="page" data-param="page" value="1">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/recordings', getParams(this), this)">Test List Recordings</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Recording</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/recordings/{id}</div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="recording ID" data-param="id">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/recordings/' + getPathParam(this, 'id'), null, this)">Test Get Recording</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = null;
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            
+            if (!email) {
+                alert('Please enter an email');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v2/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentToken = data.data.token;
+                    document.getElementById('tokenValue').textContent = currentToken;
+                    document.getElementById('tokenDisplay').classList.remove('hidden');
+                    showMessage('Login successful!', 'success');
+                } else {
+                    showMessage('Login failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Login error: ' + error.message, 'error');
+            }
+        }
+
+        async function logout() {
+            if (!currentToken) {
+                showMessage('No active session', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/v2/auth/logout', {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                currentToken = null;
+                document.getElementById('tokenDisplay').classList.add('hidden');
+                showMessage('Logged out successfully', 'success');
+            } catch (error) {
+                showMessage('Logout error: ' + error.message, 'error');
+            }
+        }
+
+        async function testEndpoint(method, url, data, buttonElement) {
+            if (!currentToken && !url.includes('/auth/login')) {
+                showMessage('Please login first to get a token', 'error');
+                return;
+            }
+
+            const card = buttonElement.closest('.endpoint-card');
+            const responseSection = card.querySelector('.response-section');
+            const statusBadge = card.querySelector('.status-badge');
+            const responseBody = card.querySelector('.response-body');
+
+            // Show loading state
+            buttonElement.disabled = true;
+            buttonElement.textContent = 'Testing...';
+            card.classList.add('loading');
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json',
+                };
+
+                if (currentToken && !url.includes('/auth/login')) {
+                    headers['Authorization'] = `Bearer ${currentToken}`;
+                }
+
+                const options = {
+                    method: method,
+                    headers: headers,
+                };
+
+                if (data && (method === 'POST' || method === 'PATCH')) {
+                    options.body = typeof data === 'string' ? data : JSON.stringify(data);
+                } else if (data && method === 'GET') {
+                    const params = new URLSearchParams(data);
+                    url += '?' + params.toString();
+                }
+
+                const response = await fetch(url, options);
+                const responseData = await response.json();
+
+                // Update UI
+                responseSection.style.display = 'block';
+                statusBadge.textContent = response.status;
+                statusBadge.className = `status-badge ${response.ok ? 'status-success' : 'status-error'}`;
+                responseBody.textContent = JSON.stringify(responseData, null, 2);
+
+            } catch (error) {
+                responseSection.style.display = 'block';
+                statusBadge.textContent = 'ERROR';
+                statusBadge.className = 'status-badge status-error';
+                responseBody.textContent = 'Error: ' + error.message;
+            } finally {
+                // Reset loading state
+                buttonElement.disabled = false;
+                buttonElement.textContent = buttonElement.textContent.replace('Testing...', 'Test ' + buttonElement.textContent.split('Test ')[1]);
+                card.classList.remove('loading');
+            }
+        }
+
+        function getParams(buttonElement) {
+            const card = buttonElement.closest('.endpoint-card');
+            const inputs = card.querySelectorAll('input[data-param]');
+            const params = {};
+
+            inputs.forEach(input => {
+                if (input.value) {
+                    params[input.dataset.param] = input.value;
+                }
+            });
+
+            return Object.keys(params).length > 0 ? params : null;
+        }
+
+        function getBody(buttonElement) {
+            const card = buttonElement.closest('.endpoint-card');
+            const textarea = card.querySelector('textarea[data-body]');
+            
+            if (textarea && textarea.value) {
+                try {
+                    return JSON.parse(textarea.value);
+                } catch (error) {
+                    showMessage('Invalid JSON in request body', 'error');
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        function getPathParam(buttonElement, paramName) {
+            const card = buttonElement.closest('.endpoint-card');
+            const input = card.querySelector(`input[data-param="${paramName}"]`);
+            return input ? input.value : '';
+        }
+
+        function showMessage(message, type) {
+            // Remove existing messages
+            const existingMessages = document.querySelectorAll('.error-message, .success-message');
+            existingMessages.forEach(msg => msg.remove());
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'error' ? 'error-message' : 'success-message';
+            messageDiv.textContent = message;
+
+            const authSection = document.querySelector('.auth-section');
+            authSection.appendChild(messageDiv);
+
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-fill some sample data on page load
+        window.addEventListener('load', function() {
+            // Set default email if available
+            const emailInput = document.getElementById('email');
+            if (!emailInput.value) {
+                emailInput.value = 'admin@tecaudex.com';
+            }
+        });
+    </script>
+</body>
+</html>

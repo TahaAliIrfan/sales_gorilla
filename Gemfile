@@ -72,6 +72,9 @@ gem 'google-api-client', '~> 0.53.0', require: ['google/apis/gmail_v1', 'google/
 # Authorization
 gem 'pundit'
 
+# JWT Authentication
+gem 'jwt'
+
 # Time-based grouping for ActiveRecord
 gem 'groupdate', "~> 6.4"
 
