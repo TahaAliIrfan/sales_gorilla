@@ -175,6 +175,7 @@ Rails.application.routes.draw do
     namespace :v2 do
       # Authentication routes
       post 'auth/login', to: 'authentication#login'
+      post 'auth/google_sign_in', to: 'authentication#google_sign_in'
       delete 'auth/logout', to: 'authentication#logout'
       get 'auth/profile', to: 'authentication#profile'
       
