@@ -69,8 +69,7 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
             name: user.name,
             email: user.email,
             role: user.highest_role&.key || 'associate',
-            phone: user.phone,
-            timezone: user.timezone
+            phone: user.phone_number
           }
         }, 
         'Google sign-in successful'
@@ -91,8 +90,7 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
       name: current_user.name,
       email: current_user.email,
       role: current_user.highest_role&.key || 'associate',
-      phone: current_user.phone,
-      timezone: current_user.timezone
+      phone: current_user.phone_number
     })
   end
 
