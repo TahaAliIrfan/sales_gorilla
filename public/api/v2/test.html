@@ -256,7 +256,7 @@
     <div class="container">
         <div class="header">
             <h1>🚀 TecAudex CRM API v2</h1>
-            <p>Interactive Testing Interface with JWT Authentication</p>
+            <p>Interactive Testing Interface with JWT Authentication & Firebase Support</p>
         </div>
 
         <div class="auth-section">
@@ -280,21 +280,69 @@
             </div>
         </div>
 
+        <div class="auth-section">
+            <h3>📱 Firebase Integration Guide</h3>
+            <div style="margin-bottom: 1rem;">
+                <p><strong>For Frontend Developers:</strong> This API now supports Firebase Google authentication for Android and iOS apps!</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #495057; margin-bottom: 0.5rem;">📋 Environment-Specific Client IDs</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.8rem; line-height: 1.4;">
+                    <strong>🔧 Development:</strong><br>
+                    • Android: <code>38897771408-lt211h526iie56l1s3udn1qh33rcbnsf.apps.googleusercontent.com</code><br>
+                    • iOS: <code>38897771408-u5m6i7c0svs3i2nvni3q09aaefahftf7.apps.googleusercontent.com</code><br><br>
+                    
+                    <strong>🔧 Staging:</strong><br>
+                    • Android: <code>403910060954-6errat661dfn55qjc7ef044ttd5nklrc.apps.googleusercontent.com</code><br>
+                    • iOS: <code>403910060954-nlbtvv6pe6ccifj2pui0unoao2tpq9lk.apps.googleusercontent.com</code><br><br>
+                    
+                    <strong>🔧 Production:</strong><br>
+                    • Android: <code>307560894176-ge50u39hj0gfj3jneesrfnmcsqgj15bm.apps.googleusercontent.com</code><br>
+                    • iOS: <code>307560894176-49e3m2vomnruelenqipufv0uc612bg22.apps.googleusercontent.com</code>
+                </div>
+            </div>
+
+            <div style="background: #e8f4fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🔗 Implementation Steps</h4>
+                <ol style="margin-left: 1.5rem; line-height: 1.6;">
+                    <li><strong>Get Firebase ID Token:</strong> Use Firebase Auth in your mobile app to get a Google ID token</li>
+                    <li><strong>Send to Backend:</strong> POST the <code>id_token</code> to <code>/api/v2/auth/google_sign_in</code></li>
+                    <li><strong>Store JWT Token:</strong> Save the returned JWT <code>token</code> for subsequent API calls</li>
+                    <li><strong>Use JWT Token:</strong> Include in <code>Authorization: Bearer &lt;token&gt;</code> header</li>
+                </ol>
+            </div>
+
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">⚡ Quick Test</h4>
+                <p>Use the <strong>Google Sign-In</strong> endpoint below with a real Firebase ID token from your mobile app to test the integration!</p>
+            </div>
+        </div>
+
         <div class="endpoints">
             <!-- Authentication Endpoints -->
             <div class="endpoint-card">
                 <div class="endpoint-header">
-                    <div class="endpoint-title">Google Sign-In</div>
+                    <div class="endpoint-title">Google Sign-In (Firebase Supported)</div>
                     <div class="method-badge method-post">POST</div>
                 </div>
                 <div class="endpoint-url">/api/v2/auth/google_sign_in</div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📱 Firebase Support:</strong> Accepts ID tokens from Android, iOS, and Web clients
+                </div>
                 <div class="params-section">
                     <h4>Request Body:</h4>
                     <textarea rows="3" data-body="true">{
-  "id_token": "mock_google_token_for_testing"
+  "id_token": "your_firebase_google_id_token_here"
 }</textarea>
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                        <strong>Examples:</strong><br>
+                        • <strong>Web:</strong> Get from Google Sign-In JavaScript API<br>
+                        • <strong>Android:</strong> Get from <code>FirebaseAuth.getInstance().currentUser.getIdToken()</code><br>
+                        • <strong>iOS:</strong> Get from <code>Auth.auth().currentUser?.getIDToken()</code>
+                    </div>
                 </div>
-                <button onclick="testEndpoint('POST', '/api/v2/auth/google_sign_in', getBody(this), this)">Test Google Sign-In</button>
+                <button onclick="testEndpoint('POST', '/api/v2/auth/google_sign_in', getBody(this), this)">Test Firebase Google Sign-In</button>
                 <div class="response-section" style="display: none;">
                     <div class="response-header">
                         <h4>Response:</h4>
@@ -863,12 +911,76 @@
             }, 5000);
         }
 
+        // Firebase Integration Examples (for developers)
+        function showFirebaseExamples() {
+            const examples = `
+🔥 FIREBASE INTEGRATION EXAMPLES:
+
+📱 Android (Java/Kotlin):
+FirebaseAuth.getInstance().getCurrentUser().getIdToken(false)
+    .addOnCompleteListener(task -> {
+        if (task.isSuccessful()) {
+            String idToken = task.getResult().getToken();
+            // Send idToken to your backend API
+            sendTokenToBackend(idToken);
+        }
+    });
+
+📱 iOS (Swift):
+Auth.auth().currentUser?.getIDToken { (token, error) in
+    if let error = error {
+        // Handle error
+        return
+    }
+    if let token = token {
+        // Send token to your backend API
+        sendTokenToBackend(token)
+    }
+}
+
+🌐 Web (JavaScript):
+import { getAuth } from "firebase/auth";
+
+const auth = getAuth();
+const user = auth.currentUser;
+if (user) {
+    user.getIdToken().then((idToken) => {
+        // Send idToken to your backend API
+        fetch('/api/v2/auth/google_sign_in', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: idToken })
+        });
+    });
+}
+
+🚀 Next Steps:
+1. Configure Firebase in your mobile app with the Client IDs above
+2. Implement Google Sign-In using Firebase Auth
+3. Get the ID token from Firebase
+4. Send it to /api/v2/auth/google_sign_in
+5. Store the returned JWT token for API authentication
+            `;
+            
+            alert(examples);
+        }
+
         // Auto-fill some sample data on page load
         window.addEventListener('load', function() {
             // Set default email if available
             const emailInput = document.getElementById('email');
             if (!emailInput.value) {
                 emailInput.value = 'admin@tecaudex.com';
+            }
+            
+            // Add Firebase examples button
+            const firebaseSection = document.querySelector('.auth-section h3');
+            if (firebaseSection && firebaseSection.textContent.includes('Firebase')) {
+                const examplesButton = document.createElement('button');
+                examplesButton.textContent = '📋 View Code Examples';
+                examplesButton.style.cssText = 'margin-left: 1rem; background: #4285f4; font-size: 0.9rem; padding: 0.5rem 1rem;';
+                examplesButton.onclick = showFirebaseExamples;
+                firebaseSection.appendChild(examplesButton);
             }
         });
     </script>

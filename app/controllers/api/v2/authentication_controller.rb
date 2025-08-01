@@ -107,12 +107,16 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
     if response.is_a?(Net::HTTPSuccess)
       payload = JSON.parse(response.body)
       
-      # Verify the token is for our app
-      client_id = Rails.application.credentials.dig(:GOOGLE_CLIENT_ID)
-      if payload['aud'] == client_id
+      # Get valid client IDs for current environment
+      valid_client_ids = FirebaseConfig.all_client_ids
+      
+      # Verify the token is for one of our apps
+      token_audience = payload['aud']
+      if FirebaseConfig.valid_client_id?(token_audience)
+        Rails.logger.info "Google token verified for client: #{token_audience}"
         return payload
       else
-        Rails.logger.error "Token audience mismatch: expected #{client_id}, got #{payload['aud']}"
+        Rails.logger.error "Token audience mismatch: expected one of #{valid_client_ids}, got #{token_audience}"
         return nil
       end
     else
