@@ -319,6 +319,218 @@
             </div>
         </div>
 
+        <div class="auth-section">
+            <h3>📞 Twilio Calling System - Complete Guide</h3>
+            
+            <!-- Overview Section -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #495057; margin-bottom: 0.5rem;">🎯 System Overview</h4>
+                <p>TecAudex CRM integrates with Twilio to provide browser-based calling, automatic call recording, and call management features. The system supports both outbound calling from the web interface and inbound call routing to sales representatives.</p>
+            </div>
+
+            <!-- Architecture Section -->
+            <div style="background: #e8f4fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🏗️ Architecture Components</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6;">
+                    <strong>Frontend Components:</strong><br>
+                    • <code>app/javascript/twilio_client.js</code> - Main Twilio client implementation<br>
+                    • <code>app/javascript/controllers/calling_controller.js</code> - Stimulus controller for UI<br>
+                    • <code>app/views/calling/index.html.erb</code> - Calling interface view<br><br>
+                    
+                    <strong>Backend Components:</strong><br>
+                    • <code>app/controllers/calling_controller.rb</code> - Handles calling endpoints<br>
+                    • <code>app/services/twilio_service.rb</code> - Twilio API service wrapper<br>
+                    • <code>config/initializers/twilio.rb</code> - Twilio configuration<br>
+                    • <code>app/models/recording.rb</code> - Call recording data model<br><br>
+                    
+                    <strong>Background Processing:</strong><br>
+                    • <code>app/workers/recording_storage_worker.rb</code> - Handles recording storage to S3<br>
+                    • <code>app/workers/customer_phone_analysis_worker.rb</code> - AI analysis of calls
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">⚙️ Configuration Setup</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; background: white; padding: 0.5rem; border-radius: 4px;">
+                    <strong>Required Credentials (Rails.application.credentials):</strong><br>
+                    • <code>TWILIO_ACCOUNT_SID</code> - Your Twilio Account SID<br>
+                    • <code>TWILIO_AUTH_TOKEN</code> - Your Twilio Auth Token<br>
+                    • <code>TWILIO_APP_SID</code> - TwiML Application SID<br><br>
+                    
+                    <strong>TwiML App Configuration:</strong><br>
+                    • Voice URL: <code>https://crm.tecaudex.com/calling/voice</code><br>
+                    • Voice Method: <code>POST</code><br>
+                    • Status Callback URL: <code>https://crm.tecaudex.com/calling/recording_status</code><br>
+                    • Status Callback Method: <code>POST</code><br><br>
+                    
+                    <strong>Default Settings:</strong><br>
+                    • Default Caller ID: <code>+447897021964</code><br>
+                    • Recording Format: <code>MP3</code><br>
+                    • Recording Storage: <code>AWS S3</code>
+                </div>
+            </div>
+
+            <!-- Call Flow Section -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">🔄 Call Flow Process</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Outbound Call Flow:</strong><br>
+                    1. User selects customer and clicks Call in browser interface<br>
+                    2. Frontend requests capability token from <code>/twilio/token</code><br>
+                    3. Twilio Device initializes with token and connects to Twilio<br>
+                    4. Call parameters sent to TwiML app at <code>/calling/voice</code><br>
+                    5. TwiML response dials target number with recording enabled<br>
+                    6. Call recording status posted to <code>/calling/recording_status</code><br>
+                    7. Recording stored to S3 and customer activity logged<br><br>
+                    
+                    <strong>Inbound Call Flow:</strong><br>
+                    1. Incoming call triggers TwiML app webhook<br>
+                    2. System identifies caller and assigned sales rep<br>
+                    3. Call forwarded to sales rep's phone with recording<br>
+                    4. Recording processed and stored same as outbound calls
+                </div>
+            </div>
+
+            <!-- API Endpoints Section -->
+            <div style="background: #f3e5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #7b1fa2; margin-bottom: 0.5rem;">🔗 Key API Endpoints</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6;">
+                    <strong>GET</strong> <code>/calling</code> - Main calling interface<br>
+                    <strong>GET</strong> <code>/twilio/token</code> - Generate capability token<br>
+                    <strong>POST</strong> <code>/calling/voice</code> - TwiML voice webhook<br>
+                    <strong>POST</strong> <code>/calling/recording_status</code> - Recording callback<br>
+                    <strong>GET</strong> <code>/twilio/recordings</code> - Fetch call recordings<br>
+                    <strong>GET</strong> <code>/calling/available_numbers</code> - Get Twilio numbers<br>
+                    <strong>POST</strong> <code>/calling/store_customer_id</code> - Associate call with customer
+                </div>
+            </div>
+
+            <!-- Frontend Implementation Section -->
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">💻 Frontend Implementation Details</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Twilio JavaScript SDK Integration:</strong><br>
+                    • Uses Twilio Client JS SDK v1.14.0<br>
+                    • Device initialization with capability tokens<br>
+                    • WebRTC for browser-based audio<br>
+                    • DTMF tone support during calls<br><br>
+                    
+                    <strong>UI Components:</strong><br>
+                    • Customer search and selection dropdown<br>
+                    • Phone number input with validation<br>
+                    • Call status indicators and progress feedback<br>
+                    • DTMF keypad for in-call interactions<br>
+                    • Call controls (hang up, mute, etc.)<br><br>
+                    
+                    <strong>Error Handling:</strong><br>
+                    • Microphone access permission prompts<br>
+                    • Network connectivity error recovery<br>
+                    • Invalid phone number validation<br>
+                    • Twilio service error messages
+                </div>
+            </div>
+
+            <!-- Recording Management Section -->
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">🎵 Recording Management</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Automatic Recording Features:</strong><br>
+                    • All calls recorded from answer (record-from-answer)<br>
+                    • Recordings stored in Twilio initially<br>
+                    • Background job transfers to S3 for long-term storage<br>
+                    • MP3 format for browser compatibility<br><br>
+                    
+                    <strong>Recording Data Model:</strong><br>
+                    • SID (Twilio recording identifier)<br>
+                    • Call SID (Twilio call identifier)<br>
+                    • Duration in seconds<br>
+                    • Date/time of recording<br>
+                    • Associated customer and user<br>
+                    • S3 storage URL<br><br>
+                    
+                    <strong>Playback & Download:</strong><br>
+                    • In-browser audio playback<br>
+                    • Direct download links<br>
+                    • Authenticated S3 access<br>
+                    • Recording transcription via AI services
+                </div>
+            </div>
+
+            <!-- Security & Permissions Section -->
+            <div style="background: #ffebee; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #c62828; margin-bottom: 0.5rem;">🔒 Security & Permissions</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Access Control:</strong><br>
+                    • User authentication required for all calling features<br>
+                    • Role-based access (Admin, Manager, Associate)<br>
+                    • Users can only call their assigned customers<br>
+                    • Admins have access to all customers and recordings<br><br>
+                    
+                    <strong>Security Measures:</strong><br>
+                    • Capability tokens expire after 1 hour<br>
+                    • CSRF protection on all endpoints<br>
+                    • Webhook authentication from Twilio<br>
+                    • Secure credential storage in Rails credentials<br>
+                    • S3 bucket access controls for recordings
+                </div>
+            </div>
+
+            <!-- Troubleshooting Section -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #495057; margin-bottom: 0.5rem;">🔧 Troubleshooting Guide</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Common Issues & Solutions:</strong><br><br>
+                    
+                    <strong>1. Device not ready / Token errors:</strong><br>
+                    • Check Twilio credentials in Rails.application.credentials<br>
+                    • Verify TwiML app configuration in Twilio Console<br>
+                    • Ensure capability token generation is working<br><br>
+                    
+                    <strong>2. Microphone access denied:</strong><br>
+                    • Browser must be served over HTTPS<br>
+                    • User must grant microphone permissions<br>
+                    • Check browser compatibility (Chrome/Firefox recommended)<br><br>
+                    
+                    <strong>3. Call connection fails:</strong><br>
+                    • Verify phone number format (+country code)<br>
+                    • Check Twilio account balance<br>
+                    • Ensure caller ID is verified in Twilio<br><br>
+                    
+                    <strong>4. Recordings not saving:</strong><br>
+                    • Check webhook URL accessibility<br>
+                    • Verify S3 credentials and permissions<br>
+                    • Monitor Sidekiq job queue for failed workers
+                </div>
+            </div>
+
+            <!-- Code Examples Section -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">📝 Code Examples</h4>
+                <button onclick="showTwilioCodeExamples()" style="background: #2d7d2d; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                    📋 View Implementation Examples
+                </button>
+            </div>
+
+            <!-- Testing Section -->
+            <div style="background: #e8f4fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🧪 Testing Your Implementation</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Development Testing:</strong><br>
+                    • Use ngrok for webhook testing<br>
+                    • Test with verified phone numbers<br>
+                    • Monitor Rails logs and Twilio debugger<br>
+                    • Check browser console for JavaScript errors<br><br>
+                    
+                    <strong>Production Deployment:</strong><br>
+                    • Update TwiML app URLs to production domain<br>
+                    • Configure SSL certificates<br>
+                    • Set up monitoring for failed calls/recordings<br>
+                    • Test call quality and recording clarity
+                </div>
+            </div>
+        </div>
+
         <div class="endpoints">
             <!-- Authentication Endpoints -->
             <div class="endpoint-card">
@@ -705,6 +917,140 @@
                     <div class="response-body"></div>
                 </div>
             </div>
+
+            <!-- Twilio Token Endpoints -->
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Twilio Capability Token</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/twilio/token</div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📞 Twilio Integration:</strong> Generates capability token for browser-based calling with Twilio Device SDK
+                </div>
+                <div style="margin-bottom: 1rem; font-size: 0.85rem; color: #666;">
+                    <strong>Use Case:</strong> This token allows the Twilio Device SDK in the browser to authenticate and make outbound calls. 
+                    The token includes capabilities for outgoing calls and expires after 1 hour for security.
+                </div>
+                <button onclick="testEndpoint('GET', '/twilio/token', null, this)">Test Get Twilio Token</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Twilio Voice Webhook</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/calling/voice</div>
+                <div style="background: #fff3e0; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>🔗 TwiML Webhook:</strong> Handles voice calls and generates TwiML responses for call routing
+                </div>
+                <div class="params-section">
+                    <h4>Request Body (Twilio Parameters):</h4>
+                    <textarea rows="6" data-body="true">{
+  "To": "+1234567890",
+  "caller_id": "+447897021964",
+  "customer_id": "123",
+  "user_id": "456"
+}</textarea>
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                        <strong>Note:</strong> This endpoint is typically called by Twilio, not directly by clients. 
+                        It generates TwiML XML responses for call handling.
+                    </div>
+                </div>
+                <button onclick="testEndpoint('POST', '/calling/voice', getBody(this), this)">Test Voice Webhook</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Recording Status Callback</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/calling/recording_status</div>
+                <div style="background: #e3f2fd; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📹 Recording Webhook:</strong> Processes recording completion notifications from Twilio
+                </div>
+                <div class="params-section">
+                    <h4>Request Body (Twilio Callback Parameters):</h4>
+                    <textarea rows="8" data-body="true">{
+  "RecordingSid": "RExxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "CallSid": "CAxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "RecordingDuration": "45",
+  "RecordingUrl": "https://api.twilio.com/2010-04-01/Accounts/.../Recordings/RExxxx.wav",
+  "customer_id": "123",
+  "user_id": "456"
+}</textarea>
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                        <strong>Note:</strong> This webhook is called by Twilio when a call recording is completed. 
+                        It creates a Recording record and queues background job for S3 storage.
+                    </div>
+                </div>
+                <button onclick="testEndpoint('POST', '/calling/recording_status', getBody(this), this)">Test Recording Callback</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Twilio Recordings</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/twilio/recordings</div>
+                <div style="background: #f3e5f5; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>🎵 Recording List:</strong> Fetches call recordings from Twilio API with metadata
+                </div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="limit" data-param="limit" value="20">
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/twilio/recordings', getParams(this), this)">Test Get Twilio Recordings</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Get Available Twilio Numbers</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/calling/available_numbers</div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📱 Phone Numbers:</strong> Lists available Twilio phone numbers for caller ID selection
+                </div>
+                <button onclick="testEndpoint('GET', '/calling/available_numbers', null, this)">Test Available Numbers</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -909,6 +1255,163 @@
             setTimeout(() => {
                 messageDiv.remove();
             }, 5000);
+        }
+
+        // Twilio Implementation Examples (for developers)  
+        function showTwilioCodeExamples() {
+            const examples = `
+📞 TWILIO CALLING SYSTEM - CODE EXAMPLES:
+
+🔧 BACKEND SETUP:
+
+1. TwilioService Configuration (app/services/twilio_service.rb):
+class TwilioService
+  def initialize
+    @account_sid = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
+    @auth_token = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+    @application_sid = Rails.application.credentials.dig(:TWILIO_APP_SID)
+    @client = Twilio::REST::Client.new(@account_sid, @auth_token)
+  end
+
+  def generate_capability_token
+    capability = Twilio::JWT::ClientCapability.new(@account_sid, @auth_token)
+    capability.add_scope(
+      Twilio::JWT::ClientCapability::OutgoingClientScope.new(@application_sid)
+    )
+    capability.to_s
+  end
+end
+
+2. Controller Endpoints (app/controllers/calling_controller.rb):
+def token
+  token = twilio_service.generate_capability_token
+  render json: { token: token }
+end
+
+def voice
+  phone_number = params[:To]
+  customer_id = params[:customer_id]
+  
+  response = Twilio::TwiML::VoiceResponse.new do |r|
+    r.dial(caller_id: '+447897021964', 
+           record: 'record-from-answer',
+           recording_status_callback: "\#{@app_url}/calling/recording_status") do |d|
+      d.number(phone_number)
+    end
+  end
+  
+  render xml: response.to_s
+end
+
+🎯 FRONTEND SETUP:
+
+3. Twilio Device Initialization (app/javascript/twilio_client.js):
+function setupDevice() {
+  fetch('/twilio/token')
+    .then(response => response.json())
+    .then(data => {
+      device = new Twilio.Device(data.token, {
+        logLevel: 3,
+        enableRTCE: true,
+        debug: true
+      });
+      
+      device.on('ready', () => console.log('Device ready'));
+      device.on('error', (error) => console.error('Device error:', error));
+      device.on('connect', (conn) => handleCallConnect(conn));
+      device.on('disconnect', () => handleCallDisconnect());
+    });
+}
+
+4. Making Outbound Calls:
+function makeCall() {
+  const phoneNumber = phoneNumberInput.value.trim();
+  const params = {
+    To: phoneNumber,
+    customer_id: selectedCustomerId
+  };
+  
+  currentConnection = device.connect(params);
+}
+
+5. DTMF Support:
+function sendDigit(digit) {
+  if (currentConnection) {
+    currentConnection.sendDigits(digit);
+  }
+}
+
+📋 RECORDING MANAGEMENT:
+
+6. Recording Storage Worker (app/workers/recording_storage_worker.rb):
+class RecordingStorageWorker
+  include Sidekiq::Worker
+  
+  def perform(recording_id)
+    recording = Recording.find(recording_id)
+    # Download from Twilio and upload to S3
+    RecordingStorageService.new(recording).store_to_s3
+  end
+end
+
+7. Recording Status Webhook:
+def recording_status
+  recording = Recording.create(
+    sid: params[:RecordingSid],
+    call_sid: params[:CallSid],
+    duration: params[:RecordingDuration].to_i,
+    url: params[:RecordingUrl],
+    customer_id: params[:customer_id],
+    user_id: params[:user_id]
+  )
+  
+  RecordingStorageWorker.perform_async(recording.id)
+end
+
+🔐 SECURITY SETUP:
+
+8. Rails Credentials Configuration:
+rails credentials:edit
+
+Add:
+TWILIO_ACCOUNT_SID: your_account_sid_here
+TWILIO_AUTH_TOKEN: your_auth_token_here  
+TWILIO_APP_SID: your_twiml_app_sid_here
+
+9. Route Configuration (config/routes.rb):
+get '/calling', to: 'calling#index'
+get '/twilio/token', to: 'calling#token'
+post '/calling/voice', to: 'calling#voice'
+post '/calling/recording_status', to: 'calling#recording_status'
+
+🧪 TESTING SETUP:
+
+10. Development with ngrok:
+# Install ngrok and expose local Rails server
+ngrok http 3000
+
+# Update TwiML app webhook URLs to:
+# https://your-ngrok-url.ngrok.io/calling/voice
+# https://your-ngrok-url.ngrok.io/calling/recording_status
+
+🚀 DEPLOYMENT CHECKLIST:
+
+✅ Set Twilio credentials in production
+✅ Configure TwiML app with production URLs
+✅ Set up SSL certificates (required for WebRTC)
+✅ Configure S3 bucket for recording storage
+✅ Set up Sidekiq for background job processing
+✅ Monitor webhook delivery in Twilio Console
+✅ Test call quality and recording functionality
+
+For more implementation details, check the codebase files:
+• app/javascript/twilio_client.js
+• app/controllers/calling_controller.rb
+• app/services/twilio_service.rb
+• app/views/calling/index.html.erb
+            `;
+            
+            alert(examples);
         }
 
         // Firebase Integration Examples (for developers)
