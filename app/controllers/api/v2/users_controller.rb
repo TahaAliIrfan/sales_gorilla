@@ -1,7 +1,7 @@
 class Api::V2::UsersController < Api::V2::BaseController
   before_action :set_user, only: [:show, :update, :destroy]
-  after_action :verify_authorized, except: :index
-  after_action :verify_policy_scoped, only: :index
+  after_action :verify_authorized, except: [:index, :update_fcm_token]
+  after_action :verify_policy_scoped, only: [:index, :update_fcm_token]
 
   def index
     @users = policy_scope(User)
@@ -40,7 +40,7 @@ class Api::V2::UsersController < Api::V2::BaseController
   def show
     authorize @user
     render_success({
-      user: @user.as_json(only: [:id, :name, :email, :phone, :timezone, :created_at, :updated_at])
+      user: @user.as_json(only: [:id, :name, :email, :phone, :timezone, :fcm_token, :created_at, :updated_at])
                   .merge(role: @user.highest_role&.key || 'associate')
     })
   end
@@ -91,6 +91,28 @@ class Api::V2::UsersController < Api::V2::BaseController
     end
   end
 
+  def update_fcm_token
+    authorize @current_user
+    
+    fcm_token = params[:fcm_token]
+    
+    if fcm_token.blank?
+      render_error('FCM token is required', ['FCM token cannot be blank'], :unprocessable_entity)
+      return
+    end
+    
+    if @current_user.update(fcm_token: fcm_token)
+      render_success(
+        { 
+          user: @current_user.as_json(only: [:id, :name, :email, :fcm_token, :updated_at]),
+          fcm_token_updated: true
+        }, 
+        'FCM token updated successfully'
+      )
+    else
+      render_error('Failed to update FCM token', @current_user.errors.full_messages, :unprocessable_entity)
+    end
+  end
 
   private
 

@@ -215,7 +215,11 @@ Rails.application.routes.draw do
         end
       end
       
-      resources :users
+      resources :users do
+        member do
+          patch 'update_fcm_token'
+        end
+      end
       resources :recordings
       resources :pipelines
       resources :deal_stages

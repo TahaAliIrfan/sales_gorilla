@@ -320,6 +320,49 @@
         </div>
 
         <div class="auth-section">
+            <h3>🔔 Firebase Cloud Messaging (FCM) Integration</h3>
+            
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">📱 Push Notifications Setup</h4>
+                <p>TecAudex CRM supports Firebase Cloud Messaging for sending push notifications to mobile apps. Users can register their FCM tokens to receive notifications about tasks, deals, and customer updates.</p>
+            </div>
+            
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🔧 FCM Token Management</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>API Endpoint:</strong> <code>PATCH /api/v2/users/{id}/update_fcm_token</code><br><br>
+                    
+                    <strong>Implementation Steps:</strong><br>
+                    1. <strong>Get FCM Token:</strong> Use Firebase SDK to get registration token<br>
+                    2. <strong>Send to Backend:</strong> PATCH request with FCM token to update user profile<br>
+                    3. <strong>Store Securely:</strong> Token is stored in user record for push notifications<br>
+                    4. <strong>Auto-Refresh:</strong> Update token when it changes (Firebase handles rotation)<br><br>
+                    
+                    <strong>Security:</strong> Users can only update their own FCM token unless they have admin privileges.
+                </div>
+            </div>
+            
+            <div style="background: #f3e5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #7b1fa2; margin-bottom: 0.5rem;">📝 Code Examples</h4>
+                <button onclick="showFCMCodeExamples()" style="background: #7b1fa2; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                    📋 View FCM Implementation Examples
+                </button>
+            </div>
+            
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">🚀 Notification Types</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Supported Notifications:</strong><br>
+                    • <strong>Task Reminders:</strong> Daily task notifications<br>
+                    • <strong>Deal Updates:</strong> Stage changes and closures<br>
+                    • <strong>Customer Assignments:</strong> New customer assignments<br>
+                    • <strong>Call Notifications:</strong> Missed calls and recording availability<br>
+                    • <strong>System Alerts:</strong> Important CRM updates
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-section">
             <h3>📞 Twilio Calling System - Complete Guide</h3>
             
             <!-- Overview Section -->
@@ -845,6 +888,39 @@
                     </div>
                 </div>
                 <button onclick="testEndpoint('GET', '/api/v2/users', getParams(this), this)">Test List Users</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">Update User FCM Token</div>
+                    <div class="method-badge method-patch">PATCH</div>
+                </div>
+                <div class="endpoint-url">/api/v2/users/{id}/update_fcm_token</div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📱 Firebase Cloud Messaging:</strong> Updates user's FCM token for push notifications
+                </div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="user ID" data-param="id">
+                    </div>
+                    <h4>Request Body:</h4>
+                    <textarea rows="3" data-body="true">{
+  "fcm_token": "your_firebase_fcm_token_here"
+}</textarea>
+                    <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #666;">
+                        <strong>Usage:</strong> Send FCM token obtained from Firebase SDK to enable push notifications for the user.
+                        <br><strong>Security:</strong> Users can only update their own FCM token (or admins can update any user's token).
+                    </div>
+                </div>
+                <button onclick="testEndpoint('PATCH', '/api/v2/users/' + getPathParam(this, 'id') + '/update_fcm_token', getBody(this), this)">Test Update FCM Token</button>
                 <div class="response-section" style="display: none;">
                     <div class="response-header">
                         <h4>Response:</h4>
@@ -1409,6 +1485,236 @@ For more implementation details, check the codebase files:
 • app/controllers/calling_controller.rb
 • app/services/twilio_service.rb
 • app/views/calling/index.html.erb
+            `;
+            
+            alert(examples);
+        }
+
+        // FCM Implementation Examples (for developers)
+        function showFCMCodeExamples() {
+            const examples = `
+🔔 FIREBASE CLOUD MESSAGING (FCM) - CODE EXAMPLES:
+
+📱 MOBILE APP SETUP:
+
+1. Android Implementation (Java/Kotlin):
+// Get FCM registration token
+FirebaseMessaging.getInstance().getToken()
+    .addOnCompleteListener(new OnCompleteListener<String>() {
+        @Override
+        public void onComplete(@NonNull Task<String> task) {
+            if (!task.isSuccessful()) {
+                Log.w(TAG, "Fetching FCM registration token failed", task.getException());
+                return;
+            }
+
+            // Get new FCM registration token
+            String token = task.getResult();
+            Log.d(TAG, "FCM Token: " + token);
+
+            // Send token to your backend
+            sendTokenToServer(token);
+        }
+    });
+
+// Send token to backend API
+private void sendTokenToServer(String token) {
+    // Assuming you have the user ID and JWT token
+    String url = "https://crm.tecaudex.com/api/v2/users/" + userId + "/update_fcm_token";
+    
+    JSONObject jsonBody = new JSONObject();
+    try {
+        jsonBody.put("fcm_token", token);
+    } catch (JSONException e) {
+        e.printStackTrace();
+    }
+
+    // Make PATCH request with Authorization header
+    // Use your preferred HTTP library (OkHttp, Volley, etc.)
+}
+
+2. iOS Implementation (Swift):
+import FirebaseMessaging
+
+// Get FCM registration token
+Messaging.messaging().token { token, error in
+    if let error = error {
+        print("Error fetching FCM registration token: \\(error)")
+    } else if let token = token {
+        print("FCM registration token: \\(token)")
+        sendTokenToServer(token)
+    }
+}
+
+// Send token to backend API
+func sendTokenToServer(_ token: String) {
+    guard let userId = currentUserId,
+          let jwtToken = currentJWTToken else { return }
+    
+    let url = URL(string: "https://crm.tecaudex.com/api/v2/users/\\(userId)/update_fcm_token")!
+    var request = URLRequest(url: url)
+    request.httpMethod = "PATCH"
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.setValue("Bearer \\(jwtToken)", forHTTPHeaderField: "Authorization")
+    
+    let body = ["fcm_token": token]
+    request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+    
+    URLSession.shared.dataTask(with: request) { data, response, error in
+        // Handle response
+    }.resume()
+}
+
+3. React Native Implementation (JavaScript):
+import messaging from '@react-native-firebase/messaging';
+
+// Get FCM token
+const getFCMToken = async () => {
+    try {
+        const token = await messaging().getToken();
+        console.log('FCM Token:', token);
+        await sendTokenToServer(token);
+    } catch (error) {
+        console.error('Error getting FCM token:', error);
+    }
+};
+
+// Send token to backend API
+const sendTokenToServer = async (token) => {
+    try {
+        const response = await fetch(\`https://crm.tecaudex.com/api/v2/users/\${userId}/update_fcm_token\`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': \`Bearer \${jwtToken}\`
+            },
+            body: JSON.stringify({
+                fcm_token: token
+            })
+        });
+
+        const result = await response.json();
+        console.log('FCM token updated:', result);
+    } catch (error) {
+        console.error('Error updating FCM token:', error);
+    }
+};
+
+🔄 TOKEN REFRESH HANDLING:
+
+4. Handle Token Refresh (Android):
+public class MyFirebaseMessagingService extends FirebaseMessagingService {
+    @Override
+    public void onNewToken(@NonNull String token) {
+        Log.d(TAG, "Refreshed token: " + token);
+        
+        // Send the new token to your backend
+        sendTokenToServer(token);
+    }
+}
+
+5. Handle Token Refresh (iOS):
+// Monitor token refresh
+Messaging.messaging().delegate = self
+
+extension AppDelegate: MessagingDelegate {
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken = fcmToken else { return }
+        print("Firebase registration token refreshed: \\(fcmToken)")
+        
+        // Send the new token to your backend
+        sendTokenToServer(fcmToken)
+    }
+}
+
+6. Handle Token Refresh (React Native):
+// Listen for token refresh
+messaging().onTokenRefresh(token => {
+    console.log('FCM token refreshed:', token);
+    sendTokenToServer(token);
+});
+
+🔔 NOTIFICATION HANDLING:
+
+7. Handle Incoming Notifications (Android):
+@Override
+public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
+    Log.d(TAG, "From: " + remoteMessage.getFrom());
+
+    // Check if message contains a data payload
+    if (remoteMessage.getData().size() > 0) {
+        Log.d(TAG, "Message data payload: " + remoteMessage.getData());
+        
+        // Handle data payload (background/foreground)
+        handleDataMessage(remoteMessage.getData());
+    }
+
+    // Check if message contains a notification payload
+    if (remoteMessage.getNotification() != null) {
+        Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
+        showNotification(remoteMessage.getNotification());
+    }
+}
+
+8. Handle Incoming Notifications (iOS):
+// Handle messages received while app is in foreground
+func userNotificationCenter(_ center: UNUserNotificationCenter,
+                           willPresent notification: UNNotification,
+                           withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+    let userInfo = notification.request.content.userInfo
+    
+    // Handle the notification data
+    handleNotificationData(userInfo)
+    
+    // Show notification even when app is in foreground
+    completionHandler([[.alert, .sound]])
+}
+
+🚀 BACKEND INTEGRATION:
+
+9. API Usage Example (cURL):
+curl -X PATCH "https://crm.tecaudex.com/api/v2/users/123/update_fcm_token" \\
+  -H "Authorization: Bearer your_jwt_token_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "fcm_token": "your_fcm_registration_token_here"
+  }'
+
+10. API Response:
+{
+  "success": true,
+  "message": "FCM token updated successfully",
+  "data": {
+    "user": {
+      "id": 123,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "fcm_token": "your_fcm_registration_token_here",
+      "updated_at": "2025-08-01T16:53:27.000Z"
+    },
+    "fcm_token_updated": true
+  }
+}
+
+📋 IMPLEMENTATION CHECKLIST:
+
+✅ Add Firebase SDK to your mobile app
+✅ Configure Firebase project with FCM enabled
+✅ Request notification permissions from user
+✅ Get FCM registration token on app start
+✅ Send token to backend via PATCH /api/v2/users/{id}/update_fcm_token
+✅ Handle token refresh events
+✅ Implement notification handling (foreground/background)
+✅ Test push notifications from Firebase Console
+✅ Set up backend notification service to send messages
+
+🔐 SECURITY NOTES:
+
+• FCM tokens are not secrets but should be treated with care
+• Only authenticated users can update their own FCM token
+• Tokens automatically expire and refresh - handle gracefully
+• Always use HTTPS for API communications
+• Validate user permissions before sending notifications
             `;
             
             alert(examples);
