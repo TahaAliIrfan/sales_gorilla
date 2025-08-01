@@ -18,8 +18,13 @@ class Api::V2::BaseController < ActionController::API
       @decoded = JsonWebToken.decode(header)
       @current_user = User.find(@decoded[:user_id])
     rescue ActiveRecord::RecordNotFound => e
+      Rails.logger.error "JWT Authentication failed - User not found: #{e.message}"
       render json: { error: 'Invalid token' }, status: :unauthorized
     rescue JWT::DecodeError => e
+      Rails.logger.error "JWT Authentication failed - JWT decode error: #{e.message}"
+      render json: { error: 'Invalid token' }, status: :unauthorized
+    rescue => e
+      Rails.logger.error "JWT Authentication failed - General error: #{e.message}"
       render json: { error: 'Invalid token' }, status: :unauthorized
     end
   end
