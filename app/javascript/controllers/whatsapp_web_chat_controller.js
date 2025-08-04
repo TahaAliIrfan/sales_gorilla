@@ -14,11 +14,8 @@ export default class extends Controller {
     "sendingIndicator",
     "sendError",
     "sendErrorMessage",
-    "customerSelect",
     "chatHeader",
     "customerName",
-    "customerError",
-    "customerErrorMessage",
     "attachButton",
     "fileInput",
     "mediaPreview",
@@ -27,7 +24,16 @@ export default class extends Controller {
     "mediaFileSize",
     "mediaCaptionInput",
     "removeMediaButton",
-    "sendMediaButton"
+    "sendMediaButton",
+    "searchInput",
+    "chatListContainer",
+    "chatListLoader",
+    "chatList",
+    "noChats",
+    "chatError",
+    "chatErrorMessage",
+    "loadMoreContainer",
+    "loadMoreButton"
   ]
   
   static values = { 
@@ -38,27 +44,46 @@ export default class extends Controller {
     this.selectedCustomerId = null
     this.apiBaseUrlValue = this.apiBaseUrlValue || '/api/v1'
     this.selectedFile = null
+    this.chats = []
+    this.filteredChats = []
+    this.currentPage = 1
+    this.chatsPerPage = 20
+    this.hasMoreChats = true
     
     console.log('WhatsApp Web Chat: Controller connected')
     console.log('API Base URL:', this.apiBaseUrlValue)
     
-    // Load customers for selection
-    this.loadCustomers()
+    // Load chats from WhatsApp API instead of customers
+    this.loadChats()
     
-    // Set up auto-refresh (but don't start until customer is selected)
+    // Set up auto-refresh (but don't start until chat is selected)
     this.refreshInterval = null
     
     // Set up drag and drop
     this.setupDragAndDrop()
+    
+    // Set up infinite scroll
+    this.setupInfiniteScroll()
   }
   
   disconnect() {
     this.stopAutoRefresh()
   }
   
-  async loadCustomers() {
+  async loadChats(reset = true) {
+    if (reset) {
+      this.currentPage = 1
+      this.chats = []
+      this.hasMoreChats = true
+      this.chatListLoaderTarget.classList.remove('hidden')
+      this.chatListTarget.classList.add('hidden')
+      this.chatErrorTarget.classList.add('hidden')
+      this.noChatsTarget.classList.add('hidden')
+    }
+    
     try {
-      const response = await fetch('/customers', {
+      // Use the WhatsApp API to get chats directly from the service
+      const response = await fetch('/whatsapp_chat', {
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest'
@@ -69,46 +94,67 @@ export default class extends Controller {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       
-      const customers = await response.json()
-      console.log('Loaded customers:', customers)
+      const data = await response.json()
+      console.log('Loaded chats data:', data)
       
-      if (this.hasCustomerSelectTarget) {
-        this.customerSelectTarget.innerHTML = '<option value="">Select a customer...</option>'
-        
-        customers.forEach(customer => {
-          const option = document.createElement('option')
-          option.value = customer.id
-          option.textContent = `${customer.name || 'Unnamed Customer'} (${customer.phone || 'No phone'})`
-          this.customerSelectTarget.appendChild(option)
-        })
-        
-        console.log(`Loaded ${customers.length} customers into dropdown`)
+      // Extract chats from the response (adjusting based on actual API structure)
+      let newChats = []
+      if (data.chats && Array.isArray(data.chats)) {
+        newChats = data.chats
+      } else if (Array.isArray(data)) {
+        newChats = data
+      } else if (data.success && data.chats) {
+        newChats = data.chats
       }
+      
+      console.log('Extracted chats:', newChats)
+      if (newChats.length > 0) {
+        console.log('First chat structure:', newChats[0])
+      }
+      
+      // Sort chats by last message timestamp (most recent first)
+      newChats.sort((a, b) => {
+        const timeA = this.getLastMessageTime(a)
+        const timeB = this.getLastMessageTime(b)
+        return timeB - timeA
+      })
+      
+      if (reset) {
+        this.chats = newChats
+      } else {
+        this.chats = [...this.chats, ...newChats]
+      }
+      
+      this.filteredChats = [...this.chats]
+      
+      // Hide loader
+      this.chatListLoaderTarget.classList.add('hidden')
+      
+      if (this.chats.length === 0) {
+        this.noChatsTarget.classList.remove('hidden')
+      } else {
+        this.renderChatList()
+        this.chatListTarget.classList.remove('hidden')
+      }
+      
+      // Update load more button visibility
+      this.hasMoreChats = newChats.length >= this.chatsPerPage
+      this.updateLoadMoreButton()
+      
+      console.log(`Loaded ${this.chats.length} chats`)
+      
     } catch (error) {
-      console.error('Error loading customers:', error)
-      this.showCustomerError('Failed to load customers: ' + error.message)
+      console.error('Error loading chats:', error)
+      this.chatListLoaderTarget.classList.add('hidden')
+      this.showChatError('Failed to load conversations: ' + error.message)
     }
   }
   
-  customerSelected(event) {
-    const customerId = event.target.value
-    
-    if (customerId) {
-      this.selectedCustomerId = customerId
-      this.showCustomerChat(customerId)
-      this.startAutoRefresh()
-    } else {
-      this.selectedCustomerId = null
-      this.hideCustomerChat()
-      this.stopAutoRefresh()
-    }
-  }
   
-  showCustomerChat(customerId) {
+  showCustomerChat(chatId, chatName) {
     // Update header
     if (this.hasCustomerNameTarget) {
-      const selectedOption = this.customerSelectTarget.selectedOptions[0]
-      this.customerNameTarget.textContent = selectedOption.textContent
+      this.customerNameTarget.textContent = chatName || 'Unknown Contact'
     }
     
     // Show chat header
@@ -128,8 +174,8 @@ export default class extends Controller {
       messagesContainer.classList.remove('hidden')
     }
     
-    // Load messages for selected customer
-    this.fetchCustomerMessages(customerId)
+    // Load messages for selected chat using the WhatsApp chat ID
+    this.fetchChatMessages(chatId)
   }
   
   hideCustomerChat() {
@@ -167,7 +213,7 @@ export default class extends Controller {
     if (this.selectedCustomerId) {
       this.refreshInterval = setInterval(() => {
         if (!this.isSending && this.selectedCustomerId) {
-          this.fetchCustomerMessages(this.selectedCustomerId, true)
+          this.fetchChatMessages(this.selectedCustomerId, true)
         }
       }, 5000)
       
@@ -183,7 +229,7 @@ export default class extends Controller {
     }
   }
 
-  async fetchCustomerMessages(customerId, isAutoRefresh = false) {
+  async fetchChatMessages(chatId, isAutoRefresh = false) {
     if (!isAutoRefresh) {
       this.loaderTarget.classList.remove('hidden')
       this.noMessagesTarget.classList.add('hidden')
@@ -195,8 +241,9 @@ export default class extends Controller {
     }
     
     try {
-      const url = `${this.apiBaseUrlValue}/whatsapp/customer/${customerId}/messages`
-      console.log('Fetching messages from:', url)
+      // Use the chat show endpoint which will fetch messages from WhatsApp API
+      const url = `/chats/${encodeURIComponent(chatId)}`
+      console.log('Fetching chat messages from:', url)
       
       const response = await fetch(url, {
         headers: {
@@ -220,16 +267,16 @@ export default class extends Controller {
       }
       
       const data = await response.json()
-      console.log('Messages response:', data)
+      console.log('Chat messages response:', data)
       
-      if (!data.success) {
-        if (!isAutoRefresh) {
-          this.showError(data.error || "Failed to load messages")
-        }
-        return
+      // Extract messages from WhatsApp API response structure
+      let messages = []
+      if (data.messages && Array.isArray(data.messages)) {
+        messages = data.messages
+      } else if (data.data && data.data.messages) {
+        messages = data.data.messages
       }
       
-      const messages = data.data?.messages || []
       console.log('Found messages:', messages.length)
       
       if (messages.length === 0) {
@@ -239,10 +286,10 @@ export default class extends Controller {
         return
       }
       
-      this.displayMessages(messages, isAutoRefresh)
+      this.displayWhatsAppMessages(messages, isAutoRefresh)
       
     } catch (error) {
-      console.error('Error fetching messages:', error)
+      console.error('Error fetching chat messages:', error)
       
       if (!isAutoRefresh) {
         this.showError("Failed to load messages: " + error.message)
@@ -370,12 +417,80 @@ export default class extends Controller {
     this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight
   }
   
+  displayWhatsAppMessages(messages, isAutoRefresh = false) {
+    const messagesElement = this.messagesTarget
+    const wasAtBottom = messagesElement.scrollTop + messagesElement.clientHeight >= messagesElement.scrollHeight - 20
+    const oldMessagesCount = this.messageContainerTarget.children.length
+    
+    // Clear container
+    this.messageContainerTarget.innerHTML = ""
+    
+    // Sort messages by timestamp
+    const sortedMessages = messages.sort((a, b) => {
+      const timeA = a.timestamp || a.t || 0
+      const timeB = b.timestamp || b.t || 0
+      return timeA - timeB
+    })
+    
+    if (sortedMessages.length === 0) {
+      this.noMessagesTarget.classList.remove('hidden')
+      return
+    }
+    
+    // Display each message
+    sortedMessages.forEach(message => {
+      const messageElement = this.createWhatsAppMessageElement(message)
+      this.messageContainerTarget.appendChild(messageElement)
+    })
+    
+    // Handle scrolling
+    const newMessagesCount = this.messageContainerTarget.children.length
+    
+    if (newMessagesCount > oldMessagesCount && isAutoRefresh) {
+      console.log(`✅ Auto-refresh: ${newMessagesCount - oldMessagesCount} new message(s)`)
+      this.scrollToBottom()
+    } else if (wasAtBottom || !isAutoRefresh) {
+      this.scrollToBottom()
+    }
+  }
+  
+  createWhatsAppMessageElement(message) {
+    const isFromMe = message.fromMe || message.from_me || false
+    const timestamp = new Date((message.timestamp || message.t || 0) * 1000).toLocaleString()
+    const content = message.body || message.content || 'No content'
+    
+    const messageElement = document.createElement('div')
+    messageElement.className = isFromMe 
+      ? 'flex flex-col items-end mb-4' 
+      : 'flex flex-col items-start mb-4'
+    
+    const senderInfo = isFromMe 
+      ? { name: "You", icon: "user-tie", color: "blue" }
+      : { name: "Contact", icon: "user", color: "green" }
+    
+    messageElement.innerHTML = `
+      <div class="flex items-end ${isFromMe ? 'flex-row-reverse' : ''}">
+        <div class="flex-shrink-0 h-8 w-8 rounded-full bg-${senderInfo.color}-500 flex items-center justify-center">
+          <i class="fas fa-${senderInfo.icon} text-white text-sm"></i>
+        </div>
+        <div class="${isFromMe ? 'mr-2' : 'ml-2'} ${isFromMe ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'} px-4 py-2 rounded-lg max-w-xs sm:max-w-md shadow-sm">
+          <div class="text-xs text-${senderInfo.color}-600 font-medium mb-1">${senderInfo.name}</div>
+          <p class="text-sm whitespace-pre-wrap">${content}</p>
+          ${message.media ? this.createMediaElement(message.media) : ''}
+          <p class="text-xs text-gray-500 mt-1 text-right">${timestamp}</p>
+        </div>
+      </div>
+    `
+    
+    return messageElement
+  }
+
   refresh(event) {
     if (event) event.preventDefault()
     
     if (this.selectedCustomerId) {
-      console.log('Manual refresh for customer:', this.selectedCustomerId)
-      this.fetchCustomerMessages(this.selectedCustomerId)
+      console.log('Manual refresh for chat:', this.selectedCustomerId)
+      this.fetchChatMessages(this.selectedCustomerId)
     }
   }
   
@@ -389,10 +504,10 @@ export default class extends Controller {
   async sendMessage(event) {
     if (event) event.preventDefault()
     
-    console.log('Send message called, selected customer:', this.selectedCustomerId)
+    console.log('Send message called, selected chat:', this.selectedCustomerId)
     
     if (!this.selectedCustomerId) {
-      this.showSendError("Please select a customer first")
+      this.showSendError("Please select a chat first")
       return
     }
     
@@ -409,7 +524,7 @@ export default class extends Controller {
     this.hideSendError()
     
     try {
-      const url = `${this.apiBaseUrlValue}/whatsapp/customer/${this.selectedCustomerId}/send_text`
+      const url = `/chats/${encodeURIComponent(this.selectedCustomerId)}/send_message`
       console.log('Sending to URL:', url)
       
       const response = await fetch(url, {
@@ -418,7 +533,7 @@ export default class extends Controller {
           'Content-Type': 'application/json',
           'X-CSRF-Token': this.getCSRFToken()
         },
-        body: JSON.stringify({ content: content })
+        body: JSON.stringify({ message: content })
       })
       
       console.log('Send response status:', response.status)
@@ -439,7 +554,7 @@ export default class extends Controller {
       this.messageInputTarget.value = ''
       
       // Refresh messages
-      this.fetchCustomerMessages(this.selectedCustomerId)
+      this.fetchChatMessages(this.selectedCustomerId)
       
     } catch (error) {
       console.error('Error sending message:', error)
@@ -473,11 +588,196 @@ export default class extends Controller {
     this.errorMessageTarget.textContent = message
   }
   
-  showCustomerError(message) {
-    if (this.hasCustomerErrorTarget) {
-      this.customerErrorTarget.classList.remove('hidden')
-      this.customerErrorMessageTarget.textContent = message
+  showChatError(message) {
+    if (this.hasChatErrorTarget) {
+      this.chatErrorTarget.classList.remove('hidden')
+      this.chatErrorMessageTarget.textContent = message
     }
+  }
+  
+  getLastMessageTime(chat) {
+    try {
+      // Extract timestamp from the chat's last message
+      if (chat.lastMessage && chat.lastMessage.timestamp) {
+        return new Date(chat.lastMessage.timestamp * 1000).getTime()
+      }
+      if (chat.timestamp) {
+        return new Date(chat.timestamp * 1000).getTime()
+      }
+      if (chat.lastMessageTimestamp) {
+        return new Date(chat.lastMessageTimestamp * 1000).getTime()
+      }
+      return 0
+    } catch (error) {
+      console.error('Error processing chat timestamp:', error, chat)
+      return 0
+    }
+  }
+  
+  renderChatList() {
+    const chatsToShow = this.filteredChats.slice(0, this.currentPage * this.chatsPerPage)
+    
+    this.chatListTarget.innerHTML = chatsToShow.map(chat => this.createChatItem(chat)).join('')
+  }
+  
+  createChatItem(chat) {
+    const chatId = String(chat.id || '')
+    const isGroup = chatId.includes('@g.us')
+    const chatName = chat.name || chat.contact?.name || chat.contact?.pushname || 'Unknown Contact'
+    const lastMessage = this.getLastMessagePreview(chat)
+    const timestamp = this.formatChatTimestamp(chat)
+    const avatar = this.generateAvatar(chatName)
+    const hasUnread = (chat.unreadCount || 0) > 0
+    
+    return `
+      <div class="chat-item p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${hasUnread ? 'bg-green-50' : ''}"
+           data-chat-id="${chatId}"
+           data-chat-name="${chatName}"
+           data-action="click->whatsapp-web-chat#selectChat">
+        <div class="flex items-center space-x-3">
+          <!-- Avatar -->
+          <div class="flex-shrink-0 w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-white font-medium">
+            ${isGroup ? '<i class="fas fa-users"></i>' : avatar}
+          </div>
+          
+          <!-- Chat Info -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-1">
+              <h4 class="font-medium text-gray-900 truncate text-sm">
+                ${chatName}
+                ${isGroup ? '<i class="fas fa-users text-xs text-gray-500 ml-1"></i>' : ''}
+              </h4>
+              <span class="text-xs text-gray-500">${timestamp}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <p class="text-sm text-gray-600 truncate pr-2">${lastMessage}</p>
+              ${hasUnread ? `<span class="bg-green-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">${chat.unreadCount}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+  
+  generateAvatar(name) {
+    return name ? name.charAt(0).toUpperCase() : 'C'
+  }
+  
+  getLastMessagePreview(chat) {
+    try {
+      if (chat.lastMessage) {
+        const msg = chat.lastMessage
+        if (msg.body) {
+          return msg.body.length > 50 ? msg.body.substring(0, 50) + '...' : msg.body
+        }
+        if (msg.type === 'image') return '📷 Photo'
+        if (msg.type === 'video') return '🎥 Video'
+        if (msg.type === 'audio') return '🎵 Voice message'
+        if (msg.type === 'document') return '📄 Document'
+      }
+      
+      // Check if there's a different message structure
+      if (chat.lastMessageContent) {
+        return chat.lastMessageContent.length > 50 ? 
+          chat.lastMessageContent.substring(0, 50) + '...' : 
+          chat.lastMessageContent
+      }
+      
+      return 'No messages'
+    } catch (error) {
+      console.error('Error processing last message preview:', error, chat)
+      return 'No messages'
+    }
+  }
+  
+  formatChatTimestamp(chat) {
+    const timestamp = this.getLastMessageTime(chat)
+    if (timestamp === 0) return ''
+    
+    const date = new Date(timestamp)
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+    
+    if (messageDate.getTime() === today.getTime()) {
+      // Today - show time
+      return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    } else if (messageDate.getTime() === today.getTime() - 86400000) {
+      // Yesterday
+      return 'Yesterday'
+    } else {
+      // Older - show date
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    }
+  }
+  
+  selectChat(event) {
+    const chatItem = event.currentTarget
+    const chatId = chatItem.dataset.chatId
+    const chatName = chatItem.dataset.chatName
+    
+    console.log('Selected chat:', chatId, chatName)
+    
+    // Update selected chat ID (use chat ID instead of customer ID)
+    this.selectedCustomerId = chatId
+    
+    // Update active chat styling
+    document.querySelectorAll('.chat-item').forEach(item => {
+      item.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500')
+    })
+    chatItem.classList.add('bg-blue-50', 'border-l-4', 'border-blue-500')
+    
+    // Show chat interface
+    this.showCustomerChat(chatId, chatName)
+    
+    // Start auto-refresh for this chat
+    this.startAutoRefresh()
+  }
+  
+  handleSearch(event) {
+    const query = event.target.value.toLowerCase().trim()
+    
+    if (query === '') {
+      this.filteredChats = [...this.chats]
+    } else {
+      this.filteredChats = this.chats.filter(chat => {
+        const name = (chat.name || chat.contact?.name || chat.contact?.pushname || '').toLowerCase()
+        const lastMessage = this.getLastMessagePreview(chat).toLowerCase()
+        return name.includes(query) || lastMessage.includes(query)
+      })
+    }
+    
+    this.renderChatList()
+  }
+  
+  loadMoreChats() {
+    this.currentPage++
+    this.renderChatList()
+    this.updateLoadMoreButton()
+  }
+  
+  updateLoadMoreButton() {
+    const totalShown = this.currentPage * this.chatsPerPage
+    const hasMore = totalShown < this.filteredChats.length
+    
+    if (hasMore) {
+      this.loadMoreContainerTarget.classList.remove('hidden')
+    } else {
+      this.loadMoreContainerTarget.classList.add('hidden')
+    }
+  }
+  
+  setupInfiniteScroll() {
+    this.chatListContainerTarget.addEventListener('scroll', () => {
+      const { scrollTop, scrollHeight, clientHeight } = this.chatListContainerTarget
+      
+      if (scrollTop + clientHeight >= scrollHeight - 100) {
+        // Near bottom, load more
+        if (this.currentPage * this.chatsPerPage < this.filteredChats.length) {
+          this.loadMoreChats()
+        }
+      }
+    })
   }
   
   getCSRFToken() {
@@ -671,11 +971,13 @@ export default class extends Controller {
       // Convert file to base64
       const base64Data = await this.fileToBase64(this.selectedFile)
       
-      const url = `${this.apiBaseUrlValue}/whatsapp/customer/${this.selectedCustomerId}/send_image`
+      const url = `/chats/${encodeURIComponent(this.selectedCustomerId)}/send_media`
       console.log('Sending media to URL:', url)
       
+      // For now, we'll upload the file as a URL since the chat controller expects media_url
+      // In a production environment, you'd want to upload to S3 first, then send the URL
       const formData = new FormData()
-      formData.append('file', this.selectedFile)
+      formData.append('media_file', this.selectedFile)
       if (caption) {
         formData.append('caption', caption)
       }
@@ -703,7 +1005,7 @@ export default class extends Controller {
       this.removeMedia()
       
       // Refresh messages
-      this.fetchCustomerMessages(this.selectedCustomerId)
+      this.fetchChatMessages(this.selectedCustomerId)
       
     } catch (error) {
       console.error('Error sending media:', error)

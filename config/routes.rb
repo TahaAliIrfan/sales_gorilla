@@ -270,7 +270,12 @@ Rails.application.routes.draw do
   get 'whatsapp_chat', to: 'chats#index', as: :whatsapp_chat
   
   # Chat routes
-  resources :chats, only: [:index] do
+  resources :chats, only: [:index, :show] do
+    member do
+      post 'send_message'
+      post 'send_media'
+      post 'mark_as_seen'
+    end
     collection do
       get 'get_chat_id'
     end

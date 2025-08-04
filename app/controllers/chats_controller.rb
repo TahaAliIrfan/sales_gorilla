@@ -31,6 +31,26 @@ class ChatsController < ApplicationController
       flash.now[:error] = "Could not fetch chats: #{response[:error]}"
       @api_error = response[:error]
     end
+
+    # Handle JSON requests
+    respond_to do |format|
+      format.html # renders the normal view
+      format.json { 
+        if response[:success]
+          render json: { 
+            success: true, 
+            chats: @chats,
+            client_connected: @client_connected
+          }
+        else
+          render json: { 
+            success: false, 
+            error: @api_error || "Failed to fetch chats",
+            chats: []
+          }
+        end
+      }
+    end
   end
 
   def show
@@ -72,6 +92,26 @@ class ChatsController < ApplicationController
       @chats = all_chats_response[:data][:data] || []
     else
       @chats = []
+    end
+
+    # Handle JSON requests
+    respond_to do |format|
+      format.html # renders the normal view
+      format.json { 
+        if response[:success]
+          render json: { 
+            success: true, 
+            messages: @messages,
+            chat_details: @chat_details
+          }
+        else
+          render json: { 
+            success: false, 
+            error: response[:error] || "Failed to fetch messages",
+            messages: []
+          }
+        end
+      }
     end
   end
 
