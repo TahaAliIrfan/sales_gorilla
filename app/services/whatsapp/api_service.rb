@@ -57,20 +57,21 @@ module Whatsapp
       handle_response(response)
     end
     
-    # Send media message
-    def send_media_message(chat_id, media_url, caption = nil, media_type = 'image')
-      # Media type can be 'image', 'video', 'audio', 'document'
-      endpoint = "message/action/send-#{media_type}"
-      
+    # Send media message (images, videos, audio, documents)
+    def send_media_message(chat_id, media_url, caption = nil, filename = nil)
+
       payload = {
         chatId: chat_id,
-        url: media_url
+        mediaUrl: media_url
       }
       
       # Add caption if provided
       payload[:caption] = caption if caption.present?
       
-      response = post_request(endpoint, payload)
+      # Add filename if provided
+      payload[:filename] = filename if filename.present?
+
+      response = post_request("client/action/send-media", payload)
       handle_response(response)
     end
     
@@ -153,7 +154,9 @@ module Whatsapp
       request["accept"] = 'application/json'
       request["content-type"] = 'application/json'
       request['authorization'] = "Bearer #{@api_token}"
-      request.body = params.to_json
+      # Ensure URLs are properly encoded for JSON
+      request.body = JSON.generate(params)
+
 
       http.request(request)
     end
@@ -172,6 +175,7 @@ module Whatsapp
     
     def handle_response(response)
       parsed_response = JSON.parse(response.body, symbolize_names: true)
+      
       
       if response.code.to_i == 200
         { success: true, data: parsed_response[:data] }

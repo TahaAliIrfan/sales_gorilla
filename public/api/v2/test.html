@@ -235,6 +235,54 @@
             pointer-events: none;
         }
         
+        /* Media upload enhancements */
+        .file-drop-zone {
+            border: 2px dashed #1565c0;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        
+        .file-drop-zone:hover {
+            border-color: #25d366;
+            background: #f8fffe;
+        }
+        
+        .file-drop-zone.dragover {
+            border-color: #4caf50;
+            background: #e8f5e8;
+            transform: scale(1.02);
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #4caf50, #45a049);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .media-format-tag {
+            display: inline-block;
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            margin: 0.1rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .upload-success {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .error-message {
             background: #ffebee;
             color: #c62828;
@@ -430,6 +478,18 @@
                     
                     <strong>Pro Tip:</strong> First use the "List Customers" endpoint to get valid customer IDs, then use those IDs in the WhatsApp endpoints below.
                 </div>
+            </div>
+
+            <!-- Media Upload Features -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">🚀 New Media Features</h4>
+                <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                    <li><strong>📤 File Upload:</strong> Upload files directly from your computer</li>
+                    <li><strong>☁️ S3 Storage:</strong> Files automatically stored on AWS S3</li>
+                    <li><strong>🎯 Multi-format:</strong> Images, videos, audio, documents supported</li>
+                    <li><strong>👀 Viewable:</strong> Media URLs included in message responses</li>
+                    <li><strong>📊 Metadata:</strong> File size, type, and name tracking</li>
+                </ul>
             </div>
         </div>
 
@@ -1439,28 +1499,88 @@
 
             <div class="endpoint-card" style="border-left: 4px solid #25d366;">
                 <div class="endpoint-header">
-                    <div class="endpoint-title">🖼️ Send WhatsApp Image Message</div>
+                    <div class="endpoint-title">📎 Send WhatsApp Media (Images, Videos, Audio, Documents)</div>
                     <div class="method-badge method-post">POST</div>
                 </div>
                 <div class="endpoint-url">/api/v2/whatsapp/customer/{customer_id}/send_image</div>
                 <div style="background: #f3e5f5; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
-                    <strong>🖼️ Send Image:</strong> Send image message with optional caption to customer
+                    <strong>📎 Send Media:</strong> Upload and send images, videos, audio, or documents with S3 storage
                 </div>
                 <div class="params-section">
                     <h4>Path Parameters:</h4>
                     <div class="param-row">
                         <input type="text" placeholder="customer ID" data-param="customer_id" value="1">
                     </div>
-                    <h4>Request Body:</h4>
-                    <textarea rows="4" data-body="true">{
-  "image_url": "https://via.placeholder.com/400x300.png?text=TecAudex+CRM",
-  "caption": "Check out this image from TecAudex CRM!"
+                    
+                    <div style="background: #e8f4fd; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #1565c0;">📂 Option 1: File Upload (Recommended)</h4>
+                        
+                        <!-- File Selection Area -->
+                        <div style="border: 2px dashed #1565c0; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; background: white;">
+                            <div style="text-align: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 2rem;">📎</span><br>
+                                <strong>Drag & Drop files here or click to browse</strong>
+                            </div>
+                            <input type="file" id="mediaFile" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.xlsx" 
+                                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;"
+                                   onchange="displaySelectedFile(this)">
+                            <div id="selectedFileInfo" style="margin-top: 0.5rem; padding: 0.5rem; background: #f0f8ff; border-radius: 4px; display: none;">
+                                <strong>Selected:</strong> <span id="selectedFileName"></span><br>
+                                <small>Size: <span id="selectedFileSize"></span> | Type: <span id="selectedFileType"></span></small>
+                            </div>
+                        </div>
+                        
+                        <!-- Caption Input -->
+                        <div style="margin-bottom: 1rem;">
+                            <label for="mediaCaption" style="display: block; margin-bottom: 0.25rem; font-weight: bold;">Caption (optional):</label>
+                            <textarea id="mediaCaption" placeholder="Add a caption to your media file..." 
+                                     style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; min-height: 60px; resize: vertical;"></textarea>
+                        </div>
+                        
+                        <!-- Supported Formats -->
+                        <div style="background: #f8f9fa; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                            <div style="font-size: 0.85rem; line-height: 1.6;">
+                                <strong>📋 Supported Formats:</strong><br>
+                                <span style="background: #e3f2fd; padding: 0.2rem 0.4rem; border-radius: 3px; margin: 0.1rem;">🖼️ Images: jpg, jpeg, png, gif</span>
+                                <span style="background: #f3e5f5; padding: 0.2rem 0.4rem; border-radius: 3px; margin: 0.1rem;">🎥 Videos: mp4, 3gp, mov</span><br>
+                                <span style="background: #e8f5e8; padding: 0.2rem 0.4rem; border-radius: 3px; margin: 0.1rem;">🎵 Audio: mp3, wav, ogg, m4a</span>
+                                <span style="background: #fff3e0; padding: 0.2rem 0.4rem; border-radius: 3px; margin: 0.1rem;">📄 Docs: pdf, doc, docx, txt, xlsx</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Progress -->
+                        <div id="uploadProgress" style="display: none; margin-bottom: 1rem;">
+                            <div style="background: #f0f0f0; border-radius: 10px; overflow: hidden;">
+                                <div id="progressBar" style="height: 20px; background: linear-gradient(90deg, #4caf50, #45a049); width: 0%; transition: width 0.3s;"></div>
+                            </div>
+                            <div style="text-align: center; margin-top: 0.25rem; font-size: 0.85rem;">
+                                <span id="progressText">Uploading...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Button -->
+                        <button onclick="uploadMediaFile(this)" 
+                                style="background: linear-gradient(135deg, #4caf50, #45a049); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1rem;">
+                            📤 Upload & Send to WhatsApp
+                        </button>
+                    </div>
+                    
+                    <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #ef6c00;">🔗 Option 2: Media URL (Legacy)</h4>
+                        <h4>Request Body:</h4>
+                        <textarea rows="4" data-body="true">{
+  "media_url": "https://via.placeholder.com/400x300.png?text=TecAudex+CRM",
+  "caption": "Check out this image from TecAudex CRM!",
+  "filename": "sample.png"
 }</textarea>
+                        <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/send_image', getBody(this), this)" style="background: #ff9800;">🔗 Send via URL</button>
+                    </div>
                 </div>
+                
                 <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
-                    💡 <strong>Sample Image:</strong> Using placeholder image URL for testing - replace with actual image URLs
+                    ✨ <strong>New Features:</strong> Files are automatically stored on S3, viewable in message history, with full metadata tracking
                 </div>
-                <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/send_image', getBody(this), this)" style="background: #25d366;">📸 Test Send Image</button>
+                
                 <div class="response-section" style="display: none;">
                     <div class="response-header">
                         <h4>Response:</h4>
@@ -2639,6 +2759,175 @@ if (user) {
             }
         }
 
+        // Display selected file information
+        function displaySelectedFile(fileInput) {
+            const file = fileInput.files[0];
+            const infoDiv = document.getElementById('selectedFileInfo');
+            const fileNameSpan = document.getElementById('selectedFileName');
+            const fileSizeSpan = document.getElementById('selectedFileSize');
+            const fileTypeSpan = document.getElementById('selectedFileType');
+            
+            if (file) {
+                fileNameSpan.textContent = file.name;
+                fileSizeSpan.textContent = formatFileSize(file.size);
+                fileTypeSpan.textContent = file.type || 'Unknown';
+                infoDiv.style.display = 'block';
+                
+                // Add file type icon
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                let icon = '📎';
+                if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExtension)) icon = '🖼️';
+                else if (['mp4', '3gp', 'mov'].includes(fileExtension)) icon = '🎥';
+                else if (['mp3', 'wav', 'ogg', 'm4a'].includes(fileExtension)) icon = '🎵';
+                else if (['pdf', 'doc', 'docx', 'txt', 'xlsx'].includes(fileExtension)) icon = '📄';
+                
+                fileNameSpan.textContent = `${icon} ${file.name}`;
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        }
+        
+        // Format file size for display
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Show upload progress
+        function showUploadProgress(show, progress = 0, text = 'Uploading...') {
+            const progressDiv = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            
+            if (show) {
+                progressDiv.style.display = 'block';
+                progressBar.style.width = progress + '%';
+                progressText.textContent = text;
+            } else {
+                progressDiv.style.display = 'none';
+            }
+        }
+
+        // Enhanced file upload function for WhatsApp media
+        async function uploadMediaFile(buttonElement) {
+            if (!currentToken) {
+                showMessage('Please login first to upload files', 'error');
+                return;
+            }
+
+            const card = buttonElement.closest('.endpoint-card');
+            const customerIdInput = card.querySelector('input[data-param="customer_id"]');
+            const fileInput = document.getElementById('mediaFile');
+            const captionInput = document.getElementById('mediaCaption');
+            
+            const customerId = customerIdInput ? customerIdInput.value : '';
+            const file = fileInput ? fileInput.files[0] : null;
+            const caption = captionInput ? captionInput.value : '';
+
+            if (!customerId) {
+                showMessage('Please enter a customer ID', 'error');
+                return;
+            }
+
+            if (!file) {
+                showMessage('Please select a file to upload', 'error');
+                return;
+            }
+
+            // Validate file size (10MB limit)
+            const maxSize = 10 * 1024 * 1024; // 10MB
+            if (file.size > maxSize) {
+                showMessage('File size must be less than 10MB', 'error');
+                return;
+            }
+
+            // Show loading state and progress
+            const originalText = buttonElement.textContent;
+            buttonElement.disabled = true;
+            buttonElement.textContent = 'Preparing...';
+            buttonElement.style.background = '#666';
+            showUploadProgress(true, 0, 'Preparing upload...');
+
+            try {
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('file', file);
+                if (caption) {
+                    formData.append('caption', caption);
+                }
+
+                // Simulate progress steps
+                showUploadProgress(true, 25, 'Uploading to server...');
+                
+                const response = await fetch(`/api/v2/whatsapp/customer/${customerId}/send_image`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: formData
+                });
+
+                showUploadProgress(true, 75, 'Processing on server...');
+                const data = await response.json();
+
+                // Update response display
+                const responseSection = card.querySelector('.response-section');
+                const statusBadge = card.querySelector('.status-badge');
+                const responseBody = card.querySelector('.response-body');
+
+                responseSection.style.display = 'block';
+                statusBadge.textContent = response.status;
+                statusBadge.className = `status-badge ${response.ok ? 'status-success' : 'status-error'}`;
+                
+                // Enhanced response display for media
+                let displayData = data;
+                if (data.success && data.data && data.data.message && data.data.message.media_url) {
+                    displayData = {
+                        ...data,
+                        preview: {
+                            file_uploaded: file.name,
+                            file_size: formatFileSize(file.size),
+                            media_url: data.data.message.media_url,
+                            stored_on_s3: true
+                        }
+                    };
+                }
+                responseBody.textContent = JSON.stringify(displayData, null, 2);
+
+                if (data.success) {
+                    showUploadProgress(true, 100, 'Upload complete!');
+                    setTimeout(() => showUploadProgress(false), 2000);
+                    
+                    showMessage(`✅ File uploaded successfully! ${file.name} sent to WhatsApp and stored on S3`, 'success');
+                    
+                    // Clear the form
+                    fileInput.value = '';
+                    captionInput.value = '';
+                    document.getElementById('selectedFileInfo').style.display = 'none';
+                    
+                    // Log for polling dashboard
+                    logToConsole(`Media file uploaded: ${file.name} (${formatFileSize(file.size)})`);
+                    
+                } else {
+                    showUploadProgress(false);
+                    showMessage(`❌ Upload failed: ${data.error}`, 'error');
+                }
+
+            } catch (error) {
+                showUploadProgress(false);
+                showMessage(`❌ Upload error: ${error.message}`, 'error');
+                console.error('Upload error:', error);
+            } finally {
+                // Reset button state
+                buttonElement.disabled = false;
+                buttonElement.textContent = originalText;
+                buttonElement.style.background = 'linear-gradient(135deg, #4caf50, #45a049)';
+            }
+        }
+
         async function pollWhatsAppMessages() {
             try {
                 const response = await fetch('/api/v2/whatsapp?limit=100', {
@@ -2700,8 +2989,57 @@ if (user) {
             return Array.from(elements).find(el => el.textContent.includes(text));
         }
 
+        // Add drag and drop functionality
+        function setupDragAndDrop() {
+            const fileInput = document.getElementById('mediaFile');
+            const dropZone = fileInput.closest('.file-drop-zone') || fileInput.parentElement;
+            
+            if (!dropZone) return;
+            
+            // Add drag and drop event listeners
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+                document.body.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight(e) {
+                dropZone.classList.add('dragover');
+            }
+            
+            function unhighlight(e) {
+                dropZone.classList.remove('dragover');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    fileInput.files = files;
+                    displaySelectedFile(fileInput);
+                }
+            }
+        }
+
         // Auto-fill some sample data on page load
         window.addEventListener('load', function() {
+            // Setup drag and drop
+            setupDragAndDrop();
             // Set default email if available
             const emailInput = document.getElementById('email');
             if (!emailInput.value) {
