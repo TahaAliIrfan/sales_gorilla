@@ -1,31 +1,38 @@
+require 'securerandom'
+
 class Api::V2::WhatsappController < Api::V2::BaseController
   def index
-    customers = accessible_customers
-    
-    # Get all WhatsApp messages for accessible customers
-    messages = WhatsappMessage.joins(:customer)
-                             .where(customer: customers)
-                             .includes(:customer)
-                             .order(created_at: :desc)
-                             .limit(params[:limit]&.to_i || 100)
-    
-    formatted_messages = messages.map do |message|
-      {
-        id: message.id,
-        customer_id: message.customer_id,
-        customer_name: message.customer.name,
-        customer_phone: message.customer.phone,
-        chat_id: message.chat_id,
-        message_id: message.message_id,
-        content: message.content,
-        message_type: message.message_type,
-        is_from_me: message.is_from_me,
-        timestamp: message.timestamp,
-        created_at: message.created_at
-      }
+    begin
+      customers = accessible_customers
+      
+      # Get all WhatsApp messages for accessible customers
+      messages = WhatsappMessage.joins(:customer)
+                               .where(customer: customers)
+                               .includes(:customer)
+                               .order(created_at: :desc)
+                               .limit(params[:limit]&.to_i || 100)
+      
+      formatted_messages = messages.map do |message|
+        {
+          id: message.id,
+          customer_id: message.customer_id,
+          customer_name: message.customer.name,
+          customer_phone: message.customer.phone,
+          message_id: message.message_id,
+          content: message.body,
+          direction: message.direction,
+          is_from_me: message.direction == 'outbound',
+          timestamp: message.timestamp,
+          created_at: message.created_at
+        }
+      end
+      
+      render_success(formatted_messages, "WhatsApp messages retrieved successfully")
+    rescue => e
+      Rails.logger.error "WhatsApp index error: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render_error("Failed to retrieve WhatsApp messages: #{e.message}", nil, :internal_server_error)
     end
-    
-    render_success(formatted_messages, "WhatsApp messages retrieved successfully")
   end
   
   def show_customer_messages
@@ -40,11 +47,10 @@ class Api::V2::WhatsappController < Api::V2::BaseController
       {
         id: message.id,
         customer_id: message.customer_id,
-        chat_id: message.chat_id,
         message_id: message.message_id,
-        content: message.content,
-        message_type: message.message_type,
-        is_from_me: message.is_from_me,
+        content: message.body,
+        direction: message.direction,
+        is_from_me: message.direction == 'outbound',
         timestamp: message.timestamp,
         created_at: message.created_at
       }
@@ -89,10 +95,10 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     if result[:success]
       # Create WhatsApp message record
       message = customer.whatsapp_messages.create!(
-        chat_id: chat_id,
-        content: content,
-        message_type: 'text',
-        is_from_me: true,
+        message_id: SecureRandom.uuid,
+        body: content,
+        direction: 'outbound',
+        status: 'sent',
         timestamp: Time.current
       )
       
@@ -100,9 +106,9 @@ class Api::V2::WhatsappController < Api::V2::BaseController
         message: {
           id: message.id,
           customer_id: message.customer_id,
-          content: message.content,
-          message_type: message.message_type,
-          is_from_me: message.is_from_me,
+          content: message.body,
+          direction: message.direction,
+          is_from_me: true,
           timestamp: message.timestamp
         }
       }, "Text message sent successfully")
@@ -140,10 +146,10 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     if result[:success]
       # Create WhatsApp message record
       message = customer.whatsapp_messages.create!(
-        chat_id: chat_id,
-        content: caption || "[Image]",
-        message_type: 'image',
-        is_from_me: true,
+        message_id: SecureRandom.uuid,
+        body: caption || "[Image sent]",
+        direction: 'outbound',
+        status: 'sent',
         timestamp: Time.current
       )
       
@@ -151,9 +157,9 @@ class Api::V2::WhatsappController < Api::V2::BaseController
         message: {
           id: message.id,
           customer_id: message.customer_id,
-          content: message.content,
-          message_type: message.message_type,
-          is_from_me: message.is_from_me,
+          content: message.body,
+          direction: message.direction,
+          is_from_me: true,
           timestamp: message.timestamp
         }
       }, "Image message sent successfully")
@@ -191,11 +197,10 @@ class Api::V2::WhatsappController < Api::V2::BaseController
         next if customer.whatsapp_messages.exists?(message_id: msg_data[:id])
         
         customer.whatsapp_messages.create!(
-          chat_id: chat_id,
           message_id: msg_data[:id],
-          content: msg_data[:body] || msg_data[:caption] || "[#{msg_data[:type]}]",
-          message_type: msg_data[:type] || 'text',
-          is_from_me: msg_data[:fromMe] || false,
+          body: msg_data[:body] || msg_data[:caption] || "[#{msg_data[:type]}]",
+          direction: msg_data[:fromMe] ? 'outbound' : 'inbound',
+          status: 'received',
           timestamp: Time.at(msg_data[:timestamp]&.to_i || Time.current.to_i)
         )
         
@@ -214,16 +219,25 @@ class Api::V2::WhatsappController < Api::V2::BaseController
   private
   
   def accessible_customers
-    case current_user.highest_role&.key
-    when 'admin'
-      Customer.all
-    when 'manager'
-      # Manager can see their own customers and their associates' customers
-      associate_user_ids = current_user.associates.pluck(:id)
-      all_user_ids = [current_user.id] + associate_user_ids
-      Customer.where(user_id: all_user_ids)
-    else
-      # Associate/regular users can only see their own customers
+    return Customer.none unless current_user
+    
+    begin
+      role_key = current_user.highest_role&.key
+      case role_key
+      when 'admin'
+        Customer.all
+      when 'manager'
+        # Manager can see their own customers and their associates' customers
+        associate_user_ids = current_user.associates.pluck(:id)
+        all_user_ids = [current_user.id] + associate_user_ids
+        Customer.where(user_id: all_user_ids)
+      else
+        # Associate/regular users can only see their own customers
+        current_user.customers
+      end
+    rescue => e
+      Rails.logger.error "Error determining accessible customers: #{e.message}"
+      # Fallback to user's own customers only
       current_user.customers
     end
   end
