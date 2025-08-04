@@ -1565,8 +1565,32 @@
                         </button>
                     </div>
                     
+                    <div style="background: #f0f8ff; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #0066cc;">📊 Option 2: Base64 Media (Developer Method)</h4>
+                        <div style="background: #ffffcc; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+                            <strong>👨‍💻 For Developers:</strong> Send media as base64 encoded string. Required fields:
+                            <br>• <code>media_base64</code> - Base64 encoded file data (without data:mime prefix)
+                            <br>• <code>filename</code> - Original filename with extension for proper content type detection
+                            <br>• <code>caption</code> - Optional message caption
+                        </div>
+                        <h4>Request Body:</h4>
+                        <textarea rows="6" data-body="true">{
+  "media_base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==",
+  "filename": "sample.png",
+  "caption": "Test image sent via base64 encoding"
+}</textarea>
+                        <div style="background: #f0f8ff; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0; font-size: 0.8rem;">
+                            <strong>💡 Note:</strong> The system will automatically:
+                            <br>• Decode base64 to binary data
+                            <br>• Detect content type from filename extension
+                            <br>• Store file in Active Storage for message history
+                            <br>• Send to WhatsApp API for immediate delivery
+                        </div>
+                        <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/send_image', getBody(this), this)" style="background: #0066cc;">📊 Send Base64 Media</button>
+                    </div>
+
                     <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
-                        <h4 style="margin: 0 0 0.5rem 0; color: #ef6c00;">🔗 Option 2: Media URL (Legacy)</h4>
+                        <h4 style="margin: 0 0 0.5rem 0; color: #ef6c00;">🔗 Option 3: Media URL (Legacy)</h4>
                         <h4>Request Body:</h4>
                         <textarea rows="4" data-body="true">{
   "media_url": "https://via.placeholder.com/400x300.png?text=TecAudex+CRM",
@@ -1579,6 +1603,24 @@
                 
                 <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
                     ✨ <strong>New Features:</strong> Files are automatically stored on S3, viewable in message history, with full metadata tracking
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0; border-left: 4px solid #007bff;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #007bff;">📋 Developer Field Reference</h4>
+                    <div style="font-size: 0.85rem;">
+                        <strong>Required Fields (Base64 Method):</strong>
+                        <br>• <code>media_base64</code> - Base64 encoded file data (string, no data:mime prefix)
+                        <br>• <code>filename</code> - Original filename with extension (string)
+                        <br><br><strong>Optional Fields:</strong>
+                        <br>• <code>caption</code> - Message caption (string, max 1024 chars)
+                        <br><br><strong>Supported File Types:</strong>
+                        <br>• Images: .jpg, .jpeg, .png, .gif
+                        <br>• Videos: .mp4, .3gp, .mov
+                        <br>• Audio: .mp3, .wav, .ogg, .m4a
+                        <br>• Documents: .pdf, .doc, .docx, .txt, .xlsx
+                        <br>• <em>Any other file type (treated as document)</em>
+                        <br><br><strong>File Size Limit:</strong> 10MB maximum
+                    </div>
                 </div>
                 
                 <div class="response-section" style="display: none;">

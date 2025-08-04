@@ -57,9 +57,23 @@ module Whatsapp
       handle_response(response)
     end
     
-    # Send media message (images, videos, audio, documents)
-    def send_media_message(chat_id, media_url, caption = nil, filename = nil)
+    # Send media message using base64 data (images, videos, audio, documents)
+    def send_media_base64(chat_id, media_base64, filename, caption = nil)
+      payload = {
+        chatId: chat_id,
+        mediaBase64: media_base64,
+        mediaName: filename  # WhatsApp API expects 'medianame' field for base64 uploads
+      }
+      
+      # Add caption if provided
+      payload[:caption] = caption if caption.present?
 
+      response = post_request("client/action/send-media", payload)
+      handle_response(response)
+    end
+
+    # Send media message using URL (kept for backward compatibility)
+    def send_media_message(chat_id, media_url, caption = nil, filename = nil)
       payload = {
         chatId: chat_id,
         mediaUrl: media_url

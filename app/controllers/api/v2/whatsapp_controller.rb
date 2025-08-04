@@ -100,7 +100,7 @@ class Api::V2::WhatsappController < Api::V2::BaseController
   def send_image_message
     customer = accessible_customers.find(params[:customer_id])
     
-    # Handle both file upload and URL
+    # Handle file upload, base64 data, or URL
     if params[:file].present?
       # File upload case
       uploaded_file = params[:file]
@@ -113,12 +113,11 @@ class Api::V2::WhatsappController < Api::V2::BaseController
       end
       
       begin
-        # Store file on S3 and get URL
-        media_url, media_info = store_media_file(uploaded_file)
+        # Convert file to base64 and send via WhatsApp API
+        media_base64 = Base64.strict_encode64(uploaded_file.read)
         filename = uploaded_file.original_filename
         
-        # Send via WhatsApp API
-        result = send_media_via_whatsapp(customer, media_url, caption, filename, media_info)
+        result = send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
         
         if result[:success]
           render_success(result[:data], "Media file sent successfully")
@@ -129,6 +128,30 @@ class Api::V2::WhatsappController < Api::V2::BaseController
       rescue => e
         Rails.logger.error "Media upload error: #{e.message}"
         render_error("Failed to process media file: #{e.message}", nil, :internal_server_error)
+      end
+      
+    elsif params[:media_base64].present? && params[:filename].present?
+      # Base64 data case
+      media_base64 = params[:media_base64]&.strip
+      filename = params[:filename]&.strip
+      caption = params[:caption]&.strip
+      
+      if media_base64.blank? || filename.blank?
+        return render_error("Both 'media_base64' and 'filename' are required", nil, :unprocessable_entity)
+      end
+      
+      begin
+        result = send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
+        
+        if result[:success]
+          render_success(result[:data], "Media message sent successfully")
+        else
+          render_error(result[:error], nil, :service_unavailable)
+        end
+        
+      rescue => e
+        Rails.logger.error "Base64 media error: #{e.message}"
+        render_error("Failed to process base64 media: #{e.message}", nil, :internal_server_error)
       end
       
     elsif params[:media_url].present?
@@ -153,7 +176,7 @@ class Api::V2::WhatsappController < Api::V2::BaseController
       end
       
     else
-      render_error("Either 'file' (for upload) or 'media_url' parameter is required", nil, :unprocessable_entity)
+      render_error("Either 'file' (for upload), 'media_base64' + 'filename' (for base64), or 'media_url' parameter is required", nil, :unprocessable_entity)
     end
   end
   
@@ -341,6 +364,45 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     end
   end
   
+  def determine_content_type_from_filename(filename)
+    extension = File.extname(filename).downcase
+    
+    case extension
+    when '.jpg', '.jpeg'
+      'image/jpeg'
+    when '.png'
+      'image/png'
+    when '.gif'
+      'image/gif'
+    when '.mp4'
+      'video/mp4'
+    when '.3gp'
+      'video/3gpp'
+    when '.mov'
+      'video/quicktime'
+    when '.mp3'
+      'audio/mpeg'
+    when '.wav'
+      'audio/wav'
+    when '.ogg'
+      'audio/ogg'
+    when '.m4a'
+      'audio/mp4'
+    when '.pdf'
+      'application/pdf'
+    when '.doc'
+      'application/msword'
+    when '.docx'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    when '.txt'
+      'text/plain'
+    when '.xlsx'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    else
+      'application/octet-stream'
+    end
+  end
+  
   def format_message_response(message, include_customer_info: false)
     response = {
       id: message.id,
@@ -379,7 +441,7 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     response
   end
   
-  def send_media_via_whatsapp(customer, media_url, caption, filename, media_info)
+  def send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
     # Initialize WhatsApp API service
     whatsapp_service = Whatsapp::ApiService.new
     
@@ -394,6 +456,107 @@ class Api::V2::WhatsappController < Api::V2::BaseController
       return { success: false, error: "Could not determine WhatsApp chat ID for customer" }
     end
 
+    # Send media message via WhatsApp API using base64
+    result = whatsapp_service.send_media_base64(chat_id, media_base64, filename, caption)
+    
+    if result[:success]
+      # Decode base64 to create Active Storage blob for local storage
+      begin
+        decoded_data = Base64.strict_decode64(media_base64)
+        content_type = determine_content_type_from_filename(filename)
+        media_type = determine_media_type_from_content_type(content_type)
+        
+        # Create blob from decoded data
+        blob = ActiveStorage::Blob.create_and_upload!(
+          io: StringIO.new(decoded_data),
+          filename: "whatsapp_media/#{Time.current.strftime('%Y%m%d_%H%M%S')}_#{SecureRandom.hex(8)}_#{filename}",
+          content_type: content_type
+        )
+        
+        media_url = blob.url
+        
+        # Create WhatsApp message record with media info
+        message = customer.whatsapp_messages.create!(
+          message_id: SecureRandom.uuid,
+          body: caption || "[#{media_type.capitalize} sent]",
+          direction: 'outbound',
+          status: 'sent',
+          timestamp: Time.current,
+          metadata: {
+            media_url: media_url,
+            media_type: media_type,
+            filename: filename,
+            content_type: content_type,
+            size: decoded_data.size,
+            blob_id: blob.id
+          }.compact
+        )
+        
+        {
+          success: true,
+          data: {
+            message: {
+              id: message.id,
+              customer_id: message.customer_id,
+              content: message.body,
+              direction: message.direction,
+              is_from_me: true,
+              timestamp: message.timestamp,
+              media_url: media_url,
+              media_type: media_type,
+              filename: filename
+            }
+          }
+        }
+      rescue => e
+        Rails.logger.error "Failed to create blob from base64: #{e.message}"
+        # Still create message record even if blob creation fails
+        message = customer.whatsapp_messages.create!(
+          message_id: SecureRandom.uuid,
+          body: caption || "[Media sent]",
+          direction: 'outbound',
+          status: 'sent',
+          timestamp: Time.current,
+          metadata: {
+            filename: filename,
+            media_type: 'document'
+          }
+        )
+        
+        {
+          success: true,
+          data: {
+            message: {
+              id: message.id,
+              customer_id: message.customer_id,
+              content: message.body,
+              direction: message.direction,
+              is_from_me: true,
+              timestamp: message.timestamp,
+              filename: filename
+            }
+          }
+        }
+      end
+    else
+      { success: false, error: "Failed to send WhatsApp media: #{result[:error]}" }
+    end
+  end
+
+  def send_media_via_whatsapp(customer, media_url, caption, filename, media_info)
+    # Initialize WhatsApp API service
+    whatsapp_service = Whatsapp::ApiService.new
+    
+    unless whatsapp_service.credentials_configured?
+      return { success: false, error: "WhatsApp API credentials not configured" }
+    end
+    
+    # Get or set WhatsApp chat ID for customer
+    chat_id = get_or_set_chat_id(customer, whatsapp_service)
+    
+    unless chat_id
+      return { success: false, error: "Could not determine WhatsApp chat ID for customer" }
+    end
 
     # Send media message via WhatsApp API
     result = whatsapp_service.send_media_message(chat_id, media_url, caption, filename)
