@@ -170,6 +170,16 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'inbound_lead', to: 'cost_calculator#inbound_lead'
+      
+      # WhatsApp routes (no authentication required)
+      resources :whatsapp, only: [:index] do
+        collection do
+          get 'customer/:customer_id/messages', to: 'whatsapp#show_customer_messages', as: :customer_messages
+          post 'customer/:customer_id/send_text', to: 'whatsapp#send_text_message', as: :send_text
+          post 'customer/:customer_id/send_image', to: 'whatsapp#send_image_message', as: :send_image
+          post 'customer/:customer_id/sync', to: 'whatsapp#sync_messages', as: :sync_messages
+        end
+      end
     end
     
     namespace :v2 do
@@ -256,6 +266,9 @@ Rails.application.routes.draw do
     resources :ai_analyses, only: [:create, :show]
   end
 
+  # WhatsApp Chat routes (authenticated)
+  get 'whatsapp_chat', to: 'chats#index', as: :whatsapp_chat
+  
   # Chat routes
   resources :chats, only: [:index] do
     collection do
