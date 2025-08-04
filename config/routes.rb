@@ -225,6 +225,16 @@ Rails.application.routes.draw do
       resources :deal_stages
       resources :notifications
       resources :emails
+      
+      # WhatsApp routes
+      resources :whatsapp, only: [:index] do
+        collection do
+          get 'customer/:customer_id/messages', to: 'whatsapp#show_customer_messages', as: :customer_messages
+          post 'customer/:customer_id/send_text', to: 'whatsapp#send_text_message', as: :send_text
+          post 'customer/:customer_id/send_image', to: 'whatsapp#send_image_message', as: :send_image
+          post 'customer/:customer_id/sync', to: 'whatsapp#sync_messages', as: :sync_messages
+        end
+      end
     end
   end
   

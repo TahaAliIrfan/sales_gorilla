@@ -257,6 +257,14 @@
         <div class="header">
             <h1>🚀 TecAudex CRM API v2</h1>
             <p>Interactive Testing Interface with JWT Authentication & Firebase Support</p>
+            <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; margin-top: 1rem;">
+                <h3 style="margin: 0 0 0.5rem 0;">💬 NEW: WhatsApp API Integration</h3>
+                <p style="margin: 0 0 0.5rem 0; font-size: 1rem;">Complete WhatsApp messaging with real-time polling</p>
+                <button onclick="document.getElementById('whatsapp-section').scrollIntoView({behavior: 'smooth'})" 
+                        style="background: #25d366; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    🚀 Jump to WhatsApp Endpoints
+                </button>
+            </div>
         </div>
 
         <div class="auth-section">
@@ -359,6 +367,201 @@
                     • <strong>Call Notifications:</strong> Missed calls and recording availability<br>
                     • <strong>System Alerts:</strong> Important CRM updates
                 </div>
+            </div>
+        </div>
+
+        <div class="auth-section">
+            <h3>💬 WhatsApp API Testing & Real-time Polling</h3>
+            
+            <!-- Quick Test Section -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">🚀 Quick Start Guide</h4>
+                <div style="font-size: 0.9rem; line-height: 1.8;">
+                    <strong>Step 1:</strong> Login using the authentication section above to get your JWT token<br>
+                    <strong>Step 2:</strong> Scroll down to the WhatsApp endpoints section<br>
+                    <strong>Step 3:</strong> Enable auto-polling for real-time updates (updates every 5 seconds)<br>
+                    <strong>Step 4:</strong> Test sending/receiving messages with a valid customer ID<br>
+                    <strong>Step 5:</strong> Check your browser console for polling logs
+                </div>
+            </div>
+
+            <!-- Polling Status Dashboard -->
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">📊 Real-time Polling Dashboard</h4>
+                <div id="pollingStatus" style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; background: white; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">
+                    Status: <span id="pollingStatusText" style="color: #666;">Not Started</span><br>
+                    Last Update: <span id="lastUpdateTime">Never</span><br>
+                    Messages Found: <span id="messageCount">0</span><br>
+                    Polling Interval: <span id="pollingInterval">5 seconds</span>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button id="startPollingBtn" onclick="startPollingFromDashboard()" style="background: #4caf50; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ▶️ Start Polling
+                    </button>
+                    <button id="stopPollingBtn" onclick="stopPollingFromDashboard()" style="background: #f44336; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer;">
+                        ⏹️ Stop Polling
+                    </button>
+                    <label style="display: flex; align-items: center; gap: 0.5rem;">
+                        <input type="checkbox" id="consoleLogging" checked>
+                        <span>Console Logging</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Role-based Access Info -->
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">🔐 Your Access Level</h4>
+                <div id="accessLevel" style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Current User:</strong> <span id="currentUserName">Not logged in</span><br>
+                    <strong>Role:</strong> <span id="currentUserRole">Unknown</span><br>
+                    <strong>WhatsApp Access:</strong> <span id="whatsappAccess">Login to see access level</span>
+                </div>
+            </div>
+
+            <!-- Sample Customer IDs -->
+            <div style="background: #f3e5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #7b1fa2; margin-bottom: 0.5rem;">📋 Sample Customer IDs for Testing</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Note:</strong> Replace these with actual customer IDs from your system:<br>
+                    <code style="background: white; padding: 0.2rem; border-radius: 2px;">1</code> - 
+                    <code style="background: white; padding: 0.2rem; border-radius: 2px;">2</code> - 
+                    <code style="background: white; padding: 0.2rem; border-radius: 2px;">3</code><br><br>
+                    
+                    <strong>Pro Tip:</strong> First use the "List Customers" endpoint to get valid customer IDs, then use those IDs in the WhatsApp endpoints below.
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-section">
+            <h3>💬 WhatsApp API Integration - Complete Guide</h3>
+            
+            <!-- Overview Section -->
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #495057; margin-bottom: 0.5rem;">🎯 System Overview</h4>
+                <p>TecAudex CRM integrates with WhatsApp API to provide comprehensive messaging capabilities. The system supports role-based message access, automatic message syncing, and bidirectional communication with customers through WhatsApp Business API.</p>
+            </div>
+
+            <!-- Architecture Section -->
+            <div style="background: #e8f4fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">🏗️ Architecture Components</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6;">
+                    <strong>Backend Components:</strong><br>
+                    • <code>app/services/whatsapp/api_service.rb</code> - WhatsApp API service wrapper<br>
+                    • <code>app/controllers/api/v2/whatsapp_controller.rb</code> - RESTful API endpoints<br>
+                    • <code>app/models/whatsapp_message.rb</code> - Message data model<br>
+                    • <code>app/models/customer.rb</code> - Customer model with WhatsApp integration<br><br>
+                    
+                    <strong>Database Schema:</strong><br>
+                    • <code>whatsapp_messages</code> - Stores message history<br>
+                    • <code>customers.whatsapp_chat_id</code> - Links customers to WhatsApp chats<br>
+                    • <code>customers.whatsapp_status</code> - Tracks WhatsApp availability<br><br>
+                    
+                    <strong>Background Processing:</strong><br>
+                    • <code>app/workers/whatsapp_sync_worker.rb</code> - Periodic message syncing<br>
+                    • <code>app/workers/whatsapp_analysis_worker.rb</code> - AI message analysis
+                </div>
+            </div>
+
+            <!-- API Endpoints Section -->
+            <div style="background: #f3e5f5; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #7b1fa2; margin-bottom: 0.5rem;">🔗 Key API Endpoints</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6;">
+                    <strong>GET</strong> <code>/api/v2/whatsapp</code> - List all accessible messages<br>
+                    <strong>GET</strong> <code>/api/v2/whatsapp/customer/{id}/messages</code> - Customer messages<br>
+                    <strong>POST</strong> <code>/api/v2/whatsapp/customer/{id}/send_text</code> - Send text message<br>
+                    <strong>POST</strong> <code>/api/v2/whatsapp/customer/{id}/send_image</code> - Send image message<br>
+                    <strong>POST</strong> <code>/api/v2/whatsapp/customer/{id}/sync</code> - Sync messages from API
+                </div>
+            </div>
+
+            <!-- Role-Based Access Section -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">🔐 Role-Based Access Control</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Admin Access:</strong><br>
+                    • View all WhatsApp messages from all customers<br>
+                    • Send messages to any customer<br>
+                    • Sync messages for any customer<br>
+                    • Full administrative access to WhatsApp features<br><br>
+                    
+                    <strong>Manager Access:</strong><br>
+                    • View messages from own customers and assigned associates' customers<br>
+                    • Send messages to customers in their team scope<br>
+                    • Manage WhatsApp communication for their team<br><br>
+                    
+                    <strong>Associate/User Access:</strong><br>
+                    • View only their own assigned customer messages<br>
+                    • Send messages to their assigned customers only<br>
+                    • Limited to their customer portfolio
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div style="background: #fff3e0; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #ef6c00; margin-bottom: 0.5rem;">⚙️ Configuration Setup</h4>
+                <div style="font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; background: white; padding: 0.5rem; border-radius: 4px;">
+                    <strong>Required Credentials (Rails.application.credentials):</strong><br>
+                    • <code>WAAPI_INSTANCE_ID</code> - Your WhatsApp API instance ID<br>
+                    • <code>WAAPI_AUTH_TOKEN</code> - Your WhatsApp API authentication token<br><br>
+                    
+                    <strong>WhatsApp API Provider:</strong><br>
+                    • Base URL: <code>https://waapi.app/api/v1/instances/{instance_id}</code><br>
+                    • Authentication: Bearer token in Authorization header<br>
+                    • Supported features: Text, media, chat management<br><br>
+                    
+                    <strong>Database Configuration:</strong><br>
+                    • WhatsApp chat IDs automatically synced with customer phone numbers<br>
+                    • Message history stored with timestamps and metadata<br>
+                    • Customer-message relationships maintained
+                </div>
+            </div>
+
+            <!-- Real-time Features Section -->
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #1565c0; margin-bottom: 0.5rem;">⚡ Real-time Features</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Auto-Polling:</strong><br>
+                    • 5-second interval message polling in test interface<br>
+                    • Real-time message updates with timestamps<br>
+                    • Automatic authentication error handling<br><br>
+                    
+                    <strong>Message Synchronization:</strong><br>
+                    • Bi-directional message sync with WhatsApp API<br>
+                    • Duplicate message prevention<br>
+                    • Batch message fetching for performance<br><br>
+                    
+                    <strong>Chat ID Management:</strong><br>
+                    • Automatic chat ID resolution from phone numbers<br>
+                    • WhatsApp registration verification<br>
+                    • Persistent chat ID storage for customers
+                </div>
+            </div>
+
+            <!-- Security & Permissions Section -->
+            <div style="background: #ffebee; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #c62828; margin-bottom: 0.5rem;">🔒 Security & Permissions</h4>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <strong>Access Control:</strong><br>
+                    • JWT-based authentication required for all endpoints<br>
+                    • Pundit authorization policies enforce role-based access<br>
+                    • Users can only access their permitted customer scope<br>
+                    • API rate limiting and request validation<br><br>
+                    
+                    <strong>Security Measures:</strong><br>
+                    • Secure credential storage in Rails credentials<br>
+                    • HTTPS-only API communication<br>
+                    • Input sanitization and validation<br>
+                    • Error message sanitization to prevent information leakage
+                </div>
+            </div>
+
+            <!-- Code Examples Section -->
+            <div style="background: #e8f5e8; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                <h4 style="color: #2d7d2d; margin-bottom: 0.5rem;">📝 Code Examples</h4>
+                <button onclick="showWhatsAppCodeExamples()" style="background: #2d7d2d; color: white; padding: 0.5rem 1rem; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                    📋 View WhatsApp Implementation Examples
+                </button>
             </div>
         </div>
 
@@ -1127,11 +1330,183 @@
                     <div class="response-body"></div>
                 </div>
             </div>
+
+            <!-- WhatsApp Endpoints Section Header -->
+            <div id="whatsapp-section" style="background: linear-gradient(135deg, #25d366 0%, #128c7e 100%); color: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; text-align: center;">
+                <h2 style="margin: 0; font-size: 1.8rem;">💬 WhatsApp API Endpoints</h2>
+                <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 1.1rem;">Real-time messaging with role-based access control</p>
+            </div>
+
+            <!-- WhatsApp Endpoints -->
+            <div class="endpoint-card" style="border-left: 4px solid #25d366;">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">🔄 Get All WhatsApp Messages</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/whatsapp</div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>💬 WhatsApp Integration:</strong> Role-based message access (Admin: all, Manager: team, User: own messages)
+                </div>
+                <div class="params-section">
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="limit" data-param="limit" value="100">
+                    </div>
+                </div>
+                <div style="background: #fff3e0; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #ef6c00;">⚡ Real-time Polling Options:</h4>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <input type="checkbox" id="whatsappPolling" onchange="toggleWhatsAppPolling(this)">
+                        <span><strong>Enable Auto-Polling (5 seconds)</strong> - Updates automatically</span>
+                    </label>
+                    <div style="font-size: 0.85rem; color: #666;">
+                        💡 <strong>Tip:</strong> Use the polling dashboard above to control and monitor real-time updates
+                    </div>
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/whatsapp', getParams(this), this)" style="background: #25d366;">🚀 Test Get Messages</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card" style="border-left: 4px solid #128c7e;">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">👤 Get Customer WhatsApp Messages</div>
+                    <div class="method-badge method-get">GET</div>
+                </div>
+                <div class="endpoint-url">/api/v2/whatsapp/customer/{customer_id}/messages</div>
+                <div style="background: #e3f2fd; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>👤 Customer Messages:</strong> Fetch WhatsApp messages for a specific customer
+                </div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="customer_id" value="1">
+                    </div>
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="limit" data-param="limit" value="100">
+                    </div>
+                </div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+                    💡 <strong>Quick Test:</strong> Use customer ID "1" for testing, or get real IDs from "List Customers" endpoint
+                </div>
+                <button onclick="testEndpoint('GET', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/messages', getParams(this), this)" style="background: #128c7e;">📱 Test Customer Messages</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card" style="border-left: 4px solid #075e54;">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">📝 Send WhatsApp Text Message</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/whatsapp/customer/{customer_id}/send_text</div>
+                <div style="background: #e8f4fd; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>📝 Send Text:</strong> Send text message to customer via WhatsApp API
+                </div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="customer_id" value="1">
+                    </div>
+                    <h4>Request Body:</h4>
+                    <textarea rows="3" data-body="true">{
+  "content": "Hello from TecAudex CRM! How can we help you today?"
+}</textarea>
+                </div>
+                <div style="background: #fff3e0; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+                    ⚠️ <strong>Note:</strong> Requires valid WhatsApp API credentials and customer with valid phone number
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/send_text', getBody(this), this)" style="background: #075e54;">💬 Test Send Text</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card" style="border-left: 4px solid #25d366;">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">🖼️ Send WhatsApp Image Message</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/whatsapp/customer/{customer_id}/send_image</div>
+                <div style="background: #f3e5f5; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>🖼️ Send Image:</strong> Send image message with optional caption to customer
+                </div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="customer_id" value="1">
+                    </div>
+                    <h4>Request Body:</h4>
+                    <textarea rows="4" data-body="true">{
+  "image_url": "https://via.placeholder.com/400x300.png?text=TecAudex+CRM",
+  "caption": "Check out this image from TecAudex CRM!"
+}</textarea>
+                </div>
+                <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+                    💡 <strong>Sample Image:</strong> Using placeholder image URL for testing - replace with actual image URLs
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/send_image', getBody(this), this)" style="background: #25d366;">📸 Test Send Image</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
+
+            <div class="endpoint-card" style="border-left: 4px solid #128c7e;">
+                <div class="endpoint-header">
+                    <div class="endpoint-title">🔄 Sync Customer WhatsApp Messages</div>
+                    <div class="method-badge method-post">POST</div>
+                </div>
+                <div class="endpoint-url">/api/v2/whatsapp/customer/{customer_id}/sync</div>
+                <div style="background: #fff3e0; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
+                    <strong>🔄 Sync Messages:</strong> Fetch and sync recent messages from WhatsApp API
+                </div>
+                <div class="params-section">
+                    <h4>Path Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="customer ID" data-param="customer_id" value="1">
+                    </div>
+                    <h4>Query Parameters:</h4>
+                    <div class="param-row">
+                        <input type="text" placeholder="limit" data-param="limit" value="50">
+                    </div>
+                </div>
+                <div style="background: #e3f2fd; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.85rem;">
+                    🔄 <strong>Auto-Sync:</strong> Fetches latest messages from WhatsApp API and stores them in the database
+                </div>
+                <button onclick="testEndpoint('POST', '/api/v2/whatsapp/customer/' + getPathParam(this, 'customer_id') + '/sync', getParams(this), this)" style="background: #128c7e;">🔄 Test Sync Messages</button>
+                <div class="response-section" style="display: none;">
+                    <div class="response-header">
+                        <h4>Response:</h4>
+                        <span class="status-badge"></span>
+                    </div>
+                    <div class="response-body"></div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
         let currentToken = null;
+        let whatsappPollingInterval = null;
 
         async function login() {
             const email = document.getElementById('email').value;
@@ -1157,6 +1532,9 @@
                     document.getElementById('tokenValue').textContent = currentToken;
                     document.getElementById('tokenDisplay').classList.remove('hidden');
                     showMessage('Login successful!', 'success');
+                    
+                    // Update user info dashboard
+                    updateUserInfo(data.data.user);
                 } else {
                     showMessage('Login failed: ' + data.error, 'error');
                 }
@@ -1189,6 +1567,9 @@
                     document.getElementById('tokenValue').textContent = currentToken;
                     document.getElementById('tokenDisplay').classList.remove('hidden');
                     showMessage('Google sign-in successful! User: ' + data.data.user.name, 'success');
+                    
+                    // Update user info dashboard
+                    updateUserInfo(data.data.user);
                 } else {
                     showMessage('Google sign-in failed: ' + data.error, 'error');
                 }
@@ -1217,8 +1598,38 @@
                 currentToken = null;
                 document.getElementById('tokenDisplay').classList.add('hidden');
                 showMessage('Logged out successfully', 'success');
+                
+                // Reset user info dashboard
+                updateUserInfo(null);
             } catch (error) {
                 showMessage('Logout error: ' + error.message, 'error');
+            }
+        }
+
+        function updateUserInfo(user) {
+            const nameElement = document.getElementById('currentUserName');
+            const roleElement = document.getElementById('currentUserRole');
+            const accessElement = document.getElementById('whatsappAccess');
+            
+            if (user) {
+                if (nameElement) nameElement.textContent = user.name || 'Unknown';
+                if (roleElement) {
+                    const role = user.highest_role || 'User';
+                    roleElement.textContent = role;
+                }
+                if (accessElement) {
+                    let access = 'Limited to assigned customers';
+                    if (user.highest_role === 'admin') {
+                        access = 'Full access to all customer messages';
+                    } else if (user.highest_role === 'manager') {
+                        access = 'Access to own and team members\' messages';
+                    }
+                    accessElement.textContent = access;
+                }
+            } else {
+                if (nameElement) nameElement.textContent = 'Not logged in';
+                if (roleElement) roleElement.textContent = 'Unknown';
+                if (accessElement) accessElement.textContent = 'Login to see access level';
             }
         }
 
@@ -1485,6 +1896,374 @@ For more implementation details, check the codebase files:
 • app/controllers/calling_controller.rb
 • app/services/twilio_service.rb
 • app/views/calling/index.html.erb
+            `;
+            
+            alert(examples);
+        }
+
+        // WhatsApp Implementation Examples (for developers)
+        function showWhatsAppCodeExamples() {
+            const examples = `
+💬 WHATSAPP API INTEGRATION - CODE EXAMPLES:
+
+🔧 BACKEND SETUP:
+
+1. WhatsApp API Service (app/services/whatsapp/api_service.rb):
+class Whatsapp::ApiService
+  def initialize(instance_id = nil, api_token = nil)
+    @instance_id = instance_id || Rails.application.credentials.dig(:WAAPI_INSTANCE_ID)
+    @api_token = api_token || Rails.application.credentials.dig(:WAAPI_AUTH_TOKEN)
+    @base_url = "https://waapi.app/api/v1/instances/#{@instance_id}"
+  end
+
+  def send_text_message(chat_id, content)
+    response = post_request("client/action/send-message", {
+      chatId: chat_id,
+      message: content
+    })
+    handle_response(response)
+  end
+
+  def get_chat_messages(chat_id, limit: 50)
+    response = post_request("message/action/fetch-messages", {
+      chatId: chat_id,
+      limit: limit
+    })
+    handle_response(response)
+  end
+
+  def get_chat_id_from_phone(phone_number)
+    cleaned_number = phone_number.gsub(/[^\\d+]/, '')
+    cleaned_number = "+#{cleaned_number}" unless cleaned_number.start_with?('+')
+    
+    response = post_request("number/action/get-whatsapp-id", {
+      phone: cleaned_number
+    })
+    
+    result = handle_response(response)
+    result[:data][:chatId] if result[:success]
+  end
+end
+
+2. Controller Implementation (app/controllers/api/v2/whatsapp_controller.rb):
+class Api::V2::WhatsappController < Api::V2::BaseController
+  def index
+    customers = accessible_customers
+    messages = WhatsappMessage.joins(:customer)
+                             .where(customer: customers)
+                             .includes(:customer)
+                             .order(created_at: :desc)
+                             .limit(params[:limit]&.to_i || 100)
+    
+    render_success(formatted_messages(messages))
+  end
+
+  def send_text_message
+    customer = accessible_customers.find(params[:customer_id])
+    content = params[:content]&.strip
+    
+    whatsapp_service = Whatsapp::ApiService.new
+    chat_id = get_or_set_chat_id(customer, whatsapp_service)
+    
+    result = whatsapp_service.send_text_message(chat_id, content)
+    
+    if result[:success]
+      message = customer.whatsapp_messages.create!(
+        chat_id: chat_id,
+        content: content,
+        message_type: 'text',
+        is_from_me: true,
+        timestamp: Time.current
+      )
+      render_success({ message: format_message(message) })
+    else
+      render_error("Failed to send message: #{result[:error]}")
+    end
+  end
+
+  private
+
+  def accessible_customers
+    case current_user.highest_role&.key
+    when 'admin'
+      Customer.all
+    when 'manager'
+      associate_user_ids = current_user.associates.pluck(:id)
+      all_user_ids = [current_user.id] + associate_user_ids
+      Customer.where(user_id: all_user_ids)
+    else
+      current_user.customers
+    end
+  end
+end
+
+📱 FRONTEND INTEGRATION:
+
+3. JavaScript API Client:
+class WhatsAppAPI {
+  constructor(token) {
+    this.token = token;
+    this.baseUrl = '/api/v2/whatsapp';
+  }
+
+  async getAllMessages(limit = 100) {
+    const response = await fetch(\`\${this.baseUrl}?limit=\${limit}\`, {
+      headers: { 'Authorization': \`Bearer \${this.token}\` }
+    });
+    return response.json();
+  }
+
+  async getCustomerMessages(customerId, limit = 100) {
+    const response = await fetch(
+      \`\${this.baseUrl}/customer/\${customerId}/messages?limit=\${limit}\`,
+      { headers: { 'Authorization': \`Bearer \${this.token}\` } }
+    );
+    return response.json();
+  }
+
+  async sendTextMessage(customerId, content) {
+    const response = await fetch(
+      \`\${this.baseUrl}/customer/\${customerId}/send_text\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`Bearer \${this.token}\`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      }
+    );
+    return response.json();
+  }
+
+  async sendImageMessage(customerId, imageUrl, caption = null) {
+    const response = await fetch(
+      \`\${this.baseUrl}/customer/\${customerId}/send_image\`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': \`Bearer \${this.token}\`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ image_url: imageUrl, caption })
+      }
+    );
+    return response.json();
+  }
+
+  async syncMessages(customerId, limit = 50) {
+    const response = await fetch(
+      \`\${this.baseUrl}/customer/\${customerId}/sync?limit=\${limit}\`,
+      {
+        method: 'POST',
+        headers: { 'Authorization': \`Bearer \${this.token}\` }
+      }
+    );
+    return response.json();
+  }
+}
+
+4. React Component Example:
+import React, { useState, useEffect } from 'react';
+
+const WhatsAppChat = ({ customerId, token }) => {
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  const whatsappAPI = new WhatsAppAPI(token);
+
+  useEffect(() => {
+    loadMessages();
+    // Poll for new messages every 5 seconds
+    const interval = setInterval(loadMessages, 5000);
+    return () => clearInterval(interval);
+  }, [customerId]);
+
+  const loadMessages = async () => {
+    try {
+      const result = await whatsappAPI.getCustomerMessages(customerId);
+      if (result.success) {
+        setMessages(result.data.messages || []);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim() || loading) return;
+    
+    setLoading(true);
+    try {
+      const result = await whatsappAPI.sendTextMessage(customerId, newMessage);
+      if (result.success) {
+        setNewMessage('');
+        loadMessages(); // Refresh messages
+      } else {
+        alert('Failed to send message: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Error sending message');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="whatsapp-chat">
+      <div className="messages">
+        {messages.map(msg => (
+          <div key={msg.id} className={\`message \${msg.is_from_me ? 'sent' : 'received'}\`}>
+            <div className="content">{msg.content}</div>
+            <div className="timestamp">
+              {new Date(msg.timestamp).toLocaleString()}
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      <div className="message-input">
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+          placeholder="Type a message..."
+          disabled={loading}
+        />
+        <button onClick={sendMessage} disabled={loading || !newMessage.trim()}>
+          {loading ? 'Sending...' : 'Send'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+🔄 REAL-TIME POLLING:
+
+5. Polling Implementation:
+class WhatsAppPoller {
+  constructor(api, onMessage) {
+    this.api = api;
+    this.onMessage = onMessage;
+    this.interval = null;
+    this.isPolling = false;
+  }
+
+  start(intervalMs = 5000) {
+    if (this.isPolling) return;
+    
+    this.isPolling = true;
+    this.poll(); // Poll immediately
+    this.interval = setInterval(() => this.poll(), intervalMs);
+  }
+
+  stop() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+    this.isPolling = false;
+  }
+
+  async poll() {
+    try {
+      const result = await this.api.getAllMessages();
+      if (result.success) {
+        this.onMessage(result.data);
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
+  }
+}
+
+// Usage:
+const poller = new WhatsAppPoller(whatsappAPI, (messages) => {
+  console.log('New messages:', messages);
+  updateMessageDisplay(messages);
+});
+
+poller.start(5000); // Poll every 5 seconds
+
+📋 DATABASE MODELS:
+
+6. WhatsApp Message Model (app/models/whatsapp_message.rb):
+class WhatsappMessage < ApplicationRecord
+  belongs_to :customer
+  
+  validates :chat_id, :content, :message_type, presence: true
+  validates :is_from_me, inclusion: { in: [true, false] }
+  
+  scope :from_me, -> { where(is_from_me: true) }
+  scope :from_customer, -> { where(is_from_me: false) }
+  scope :recent, -> { order(created_at: :desc) }
+  
+  enum message_type: {
+    text: 'text',
+    image: 'image',
+    video: 'video',
+    audio: 'audio',
+    document: 'document'
+  }
+end
+
+7. Customer Model Integration (app/models/customer.rb):
+class Customer < ApplicationRecord
+  has_many :whatsapp_messages, dependent: :destroy
+  
+  before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
+  
+  def whatsapp_available?
+    whatsapp_status == 'Available' && whatsapp_chat_id.present?
+  end
+  
+  private
+  
+  def sync_whatsapp_chat_id
+    return unless phone.present?
+    
+    service = Whatsapp::ApiService.new
+    if service.credentials_configured?
+      chat_id = service.get_chat_id_from_phone(phone)
+      self.whatsapp_chat_id = chat_id if chat_id
+      
+      # Check if registered on WhatsApp
+      is_registered = service.is_registered_on_whatsapp(phone)
+      self.whatsapp_status = is_registered ? 'Available' : 'Not Available'
+    end
+  end
+end
+
+🚀 DEPLOYMENT CHECKLIST:
+
+✅ Set WhatsApp API credentials in Rails credentials
+✅ Configure WAAPI_INSTANCE_ID and WAAPI_AUTH_TOKEN
+✅ Set up database migrations for whatsapp_messages table
+✅ Configure background job processing for message sync
+✅ Set up proper error handling and logging
+✅ Implement rate limiting for API calls
+✅ Test message sending and receiving functionality
+✅ Set up monitoring for API failures
+✅ Configure webhooks for real-time message delivery (if supported)
+
+🔐 SECURITY NOTES:
+
+• Always validate and sanitize message content
+• Use role-based access control for all endpoints
+• Store API credentials securely in Rails credentials
+• Implement proper error handling without exposing sensitive data
+• Log API interactions for debugging and monitoring
+• Use HTTPS for all API communications
+• Validate phone number formats before API calls
+
+For more implementation details, check the codebase files:
+• app/services/whatsapp/api_service.rb
+• app/controllers/api/v2/whatsapp_controller.rb
+• app/models/whatsapp_message.rb
+• app/models/customer.rb
             `;
             
             alert(examples);
@@ -1772,6 +2551,153 @@ if (user) {
             `;
             
             alert(examples);
+        }
+
+        // WhatsApp Polling Functions
+        function toggleWhatsAppPolling(checkbox) {
+            if (checkbox.checked) {
+                startWhatsAppPolling();
+            } else {
+                stopWhatsAppPolling();
+            }
+        }
+
+        function startPollingFromDashboard() {
+            const checkbox = document.getElementById('whatsappPolling');
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+            startWhatsAppPolling();
+        }
+
+        function stopPollingFromDashboard() {
+            const checkbox = document.getElementById('whatsappPolling');
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+            stopWhatsAppPolling();
+        }
+
+        function startWhatsAppPolling() {
+            if (whatsappPollingInterval) {
+                clearInterval(whatsappPollingInterval);
+            }
+            
+            if (!currentToken) {
+                alert('Please login first to enable polling');
+                const checkbox = document.getElementById('whatsappPolling');
+                if (checkbox) checkbox.checked = false;
+                updatePollingStatus('Error: Not logged in', '#f44336');
+                return;
+            }
+            
+            updatePollingStatus('Active - Polling every 5 seconds', '#4caf50');
+            logToConsole('Starting WhatsApp message polling...');
+            
+            // Poll immediately
+            pollWhatsAppMessages();
+            
+            // Then poll every 5 seconds
+            whatsappPollingInterval = setInterval(pollWhatsAppMessages, 5000);
+        }
+
+        function stopWhatsAppPolling() {
+            if (whatsappPollingInterval) {
+                clearInterval(whatsappPollingInterval);
+                whatsappPollingInterval = null;
+                updatePollingStatus('Stopped', '#666');
+                logToConsole('Stopped WhatsApp message polling');
+            }
+        }
+
+        function updatePollingStatus(status, color = '#666') {
+            const statusElement = document.getElementById('pollingStatusText');
+            if (statusElement) {
+                statusElement.textContent = status;
+                statusElement.style.color = color;
+            }
+        }
+
+        function updateLastUpdateTime() {
+            const timeElement = document.getElementById('lastUpdateTime');
+            if (timeElement) {
+                timeElement.textContent = new Date().toLocaleTimeString();
+            }
+        }
+
+        function updateMessageCount(count) {
+            const countElement = document.getElementById('messageCount');
+            if (countElement) {
+                countElement.textContent = count || 0;
+            }
+        }
+
+        function logToConsole(message) {
+            const consoleLogging = document.getElementById('consoleLogging');
+            if (consoleLogging && consoleLogging.checked) {
+                console.log(`[WhatsApp Polling] ${message}`);
+            }
+        }
+
+        async function pollWhatsAppMessages() {
+            try {
+                const response = await fetch('/api/v2/whatsapp?limit=100', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update dashboard
+                    updateLastUpdateTime();
+                    updateMessageCount(data.data ? data.data.length : 0);
+                    
+                    // Find the WhatsApp messages endpoint card
+                    const whatsappCard = findElementByText('.endpoint-title', 'Get All WhatsApp Messages');
+                    if (whatsappCard) {
+                        const card = whatsappCard.closest('.endpoint-card');
+                        const responseSection = card.querySelector('.response-section');
+                        const statusBadge = card.querySelector('.status-badge');
+                        const responseBody = card.querySelector('.response-body');
+                        
+                        // Update the response display
+                        responseSection.style.display = 'block';
+                        statusBadge.textContent = response.status;
+                        statusBadge.className = `status-badge ${response.ok ? 'status-success' : 'status-error'}`;
+                        responseBody.textContent = JSON.stringify(data, null, 2);
+                        
+                        // Add timestamp to show when last updated
+                        const timestamp = new Date().toLocaleTimeString();
+                        statusBadge.textContent += ` (${timestamp})`;
+                    }
+                    
+                    logToConsole(`Polled WhatsApp messages: ${data.data ? data.data.length : 0} messages found`);
+                } else {
+                    updatePollingStatus('Error: ' + data.error, '#f44336');
+                    logToConsole('WhatsApp polling failed: ' + data.error);
+                    
+                    // Stop polling on authentication errors
+                    if (response.status === 401) {
+                        stopWhatsAppPolling();
+                        const checkbox = document.getElementById('whatsappPolling');
+                        if (checkbox) checkbox.checked = false;
+                        showMessage('Polling stopped due to authentication error', 'error');
+                    }
+                }
+            } catch (error) {
+                updatePollingStatus('Network Error', '#f44336');
+                logToConsole('WhatsApp polling error: ' + error.message);
+            }
+        }
+
+        // Helper function to find elements by text content
+        function findElementByText(selector, text) {
+            const elements = document.querySelectorAll(selector);
+            return Array.from(elements).find(el => el.textContent.includes(text));
         }
 
         // Auto-fill some sample data on page load
