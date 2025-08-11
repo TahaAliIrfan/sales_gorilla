@@ -245,6 +245,9 @@ Rails.application.routes.draw do
           post 'customer/:customer_id/sync', to: 'whatsapp#sync_messages', as: :sync_messages
         end
       end
+      
+      # Twilio routes
+      get 'twilio/token', to: 'twilio#token'
     end
   end
   

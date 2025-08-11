@@ -1263,7 +1263,7 @@
                     <div class="endpoint-title">Get Twilio Capability Token</div>
                     <div class="method-badge method-get">GET</div>
                 </div>
-                <div class="endpoint-url">/twilio/token</div>
+                <div class="endpoint-url">/api/v2/twilio/token</div>
                 <div style="background: #e8f5e8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem; font-size: 0.9rem;">
                     <strong>📞 Twilio Integration:</strong> Generates capability token for browser-based calling with Twilio Device SDK
                 </div>
@@ -1271,7 +1271,7 @@
                     <strong>Use Case:</strong> This token allows the Twilio Device SDK in the browser to authenticate and make outbound calls. 
                     The token includes capabilities for outgoing calls and expires after 1 hour for security.
                 </div>
-                <button onclick="testEndpoint('GET', '/twilio/token', null, this)">Test Get Twilio Token</button>
+                <button onclick="testEndpoint('GET', '/api/v2/twilio/token', null, this)">Test Get Twilio Token</button>
                 <div class="response-section" style="display: none;">
                     <div class="response-header">
                         <h4>Response:</h4>
