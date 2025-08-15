@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_15_122406) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -103,6 +103,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
     t.string "whatsapp_chat_id"
     t.datetime "last_email_fetched_at"
     t.string "customer_type", default: "Standard"
+    t.string "meta_lead_id"
+    t.string "facebook_click_id"
+    t.string "browser_id"
+    t.string "meta_campaign_id"
+    t.string "meta_adset_id"
+    t.string "meta_ad_id"
+    t.text "meta_events_sent"
+    t.datetime "last_meta_event_sent_at"
+    t.index ["browser_id"], name: "index_customers_on_browser_id"
+    t.index ["facebook_click_id"], name: "index_customers_on_facebook_click_id"
+    t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
@@ -316,10 +327,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
-    t.string "key", null: false
-    t.integer "hierarchy_level", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "key", null: false
+    t.integer "hierarchy_level", default: 0
     t.index ["hierarchy_level"], name: "index_roles_on_hierarchy_level"
     t.index ["key"], name: "index_roles_on_key", unique: true
   end
@@ -393,11 +404,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
     t.string "email"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "fcm_token"
+    t.string "voip_device_id"
+    t.string "device_platform"
     t.string "phone_number"
     t.string "google_token"
     t.string "google_refresh_token"
     t.datetime "google_token_expires_at"
-    t.text "fcm_token"
+    t.index ["fcm_token"], name: "index_users_on_fcm_token"
+    t.index ["voip_device_id"], name: "index_users_on_voip_device_id"
   end
 
   create_table "whatsapp_messages", force: :cascade do |t|
@@ -411,7 +426,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
     t.jsonb "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.boolean "read", default: false
     t.index ["customer_id", "timestamp"], name: "index_whatsapp_messages_on_customer_id_and_timestamp"
     t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
     t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
@@ -421,6 +435,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_01_165327) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_analyses", "recordings"
+  add_foreign_key "calls", "customers"
+  add_foreign_key "calls", "users", column: "caller_id"
+  add_foreign_key "calls", "users", column: "receiver_id"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
   add_foreign_key "customers", "users"

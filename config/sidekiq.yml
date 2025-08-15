@@ -1,6 +1,7 @@
 ---
 :concurrency: 5
 :queues:
+  - meta_conversions
   - notifications
   - recordings
   - emails

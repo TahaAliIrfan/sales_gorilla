@@ -15,6 +15,9 @@ class Deal < ApplicationRecord
   validates :user_id, presence: { message: "is required - please select an owner" }
   validate :deal_stage_belongs_to_user_pipeline
   
+  # Lifecycle hooks for Meta tracking
+  after_save :track_meta_conversions_deal_events
+  
   enum status: {
     active: 'active',
     won: 'won',
@@ -42,7 +45,38 @@ class Deal < ApplicationRecord
     )
   end
 
+  # Track Meta Conversions API events for deal lifecycle
+  def track_meta_conversions_deal_events
+    return if skip_meta_tracking? || customer.nil?
+
+    # Track deal won (Purchase event)
+    if saved_change_to_status? && status == 'won'
+      MetaConversionsApiWorker.perform_async(customer.id, 'purchase', { 'deal_id' => id })
+    end
+
+    # Track significant deal stage movements
+    if saved_change_to_deal_stage_id? && deal_stage.present?
+      stage_name = deal_stage.name.downcase
+      
+      # Track proposal/negotiation stages as checkout initiation
+      if stage_name.include?('proposal') || stage_name.include?('negotiation') || stage_name.include?('quote')
+        MetaConversionsApiWorker.perform_async(customer.id, 'initiate_checkout', { 'deal_id' => id })
+      end
+    end
+
+    # Track high-value deals as view content
+    if saved_change_to_amount? && amount.present? && amount > 5000
+      MetaConversionsApiWorker.perform_async(customer.id, 'view_content')
+    end
+  end
+
   private
+
+  def skip_meta_tracking?
+    Rails.env.test? || 
+    defined?(Rails::Console) || 
+    Thread.current[:skip_meta_tracking] == true
+  end
 
   def deal_stage_belongs_to_user_pipeline
     return if deal_stage.nil? || user.nil?

@@ -30,6 +30,7 @@ class Customer < ApplicationRecord
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :analyze_phone_number, if: -> { phone.present? }
+  after_save :track_meta_conversions_events
   
   # Constants for dropdown fields
   CUSTOMER_TYPES = {
@@ -649,5 +650,82 @@ class Customer < ApplicationRecord
   # Queue phone analysis when phone number is added or changed
   def queue_phone_analysis
     analyze_phone_number
+  end
+
+  # Track Meta Conversions API events based on customer lifecycle changes
+  def track_meta_conversions_events
+    return if skip_meta_tracking? # Skip during seeds, tests, etc.
+
+    # Track lead creation
+    if saved_change_to_id? # New customer created
+      MetaConversionsApiWorker.perform_async(id, 'lead')
+    end
+
+    # Track contact establishment
+    if saved_change_to_status? && status == 'Contact Established'
+      MetaConversionsApiWorker.perform_async(id, 'complete_registration')
+    end
+
+    # Track conversion
+    if saved_change_to_status? && status == 'Converted'
+      MetaConversionsApiWorker.perform_async(id, 'purchase')
+    end
+
+    # Track proposal sent
+    if saved_change_to_status? && status == 'Proposal Sent'
+      MetaConversionsApiWorker.perform_async(id, 'initiate_checkout')
+    end
+
+    # Track communication status changes
+    track_communication_events if communication_status_changed?
+
+    # Track profile completion
+    if profile_completion_improved?
+      MetaConversionsApiWorker.perform_async(id, 'complete_registration')
+    end
+  end
+
+  private
+
+  def skip_meta_tracking?
+    # Skip tracking during tests, seeds, or if specifically disabled
+    Rails.env.test? || 
+    defined?(Rails::Console) || 
+    Thread.current[:skip_meta_tracking] == true
+  end
+
+  def communication_status_changed?
+    saved_change_to_call_status? || 
+    saved_change_to_email_status? || 
+    saved_change_to_whatsapp_status? || 
+    saved_change_to_linkedin_status?
+  end
+
+  def track_communication_events
+    if saved_change_to_call_status? && call_status == 'Connected'
+      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'phone' })
+    end
+
+    if saved_change_to_email_status? && email_status == 'Connected'
+      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'email' })
+    end
+
+    if saved_change_to_whatsapp_status? && whatsapp_status == 'Connected'
+      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'whatsapp' })
+    end
+
+    if saved_change_to_linkedin_status? && linkedin_status == 'Conversation Initiated'
+      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'linkedin' })
+    end
+  end
+
+  def profile_completion_improved?
+    # Check if important fields were added that improve profile completeness
+    return false unless persisted?
+    
+    important_fields = [:email, :phone, :company, :country, :project_type]
+    important_fields.any? do |field|
+      saved_change_to_attribute?(field) && send(field).present? && send("#{field}_was").blank?
+    end
   end
 end
