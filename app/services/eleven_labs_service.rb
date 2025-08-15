@@ -1,8 +1,8 @@
 class ElevenLabsService
   def initialize
-    @api_key = Rails.application.credentials.dig(:eleven_labs_api_key)
-    @agent_id = Rails.application.credentials.dig(:eleven_labs_agent_id)
-    @agent_phone_number_id = Rails.application.credentials.dig(:eleven_labs_agent_phone_number_id)
+    @api_key = Rails.application.credentials.dig(:ELEVEN_LABS_API_KEY)
+    @agent_id = Rails.application.credentials.dig(:ELEVEN_LABS_AGENT_ID)
+    @agent_phone_number_id = Rails.application.credentials.dig(:ELEVEN_LABS_AGENT_PHONE_NUMBER)
     
     unless @api_key && @agent_id && @agent_phone_number_id
       Rails.logger.error("Missing required ElevenLabs credentials")
