@@ -69,6 +69,7 @@ Rails.application.routes.draw do
       post 'send_whatsapp_text'
       post 'send_whatsapp_media'
       post 'analyze_phone'
+      post 'ai_call'
     end
     
     # Add routes for follow-ups

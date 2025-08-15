@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone, :ai_call]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -632,6 +632,35 @@ class CustomersController < ApplicationController
       respond_to do |format|
         format.html { redirect_to @customer, alert: 'Failed to queue phone analysis.' }
         format.json { render json: { success: false, error: 'Failed to queue phone analysis.' }, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def ai_call
+    authorize @customer
+    
+    if @customer.phone.blank?
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Customer does not have a phone number.' }
+        format.json { render json: { success: false, error: 'Customer does not have a phone number.' }, status: :unprocessable_entity }
+      end
+      return
+    end
+    
+    begin
+      eleven_labs_service = ElevenLabsService.new
+      result = eleven_labs_service.make_outbound_call(@customer.phone)
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'AI call has been initiated successfully.' }
+        format.json { render json: { success: true, data: result } }
+      end
+    rescue => e
+      Rails.logger.error("Failed to initiate AI call for customer #{@customer.id}: #{e.message}")
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: "Failed to initiate AI call: #{e.message}" }
+        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
       end
     end
   end
