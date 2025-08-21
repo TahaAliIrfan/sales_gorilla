@@ -36,6 +36,8 @@ module Api
             project_scope: project_scope,
             ccr_link: ccr_link
           )
+        else
+          customer.update!(created_at: Time.current, idea_description: description)
         end
 
         # Handle file upload via multipart form
@@ -132,6 +134,8 @@ module Api
             meta_adset_id: params[:meta_adset_id],
             meta_ad_id: params[:meta_ad_id]
           )
+        else
+          customer.update!(created_at: Time.current)
         end
 
         if customer.save
