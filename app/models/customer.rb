@@ -518,6 +518,54 @@ class Customer < ApplicationRecord
       end
     end
   end
+
+  def calculate_lead_score
+    scoring_service = LeadScoringService.new(self)
+    result = scoring_service.calculate_score
+
+    update!(
+      lead_score: result[:total_score],
+      geographic_score: result[:geographic_score],
+      description_score: result[:description_score],
+      lead_score_updated_at: Time.current
+    )
+
+    result
+  end
+
+  def queue_lead_scoring
+    LeadScoringWorker.perform_async(id)
+  end
+  
+  def should_recalculate_lead_score?
+    # Recalculate if relevant fields changed
+    scoring_fields = ['country', 'idea_description', 'name', 'company']
+    scoring_fields.any? { |field| saved_change_to_attribute?(field) }
+  end
+
+  def lead_score_color
+    return 'text-gray-500' unless lead_score
+    
+    case lead_score
+    when 80..100 then 'text-green-600 font-bold'
+    when 60..79 then 'text-green-500'
+    when 40..59 then 'text-yellow-600'
+    when 20..39 then 'text-orange-600'
+    else 'text-red-600'
+    end
+  end
+  
+  def lead_score_badge
+    return 'N/A' unless lead_score
+    
+    case lead_score
+    when 80..100 then 'Excellent'
+    when 60..79 then 'Good'
+    when 40..59 then 'Fair'
+    when 20..39 then 'Poor'
+    else 'Very Poor'
+    end
+  end
   
   private
   
@@ -686,8 +734,6 @@ class Customer < ApplicationRecord
     end
   end
 
-  private
-
   def skip_meta_tracking?
     # Skip tracking during tests, seeds, or if specifically disabled
     Rails.env.test? || 
@@ -730,52 +776,4 @@ class Customer < ApplicationRecord
     end
   end
   
-  # Lead scoring methods
-  def calculate_lead_score
-    scoring_service = LeadScoringService.new(self)
-    result = scoring_service.calculate_score
-    
-    update!(
-      lead_score: result[:total_score],
-      geographic_score: result[:geographic_score],
-      description_score: result[:description_score],
-      lead_score_updated_at: Time.current
-    )
-    
-    result
-  end
-  
-  def queue_lead_scoring
-    LeadScoringWorker.perform_async(id)
-  end
-  
-  def should_recalculate_lead_score?
-    # Recalculate if relevant fields changed
-    scoring_fields = ['country', 'idea_description', 'name', 'company']
-    scoring_fields.any? { |field| saved_change_to_attribute?(field) }
-  end
-  
-  def lead_score_color
-    return 'text-gray-500' unless lead_score
-    
-    case lead_score
-    when 80..100 then 'text-green-600 font-bold'
-    when 60..79 then 'text-green-500'
-    when 40..59 then 'text-yellow-600'
-    when 20..39 then 'text-orange-600'
-    else 'text-red-600'
-    end
-  end
-  
-  def lead_score_badge
-    return 'N/A' unless lead_score
-    
-    case lead_score
-    when 80..100 then 'Excellent'
-    when 60..79 then 'Good'
-    when 40..59 then 'Fair'
-    when 20..39 then 'Poor'
-    else 'Very Poor'
-    end
-  end
 end

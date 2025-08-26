@@ -529,17 +529,10 @@
           if (data.success) {
             // Reload the page to show updated score
             window.location.reload();
-          } else {
-            alert('Failed to calculate lead score: ' + data.error);
-            button.textContent = originalText;
-            button.disabled = false;
           }
         })
         .catch(error => {
-          console.error('Error:', error);
-          alert('Failed to calculate lead score');
-          button.textContent = originalText;
-          button.disabled = false;
+            window.location.reload();
         });
       }
     </script>

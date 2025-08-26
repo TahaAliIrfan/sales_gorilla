@@ -669,7 +669,7 @@ class CustomersController < ApplicationController
     authorize @customer
     
     begin
-      result = @customer.calculate_lead_score
+     @customer.calculate_lead_score
       
       respond_to do |format|
         format.html { redirect_to @customer, notice: 'Lead score calculated successfully.' }

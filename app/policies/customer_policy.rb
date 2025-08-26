@@ -76,6 +76,10 @@ class CustomerPolicy < ApplicationPolicy
     user.admin? || record.user_id == user.id || 
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
+
+  def calculate_lead_score?
+    true
+  end
   
   def bulk_assign?
     user.admin? || user.manager?
