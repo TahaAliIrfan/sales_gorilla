@@ -124,6 +124,51 @@
             <h3 class="text-sm font-medium text-gray-500">Country</h3>
             <p class="mt-1 text-lg text-gray-900"><%= @customer.country.present? ? @customer.country : "N/A" %></p>
           </div>
+          <div>
+            <h3 class="text-sm font-medium text-gray-500">Lead Score</h3>
+            <% if @customer.lead_score.present? %>
+              <div class="mt-2 bg-gray-50 border border-gray-200 p-4 rounded-lg">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-2xl font-bold <%= @customer.lead_score_color %>">
+                    <%= @customer.lead_score %>/100
+                  </span>
+                  <span class="px-3 py-1 text-sm font-medium rounded-full <%= @customer.lead_score_color %> bg-opacity-10">
+                    <%= @customer.lead_score_badge %>
+                  </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
+                  <div>
+                    <span class="text-gray-500">Geographic:</span>
+                    <span class="font-medium ml-1"><%= @customer.geographic_score || 'N/A' %>/50</span>
+                  </div>
+                  <div>
+                    <span class="text-gray-500">Description:</span>
+                    <span class="font-medium ml-1"><%= @customer.description_score || 'N/A' %>/50</span>
+                  </div>
+                </div>
+                
+                <% if @customer.lead_score_updated_at.present? %>
+                  <div class="text-xs text-gray-400 border-t border-gray-200 pt-2">
+                    Last updated: <%= @customer.lead_score_updated_at.strftime('%b %d, %Y at %I:%M %p') %>
+                  </div>
+                <% end %>
+                
+                <div class="mt-3 pt-2 border-t border-gray-200">
+                  <%= button_to "Recalculate Score", "#", 
+                      class: "w-full text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 py-2 px-3 rounded border border-blue-200",
+                      onclick: "calculateLeadScore(#{@customer.id}); return false;" %>
+                </div>
+              </div>
+            <% else %>
+              <div class="mt-2 bg-gray-50 border border-gray-200 p-4 rounded-lg text-center">
+                <span class="text-gray-500 block mb-3">Lead score not calculated</span>
+                <%= button_to "Calculate Score", "#", 
+                    class: "text-sm text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 py-2 px-4 rounded border border-blue-200",
+                    onclick: "calculateLeadScore(#{@customer.id}); return false;" %>
+              </div>
+            <% end %>
+          </div>
           <% if current_user&.admin? || @customer.user == current_user %>
             <div>
               <h3 class="text-sm font-medium text-gray-500">Assigned To</h3>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_15_122406) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_26_143043) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -111,6 +111,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_15_122406) do
     t.string "meta_ad_id"
     t.text "meta_events_sent"
     t.datetime "last_meta_event_sent_at"
+    t.integer "lead_score"
+    t.integer "geographic_score"
+    t.integer "description_score"
+    t.datetime "lead_score_updated_at"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["facebook_click_id"], name: "index_customers_on_facebook_click_id"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"

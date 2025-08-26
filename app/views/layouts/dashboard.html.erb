@@ -508,5 +508,40 @@
         </main>
       </div>
     </div>
+    
+    <script>
+      function calculateLeadScore(customerId) {
+        // Show loading state
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = 'Calculating...';
+        button.disabled = true;
+        
+        fetch(`/customers/${customerId}/calculate_lead_score`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Reload the page to show updated score
+            window.location.reload();
+          } else {
+            alert('Failed to calculate lead score: ' + data.error);
+            button.textContent = originalText;
+            button.disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to calculate lead score');
+          button.textContent = originalText;
+          button.disabled = false;
+        });
+      }
+    </script>
   </body>
 </html> 

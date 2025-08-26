@@ -245,6 +245,7 @@
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone/Preferred Time</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead Source</th>
+            <th scope="col" class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Lead Score</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date Added
@@ -351,6 +352,30 @@
                     <% end %>
                   </div>
                 </td>
+                <td class="px-6 py-4 whitespace-nowrap text-center">
+                  <% if customer.lead_score.present? %>
+                    <div class="flex flex-col items-center">
+                      <span class="text-lg font-bold <%= customer.lead_score_color %>">
+                        <%= customer.lead_score %>
+                      </span>
+                      <span class="text-xs <%= customer.lead_score_color %>">
+                        <%= customer.lead_score_badge %>
+                      </span>
+                      <% if customer.lead_score_updated_at.present? %>
+                        <span class="text-xs text-gray-400 mt-1" title="Last updated: <%= customer.lead_score_updated_at.strftime('%b %d, %Y at %I:%M %p') %>">
+                          <%= time_ago_in_words(customer.lead_score_updated_at) %> ago
+                        </span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="flex flex-col items-center">
+                      <span class="text-sm text-gray-400">Not scored</span>
+                      <%= link_to "Calculate", "#", 
+                          class: "text-xs text-blue-600 hover:text-blue-800 mt-1",
+                          onclick: "calculateLeadScore(#{customer.id}); return false;" %>
+                    </div>
+                  <% end %>
+                </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm text-gray-900">
                     <% if customer.user %>
@@ -438,6 +463,24 @@
                       <span class="text-gray-500">Unassigned</span>
                     <% end %>
                   </span>
+                </div>
+
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-500">Lead Score:</span>
+                  <% if customer.lead_score.present? %>
+                    <div class="flex flex-col items-end">
+                      <span class="font-bold <%= customer.lead_score_color %>">
+                        <%= customer.lead_score %> (<%= customer.lead_score_badge %>)
+                      </span>
+                      <% if customer.lead_score_updated_at.present? %>
+                        <span class="text-xs text-gray-400" title="Last updated: <%= customer.lead_score_updated_at.strftime('%b %d, %Y at %I:%M %p') %>">
+                          <%= time_ago_in_words(customer.lead_score_updated_at) %> ago
+                        </span>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <span class="text-gray-400">Not scored</span>
+                  <% end %>
                 </div>
 
                 <div class="flex justify-between text-sm">
