@@ -7,13 +7,49 @@ class LeadScoringService
     response = analyze_with_deepseek(@customer)
 
     if response
-      @customer.update(lead_score: response["total_score"],
+      base_score = response["total_score"]
+      call_bonus = calculate_historical_call_bonus
+      ai_analysis_bonus = calculate_historical_ai_analysis_bonus
+      
+      final_score = [base_score + call_bonus + ai_analysis_bonus, 100].min
+      
+      @customer.update(lead_score: final_score,
                        geographic_score: response["location_score"] + response["name_score"],
                        description_score: response["idea_description_score"])
     end
   end
 
   private
+
+  def calculate_historical_call_bonus
+    # Count successful calls (duration >= 90 seconds)
+    successful_calls = @customer.recordings.where('duration >= ?', 90).count
+    
+    # Each successful call adds 10 points
+    successful_calls * 10
+  end
+
+  def calculate_historical_ai_analysis_bonus
+    # Get all AI analyses for this customer through recordings
+    ai_analyses = AiAnalysis.joins(:recording)
+                           .where(recordings: { customer: @customer })
+                           .where('interest_score >= ?', 3)
+    
+    total_bonus = 0
+    base_score_for_percentage = @customer.lead_score || 0
+    
+    ai_analyses.each do |analysis|
+      case analysis.interest_score
+      when 3
+        total_bonus += 5  # Fixed 5-point increase
+      when 4, 5
+        # 30% increase based on score at time of calculation
+        total_bonus += (base_score_for_percentage * 0.30).round
+      end
+    end
+    
+    total_bonus
+  end
 
   def extract_json_from_response(response_text)
     return nil unless response_text
