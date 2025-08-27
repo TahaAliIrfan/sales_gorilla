@@ -111,7 +111,7 @@ module Api
         phone_number = params[:phone_number]
         country = params[:country]
         description = params[:description] || nil
-        preferred_calling_time = params[:preferred_time] || nil
+        preferred_calling_time = parse_preferred_time(params[:preferred_time])
         lead_source = params[:lead_source] || 'Inbound'
 
         customer = Customer.find_by(email: email)
@@ -164,6 +164,27 @@ module Api
         
         # Add the plus sign back if it was there, or add it if it wasn't
         '+' + digits_only
+      end
+
+      def parse_preferred_time(timestamp)
+        return nil if timestamp.blank?
+        
+        begin
+          # Parse ISO 8601 timestamp format like "2025-08-26T07:00:00+0200"
+          parsed_time = Time.parse(timestamp)
+          
+          # Format as readable time with timezone
+          # Example: "7:00 AM (+02:00)"
+          formatted_time = parsed_time.strftime("%I:%M %p")
+          timezone_offset = parsed_time.strftime("%z")
+          formatted_offset = "#{timezone_offset[0]}#{timezone_offset[1..2]}:#{timezone_offset[3..4]}"
+          
+          return "#{formatted_time} (#{formatted_offset})"
+        rescue => e
+          Rails.logger.warn("Failed to parse preferred_time '#{timestamp}': #{e.message}")
+          # Return the original value if parsing fails
+          return timestamp
+        end
       end
 
       def extract_timezone_from_timestamp(timestamp)

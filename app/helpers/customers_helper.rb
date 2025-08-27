@@ -32,6 +32,32 @@ module CustomersHelper
     else 'bg-gray-100 text-gray-800'
     end
   end
+
+  def display_preferred_calling_time(preferred_calling_time)
+    return 'Not Specified' if preferred_calling_time.blank? || preferred_calling_time == 'Not Applicable'
+    
+    # Check if it's already formatted by our API (contains parentheses with timezone)
+    if preferred_calling_time.match(/\d{1,2}:\d{2}\s+(AM|PM)\s+\([+-]\d{2}:\d{2}\)/)
+      return preferred_calling_time
+    end
+    
+    # Check if it looks like an ISO 8601 timestamp and try to parse it
+    if preferred_calling_time.match(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+-]\d{4}/)
+      begin
+        parsed_time = Time.parse(preferred_calling_time)
+        formatted_time = parsed_time.strftime("%I:%M %p")
+        timezone_offset = parsed_time.strftime("%z")
+        formatted_offset = "#{timezone_offset[0]}#{timezone_offset[1..2]}:#{timezone_offset[3..4]}"
+        return "#{formatted_time} (#{formatted_offset})"
+      rescue => e
+        Rails.logger.warn("Failed to parse preferred calling time '#{preferred_calling_time}': #{e.message}")
+        # Fall through to return original value
+      end
+    end
+    
+    # Return the original value for any other format (text descriptions, etc.)
+    preferred_calling_time
+  end
   
   def format_preferred_calling_time(time_str, current_customer_time)
     return time_str unless time_str.present? && current_customer_time
