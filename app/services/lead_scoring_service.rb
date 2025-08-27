@@ -112,34 +112,6 @@ class LeadScoringService
   end
 
   def build_ai_prompt(description, location, name, lead_source, preferred_calling_time)
-    if lead_source == 'WA'
-      # Special scoring for WhatsApp leads - location only
-      <<~PROMPT
-        Analyze this WhatsApp lead based ONLY on location and score from 0-100:
-
-        **Scoring for WhatsApp Leads (Location Only):**
-        - 1st World Countries (USA, Canada, UK, Australia, Germany, France, etc.): 80-100 points
-        - 2nd Tier Countries (UAE, Saudi Arabia, Qatar, Singapore, etc.): 60-80 points
-        - 3rd Tier Countries (India, Pakistan, Bangladesh, Sri Lanka, etc.): 0-10 points
-        - Other developing countries: 0-20 points
-
-        **Input:**
-        - Customer Location: "#{location}"
-        - Lead Source: WhatsApp
-
-        **JSON Response Format:**
-        ```json
-        {
-          "total_score": "integer value from 0-100",
-          "location_score": "integer value from 0-100",
-          "name_score": 0,
-          "idea_description_score": 0,
-          "explanation": "WhatsApp lead scored based on location only"
-        }
-        ```
-      PROMPT
-    else
-      # Standard scoring for non-WhatsApp leads
       <<~PROMPT
         Analyze this customer lead and score it from 0-100 based on the following criteria:
 
@@ -187,6 +159,5 @@ class LeadScoringService
         }
         ```
       PROMPT
-    end
   end
 end
