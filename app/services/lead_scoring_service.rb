@@ -143,19 +143,27 @@ class LeadScoringService
       <<~PROMPT
         Analyze this customer lead and score it from 0-100 based on the following criteria:
 
-        **NEW SCORING CRITERIA:**
+        **SCORING CRITERIA:**
 
-        **1. Description and Data Quality (0-60 points) - HIGHEST PRIORITY**
-        - Preferred calling time provided: 0-15 points
-        - Description detail and completeness: 0-25 points
-        - Market potential and business viability: 0-20 points
+        **1. Project Cost Estimation and Scoring (0-40 points) - HIGHEST PRIORITY**
+        First, estimate the project cost based on the description using $30/hour rate:
+        - Less than $5,000: 0 points
+        - $5,000 - $9,999: 5 points
+        - $10,000 - $19,999: 10 points
+        - $20,000 - $50,000: 20 points
+        - Above $50,000: 40 points
 
-        **2. Name-based Ethnicity Score (0-30 points)**
-        - 1st World Country Names (Western, European origin): 20-30 points
-        - Arabic Names: 10-20 points
-        - Subcontinent Names (Indian, Pakistani, Sri Lankan, Bangladeshi): 0-10 points
+        **2. Description and Data Quality (0-30 points)**
+        - Preferred calling time provided: 0-10 points
+        - Description detail and completeness: 0-10 points
+        - Market potential and business viability: 0-10 points
 
-        **3. Location Score (0-10 points)**
+        **3. Name-based Ethnicity Score (0-20 points)**
+        - 1st World Country Names (Western, European origin): 15-20 points
+        - Arabic Names: 8-14 points
+        - Subcontinent Names (Indian, Pakistani, Sri Lankan, Bangladeshi): 0-7 points
+
+        **4. Location Score (0-10 points)**
         - 1st World Country: 8-10 points
         - 2nd World Country: 4-7 points
         - 3rd World Country: 0-3 points
@@ -171,9 +179,11 @@ class LeadScoringService
         {
           "total_score": "integer value from 0-100",
           "location_score": "integer value from 0-10",
-          "name_score": "integer value from 0-30",
-          "idea_description_score": "integer value from 0-60",
-          "explanation": "brief explanation focusing on description quality and name ethnicity assessment"
+          "name_score": "integer value from 0-20",
+          "idea_description_score": "integer value from 0-30",
+          "project_cost_score": "integer value from 0-40",
+          "estimated_project_cost": "integer value in USD",
+          "explanation": "brief explanation including project cost estimation reasoning"
         }
         ```
       PROMPT
