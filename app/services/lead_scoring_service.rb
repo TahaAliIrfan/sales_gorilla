@@ -4,7 +4,7 @@ class LeadScoringService
   end
 
   def calculate_score
-    response = analyze_with_gemini(@customer)
+    response = analyze_with_deepseek(@customer)
 
     @customer.update(lead_score: response["total_score"],
                      geographic_score: response["location_score"] + response["name_score"],
@@ -26,12 +26,11 @@ class LeadScoringService
     end
   end
 
-  def analyze_with_gemini(customer)
+  def analyze_with_deepseek(customer)
     require 'net/http'
     require 'json'
 
-    api_key = Rails.application.credentials.dig(:GEMINI_API_KEY) || ENV['GEMINI_API_KEY']
-    @model = "gemini-1.5-flash"
+    api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY) || ENV['DEEPSEEK_API_KEY']
     return nil unless api_key
 
     country_name = if customer.customer_location.present?
@@ -42,21 +41,22 @@ class LeadScoringService
 
     prompt = build_ai_prompt(customer.idea_description, country_name, customer.name)
 
-    uri = URI("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=#{api_key}")
+
+    uri = URI.parse("https://api.deepseek.com/v1/chat/completions")
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
 
-    request = Net::HTTP::Post.new(uri)
-    request['Content-Type'] = 'application/json'
+    request = Net::HTTP::Post.new(uri.path, {
+      'Content-Type' => 'application/json',
+      'Authorization' => "Bearer #{api_key}"
+    })
 
     request.body = {
-      contents: [
+      model: "deepseek-chat",
+      messages: [
         {
-          parts: [
-            {
-              text: prompt
-            }
-          ]
+          role: "user",
+          content: prompt
         }
       ]
     }.to_json
@@ -65,10 +65,10 @@ class LeadScoringService
 
     if response.code == '200'
       data = JSON.parse(response.body)
-      content = data.dig('candidates', 0, 'content', 'parts', 0, 'text')
+      content = data.dig('choices', 0, 'message', 'content')
       extract_json_from_response(content)
     else
-      Rails.logger.error("Gemini API error: #{response.code} - #{response.body}")
+      Rails.logger.error("DeepSeek API error: #{response.code} - #{response.body}")
       nil
     end
   end
