@@ -135,17 +135,6 @@
                   </span>
                 </div>
                 
-                <div class="grid grid-cols-2 gap-3 mb-3 text-sm">
-                  <div>
-                    <span class="text-gray-500">Geographic:</span>
-                    <span class="font-medium ml-1"><%= @customer.geographic_score || 'N/A' %>/50</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-500">Description:</span>
-                    <span class="font-medium ml-1"><%= @customer.description_score || 'N/A' %>/50</span>
-                  </div>
-                </div>
-                
                 <% if @customer.lead_score_updated_at.present? %>
                   <div class="text-xs text-gray-400 border-t border-gray-200 pt-2">
                     Last updated: <%= @customer.lead_score_updated_at.strftime('%b %d, %Y at %I:%M %p') %>

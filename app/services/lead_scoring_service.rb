@@ -6,9 +6,11 @@ class LeadScoringService
   def calculate_score
     response = analyze_with_deepseek(@customer)
 
-    @customer.update(lead_score: response["total_score"],
-                     geographic_score: response["location_score"] + response["name_score"],
-                     description_score: response["idea_description_score"])
+    if response
+      @customer.update(lead_score: response["total_score"],
+                       geographic_score: response["location_score"] + response["name_score"],
+                       description_score: response["idea_description_score"])
+    end
   end
 
   private
@@ -39,7 +41,7 @@ class LeadScoringService
                      customer.country
                    end
 
-    prompt = build_ai_prompt(customer.idea_description, country_name, customer.name)
+    prompt = build_ai_prompt(customer.idea_description, country_name, customer.name, customer.lead_source, customer.preferred_calling_time)
 
 
     uri = URI.parse("https://api.deepseek.com/v1/chat/completions")
@@ -73,43 +75,72 @@ class LeadScoringService
     end
   end
 
-  def build_ai_prompt(description, location, name)
-    <<~PROMPT
-            Analyze this customer's business idea, including their location and name origin, and score it from 0-100 based on the following criteria:
+  def build_ai_prompt(description, location, name, lead_source, preferred_calling_time)
+    if lead_source == 'WA'
+      # Special scoring for WhatsApp leads - location only
+      <<~PROMPT
+        Analyze this WhatsApp lead based ONLY on location and score from 0-100:
 
-       **Scoring Criteria:**
+        **Scoring for WhatsApp Leads (Location Only):**
+        - 1st World Countries (USA, Canada, UK, Australia, Germany, France, etc.): 80-100 points
+        - 2nd Tier Countries (UAE, Saudi Arabia, Qatar, Singapore, etc.): 60-80 points
+        - 3rd Tier Countries (India, Pakistan, Bangladesh, Sri Lanka, etc.): 0-10 points
+        - Other developing countries: 0-20 points
 
-      **1. Customer Location Score (0-35 points)**
-      - 1st World Country: 35 points
-      - 2nd World Country: 0-30 points (variable based on specific location)
-      - 3rd World Country: 0-10 points (variable based on specific location)
+        **Input:**
+        - Customer Location: "#{location}"
+        - Lead Source: WhatsApp
 
-      **2. Customer Name Origin Score (0-25 points)**
-      - 1st World Origin: 25 points
-      - 2nd World Origin (e.g., Core Arabic names): 15-20 points (variable)
-      - 3rd World Origin: 5-10 points (variable)
+        **JSON Response Format:**
+        ```json
+        {
+          "total_score": "integer value from 0-100",
+          "location_score": "integer value from 0-100",
+          "name_score": 0,
+          "idea_description_score": 0,
+          "explanation": "WhatsApp lead scored based on location only"
+        }
+        ```
+      PROMPT
+    else
+      # Standard scoring for non-WhatsApp leads
+      <<~PROMPT
+        Analyze this customer lead and score it from 0-100 based on the following criteria:
 
-      **3. Idea Description Score (0-40 points)**
-      - Clarity and detail: 0-15 points
-      - Market potential and viability: 0-15 points
-      - Technical complexity and innovation: 0-10 points
-      - Specificity and completeness: 0-10 points
+        **NEW SCORING CRITERIA:**
 
-      **Input:**
-      - Customer Location: "#{location}"
-      - Customer Name: "#{name}"
-      - Idea Description: "#{description}"
+        **1. Description and Data Quality (0-60 points) - HIGHEST PRIORITY**
+        - Preferred calling time provided: 0-15 points
+        - Description detail and completeness: 0-25 points
+        - Market potential and business viability: 0-20 points
 
-      **JSON Response Format:**
-      ```json
-      {
-        "total_score": "integer value from 0-100",
-        "location_score": "integer value from 0-35",
-        "name_score": "integer value from 0-25",
-        "idea_description_score": "integer value from 0-40",
-        "explanation": "a brief, one-sentence explanation"
-      }
+        **2. Name-based Ethnicity Score (0-30 points)**
+        - 1st World Country Names (Western, European origin): 20-30 points
+        - Arabic Names: 10-20 points
+        - Subcontinent Names (Indian, Pakistani, Sri Lankan, Bangladeshi): 0-10 points
 
-    PROMPT
+        **3. Location Score (0-10 points)**
+        - 1st World Country: 8-10 points
+        - 2nd World Country: 4-7 points
+        - 3rd World Country: 0-3 points
+
+        **Input:**
+        - Customer Location: "#{location}"
+        - Customer Name: "#{name}"
+        - Idea Description: "#{description}"
+        - Preferred Calling Time: "#{preferred_calling_time}"
+
+        **JSON Response Format:**
+        ```json
+        {
+          "total_score": "integer value from 0-100",
+          "location_score": "integer value from 0-10",
+          "name_score": "integer value from 0-30",
+          "idea_description_score": "integer value from 0-60",
+          "explanation": "brief explanation focusing on description quality and name ethnicity assessment"
+        }
+        ```
+      PROMPT
+    end
   end
 end
