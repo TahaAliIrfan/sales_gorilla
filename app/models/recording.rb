@@ -10,7 +10,7 @@ class Recording < ApplicationRecord
   # Add ActiveStorage attachment for recording file
   has_one_attached :audio_file
   
-  after_create :set_called_at_prefered_time
+  after_create :set_called_at_prefered_time, :update_lead_score_for_successful_call
   
   scope :recent, -> { order(date: :desc) }
   
@@ -33,5 +33,15 @@ class Recording < ApplicationRecord
     if customer.present? && customer.respond_to?(:is_preferred_calling_time?)
       update_column(:called_at_prefered_time, customer.is_preferred_calling_time?)
     end
+  end
+
+  # Updates customer lead score for successful calls (90+ seconds)
+  def update_lead_score_for_successful_call
+    return unless customer.present? && duration.present? && duration >= 90
+
+    current_score = customer.lead_score || 0
+    new_score = [current_score + 10, 100].min  # Cap at 100
+    
+    customer.update_column(:lead_score, new_score)
   end
 end
