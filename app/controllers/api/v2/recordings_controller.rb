@@ -76,7 +76,6 @@ class Api::V2::RecordingsController < Api::V2::BaseController
         'transcription' => @recording.transcription,
         'transcription_status' => @recording.transcription_status,
         'transcribed' => @recording.transcribed?,
-        'called_at_preferred_time' => @recording.called_at_prefered_time,
         'customer_tasks' => @recording.customer.tasks.map do |task|
           {
             'id' => task.id,

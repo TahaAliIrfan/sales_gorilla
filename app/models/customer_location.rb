@@ -78,15 +78,6 @@ class CustomerLocation < ApplicationRecord
     end
   end
 
-  def is_business_hours?
-    return false unless preferred_calling_time.present?
-    current = current_time
-    return false unless current
-    
-    # Use the existing logic from Customer model
-    # This would need to be extracted to a shared service
-    customer.is_preferred_calling_time?
-  end
 
   def location_summary
     parts = [city, state_province, country_name].compact.reject(&:blank?)

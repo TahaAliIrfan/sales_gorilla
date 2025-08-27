@@ -310,25 +310,6 @@
                           <span class="text-blue-600 font-normal">(<%= current_time.strftime("%Z") %>)</span>
                         </span>
                       </span>
-                      <div class="mt-1 flex items-center space-x-2">
-                        <% if customer.preferred_calling_time.present? && customer.preferred_calling_time != 'Not Applicable' %>
-                          <% if customer.is_preferred_calling_time? %>
-                          <span class="inline-flex items-center ml-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-100 text-green-800 border border-green-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                            Within call window
-                          </span>
-                          <% else %>
-                          <span class="inline-flex items-center ml-1 px-2 py-0.5 rounded-md text-xs font-medium bg-red-100 text-red-800 border border-red-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Outside call window
-                          </span>
-                          <% end %>
-                        <% end %>
-                      </div>
                     </div>
                   <% else %>
                     <div class="text-xs text-gray-500 mt-1">
