@@ -40,7 +40,6 @@ class PhoneLocationService
           timezone: timezone_data[:timezone],
           timezone_name: timezone_data[:timezone_name],
           timezone_offset: timezone_data[:timezone_offset],
-          preferred_calling_time: timezone_data[:preferred_calling_time],
           
           # Carrier data
           carrier: carrier_data[:carrier],

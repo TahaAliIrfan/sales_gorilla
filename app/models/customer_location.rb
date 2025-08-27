@@ -45,7 +45,6 @@ class CustomerLocation < ApplicationRecord
       timezone_abbreviation: data[:timezone_abbreviation],
       timezone_offset: data[:timezone_offset],
       dst_active: data[:dst_active],
-      preferred_calling_time: data[:preferred_calling_time],
       
       # Carrier data
       carrier: data[:carrier],

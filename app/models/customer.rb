@@ -371,7 +371,6 @@ class Customer < ApplicationRecord
       basic_updates = {
         country: data[:country] || country,
         timezone: data[:timezone] || timezone,
-        preferred_calling_time: data[:preferred_calling_time] || preferred_calling_time,
         phone_analysis_completed_at: Time.current,
         phone_analysis_version: '2.0'
       }
