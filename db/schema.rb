@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_26_143043) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_26_233121) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -64,6 +64,49 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_26_143043) do
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
     t.index ["user_id"], name: "index_customer_activities_on_user_id"
+  end
+
+  create_table "customer_locations", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "formatted_number"
+    t.string "national_format"
+    t.string "country_code"
+    t.string "area_code"
+    t.string "phone_type"
+    t.string "country_iso"
+    t.string "country_name"
+    t.string "state_province"
+    t.string "city"
+    t.string "region"
+    t.string "geo_name"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.string "timezone"
+    t.string "timezone_abbreviation"
+    t.decimal "timezone_offset", precision: 4, scale: 2
+    t.boolean "dst_active", default: false
+    t.string "preferred_calling_time"
+    t.string "carrier"
+    t.string "line_type"
+    t.string "network_operator"
+    t.string "analysis_version", default: "2.0"
+    t.datetime "analyzed_at"
+    t.string "data_source"
+    t.json "raw_analysis_data"
+    t.integer "location_confidence", default: 0
+    t.integer "timezone_confidence", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["analysis_version"], name: "index_customer_locations_on_analysis_version"
+    t.index ["analyzed_at"], name: "index_customer_locations_on_analyzed_at"
+    t.index ["area_code"], name: "index_customer_locations_on_area_code"
+    t.index ["carrier"], name: "index_customer_locations_on_carrier"
+    t.index ["city"], name: "index_customer_locations_on_city"
+    t.index ["country_iso"], name: "index_customer_locations_on_country_iso"
+    t.index ["customer_id"], name: "index_customer_locations_on_customer_id", unique: true
+    t.index ["latitude", "longitude"], name: "index_customer_locations_on_coordinates"
+    t.index ["state_province"], name: "index_customer_locations_on_state_province"
+    t.index ["timezone"], name: "index_customer_locations_on_timezone"
   end
 
   create_table "customers", force: :cascade do |t|
@@ -444,6 +487,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_26_143043) do
   add_foreign_key "calls", "users", column: "receiver_id"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
+  add_foreign_key "customer_locations", "customers"
   add_foreign_key "customers", "users"
   add_foreign_key "deal_activities", "deals"
   add_foreign_key "deal_activities", "users"

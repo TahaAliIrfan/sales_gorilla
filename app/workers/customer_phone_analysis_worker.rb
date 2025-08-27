@@ -1,3 +1,7 @@
+# DEPRECATED: This worker has been replaced by EnhancedPhoneAnalysisWorker
+# which uses PhoneLocationService instead of GeminiCustomerAnalysisService
+# for more accurate, cost-effective, and reliable phone number analysis.
+# TODO: Remove this file after confirming no active jobs are using it.
 class CustomerPhoneAnalysisWorker
   include Sidekiq::Worker
   sidekiq_options queue: 'default', retry: 3

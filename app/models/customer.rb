@@ -1,5 +1,6 @@
 class Customer < ApplicationRecord
   belongs_to :user, optional: true
+  has_one :customer_location, dependent: :destroy
   has_many :deals
   has_many :recordings, dependent: :destroy
   has_many :customer_activities, dependent: :destroy
@@ -29,9 +30,9 @@ class Customer < ApplicationRecord
   before_save :record_activity_changes
   after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
-  after_save :analyze_phone_number, if: -> { phone.present? }
+  after_save :analyze_phone_number, if: -> { phone.present? && should_analyze_phone? }
   after_save :track_meta_conversions_events
-  after_save :queue_lead_scoring, if: :should_recalculate_lead_score?
+  after_create :calculate_lead_score
   
   # Constants for dropdown fields
   CUSTOMER_TYPES = {
@@ -311,27 +312,115 @@ class Customer < ApplicationRecord
     nil
   end
   
-  # Analyze the customer's phone number using Gemini to identify country, timezone, and preferred calling time
+  # Analyze the customer's phone number using comprehensive phone location services
   def analyze_phone_number
     return false unless phone.present?
-
-    return false if preferred_calling_time.present? && preferred_calling_time.downcase != 'not applicable'
     
-    Rails.logger.info("Queuing phone analysis for customer #{id} (#{name}) with phone #{phone}")
+    Rails.logger.info("Queuing comprehensive phone analysis for customer #{id} (#{name}) with phone #{phone}")
     
-    # Enqueue the background job to analyze the phone number
-    job_id = CustomerPhoneAnalysisWorker.perform_async(id)
+    # Enqueue the background job to analyze the phone number with new services
+    job_id = EnhancedPhoneAnalysisWorker.perform_async(id)
     
     if job_id
-      Rails.logger.info("Successfully queued phone analysis job #{job_id} for customer #{id}")
+      Rails.logger.info("Successfully queued enhanced phone analysis job #{job_id} for customer #{id}")
       true
     else
-      Rails.logger.error("Failed to queue phone analysis job for customer #{id}")
+      Rails.logger.error("Failed to queue enhanced phone analysis job for customer #{id}")
       false
     end
   rescue => e
-    Rails.logger.error("Error queueing phone analysis for customer #{id}: #{e.message}")
+    Rails.logger.error("Error queueing enhanced phone analysis for customer #{id}: #{e.message}")
     false
+  end
+  
+  # Determine if phone analysis should be performed
+  def should_analyze_phone?
+    # Always analyze if no location record exists
+    return true unless customer_location.present?
+    
+    # Re-analyze if phone number changed
+    return true if saved_change_to_phone?
+    
+    # Re-analyze if using old analysis version
+    return true if customer_location.analysis_version != '2.0'
+    
+    # Re-analyze if analysis is older than 30 days (for accuracy improvements)
+    return true if customer_location.analyzed_at < 30.days.ago
+    
+    false
+  end
+  
+  # Force re-analysis of phone number (for manual triggers)
+  def force_phone_analysis!
+    return false unless phone.present?
+    
+    Rails.logger.info("Force analyzing phone number for customer #{id} (#{name})")
+    analyze_phone_number
+  end
+  
+  # Update customer with comprehensive phone analysis data using new location table
+  def update_from_phone_analysis(analysis_data)
+    return false unless analysis_data[:success]
+    
+    begin
+      # Create/update the customer location record
+      CustomerLocation.create_from_analysis(self, analysis_data)
+      
+      # Update basic customer fields that should remain in customer table
+      data = analysis_data[:data]
+      basic_updates = {
+        country: data[:country] || country,
+        timezone: data[:timezone] || timezone,
+        preferred_calling_time: data[:preferred_calling_time] || preferred_calling_time,
+        phone_analysis_completed_at: Time.current,
+        phone_analysis_version: '2.0'
+      }
+      
+      # Only update non-blank values to preserve existing data
+      basic_updates = basic_updates.select { |k, v| v.present? || self[k].blank? }
+      update!(basic_updates)
+      
+      Rails.logger.info("Successfully updated customer #{id} with enhanced phone analysis data (v2.0)")
+      true
+    rescue => e
+      Rails.logger.error("Error updating customer #{id} with phone analysis data: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      false
+    end
+  end
+  
+  # Delegate location methods to customer_location
+  def location_summary
+    customer_location&.location_summary || [city, state, country].compact.join(', ')
+  end
+  
+  def current_location_time
+    customer_location&.current_time || current_time_in_timezone
+  end
+  
+  def location_coordinates
+    return nil unless customer_location&.coordinates_available?
+    { lat: customer_location.latitude, lng: customer_location.longitude }
+  end
+  
+  def detailed_timezone_info
+    return nil unless customer_location
+    {
+      timezone: customer_location.timezone,
+      abbreviation: customer_location.timezone_abbreviation,
+      offset: customer_location.timezone_offset,
+      dst_active: customer_location.dst_active,
+      current_time: customer_location.current_time
+    }
+  end
+  
+  def phone_analysis_confidence
+    return nil unless customer_location
+    {
+      location: customer_location.location_confidence,
+      timezone: customer_location.timezone_confidence,
+      overall: (customer_location.location_confidence + customer_location.timezone_confidence) / 2
+    }
   end
   
   # Follow-up methods
@@ -521,26 +610,7 @@ class Customer < ApplicationRecord
 
   def calculate_lead_score
     scoring_service = LeadScoringService.new(self)
-    result = scoring_service.calculate_score
-
-    update!(
-      lead_score: result[:total_score],
-      geographic_score: result[:geographic_score],
-      description_score: result[:description_score],
-      lead_score_updated_at: Time.current
-    )
-
-    result
-  end
-
-  def queue_lead_scoring
-    LeadScoringWorker.perform_async(id)
-  end
-  
-  def should_recalculate_lead_score?
-    # Recalculate if relevant fields changed
-    scoring_fields = ['country', 'idea_description', 'name', 'company']
-    scoring_fields.any? { |field| saved_change_to_attribute?(field) }
+    scoring_service.calculate_score
   end
 
   def lead_score_color

@@ -88,6 +88,12 @@ gem "sidekiq-scheduler", "~> 5.0"
 # Mail gem for email processing
 gem 'mail'
 
+# Phone number parsing and geographic location detection
+gem 'phonelib'
+
+# Timezone detection and conversion
+gem 'timezone'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]

@@ -623,9 +623,10 @@ class CustomersController < ApplicationController
       return
     end
     
-    if @customer.analyze_phone_number
+    # Use force analysis for manual triggers
+    if @customer.force_phone_analysis!
       respond_to do |format|
-        format.html { redirect_to @customer, notice: 'Phone analysis has been queued.' }
+        format.html { redirect_to @customer, notice: 'Enhanced phone analysis has been queued using our comprehensive location database.' }
         format.json { render json: { success: true } }
       end
     else
