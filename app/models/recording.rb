@@ -37,7 +37,7 @@ class Recording < ApplicationRecord
 
   # Updates customer lead score for successful calls (90+ seconds)
   def update_lead_score_for_successful_call
-    return unless customer.present? && duration.present? && duration >= 90
+    return unless customer.present? && duration.present? && duration >=  150
 
     current_score = customer.lead_score || 0
     new_score = [current_score + 10, 100].min  # Cap at 100

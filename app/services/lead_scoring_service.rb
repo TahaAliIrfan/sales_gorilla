@@ -23,7 +23,7 @@ class LeadScoringService
 
   def calculate_historical_call_bonus
     # Count successful calls (duration >= 90 seconds)
-    successful_calls = @customer.recordings.where('duration >= ?', 90).count
+    successful_calls = @customer.recordings.where('duration >= ?', 150).count
     
     # Each successful call adds 10 points
     successful_calls * 10
