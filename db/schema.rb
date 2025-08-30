@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_27_015734) do
+ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,6 +53,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_27_015734) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["recording_id"], name: "index_ai_analyses_on_recording_id"
+  end
+
+  create_table "ai_conversations", force: :cascade do |t|
+    t.string "conversation_id", null: false
+    t.string "status"
+    t.integer "duration_seconds"
+    t.string "agent_id"
+    t.string "call_from"
+    t.string "call_to"
+    t.datetime "conversation_date"
+    t.jsonb "transcript"
+    t.jsonb "raw_data"
+    t.bigint "user_id"
+    t.bigint "customer_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conversation_date"], name: "index_ai_conversations_on_conversation_date"
+    t.index ["conversation_id"], name: "index_ai_conversations_on_conversation_id", unique: true
+    t.index ["customer_id"], name: "index_ai_conversations_on_customer_id"
+    t.index ["status"], name: "index_ai_conversations_on_status"
+    t.index ["user_id"], name: "index_ai_conversations_on_user_id"
   end
 
   create_table "customer_activities", force: :cascade do |t|
@@ -482,6 +503,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_27_015734) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "ai_analyses", "recordings"
+  add_foreign_key "ai_conversations", "customers"
+  add_foreign_key "ai_conversations", "users"
   add_foreign_key "calls", "customers"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"

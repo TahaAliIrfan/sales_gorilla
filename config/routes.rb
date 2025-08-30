@@ -271,6 +271,16 @@ Rails.application.routes.draw do
     resources :ai_analyses, only: [:create, :show]
   end
 
+  # AI Calls routes
+  resources :ai_calls, only: [:index, :show] do
+    collection do
+      post :sync
+    end
+    member do
+      get :audio
+    end
+  end
+
   # WhatsApp Chat routes (authenticated)
   get 'whatsapp_chat', to: 'chats#index', as: :whatsapp_chat
   

@@ -1,0 +1,158 @@
+<div class="bg-white shadow overflow-hidden sm:rounded-lg">
+  <div class="px-4 py-5 sm:px-6">
+    <div class="flex justify-between items-start">
+      <div>
+        <h2 class="text-2xl font-semibold text-gray-900">AI Conversation Details</h2>
+        <p class="mt-1 text-sm text-gray-500">Conversation ID: <%= @conversation.conversation_id %></p>
+        <% if @conversation.customer %>
+          <p class="mt-1 text-sm text-gray-500">Customer: <%= link_to @conversation.customer.name, customer_path(@conversation.customer), class: "text-blue-600 hover:text-blue-900" %></p>
+        <% end %>
+      </div>
+      <div class="flex space-x-2">
+        <%= link_to ai_calls_path, class: "inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Conversations
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conversation Overview -->
+  <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">Status</dt>
+        <dd class="mt-1">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+            <%= @conversation.status == 'completed' ? 'bg-green-100 text-green-800' : 
+                @conversation.status == 'active' ? 'bg-blue-100 text-blue-800' : 
+                'bg-gray-100 text-gray-800' %>">
+            <%= @conversation.status&.humanize || 'Unknown' %>
+          </span>
+        </dd>
+      </div>
+
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">Date</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          <%= @conversation.conversation_date&.strftime("%B %d, %Y at %I:%M %p") || @conversation.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+        </dd>
+      </div>
+
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">Duration</dt>
+        <dd class="mt-1 text-sm text-gray-900">
+          <%= @conversation.formatted_duration %>
+        </dd>
+      </div>
+
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">Audio</dt>
+        <dd class="mt-1">
+          <% if @conversation.status == 'completed' %>
+            <button data-controller="audio-player" 
+                    data-audio-player-url-value="<%= ai_calls_audio_path(@conversation.conversation_id) %>" 
+                    data-action="click->audio-player#play" 
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Play Audio
+            </button>
+          <% else %>
+            <span class="inline-flex items-center px-3 py-2 text-sm text-gray-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Audio not available
+            </span>
+          <% end %>
+        </dd>
+      </div>
+
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">From</dt>
+        <dd class="mt-1 text-sm text-gray-900"><%= @conversation.call_from || 'N/A' %></dd>
+      </div>
+
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">To</dt>
+        <dd class="mt-1 text-sm text-gray-900"><%= @conversation.call_to || 'N/A' %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <!-- Agent Information -->
+  <% if @conversation.agent_id %>
+  <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Agent Information</h3>
+    <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
+      <div class="sm:col-span-1">
+        <dt class="text-sm font-medium text-gray-500">Agent ID</dt>
+        <dd class="mt-1 text-sm text-gray-900"><%= @conversation.agent_id %></dd>
+      </div>
+    </dl>
+  </div>
+  <% end %>
+
+  <!-- Transcript -->
+  <% if @conversation.has_transcript? %>
+  <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Conversation Transcript
+    </h3>
+    <div class="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+      <div class="space-y-4">
+        <% @conversation.transcript.each_with_index do |message, index| %>
+          <div class="flex <%= message['role'] == 'user' ? 'justify-end' : 'justify-start' %>">
+            <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg <%= message['role'] == 'user' ? 'bg-blue-500 text-white' : 'bg-white border border-gray-200' %>">
+              <div class="text-xs <%= message['role'] == 'user' ? 'text-blue-100' : 'text-gray-500' %> mb-1">
+                <%= message['role']&.humanize || 'Unknown' %>
+                <% if message['timestamp'] %>
+                  • <%= Time.at(message['timestamp'].to_f).strftime("%H:%M:%S") %>
+                <% end %>
+              </div>
+              <div class="text-sm">
+                <%= message['message'] %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <% end %>
+
+  <!-- Raw Data (Debug) -->
+  <% if Rails.env.development? %>
+  <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+    <h3 class="text-lg font-medium text-gray-900 mb-4">Raw Data (Debug)</h3>
+    <div class="bg-gray-800 text-white p-4 rounded-lg overflow-auto max-h-60">
+      <pre class="text-xs whitespace-pre-wrap"><%= JSON.pretty_generate(@conversation.raw_data) if @conversation.raw_data %></pre>
+    </div>
+  </div>
+  <% end %>
+</div>
+
+<!-- Audio Player Modal -->
+<div id="audio-player-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" data-controller="modal" data-action="click@window->modal#closeBackground keyup@window->modal#closeWithKeyboard">
+  <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6" data-modal-target="container">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-medium text-gray-900">AI Conversation Audio</h3>
+      <button data-action="modal#close" class="text-gray-400 hover:text-gray-500">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div>
+      <audio id="audio-player" controls class="w-full"></audio>
+    </div>
+  </div>
+</div>
