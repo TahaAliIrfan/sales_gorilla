@@ -75,9 +75,9 @@
                 <%= conversation.formatted_duration %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <% if conversation.status == 'completed' %>
+                <% if conversation.has_audio? %>
                   <button data-controller="audio-player" 
-                          data-audio-player-url-value="<%= ai_calls_audio_path(conversation.conversation_id) %>" 
+                          data-audio-player-url-value="<%= audio_ai_call_path(conversation.conversation_id) %>" 
                           data-action="click->audio-player#play" 
                           class="text-blue-600 hover:text-blue-900"
                           title="Play Audio">

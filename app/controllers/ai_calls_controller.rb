@@ -24,6 +24,9 @@ class AiCallsController < ApplicationController
 
   def show
     # Already set by before_action
+    Rails.logger.info("AI Conversation Show: #{@conversation.conversation_id}")
+    Rails.logger.info("Has transcript: #{@conversation.has_transcript?}")
+    Rails.logger.info("Transcript data: #{@conversation.transcript.inspect}")
   end
 
   def sync
@@ -44,25 +47,33 @@ class AiCallsController < ApplicationController
   end
 
   def audio
+    Rails.logger.info("Audio request for conversation ID: #{params[:id]}")
+    
     ai_conversation = AiConversation.find_by(conversation_id: params[:id])
     
     unless ai_conversation
+      Rails.logger.error("AI conversation not found: #{params[:id]}")
       head :not_found
       return
     end
     
+    Rails.logger.info("Found conversation: #{ai_conversation.conversation_id}, status: #{ai_conversation.status}")
+    
     audio_data = ElevenLabsService.fetch_conversation_audio(params[:id])
     
     if audio_data
+      Rails.logger.info("Successfully fetched audio data, size: #{audio_data.size} bytes")
       send_data audio_data,
                 type: 'audio/mpeg',
                 disposition: 'inline',
                 filename: "conversation_#{params[:id]}.mp3"
     else
+      Rails.logger.error("No audio data returned from API")
       head :not_found
     end
   rescue => e
     Rails.logger.error "Failed to fetch audio: #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
     head :internal_server_error
   end
 
