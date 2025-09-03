@@ -28,10 +28,7 @@ class UserMailer < ApplicationMailer
     
     mail(
       to: @user.email,
-      subject: subject_line,
-      'Message-ID' => message_id,
-      'In-Reply-To' => thread_id,
-      'References' => thread_id
+      subject: subject_line
     )
   end
 end 
