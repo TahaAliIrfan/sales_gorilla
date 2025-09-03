@@ -4,6 +4,54 @@ class DashboardController < ApplicationController
   before_action :require_admin, except: [:my_reports]
 
   def index
+    # Date range setup for analytics
+    @filter_range = params[:filter_range] || '30'
+    @custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    @custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    
+    # Set date range based on filter
+    case @filter_range
+    when '7'
+      @start_date = 7.days.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
+      @period_name = "Last 7 Days"
+    when '30'
+      @start_date = 30.days.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
+      @period_name = "Last 30 Days"
+    when '90'
+      @start_date = 90.days.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
+      @period_name = "Last 90 Days"
+    when 'custom'
+      @start_date = @custom_start_date&.beginning_of_day || 30.days.ago.beginning_of_day
+      @end_date = @custom_end_date&.end_of_day || Time.current.end_of_day
+      @period_name = "Custom Range"
+    else
+      @start_date = 30.days.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
+      @period_name = "Last 30 Days"
+    end
+    
+    # User filter
+    @selected_user_id = params[:user_id]
+    @selected_user = @selected_user_id.present? ? User.find(@selected_user_id) : nil
+    
+    # Initialize analytics service
+    analytics = AdminAnalyticsService.new(
+      start_date: @start_date,
+      end_date: @end_date,
+      user_id: @selected_user_id
+    )
+    
+    # Get comprehensive analytics
+    @user_performance = analytics.user_performance_summary
+    @team_overview = analytics.team_performance_overview
+    @activity_trends = analytics.activity_trends
+    @deal_analytics = analytics.deal_pipeline_analytics
+    @communication_analytics = analytics.communication_analytics
+    
+    # Traditional dashboard stats (kept for compatibility)
     @total_customers = Customer.count
     @total_deals = Deal.count
     @active_deals = Deal.active.count

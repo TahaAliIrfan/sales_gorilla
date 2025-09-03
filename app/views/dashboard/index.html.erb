@@ -1,193 +1,454 @@
 <div>
-  <h1 class="text-2xl font-bold mb-6">Dashboard</h1>
-
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-    <!-- Customers Stats card -->
-    <div class="bg-white overflow-hidden shadow rounded-lg">
-      <div class="p-5">
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </div>
-          <div class="ml-5 w-0 flex-1">
-            <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
-              <dd class="flex items-baseline">
-                <div class="text-2xl font-semibold text-gray-900"><%= @total_customers %></div>
-              </dd>
-            </dl>
-          </div>
-        </div>
-      </div>
-      <div class="bg-gray-50 px-5 py-3">
-        <div class="text-sm">
-          <%= link_to customers_path, class: "font-medium text-blue-600 hover:text-blue-900" do %>
-            View all customers
-          <% end %>
-        </div>
-      </div>
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">Admin Performance Dashboard</h1>
+    <div class="text-sm text-gray-600 bg-white px-3 py-1 rounded-lg border">
+      <%= @period_name %>
     </div>
+  </div>
 
-    <!-- Active Deals Stats card -->
+  <!-- Filters Section -->
+  <div class="mb-6 bg-white p-4 rounded-lg shadow">
+    <%= form_with url: admin_dashboard_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |form| %>
+      <div class="flex-1 min-w-48">
+        <%= form.label :filter_range, "Time Period", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.select :filter_range, 
+            options_for_select([
+              ['Last 7 Days', '7'],
+              ['Last 30 Days', '30'],
+              ['Last 90 Days', '90'],
+              ['Custom Range', 'custom']
+            ], @filter_range), 
+            {}, 
+            { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
+              onchange: "toggleCustomDates()" } %>
+      </div>
+      
+      <div class="flex-1 min-w-48" id="custom-dates" style="<%= @filter_range != 'custom' ? 'display: none;' : '' %>">
+        <div class="flex gap-2">
+          <div>
+            <%= form.label :start_date, "From", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.date_field :start_date, value: @custom_start_date, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+          <div>
+            <%= form.label :end_date, "To", class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= form.date_field :end_date, value: @custom_end_date, class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex-1 min-w-48">
+        <%= form.label :user_id, "Filter by User", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= form.select :user_id, 
+            options_from_collection_for_select(User.all, :id, :name, @selected_user_id), 
+            { prompt: "All Users" }, 
+            { class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+      </div>
+      
+      <div>
+        <%= form.submit "Apply Filters", class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" %>
+        <%= link_to "Clear", admin_dashboard_path, class: "ml-2 bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300" %>
+      </div>
+    <% end %>
+  </div>
+
+  <script>
+    function toggleCustomDates() {
+      const select = document.querySelector('select[name="filter_range"]');
+      const customDates = document.getElementById('custom-dates');
+      if (select.value === 'custom') {
+        customDates.style.display = 'block';
+      } else {
+        customDates.style.display = 'none';
+      }
+    }
+  </script>
+
+  <!-- Team Overview Stats -->
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-8">
     <div class="bg-white overflow-hidden shadow rounded-lg">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Active Deals</dt>
-              <dd class="flex items-baseline">
-                <div class="text-2xl font-semibold text-gray-900"><%= @active_deals %></div>
-              </dd>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= @team_overview[:total_users] %></dd>
             </dl>
           </div>
         </div>
       </div>
-      <div class="bg-gray-50 px-5 py-3">
-        <div class="text-sm">
-          <%= link_to deals_path, class: "font-medium text-blue-600 hover:text-blue-900" do %>
-            View all deals
-          <% end %>
-        </div>
-      </div>
     </div>
 
-    <!-- Won Deals Stats card -->
     <div class="bg-white overflow-hidden shadow rounded-lg">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Won Deals</dt>
-              <dd class="flex items-baseline">
-                <div class="text-2xl font-semibold text-gray-900"><%= @won_deals %></div>
-                <div class="ml-2 text-sm font-medium text-green-600">
-                  <%= number_to_currency(@won_deal_value) %>
-                </div>
-              </dd>
+              <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= @team_overview[:active_users] %></dd>
             </dl>
           </div>
         </div>
       </div>
-      <div class="bg-gray-50 px-5 py-3">
-        <div class="text-sm">
-          <%= link_to deals_path, class: "font-medium text-blue-600 hover:text-blue-900" do %>
-            View all deals
-          <% end %>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= number_to_currency(@team_overview[:total_revenue]) %></dd>
+            </dl>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Lost Deals Stats card -->
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Deals</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= @team_overview[:total_deals] %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="bg-white overflow-hidden shadow rounded-lg">
       <div class="p-5">
         <div class="flex items-center">
           <div class="flex-shrink-0">
             <svg class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
             </svg>
           </div>
           <div class="ml-5 w-0 flex-1">
             <dl>
-              <dt class="text-sm font-medium text-gray-500 truncate">Lost Deals</dt>
-              <dd class="flex items-baseline">
-                <div class="text-2xl font-semibold text-gray-900"><%= @lost_deals %></div>
-              </dd>
+              <dt class="text-sm font-medium text-gray-500 truncate">Conversion Rate</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= @team_overview[:conversion_rate] %>%</dd>
             </dl>
           </div>
         </div>
       </div>
-      <div class="bg-gray-50 px-5 py-3">
-        <div class="text-sm">
-          <%= link_to deals_path, class: "font-medium text-blue-600 hover:text-blue-900" do %>
-            View all deals
-          <% end %>
-        </div>
-      </div>
     </div>
   </div>
 
-  <!-- Pipeline Overview -->
-  <div class="mt-8">
-    <h2 class="text-lg font-medium text-gray-900 mb-4">Pipeline Overview</h2>
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-      <div class="px-4 py-5 sm:p-6">
-        <div class="flex items-center space-x-4">
-          <% @deal_stages.each do |stage| %>
-            <div class="flex-1 text-center">
-              <div class="text-sm font-medium text-gray-500"><%= stage.name %></div>
-              <div class="mt-1 text-2xl font-semibold text-gray-900"><%= @deals_by_stage[stage.id] || 0 %></div>
-            </div>
-            <% unless stage == @deal_stages.last %>
-              <div class="text-gray-300">
-                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            <% end %>
-          <% end %>
-        </div>
-      </div>
+  <!-- User Performance Table -->
+  <div class="bg-white shadow rounded-lg mb-8">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+      <h3 class="text-lg font-medium leading-6 text-gray-900">
+        <%= @selected_user ? "#{@selected_user.name}'s Performance" : "Team Performance Overview" %>
+      </h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">
+        Daily, weekly, and monthly activity metrics for sales representatives
+      </p>
     </div>
-  </div>
-
-  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-    <!-- My Deals -->
-    <div class="bg-white shadow rounded-lg">
-      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-        <h3 class="text-lg font-medium leading-6 text-gray-900">My Deals</h3>
-      </div>
-      <div class="px-4 py-5 sm:p-6">
-        <% if @my_deals.any? %>
-          <div class="flow-root">
-            <ul class="-my-5 divide-y divide-gray-200">
-              <% @my_deals.each do |deal| %>
-                <li class="py-4">
-                  <div class="flex items-center space-x-4">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">
-                        <%= link_to deal.title, deal_path(deal), class: "hover:text-blue-600" %>
-                      </p>
-                      <p class="text-sm text-gray-500 truncate">
-                        <% if deal.customer.present? %>
-                          <%= deal.customer.name %>
-                        <% else %>
-                          <span class="text-gray-500">No customer</span>
-                        <% end %> • <%= deal.deal_stage.name %>
-                      </p>
-                    </div>
-                    <div>
-                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        <%= number_to_currency(deal.amount) %>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance Score</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Week</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @user_performance.each do |user_data| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                      <span class="text-sm font-medium text-blue-800">
+                        <%= (user_data[:name] || 'N/A').split(' ').map(&:first).join.upcase[0..1] %>
                       </span>
                     </div>
                   </div>
-                </li>
-              <% end %>
-            </ul>
-          </div>
-          <div class="mt-6">
-            <%= link_to "View all my deals", my_deals_deals_path, class: "w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
-          </div>
-        <% else %>
-          <div class="text-center text-gray-500">
-            No deals assigned to you
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900"><%= user_data[:name] || 'Unknown User' %></div>
+                    <div class="text-sm text-gray-500"><%= user_data[:email] %></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                  <%= case user_data[:role]
+                      when 'admin' then 'bg-red-100 text-red-800'
+                      when 'manager' then 'bg-yellow-100 text-yellow-800'
+                      when 'associate' then 'bg-green-100 text-green-800'
+                      else 'bg-gray-100 text-gray-800'
+                      end %>">
+                  <%= user_data[:role] %>
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900"><%= user_data[:performance_score] %>/100</div>
+                  <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: <%= user_data[:performance_score] %>%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="space-y-1">
+                  <div>Calls: <span class="font-medium"><%= user_data[:daily_metrics][:today][:calls] %></span></div>
+                  <div>Tasks: <span class="font-medium"><%= user_data[:daily_metrics][:today][:tasks_completed] %></span></div>
+                  <div>Deals: <span class="font-medium"><%= user_data[:daily_metrics][:today][:deals_created] %></span></div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="space-y-1">
+                  <div>Calls: <span class="font-medium"><%= user_data[:weekly_metrics][:this_week][:calls] %></span></div>
+                  <div>Success: <span class="font-medium"><%= user_data[:weekly_metrics][:this_week][:successful_calls] %></span></div>
+                  <div>Deals Won: <span class="font-medium"><%= user_data[:weekly_metrics][:this_week][:deals_won] %></span></div>
+                  <div>Revenue: <span class="font-medium"><%= number_to_currency(user_data[:weekly_metrics][:this_week][:revenue_generated]) %></span></div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <div class="space-y-1">
+                  <div>Calls: <span class="font-medium"><%= user_data[:monthly_metrics][:this_month][:calls] %></span></div>
+                  <div>Success: <span class="font-medium"><%= user_data[:monthly_metrics][:this_month][:successful_calls] %></span></div>
+                  <div>Deals Won: <span class="font-medium"><%= user_data[:monthly_metrics][:this_month][:deals_won] %></span></div>
+                  <div>Revenue: <span class="font-medium"><%= number_to_currency(user_data[:monthly_metrics][:this_month][:revenue_generated]) %></span></div>
+                  <div>Converted: <span class="font-medium"><%= user_data[:monthly_metrics][:this_month][:customers_converted] %></span></div>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Top Performers -->
+  <div class="bg-white shadow rounded-lg mb-8">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+      <h3 class="text-lg font-medium leading-6 text-gray-900">Top Performers</h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">
+        Highest performing team members for the selected period
+      </p>
+    </div>
+    <div class="px-4 py-5 sm:p-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <% @team_overview[:top_performers].each_with_index do |performer, index| %>
+          <div class="relative bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-lg font-semibold"><%= performer[:name] || 'Unknown User' %></div>
+                <div class="text-sm opacity-90">Score: <%= performer[:score] %>/100</div>
+                <div class="text-sm opacity-90">Deals Won: <%= performer[:deals_won] %></div>
+                <div class="text-sm opacity-90">Revenue: <%= number_to_currency(performer[:revenue]) %></div>
+              </div>
+              <div class="text-3xl font-bold opacity-50">#<%= index + 1 %></div>
+            </div>
           </div>
         <% end %>
       </div>
     </div>
+  </div>
 
+  <!-- Communication Analytics -->
+  <div class="bg-white shadow rounded-lg mb-8">
+    <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+      <h3 class="text-lg font-medium leading-6 text-gray-900">Communication Analytics</h3>
+      <p class="mt-1 max-w-2xl text-sm text-gray-500">
+        Call activity and customer engagement metrics
+      </p>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Calls</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Successful Calls</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customers Contacted</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Created</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Won</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @communication_analytics.each do |user_id, data| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900"><%= data[:name] || 'Unknown User' %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 font-medium"><%= data[:calls_made] %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 font-medium"><%= data[:successful_calls] %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <% success_rate = data[:calls_made] > 0 ? ((data[:successful_calls].to_f / data[:calls_made]) * 100).round(1) : 0 %>
+                  <div class="text-sm font-medium text-gray-900"><%= success_rate %>%</div>
+                  <div class="ml-2 w-16 bg-gray-200 rounded-full h-2">
+                    <div class="bg-green-600 h-2 rounded-full" style="width: <%= [success_rate, 100].min %>%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 font-medium"><%= data[:customers_contacted] %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 font-medium"><%= data[:deals_created] %></div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 font-medium"><%= data[:deals_won] %></div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Deal Pipeline Analytics -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Deals by Stage</h3>
+      </div>
+      <div class="px-4 py-5 sm:p-6">
+        <% if @deal_analytics[:deals_by_stage].any? %>
+          <div class="space-y-4">
+            <% @deal_analytics[:deals_by_stage].each do |stage_name, count| %>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900"><%= stage_name %></div>
+                </div>
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900 mr-3"><%= count %></div>
+                  <div class="w-20 bg-gray-200 rounded-full h-2">
+                    <% percentage = (@deal_analytics[:deals_by_stage].values.sum > 0) ? ((count.to_f / @deal_analytics[:deals_by_stage].values.sum) * 100).round(1) : 0 %>
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: <%= percentage %>%"></div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center text-gray-500">No deals found for the selected period</div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Deals by User</h3>
+      </div>
+      <div class="px-4 py-5 sm:p-6">
+        <% if @deal_analytics[:deals_by_user].any? %>
+          <div class="space-y-4">
+            <% @deal_analytics[:deals_by_user].sort_by { |name, count| -count }.first(10).each do |user_name, count| %>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900"><%= user_name %></div>
+                </div>
+                <div class="flex items-center">
+                  <div class="text-sm font-medium text-gray-900 mr-3"><%= count %></div>
+                  <div class="w-20 bg-gray-200 rounded-full h-2">
+                    <% percentage = (@deal_analytics[:deals_by_user].values.sum > 0) ? ((count.to_f / @deal_analytics[:deals_by_user].values.sum) * 100).round(1) : 0 %>
+                    <div class="bg-purple-600 h-2 rounded-full" style="width: <%= percentage %>%"></div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center text-gray-500">No deals found for the selected period</div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Analytics -->
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-8">
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Average Deal Size</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= number_to_currency(@deal_analytics[:average_deal_size]) %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Deal Velocity</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= @deal_analytics[:deal_velocity] %> days</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white overflow-hidden shadow rounded-lg">
+      <div class="p-5">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div class="ml-5 w-0 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 truncate">Total Pipeline Value</dt>
+              <dd class="text-2xl font-semibold text-gray-900"><%= number_to_currency(@total_deal_value) %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions Section -->
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
     <!-- Recent Deals -->
     <div class="bg-white shadow rounded-lg">
       <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
@@ -235,6 +496,33 @@
             No deals created yet
           </div>
         <% end %>
+      </div>
+    </div>
+
+    <!-- Pipeline Overview -->
+    <div class="bg-white shadow rounded-lg">
+      <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
+        <h3 class="text-lg font-medium leading-6 text-gray-900">Current Pipeline</h3>
+      </div>
+      <div class="px-4 py-5 sm:p-6">
+        <div class="space-y-3">
+          <% @deal_stages.each do |stage| %>
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium text-gray-700"><%= stage.name %></div>
+              <div class="flex items-center">
+                <span class="text-sm font-medium text-gray-900 mr-3"><%= @deals_by_stage[stage.id] || 0 %></span>
+                <div class="w-16 bg-gray-200 rounded-full h-2">
+                  <% total_deals = @deals_by_stage.values.sum %>
+                  <% percentage = total_deals > 0 ? ((@deals_by_stage[stage.id] || 0).to_f / total_deals * 100).round(1) : 0 %>
+                  <div class="bg-blue-600 h-2 rounded-full" style="width: <%= percentage %>%"></div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        <div class="mt-6">
+          <%= link_to "View Pipeline", deals_path, class: "w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50" %>
+        </div>
       </div>
     </div>
   </div>

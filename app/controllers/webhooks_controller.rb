@@ -67,8 +67,17 @@ class WebhooksController < ApplicationController
         read: false
       )
       
-      # Send email notification with cooldown protection
-      UserMailer.whatsapp_message_notification(customer.user, customer, message.body).deliver_now
+      # Send email notification with cooldown protection (max 1 email per customer per 5 minutes)
+      cooldown_key = "whatsapp_email_#{customer.id}_#{customer.user.id}"
+      last_email_time = Rails.cache.read(cooldown_key)
+      
+      if last_email_time.nil? || last_email_time < 5.minutes.ago
+        Rails.logger.info("Sending WhatsApp email notification for customer #{customer.id} to user #{customer.user.id}")
+        UserMailer.whatsapp_message_notification(customer.user, customer, message.body).deliver_now
+        Rails.cache.write(cooldown_key, Time.current, expires_in: 5.minutes)
+      else
+        Rails.logger.info("Skipping WhatsApp email notification for customer #{customer.id} - cooldown active (last sent: #{last_email_time})")
+      end
     end
   end
 end 
