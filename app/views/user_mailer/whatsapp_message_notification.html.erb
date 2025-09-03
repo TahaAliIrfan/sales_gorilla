@@ -46,6 +46,20 @@
       color: #777;
       text-align: center;
     }
+    .cta-button {
+      display: inline-block;
+      background-color: #25D366;
+      color: white !important;
+      padding: 12px 24px;
+      text-decoration: none;
+      border-radius: 5px;
+      margin: 20px 0;
+      font-weight: bold;
+      text-align: center;
+    }
+    .cta-button:hover {
+      background-color: #128C7E;
+    }
   </style>
 </head>
 <body>
@@ -69,7 +83,11 @@
       <p style="font-style: italic; color: #555;"><%= @message_preview %></p>
     </div>
     
-    <p>Please log in to the CRM to view the complete message and respond appropriately.</p>
+    <div style="text-align: center;">
+      <%= link_to "View Customer Details", customer_url(@customer), class: "cta-button" %>
+    </div>
+    
+    <p>Click the button above to view the customer details and complete message in the CRM.</p>
     
     <p>Best regards,<br>TecAudex Team</p>
   </div>
