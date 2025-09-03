@@ -66,6 +66,9 @@ class WebhooksController < ApplicationController
         resource: message,
         read: false
       )
+      
+      # Send email notification with cooldown protection
+      UserMailer.whatsapp_message_notification(customer.user, customer, message).deliver_later
     end
   end
 end 

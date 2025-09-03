@@ -11,4 +11,16 @@ class UserMailer < ApplicationMailer
       subject: "You have been assigned a new Lead"
     )
   end
+
+  def whatsapp_message_notification(user, customer, message_preview)
+    
+    @user = user
+    @customer = customer
+    @message_preview = message_preview
+    
+    mail(
+      to: @user.email,
+      subject: "New WhatsApp message from #{@customer.name}"
+    )
+  end
 end 

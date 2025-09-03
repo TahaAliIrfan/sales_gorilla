@@ -1,0 +1,21 @@
+New WhatsApp Message - TecAudex CRM
+
+Hello <%= @user.name %>,
+
+You have received a new WhatsApp message from one of your assigned customers.
+
+Customer Information:
+- Name: <%= @customer.name %>
+- Phone: <%= @customer.phone || 'Not specified' %>
+- Country: <%= @customer.country || 'Not specified' %>
+
+Message Preview:
+<%= @message_preview %>
+
+Please log in to the CRM to view the complete message and respond appropriately.
+
+Best regards,
+TecAudex Team
+
+---
+This is an automated message from the TecAudex CRM system.
