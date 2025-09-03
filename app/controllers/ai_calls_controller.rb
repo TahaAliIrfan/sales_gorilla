@@ -1,25 +1,11 @@
 class AiCallsController < ApplicationController
   layout 'dashboard'
   before_action :require_login
+  before_action :require_admin
   before_action :set_ai_conversation, only: [:show]
 
   def index
-    @conversations = AiConversation.includes(:user, :customer).recent
-    
-    # Apply filters based on user role
-    unless current_user&.admin?
-      if current_user&.manager?
-        # Managers can see conversations for themselves and their associates
-        user_ids = [current_user.id] + current_user.associates.pluck(:id)
-        @conversations = @conversations.where(user_id: user_ids)
-      else
-        # Associates can only see their own conversations
-        @conversations = @conversations.for_user(current_user)
-      end
-    end
-    
-    # Add pagination
-    @conversations = @conversations.page(params[:page]).per(20)
+    @conversations = AiConversation.includes(:user, :customer).recent.page(params[:page]).per(20)
   end
 
   def show
