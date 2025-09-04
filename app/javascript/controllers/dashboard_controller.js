@@ -138,6 +138,40 @@ export default class extends Controller {
           </div>
         </div>
       </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">WhatsApp Conversations</dt>
+                <dd class="text-2xl font-semibold text-gray-900">${data.total_whatsapp_conversations || 0}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white overflow-hidden shadow rounded-lg">
+        <div class="p-5">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <svg class="h-6 w-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-6a2 2 0 012-2h8z" />
+              </svg>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 truncate">Active Conversations</dt>
+                <dd class="text-2xl font-semibold text-gray-900">${data.total_active_conversations || 0}</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
     `
     
     // Render top performers if available
@@ -166,7 +200,7 @@ export default class extends Controller {
       `
     })
     
-    const cardContainer = this.topPerformersTarget.querySelector('.px-4')
+    const cardContainer = this.topPerformersTarget.querySelector('.px-4.py-5.sm\\:p-6') || this.topPerformersTarget.querySelector('.px-4')
     cardContainer.innerHTML = `
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         ${performerCards}
@@ -232,10 +266,11 @@ export default class extends Controller {
           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
             <div class="space-y-1">
               <div>Calls: <span class="font-medium">${user.monthly_metrics.this_month.calls}</span></div>
-              <div>Success: <span class="font-medium">${user.monthly_metrics.this_month.successful_calls}</span></div>
+              <div>Connected: <span class="font-medium">${user.connected_calls}</span></div>
               <div>Deals Won: <span class="font-medium">${user.monthly_metrics.this_month.deals_won}</span></div>
               <div>Revenue: <span class="font-medium">$${(user.monthly_metrics.this_month.revenue_generated || 0).toLocaleString()}</span></div>
-              <div>Converted: <span class="font-medium">${user.monthly_metrics.this_month.customers_converted}</span></div>
+              <div>WhatsApp: <span class="font-medium">${user.whatsapp_conversations}</span></div>
+              <div>Active Chat: <span class="font-medium">${user.active_whatsapp_conversations}</span></div>
             </div>
           </td>
         </tr>
@@ -252,7 +287,7 @@ export default class extends Controller {
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance Score</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Week</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month + WhatsApp</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -297,6 +332,12 @@ export default class extends Controller {
           <td class="px-6 py-4 whitespace-nowrap">
             <div class="text-sm text-gray-900 font-medium">${userData.deals_won}</div>
           </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900 font-medium">${userData.whatsapp_conversations || 0}</div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-gray-900 font-medium">${userData.active_whatsapp_conversations || 0}</div>
+          </td>
         </tr>
       `
     })
@@ -308,11 +349,13 @@ export default class extends Controller {
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Calls</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Successful Calls</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connected Calls (120s+)</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customers Contacted</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Created</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Won</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp Conversations</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Conversations</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">

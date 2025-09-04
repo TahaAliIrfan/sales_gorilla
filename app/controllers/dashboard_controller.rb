@@ -517,7 +517,7 @@ class DashboardController < ApplicationController
     date_filtered_recordings = recording_scope.where(date: @start_date..@end_date)
     
     # Calculate successful and failed communications based on call duration
-    @successful_calls_count = date_filtered_recordings.where("duration >= ?", 40).count
+    @successful_calls_count = date_filtered_recordings.where("duration >= ?", 120).count
     @failed_calls_count = date_filtered_recordings.where("duration < ?", 40).count
     @successful_calls_percentage = view_context.calculate_percentage(@successful_calls_count, (@successful_calls_count + @failed_calls_count))
     
@@ -525,12 +525,12 @@ class DashboardController < ApplicationController
     begin
       # Try to use groupdate gem if available
       @monthly_system_calls = recording_scope.where(date: @start_date..@end_date).group_by_month(:date, last: 6).count
-      @monthly_successful_calls = recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 40).group_by_month(:date, last: 6).count
+      @monthly_successful_calls = recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 120).group_by_month(:date, last: 6).count
       @monthly_failed_calls = recording_scope.where(date: @start_date..@end_date).where("duration < ?", 40).group_by_month(:date, last: 6).count
     rescue NoMethodError
       # Fallback to manual grouping if groupdate gem is not available
       @monthly_system_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date), 6)
-      @monthly_successful_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 40), 6)
+      @monthly_successful_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date).where("duration >= ?", 120), 6)
       @monthly_failed_calls = group_by_month_manual_for_recordings(recording_scope.where(date: @start_date..@end_date).where("duration < ?", 40), 6)
     end
     
@@ -572,13 +572,13 @@ class DashboardController < ApplicationController
       # Last day calls
       last_day_recordings = Recording.where(user: user, date: 1.day.ago.beginning_of_day..Time.current.end_of_day)
       last_day_calls = last_day_recordings.count
-      last_day_successful_calls = last_day_recordings.where("duration >= ?", 40).count
+      last_day_successful_calls = last_day_recordings.where("duration >= ?", 120).count
       last_day_failed_calls = last_day_recordings.where("duration < ?", 40).count
       
       # Last month calls
       last_month_recordings = Recording.where(user: user, date: 1.month.ago.beginning_of_day..Time.current.end_of_day)
       last_month_calls = last_month_recordings.count
-      last_month_successful_calls = last_month_recordings.where("duration >= ?", 40).count
+      last_month_successful_calls = last_month_recordings.where("duration >= ?", 120).count
       last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
       
       @user_call_reports[user.id] = {
@@ -596,13 +596,13 @@ class DashboardController < ApplicationController
         # Last day calls
         last_day_recordings = Recording.where(user: u, date: 1.day.ago.beginning_of_day..Time.current.end_of_day)
         last_day_calls = last_day_recordings.count
-        last_day_successful_calls = last_day_recordings.where("duration >= ?", 40).count
+        last_day_successful_calls = last_day_recordings.where("duration >= ?", 120).count
         last_day_failed_calls = last_day_recordings.where("duration < ?", 40).count
         
         # Last month calls
         last_month_recordings = Recording.where(user: u, date: 1.month.ago.beginning_of_day..Time.current.end_of_day)
         last_month_calls = last_month_recordings.count
-        last_month_successful_calls = last_month_recordings.where("duration >= ?", 40).count
+        last_month_successful_calls = last_month_recordings.where("duration >= ?", 120).count
         last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
         
         @user_call_reports[u.id] = {

@@ -22,7 +22,10 @@ class AdminAnalyticsService
         daily_metrics: calculate_daily_metrics(user),
         weekly_metrics: calculate_weekly_metrics(user),
         monthly_metrics: calculate_monthly_metrics(user),
-        performance_score: calculate_performance_score(user)
+        performance_score: calculate_performance_score(user),
+        whatsapp_conversations: calculate_whatsapp_conversations(user),
+        active_whatsapp_conversations: calculate_active_whatsapp_conversations(user),
+        connected_calls: Recording.where(user: user, date: @start_date..@end_date).where("duration >= ?", 120).count
       }
     end
   end
@@ -35,6 +38,8 @@ class AdminAnalyticsService
       total_deals: Deal.where(created_at: @start_date..@end_date).count,
       total_revenue: Deal.won.where(closing_date: @start_date.to_date..@end_date.to_date).sum(:amount),
       conversion_rate: calculate_team_conversion_rate,
+      total_whatsapp_conversations: calculate_total_whatsapp_conversations,
+      total_active_conversations: calculate_total_active_conversations,
       top_performers: get_top_performers
     }
   end
@@ -76,11 +81,13 @@ class AdminAnalyticsService
         name: user.name || 'Unknown User',
         calls_made: Recording.where(user: user, date: @start_date..@end_date).count,
         successful_calls: Recording.where(user: user, date: @start_date..@end_date)
-                                  .where("duration >= ?", 40).count,
+                                  .where("duration >= ?", 120).count,
         customers_contacted: Customer.where(user: user, updated_at: @start_date..@end_date)
                                    .where.not(call_status: 'Pending').count,
         deals_created: Deal.where(user: user, created_at: @start_date..@end_date).count,
-        deals_won: Deal.where(user: user, status: 'won', closing_date: @start_date.to_date..@end_date.to_date).count
+        deals_won: Deal.where(user: user, status: 'won', closing_date: @start_date.to_date..@end_date.to_date).count,
+        whatsapp_conversations: calculate_whatsapp_conversations(user),
+        active_whatsapp_conversations: calculate_active_whatsapp_conversations(user)
       }
     end
     
@@ -121,7 +128,7 @@ class AdminAnalyticsService
       this_week: {
         calls: Recording.where(user: user, date: this_week_start..this_week_end).count,
         successful_calls: Recording.where(user: user, date: this_week_start..this_week_end)
-                                  .where("duration >= ?", 40).count,
+                                  .where("duration >= ?", 120).count,
         tasks_completed: user.tasks.where(status: 'completed', updated_at: this_week_start..this_week_end).count,
         customers_contacted: Customer.where(user: user, updated_at: this_week_start..this_week_end)
                                    .where.not(call_status: 'Pending').count,
@@ -132,7 +139,7 @@ class AdminAnalyticsService
       last_week: {
         calls: Recording.where(user: user, date: last_week_start..last_week_end).count,
         successful_calls: Recording.where(user: user, date: last_week_start..last_week_end)
-                                  .where("duration >= ?", 40).count,
+                                  .where("duration >= ?", 120).count,
         tasks_completed: user.tasks.where(status: 'completed', updated_at: last_week_start..last_week_end).count,
         customers_contacted: Customer.where(user: user, updated_at: last_week_start..last_week_end)
                                    .where.not(call_status: 'Pending').count,
@@ -153,7 +160,7 @@ class AdminAnalyticsService
       this_month: {
         calls: Recording.where(user: user, date: this_month_start..this_month_end).count,
         successful_calls: Recording.where(user: user, date: this_month_start..this_month_end)
-                                  .where("duration >= ?", 40).count,
+                                  .where("duration >= ?", 120).count,
         tasks_completed: user.tasks.where(status: 'completed', updated_at: this_month_start..this_month_end).count,
         customers_contacted: Customer.where(user: user, updated_at: this_month_start..this_month_end)
                                    .where.not(call_status: 'Pending').count,
@@ -165,7 +172,7 @@ class AdminAnalyticsService
       last_month: {
         calls: Recording.where(user: user, date: last_month_start..last_month_end).count,
         successful_calls: Recording.where(user: user, date: last_month_start..last_month_end)
-                                  .where("duration >= ?", 40).count,
+                                  .where("duration >= ?", 120).count,
         tasks_completed: user.tasks.where(status: 'completed', updated_at: last_month_start..last_month_end).count,
         customers_contacted: Customer.where(user: user, updated_at: last_month_start..last_month_end)
                                    .where.not(call_status: 'Pending').count,
@@ -184,23 +191,32 @@ class AdminAnalyticsService
     # Calculate performance score based on various factors (out of 100)
     score = 0
     
-    # Calls made (30 points max)
-    calls_score = [this_month[:calls] * 2, 30].min
+    # Connected calls (calls above 120 sec) - 25 points max
+    connected_calls = Recording.where(user: user, date: Date.current.beginning_of_month..Date.current.end_of_month)
+                               .where("duration >= ?", 120).count
+    connected_calls_score = [connected_calls * 3, 25].min
+    score += connected_calls_score
+    
+    # Regular calls made (15 points max)
+    calls_score = [this_month[:calls] * 1, 15].min
     score += calls_score
     
-    # Success rate (25 points max)
-    if this_month[:calls] > 0
-      success_rate = (this_month[:successful_calls].to_f / this_month[:calls]) * 100
-      success_score = [success_rate / 4, 25].min
-      score += success_score
-    end
+    # WhatsApp conversations (15 points max)
+    whatsapp_conversations = calculate_whatsapp_conversations(user)
+    whatsapp_score = [whatsapp_conversations * 2, 15].min
+    score += whatsapp_score
     
-    # Deals won (25 points max)
-    deals_score = [this_month[:deals_won] * 5, 25].min
+    # Active WhatsApp conversations (15 points max)
+    active_conversations = calculate_active_whatsapp_conversations(user)
+    active_whatsapp_score = [active_conversations * 3, 15].min
+    score += active_whatsapp_score
+    
+    # Deals won (20 points max)
+    deals_score = [this_month[:deals_won] * 4, 20].min
     score += deals_score
     
-    # Task completion (20 points max)
-    tasks_score = [this_month[:tasks_completed] * 2, 20].min
+    # Task completion (10 points max)
+    tasks_score = [this_month[:tasks_completed] * 1, 10].min
     score += tasks_score
     
     score.round
@@ -291,5 +307,53 @@ class AdminAnalyticsService
     total_days = won_deals.sum { |deal| (deal.closing_date - deal.created_at.to_date).to_i }
     average_days = total_days / won_deals.count
     average_days
+  end
+
+  def calculate_whatsapp_conversations(user)
+    # Count unique customers that had WhatsApp messages sent to them
+    Customer.joins(:whatsapp_messages)
+            .where(user: user)
+            .where(whatsapp_messages: { 
+              timestamp: @start_date..@end_date, 
+              direction: 'outbound' 
+            })
+            .distinct
+            .count
+  end
+
+  def calculate_active_whatsapp_conversations(user)
+    # Count conversations where customer replied back
+    Customer.joins(:whatsapp_messages)
+            .where(user: user)
+            .where(whatsapp_messages: { timestamp: @start_date..@end_date })
+            .group('customers.id')
+            .having('COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0 AND COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0', 'outbound', 'inbound')
+            .count
+            .size
+  end
+
+  def calculate_total_whatsapp_conversations
+    # Count unique customers that had WhatsApp messages sent to them (excluding admin users)
+    non_admin_users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    Customer.joins(:whatsapp_messages)
+            .where(user: non_admin_users)
+            .where(whatsapp_messages: { 
+              timestamp: @start_date..@end_date, 
+              direction: 'outbound' 
+            })
+            .distinct
+            .count
+  end
+
+  def calculate_total_active_conversations
+    # Count total conversations where customers replied back (excluding admin users)
+    non_admin_users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    Customer.joins(:whatsapp_messages)
+            .where(user: non_admin_users)
+            .where(whatsapp_messages: { timestamp: @start_date..@end_date })
+            .group('customers.id')
+            .having('COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0 AND COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0', 'outbound', 'inbound')
+            .count
+            .size
   end
 end
