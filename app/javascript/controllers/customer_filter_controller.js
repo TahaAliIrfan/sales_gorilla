@@ -5,6 +5,7 @@ export default class extends Controller {
     "search", 
     "user", 
     "leadSource",
+    "customerType",
     "status",
     "direction", 
     "customersList", 
@@ -18,7 +19,9 @@ export default class extends Controller {
     "statusBadge",
     "statusText",
     "leadSourceBadge",
-    "leadSourceText"
+    "leadSourceText",
+    "customerTypeBadge",
+    "customerTypeText"
   ]
 
   connect() {   
@@ -44,7 +47,7 @@ export default class extends Controller {
     const urlParams = new URLSearchParams(window.location.search)
     return urlParams.has('search') || urlParams.has('user_id') || 
            urlParams.has('status') || urlParams.has('lead_source') || 
-           urlParams.has('direction')
+           urlParams.has('customer_type') || urlParams.has('direction')
   }
   
   initializeFromUrlParams() {
@@ -73,6 +76,12 @@ export default class extends Controller {
     const leadSourceParam = urlParams.get('lead_source')
     if (leadSourceParam) {
       this.leadSourceTarget.value = leadSourceParam
+    }
+    
+    // Set customer type dropdown from URL parameter
+    const customerTypeParam = urlParams.get('customer_type')
+    if (customerTypeParam) {
+      this.customerTypeTarget.value = customerTypeParam
     }
     
     // Set direction parameter
@@ -105,6 +114,10 @@ export default class extends Controller {
         this.leadSourceTarget.value = storedFilters.leadSource
       }
       
+      if (storedFilters.customerType) {
+        this.customerTypeTarget.value = storedFilters.customerType
+      }
+      
       if (storedFilters.sortDirection && this.directionTarget.querySelector(`option[value="${storedFilters.sortDirection}"]`)) {
         this.directionTarget.value = storedFilters.sortDirection
       }
@@ -122,6 +135,7 @@ export default class extends Controller {
       filters.userId || 
       filters.status ||
       filters.leadSource || 
+      filters.customerType ||
       (filters.sortDirection && filters.sortDirection !== 'desc')
     )
   }
@@ -131,6 +145,7 @@ export default class extends Controller {
       search: this.searchTarget.value.trim(),
       status: this.statusTarget.value,
       leadSource: this.leadSourceTarget.value,
+      customerType: this.customerTypeTarget.value,
       sortDirection: this.directionTarget.value
     }
     
@@ -152,6 +167,7 @@ export default class extends Controller {
     const searchTerm = this.searchTarget.value.trim()
     const status = this.statusTarget.value
     const leadSource = this.leadSourceTarget.value
+    const customerType = this.customerTypeTarget.value
     const sortDirection = this.directionTarget.value
     
     // Only use userId if the user target exists (for admin users)
@@ -163,6 +179,7 @@ export default class extends Controller {
       userId,
       status,
       leadSource,
+      customerType,
       sortDirection,
       hasUserTarget: this.hasUserTarget
     })
@@ -192,6 +209,11 @@ export default class extends Controller {
     // Add lead_source param if present
     if (leadSource) {
       params.append('lead_source', leadSource)
+    }
+    
+    // Add customer_type param if present
+    if (customerType) {
+      params.append('customer_type', customerType)
     }
     
     // Add direction param
@@ -230,6 +252,8 @@ export default class extends Controller {
     const statusText = status ? this.statusTarget.options[this.statusTarget.selectedIndex].text : ''
     const leadSource = this.leadSourceTarget.value
     const leadSourceText = leadSource ? this.leadSourceTarget.options[this.leadSourceTarget.selectedIndex].text : ''
+    const customerType = this.customerTypeTarget.value
+    const customerTypeText = customerType ? this.customerTypeTarget.options[this.customerTypeTarget.selectedIndex].text : ''
     
     // Update search badge
     this.searchBadgeTarget.classList.toggle('hidden', !searchTerm)
@@ -257,8 +281,14 @@ export default class extends Controller {
       this.leadSourceTextTarget.textContent = `Lead Source: ${leadSourceText}`
     }
     
+    // Update customer type badge
+    this.customerTypeBadgeTarget.classList.toggle('hidden', !customerType)
+    if (customerType) {
+      this.customerTypeTextTarget.textContent = `Lead Type: ${customerTypeText}`
+    }
+    
     // Show/hide active filters section
-    const hasActiveFilters = searchTerm || userId || status || leadSource
+    const hasActiveFilters = searchTerm || userId || status || leadSource || customerType
     this.activeFiltersTarget.classList.toggle('hidden', !hasActiveFilters)
   }
   
@@ -282,6 +312,11 @@ export default class extends Controller {
     this.filter()
   }
   
+  clearCustomerType() {
+    this.customerTypeTarget.value = ''
+    this.filter()
+  }
+  
   clearAll() {
     this.searchTarget.value = ''
     // Only clear user if target exists (admin only)
@@ -290,6 +325,7 @@ export default class extends Controller {
     }
     this.statusTarget.value = ''
     this.leadSourceTarget.value = ''
+    this.customerTypeTarget.value = ''
     this.directionTarget.value = 'desc'
     
     // Clear stored filters

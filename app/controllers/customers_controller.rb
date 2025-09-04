@@ -49,6 +49,9 @@ class CustomersController < ApplicationController
     # Filter by lead source if provided
     @customers = @customers.where(lead_source: params[:lead_source]) if params[:lead_source].present?
     
+    # Filter by customer type (high value leads) if provided
+    @customers = @customers.where(customer_type: params[:customer_type]) if params[:customer_type].present?
+    
     # Apply sorting - always sort by created_at since we removed the sort column
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("created_at #{sort_direction}")
@@ -58,7 +61,8 @@ class CustomersController < ApplicationController
     
     # Track filter state for the view
     @filter_applied = params[:search].present? || params[:user_id].present? || 
-                      params[:status].present? || params[:lead_source].present?
+                      params[:status].present? || params[:lead_source].present? ||
+                      params[:customer_type].present?
   end
 
   def show

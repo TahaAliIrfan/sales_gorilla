@@ -78,6 +78,20 @@
         </select>
       </div>
 
+      <!-- Customer Type Filter (High Value Leads) -->
+      <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200">
+        <label for="customer-type-filter" class="block text-xs font-medium text-gray-500 mb-1">Lead Type</label>
+        <select id="customer-type-filter"
+                class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
+                data-customer-filter-target="customerType"
+                data-action="change->customer-filter#filter">
+          <option value="">All Leads</option>
+          <% Customer::CUSTOMER_TYPES.each do |key, value| %>
+            <option value="<%= value %>"><%= value %></option>
+          <% end %>
+        </select>
+      </div>
+
       <!-- Sort Direction -->
       <div class="px-3 py-2">
         <label for="direction-filter" class="block text-xs font-medium text-gray-500 mb-1">Order</label>
@@ -123,6 +137,15 @@
       <span data-customer-filter-target="leadSourceBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800">
         <span data-customer-filter-target="leadSourceText"></span>
         <button type="button" data-action="click->customer-filter#clearLeadSource" class="ml-1 text-purple-500 hover:text-purple-700">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </span>
+
+      <span data-customer-filter-target="customerTypeBadge" class="hidden inline-flex items-center px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">
+        <span data-customer-filter-target="customerTypeText"></span>
+        <button type="button" data-action="click->customer-filter#clearCustomerType" class="ml-1 text-yellow-500 hover:text-yellow-700">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -262,6 +285,7 @@
                   data-user-id="<%= customer.user_id %>"
                   data-lead-source="<%= customer.lead_source %>"
                   data-status="<%= customer.status %>"
+                  data-customer-type="<%= customer.customer_type %>"
                   data-created-at="<%= customer.created_at.to_i %>"
                   data-updated-at="<%= customer.updated_at.to_i %>"
                   data-customer-id="<%= customer.id %>">
@@ -397,6 +421,7 @@
                 data-user-id="<%= customer.user_id %>"
                 data-lead-source="<%= customer.lead_source %>"
                 data-status="<%= customer.status %>"
+                data-customer-type="<%= customer.customer_type %>"
                 data-created-at="<%= customer.created_at.to_i %>"
                 data-updated-at="<%= customer.updated_at.to_i %>"
                 data-customer-id="<%= customer.id %>">
