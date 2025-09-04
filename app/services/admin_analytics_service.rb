@@ -9,7 +9,8 @@ class AdminAnalyticsService
     if @user_id.present?
       users = [User.find(@user_id)]
     else
-      users = User.all.includes(:deals, :customers, :tasks, :recordings)
+      users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+                  .includes(:deals, :customers, :tasks, :recordings)
     end
 
     users.map do |user|
@@ -27,9 +28,10 @@ class AdminAnalyticsService
   end
 
   def team_performance_overview
+    non_admin_users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
     {
-      total_users: User.count,
-      active_users: User.joins(:customers).where(customers: { updated_at: @start_date..@end_date }).distinct.count,
+      total_users: non_admin_users.count,
+      active_users: non_admin_users.joins(:customers).where(customers: { updated_at: @start_date..@end_date }).distinct.count,
       total_deals: Deal.where(created_at: @start_date..@end_date).count,
       total_revenue: Deal.won.where(closing_date: @start_date.to_date..@end_date.to_date).sum(:amount),
       conversion_rate: calculate_team_conversion_rate,
@@ -63,7 +65,11 @@ class AdminAnalyticsService
   def communication_analytics
     users_data = {}
     
-    users = @user_id.present? ? [User.find(@user_id)] : User.all
+    if @user_id.present?
+      users = [User.find(@user_id)]
+    else
+      users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    end
     
     users.each do |user|
       users_data[user.id] = {
@@ -210,7 +216,8 @@ class AdminAnalyticsService
   end
 
   def get_top_performers(limit = 5)
-    User.all.map do |user|
+    non_admin_users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    non_admin_users.map do |user|
       {
         id: user.id,
         name: user.name || 'Unknown User',

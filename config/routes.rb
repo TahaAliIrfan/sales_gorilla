@@ -143,6 +143,13 @@ Rails.application.routes.draw do
   get 'dashboard/reports', to: 'dashboard#reports', as: :reports
   get 'dashboard/my_reports', to: 'dashboard#my_reports', as: :my_reports
   
+  # Dashboard AJAX endpoints
+  get 'dashboard/team_overview', to: 'dashboard#team_overview', as: :dashboard_team_overview
+  get 'dashboard/user_performance', to: 'dashboard#user_performance', as: :dashboard_user_performance
+  get 'dashboard/communication_analytics', to: 'dashboard#communication_analytics', as: :dashboard_communication_analytics
+  get 'dashboard/deal_analytics', to: 'dashboard#deal_analytics', as: :dashboard_deal_analytics
+  get 'dashboard/quick_data', to: 'dashboard#quick_data', as: :dashboard_quick_data
+  
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
   

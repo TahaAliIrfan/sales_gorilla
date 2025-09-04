@@ -4,98 +4,46 @@ class DashboardController < ApplicationController
   before_action :require_admin, except: [:my_reports]
 
   def index
-    # Date range setup for analytics
+    # Setup filter parameters for AJAX requests
     @filter_range = params[:filter_range] || '30'
     @custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
     @custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
-    
-    # Set date range based on filter
-    case @filter_range
-    when '7'
-      @start_date = 7.days.ago.beginning_of_day
-      @end_date = Time.current.end_of_day
-      @period_name = "Last 7 Days"
-    when '30'
-      @start_date = 30.days.ago.beginning_of_day
-      @end_date = Time.current.end_of_day
-      @period_name = "Last 30 Days"
-    when '90'
-      @start_date = 90.days.ago.beginning_of_day
-      @end_date = Time.current.end_of_day
-      @period_name = "Last 90 Days"
-    when 'custom'
-      @start_date = @custom_start_date&.beginning_of_day || 30.days.ago.beginning_of_day
-      @end_date = @custom_end_date&.end_of_day || Time.current.end_of_day
-      @period_name = "Custom Range"
-    else
-      @start_date = 30.days.ago.beginning_of_day
-      @end_date = Time.current.end_of_day
-      @period_name = "Last 30 Days"
-    end
-    
-    # User filter
     @selected_user_id = params[:user_id]
     @selected_user = @selected_user_id.present? ? User.find(@selected_user_id) : nil
     
-    # Initialize analytics service
-    analytics = AdminAnalyticsService.new(
-      start_date: @start_date,
-      end_date: @end_date,
-      user_id: @selected_user_id
-    )
+    # Set period name for display
+    @period_name = case @filter_range
+                   when '7' then "Last 7 Days"
+                   when '30' then "Last 30 Days"
+                   when '90' then "Last 90 Days"
+                   when 'custom' then "Custom Range"
+                   else "Last 30 Days"
+                   end
     
-    # Get comprehensive analytics
-    @user_performance = analytics.user_performance_summary
-    @team_overview = analytics.team_performance_overview
-    @activity_trends = analytics.activity_trends
-    @deal_analytics = analytics.deal_pipeline_analytics
-    @communication_analytics = analytics.communication_analytics
+    # Only load essential data for initial page load
+    @users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))  # Needed for filter dropdown
     
-    # Traditional dashboard stats (kept for compatibility)
-    @total_customers = Customer.count
-    @total_deals = Deal.count
-    @active_deals = Deal.active.count
-    @won_deals = Deal.won.count
-    @lost_deals = Deal.lost.count
-    @total_deal_value = Deal.sum(:amount)
-    @won_deal_value = Deal.won.sum(:amount)
-    
-    # Get deals for the current user
-    @my_deals = current_user ? Deal.assigned_to(current_user).active.order(expected_close_date: :asc).limit(5) : []
-    
-    # Get recent deals
-    @recent_deals = Deal.order(created_at: :desc).limit(5)
-    
-    # Get deals by stage for a simple pipeline overview
-    @deal_stages = DealStage.all
-    @deals_by_stage = {}
-    @deal_stages.each do |stage|
-      @deals_by_stage[stage.id] = Deal.active.by_stage(stage).count
-    end
-    
-    # Check for deals and customers that need attention
-    @deals_needing_attention = deals_needing_attention
-    @customers_needing_attention = customers_needing_attention
-    @needs_attention = @deals_needing_attention.any? || @customers_needing_attention.any?
-    
-    # Get tasks data
-    @pending_tasks_count = Task.pending.count
-    @today_tasks_count = Task.for_today.count
-    @overdue_tasks_count = Task.overdue.count
-    
-    # Get tasks by user for admin dashboard
-    @users = User.all
-    @tasks_by_user = {}
-    @users.each do |user|
-      @tasks_by_user[user.id] = {
-        pending: user.tasks.pending.count,
-        today: user.tasks.for_today.count,
-        overdue: user.tasks.overdue.count
+    # Quick stats (cached)
+    Rails.cache.fetch("dashboard_quick_stats", expires_in: 5.minutes) do
+      @total_customers = Customer.count
+      @total_deals = Deal.count
+      @active_deals = Deal.active.count
+      @won_deals = Deal.won.count
+      @total_deal_value = Deal.sum(:amount)
+      {
+        total_customers: @total_customers,
+        total_deals: @total_deals,
+        active_deals: @active_deals,
+        won_deals: @won_deals,
+        total_deal_value: @total_deal_value
       }
+    end.tap do |cached_stats|
+      @total_customers = cached_stats[:total_customers]
+      @total_deals = cached_stats[:total_deals]
+      @active_deals = cached_stats[:active_deals]
+      @won_deals = cached_stats[:won_deals]
+      @total_deal_value = cached_stats[:total_deal_value]
     end
-    
-    # Get today's tasks across all users for admin view
-    @today_tasks = Task.for_today.includes(:user, :customer).order(due_date: :asc).limit(10)
   end
 
   def reports
@@ -122,7 +70,7 @@ class DashboardController < ApplicationController
     
     # User filter for admin
     @selected_user_id = params[:user_id]
-    @users = User.all
+    @users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
     
     # Prepare data for all users or selected user
     if @selected_user_id.present?
@@ -161,7 +109,154 @@ class DashboardController < ApplicationController
     render 'user_reports'
   end
 
+  # AJAX endpoint for team overview data
+  def team_overview
+    start_date, end_date = get_date_range
+    selected_user_id = params[:user_id]
+    
+    cache_key = "dashboard_team_overview_#{start_date.to_i}_#{end_date.to_i}_#{selected_user_id}"
+    
+    @team_overview = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      analytics = AdminAnalyticsService.new(
+        start_date: start_date,
+        end_date: end_date,
+        user_id: selected_user_id
+      )
+      analytics.team_performance_overview
+    end
+    
+    render json: @team_overview
+  end
+
+  # AJAX endpoint for user performance data
+  def user_performance
+    start_date, end_date = get_date_range
+    selected_user_id = params[:user_id]
+    
+    cache_key = "dashboard_user_performance_#{start_date.to_i}_#{end_date.to_i}_#{selected_user_id}"
+    
+    @user_performance = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      analytics = AdminAnalyticsService.new(
+        start_date: start_date,
+        end_date: end_date,
+        user_id: selected_user_id
+      )
+      analytics.user_performance_summary
+    end
+    
+    render json: @user_performance
+  end
+
+  # AJAX endpoint for communication analytics
+  def communication_analytics
+    start_date, end_date = get_date_range
+    selected_user_id = params[:user_id]
+    
+    cache_key = "dashboard_communication_analytics_#{start_date.to_i}_#{end_date.to_i}_#{selected_user_id}"
+    
+    @communication_analytics = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      analytics = AdminAnalyticsService.new(
+        start_date: start_date,
+        end_date: end_date,
+        user_id: selected_user_id
+      )
+      analytics.communication_analytics
+    end
+    
+    render json: @communication_analytics
+  end
+
+  # AJAX endpoint for deal pipeline analytics
+  def deal_analytics
+    start_date, end_date = get_date_range
+    selected_user_id = params[:user_id]
+    
+    cache_key = "dashboard_deal_analytics_#{start_date.to_i}_#{end_date.to_i}_#{selected_user_id}"
+    
+    @deal_analytics = Rails.cache.fetch(cache_key, expires_in: 10.minutes) do
+      analytics = AdminAnalyticsService.new(
+        start_date: start_date,
+        end_date: end_date,
+        user_id: selected_user_id
+      )
+      analytics.deal_pipeline_analytics
+    end
+    
+    render json: @deal_analytics
+  end
+
+  # AJAX endpoint for recent deals and pipeline
+  def quick_data
+    @recent_deals = Rails.cache.fetch("dashboard_recent_deals", expires_in: 5.minutes) do
+      Deal.includes(:customer, :deal_stage).order(created_at: :desc).limit(5)
+    end
+    
+    @deal_stages = Rails.cache.fetch("dashboard_deal_stages", expires_in: 30.minutes) do
+      DealStage.all
+    end
+    
+    @deals_by_stage = Rails.cache.fetch("dashboard_deals_by_stage", expires_in: 5.minutes) do
+      stages_hash = {}
+      @deal_stages.each do |stage|
+        stages_hash[stage.id] = Deal.active.by_stage(stage).count
+      end
+      stages_hash
+    end
+    
+    @pending_tasks_count = Rails.cache.fetch("dashboard_pending_tasks", expires_in: 2.minutes) do
+      Task.pending.count
+    end
+    
+    @today_tasks_count = Rails.cache.fetch("dashboard_today_tasks", expires_in: 2.minutes) do
+      Task.for_today.count
+    end
+    
+    @overdue_tasks_count = Rails.cache.fetch("dashboard_overdue_tasks", expires_in: 2.minutes) do
+      Task.overdue.count
+    end
+    
+    @today_tasks = Rails.cache.fetch("dashboard_today_tasks_list", expires_in: 5.minutes) do
+      Task.for_today.includes(:user, :customer).order(due_date: :asc).limit(10)
+    end
+    
+    render json: {
+      recent_deals: @recent_deals.as_json(include: [:customer, :deal_stage]),
+      deal_stages: @deal_stages.as_json,
+      deals_by_stage: @deals_by_stage,
+      pending_tasks_count: @pending_tasks_count,
+      today_tasks_count: @today_tasks_count,
+      overdue_tasks_count: @overdue_tasks_count,
+      today_tasks: @today_tasks.as_json(include: [:user, :customer])
+    }
+  end
+
   private
+
+  def get_date_range
+    filter_range = params[:filter_range] || '30'
+    custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
+    custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
+    
+    case filter_range
+    when '7'
+      start_date = 7.days.ago.beginning_of_day
+      end_date = Time.current.end_of_day
+    when '30'
+      start_date = 30.days.ago.beginning_of_day
+      end_date = Time.current.end_of_day
+    when '90'
+      start_date = 90.days.ago.beginning_of_day
+      end_date = Time.current.end_of_day
+    when 'custom'
+      start_date = custom_start_date&.beginning_of_day || 30.days.ago.beginning_of_day
+      end_date = custom_end_date&.end_of_day || Time.current.end_of_day
+    else
+      start_date = 30.days.ago.beginning_of_day
+      end_date = Time.current.end_of_day
+    end
+    
+    [start_date, end_date]
+  end
 
   def require_login
     unless session[:user_id]
@@ -496,8 +591,8 @@ class DashboardController < ApplicationController
         last_month_failed_calls: last_month_failed_calls
       }
     else
-      # Get data for all users
-      User.all.each do |u|
+      # Get data for all users (exclude admins)
+      User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id)).each do |u|
         # Last day calls
         last_day_recordings = Recording.where(user: u, date: 1.day.ago.beginning_of_day..Time.current.end_of_day)
         last_day_calls = last_day_recordings.count
