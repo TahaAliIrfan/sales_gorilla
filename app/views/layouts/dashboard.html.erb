@@ -57,6 +57,13 @@
                 Reports
               <% end %>
               
+              <%= link_to dashboard_team_performance_path, class: "text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md #{current_page?(dashboard_team_performance_path) ? 'bg-gray-800 text-white' : ''}" do %>
+                <svg class="mr-4 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                </svg>
+                Team Performance
+              <% end %>
+              
               <!-- User Management Dropdown -->
               <div data-controller="dropdown" class="relative">
                 <button type="button" data-action="dropdown#toggle" class="text-gray-300 hover:bg-gray-800 hover:text-white group flex items-center px-2 py-2 text-base font-medium rounded-md w-full">
@@ -311,6 +318,8 @@
                 <h1 class="text-2xl font-semibold text-gray-900">Reports</h1>
               <% elsif current_page?(my_reports_path) && !current_user&.admin? %>
                 <h1 class="text-2xl font-semibold text-gray-900">My Reports</h1>
+              <% elsif current_page?(dashboard_team_performance_path) %>
+                <h1 class="text-2xl font-semibold text-gray-900">Team Performance</h1>
               <% elsif current_page?(my_tasks_dashboard_path) %>
                 <h1 class="text-2xl font-semibold text-gray-900">My Tasks Dashboard</h1>
               <% elsif current_page?(calling_path) %>

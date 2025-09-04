@@ -1,0 +1,327 @@
+<div class="container mx-auto px-4 py-6">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">Team Performance Overview</h1>
+      <p class="text-gray-600">Daily performance metrics to track sales team activity</p>
+    </div>
+    <div class="text-sm text-gray-600 bg-white px-3 py-2 rounded-lg border">
+      Today: <%= @daily_team_performance[:date].strftime("%B %d, %Y") %>
+    </div>
+  </div>
+
+  <!-- Team Summary Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4 mb-8">
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Team Members</h3>
+      <p class="mt-2 text-2xl font-bold text-gray-800"><%= @daily_team_performance[:team_summary][:total_team_members] %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Active Today</h3>
+      <p class="mt-2 text-2xl font-bold text-green-600"><%= @daily_team_performance[:team_summary][:active_today] %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Total Calls</h3>
+      <p class="mt-2 text-2xl font-bold text-blue-600"><%= @daily_team_performance[:team_summary][:total_calls_today] %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Success Calls</h3>
+      <p class="mt-2 text-2xl font-bold text-green-600"><%= @daily_team_performance[:team_summary][:successful_calls_today] %></p>
+      <p class="text-xs text-gray-500">Duration ≥ 2 min</p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Failed Calls</h3>
+      <p class="mt-2 text-2xl font-bold text-red-600"><%= @daily_team_performance[:team_summary][:failed_calls_today] %></p>
+      <p class="text-xs text-gray-500">Duration &lt; 40 sec</p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Tasks Done</h3>
+      <p class="mt-2 text-2xl font-bold text-purple-600"><%= @daily_team_performance[:team_summary][:tasks_completed_today] %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Deals Created</h3>
+      <p class="mt-2 text-2xl font-bold text-yellow-600"><%= @daily_team_performance[:team_summary][:deals_created_today] %></p>
+    </div>
+    
+    <div class="bg-white shadow-md rounded-lg p-4">
+      <h3 class="text-xs uppercase text-gray-500 font-medium">Customers Contacted</h3>
+      <p class="mt-2 text-2xl font-bold text-indigo-600"><%= @daily_team_performance[:team_summary][:customers_contacted_today] %></p>
+    </div>
+  </div>
+
+  <!-- Team Performance Leaderboard -->
+  <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
+    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+      <h2 class="text-xl font-semibold text-gray-900">Daily Performance Leaderboard</h2>
+      <p class="text-sm text-gray-600">Individual performance scores and call metrics for today</p>
+    </div>
+    
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales Rep</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Daily Score</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Calls Made</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Success Rate</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks Done</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity Level</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% @daily_team_performance[:individual_performance].each_with_index do |performance, index| %>
+            <tr class="<%= index < 3 ? 'bg-green-50' : '' %>">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <% if index == 0 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    🏆 #1
+                  </span>
+                <% elsif index == 1 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    🥈 #2
+                  </span>
+                <% elsif index == 2 %>
+                  <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    🥉 #3
+                  </span>
+                <% else %>
+                  <span class="text-sm text-gray-600">#<%= index + 1 %></span>
+                <% end %>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div>
+                    <div class="text-sm font-medium text-gray-900"><%= performance[:name] %></div>
+                    <div class="text-xs text-gray-500"><%= performance[:role] %></div>
+                  </div>
+                </div>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="text-2xl font-bold 
+                    <%= case performance[:daily_score]
+                        when 80..100 then 'text-green-600'
+                        when 60..79 then 'text-yellow-600'
+                        when 40..59 then 'text-orange-600'
+                        else 'text-red-600'
+                        end %>">
+                    <%= performance[:daily_score] %>
+                  </div>
+                  <div class="ml-2 text-sm text-gray-500">/100</div>
+                </div>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                  <%= case performance[:performance_grade]
+                      when 'A+', 'A' then 'bg-green-100 text-green-800'
+                      when 'B+', 'B' then 'bg-blue-100 text-blue-800'
+                      when 'C+', 'C' then 'bg-yellow-100 text-yellow-800'
+                      when 'D' then 'bg-orange-100 text-orange-800'
+                      else 'bg-red-100 text-red-800'
+                      end %>">
+                  <%= performance[:performance_grade] %>
+                </span>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900"><%= performance[:calls_made_today] %></div>
+                <div class="text-xs text-green-600">✓ <%= performance[:successful_calls_today] %> success</div>
+                <div class="text-xs text-red-600">✗ <%= performance[:failed_calls_today] %> failed</div>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="text-sm font-medium 
+                    <%= performance[:call_success_rate] >= 70 ? 'text-green-600' : 
+                        performance[:call_success_rate] >= 50 ? 'text-yellow-600' : 'text-red-600' %>">
+                    <%= performance[:call_success_rate] %>%
+                  </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div class="
+                    <%= performance[:call_success_rate] >= 70 ? 'bg-green-600' : 
+                        performance[:call_success_rate] >= 50 ? 'bg-yellow-600' : 'bg-red-600' %>
+                    h-2 rounded-full" style="width: <%= performance[:call_success_rate] %>%"></div>
+                </div>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900"><%= performance[:tasks_completed_today] %></div>
+                <% if performance[:deals_created_today] > 0 %>
+                  <div class="text-xs text-green-600">+ <%= performance[:deals_created_today] %> deals</div>
+                <% end %>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                  <%= case performance[:activity_score]
+                      when 'Very High' then 'bg-green-100 text-green-800'
+                      when 'High' then 'bg-blue-100 text-blue-800'
+                      when 'Medium' then 'bg-yellow-100 text-yellow-800'
+                      else 'bg-red-100 text-red-800'
+                      end %>">
+                  <%= performance[:activity_score] %>
+                </span>
+              </td>
+              
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                <%= performance[:last_activity] ? time_ago_in_words(performance[:last_activity]) + " ago" : "No recent activity" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Performance Insights -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Call Performance Analysis -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Call Performance Analysis</h3>
+      
+      <% total_calls = @daily_team_performance[:team_summary][:total_calls_today] %>
+      <% success_calls = @daily_team_performance[:team_summary][:successful_calls_today] %>
+      <% failed_calls = @daily_team_performance[:team_summary][:failed_calls_today] %>
+      <% success_rate = total_calls > 0 ? ((success_calls.to_f / total_calls) * 100).round(1) : 0 %>
+      
+      <div class="space-y-4">
+        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+          <div>
+            <div class="text-sm font-medium text-green-800">Connected Calls</div>
+            <div class="text-xs text-green-600">Duration ≥ 2 minutes</div>
+          </div>
+          <div class="text-xl font-bold text-green-800"><%= success_calls %></div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+          <div>
+            <div class="text-sm font-medium text-red-800">Failed Calls</div>
+            <div class="text-xs text-red-600">Duration &lt; 40 seconds</div>
+          </div>
+          <div class="text-xl font-bold text-red-800"><%= failed_calls %></div>
+        </div>
+        
+        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+          <div>
+            <div class="text-sm font-medium text-blue-800">Overall Success Rate</div>
+            <div class="text-xs text-blue-600">Connected calls / Total calls</div>
+          </div>
+          <div class="text-xl font-bold text-blue-800"><%= success_rate %>%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Alerts -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Alerts</h3>
+      
+      <% low_performers = @daily_team_performance[:individual_performance].select { |p| p[:daily_score] < 40 } %>
+      <% inactive_members = @daily_team_performance[:individual_performance].select { |p| p[:calls_made_today] == 0 } %>
+      <% zero_success = @daily_team_performance[:individual_performance].select { |p| p[:calls_made_today] > 0 && p[:successful_calls_today] == 0 } %>
+      
+      <div class="space-y-3">
+        <% if low_performers.any? %>
+          <div class="p-3 bg-red-50 rounded-lg border-l-4 border-red-400">
+            <div class="text-sm font-medium text-red-800">⚠️ Low Performers (<%= low_performers.count %>)</div>
+            <div class="text-xs text-red-600 mt-1">
+              <%= low_performers.map { |p| p[:name] }.join(", ") %>
+            </div>
+          </div>
+        <% end %>
+        
+        <% if inactive_members.any? %>
+          <div class="p-3 bg-orange-50 rounded-lg border-l-4 border-orange-400">
+            <div class="text-sm font-medium text-orange-800">📞 No Calls Made (<%= inactive_members.count %>)</div>
+            <div class="text-xs text-orange-600 mt-1">
+              <%= inactive_members.map { |p| p[:name] }.join(", ") %>
+            </div>
+          </div>
+        <% end %>
+        
+        <% if zero_success.any? %>
+          <div class="p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+            <div class="text-sm font-medium text-yellow-800">🎯 No Successful Calls (<%= zero_success.count %>)</div>
+            <div class="text-xs text-yellow-600 mt-1">
+              <%= zero_success.map { |p| p[:name] }.join(", ") %>
+            </div>
+          </div>
+        <% end %>
+        
+        <% if low_performers.empty? && inactive_members.empty? && zero_success.empty? %>
+          <div class="p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+            <div class="text-sm font-medium text-green-800">✅ No Performance Issues</div>
+            <div class="text-xs text-green-600 mt-1">All team members meeting expectations</div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Performance Metrics Guide -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Scoring System</h3>
+      
+      <div class="space-y-3 text-sm">
+        <div class="flex justify-between">
+          <span class="text-gray-600">Connected Calls (≥2 min):</span>
+          <span class="font-medium">15 pts each</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Total Calls Made:</span>
+          <span class="font-medium">5 pts each</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Tasks Completed:</span>
+          <span class="font-medium">8 pts each</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Deals Created:</span>
+          <span class="font-medium">20 pts each</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-gray-600">Customers Contacted:</span>
+          <span class="font-medium">3 pts each</span>
+        </div>
+      </div>
+      
+      <div class="mt-6 pt-4 border-t border-gray-200">
+        <h4 class="font-medium text-gray-900 mb-2">Grade Scale:</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex justify-between">
+            <span class="text-green-600 font-medium">A+ (90-100)</span>
+            <span class="text-blue-600 font-medium">B+ (70-79)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-green-600 font-medium">A (80-89)</span>
+            <span class="text-blue-600 font-medium">B (60-69)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-yellow-600 font-medium">C+ (50-59)</span>
+            <span class="text-red-600 font-medium">D (30-39)</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-yellow-600 font-medium">C (40-49)</span>
+            <span class="text-red-600 font-medium">F (&lt;30)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="mt-6 flex space-x-4">
+    <%= link_to "Back to Dashboard", admin_dashboard_path, class: "bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors" %>
+    <%= link_to "Refresh Data", dashboard_team_performance_path, class: "bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors" %>
+  </div>
+</div>

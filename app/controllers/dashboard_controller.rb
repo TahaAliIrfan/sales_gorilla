@@ -186,6 +186,19 @@ class DashboardController < ApplicationController
   end
 
   # AJAX endpoint for recent deals and pipeline
+  def team_performance
+    @users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+                .includes(:recordings, :deals, :tasks, :customers)
+                .order(:name)
+    
+    analytics = AdminAnalyticsService.new(
+      start_date: Date.current.beginning_of_day,
+      end_date: Date.current.end_of_day
+    )
+    
+    @daily_team_performance = analytics.daily_team_performance_overview(@users)
+  end
+
   def quick_data
     @recent_deals = Rails.cache.fetch("dashboard_recent_deals", expires_in: 5.minutes) do
       Deal.includes(:customer, :deal_stage).order(created_at: :desc).limit(5)

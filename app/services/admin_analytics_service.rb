@@ -94,6 +94,51 @@ class AdminAnalyticsService
     users_data
   end
 
+  def daily_team_performance_overview(users = nil)
+    users ||= User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    today = Date.current
+    
+    {
+      date: today,
+      team_summary: {
+        total_team_members: users.count,
+        active_today: users.joins(:recordings).where(recordings: { date: today.beginning_of_day..today.end_of_day }).distinct.count,
+        total_calls_today: Recording.where(user: users, date: today.beginning_of_day..today.end_of_day).count,
+        successful_calls_today: Recording.where(user: users, date: today.beginning_of_day..today.end_of_day)
+                                         .where("duration >= ?", 120).count,
+        failed_calls_today: Recording.where(user: users, date: today.beginning_of_day..today.end_of_day)
+                                     .where("duration < ?", 40).count,
+        tasks_completed_today: Task.where(user: users, status: 'completed', updated_at: today.beginning_of_day..today.end_of_day).count,
+        deals_created_today: Deal.where(user: users, created_at: today.beginning_of_day..today.end_of_day).count,
+        customers_contacted_today: Customer.where(user: users, updated_at: today.beginning_of_day..today.end_of_day)
+                                          .where.not(call_status: 'Pending').count
+      },
+      individual_performance: users.map do |user|
+        daily_score = calculate_daily_performance_score(user, today)
+        recordings_today = Recording.where(user: user, date: today.beginning_of_day..today.end_of_day)
+        
+        {
+          id: user.id,
+          name: user.name || 'Unknown User',
+          email: user.email,
+          role: user.highest_role&.name || 'No Role',
+          daily_score: daily_score,
+          performance_grade: get_performance_grade(daily_score),
+          calls_made_today: recordings_today.count,
+          successful_calls_today: recordings_today.where("duration >= ?", 120).count,
+          failed_calls_today: recordings_today.where("duration < ?", 40).count,
+          call_success_rate: calculate_call_success_rate(recordings_today),
+          tasks_completed_today: user.tasks.where(status: 'completed', updated_at: today.beginning_of_day..today.end_of_day).count,
+          deals_created_today: user.deals.where(created_at: today.beginning_of_day..today.end_of_day).count,
+          customers_contacted_today: Customer.where(user: user, updated_at: today.beginning_of_day..today.end_of_day)
+                                            .where.not(call_status: 'Pending').count,
+          activity_score: calculate_activity_score(user, today),
+          last_activity: get_last_activity_time(user)
+        }
+      end.sort_by { |p| -p[:daily_score] }
+    }
+  end
+
   private
 
   def calculate_daily_metrics(user)
@@ -355,5 +400,79 @@ class AdminAnalyticsService
             .having('COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0 AND COUNT(CASE WHEN whatsapp_messages.direction = ? THEN 1 END) > 0', 'outbound', 'inbound')
             .count
             .size
+  end
+
+  private
+
+  def calculate_daily_performance_score(user, date)
+    recordings = Recording.where(user: user, date: date.beginning_of_day..date.end_of_day)
+    successful_calls = recordings.where("duration >= ?", 120).count
+    total_calls = recordings.count
+    
+    tasks_completed = user.tasks.where(status: 'completed', updated_at: date.beginning_of_day..date.end_of_day).count
+    deals_created = user.deals.where(created_at: date.beginning_of_day..date.end_of_day).count
+    customers_contacted = Customer.where(user: user, updated_at: date.beginning_of_day..date.end_of_day)
+                                 .where.not(call_status: 'Pending').count
+    
+    score = 0
+    score += successful_calls * 15
+    score += total_calls * 5
+    score += tasks_completed * 8
+    score += deals_created * 20
+    score += customers_contacted * 3
+    
+    [score, 100].min
+  end
+
+  def get_performance_grade(score)
+    case score
+    when 90..100 then 'A+'
+    when 80..89 then 'A'
+    when 70..79 then 'B+'
+    when 60..69 then 'B'
+    when 50..59 then 'C+'
+    when 40..49 then 'C'
+    when 30..39 then 'D'
+    else 'F'
+    end
+  end
+
+  def calculate_call_success_rate(recordings)
+    return 0 if recordings.count == 0
+    successful = recordings.where("duration >= ?", 120).count
+    ((successful.to_f / recordings.count) * 100).round(1)
+  end
+
+  def calculate_activity_score(user, date)
+    total_activities = 0
+    total_activities += Recording.where(user: user, date: date.beginning_of_day..date.end_of_day).count
+    total_activities += user.tasks.where(updated_at: date.beginning_of_day..date.end_of_day).count
+    total_activities += Customer.where(user: user, updated_at: date.beginning_of_day..date.end_of_day).count
+    total_activities += user.deals.where(created_at: date.beginning_of_day..date.end_of_day).count
+    
+    case total_activities
+    when 0..2 then 'Low'
+    when 3..8 then 'Medium'
+    when 9..15 then 'High'
+    else 'Very High'
+    end
+  end
+
+  def get_last_activity_time(user)
+    activities = []
+    
+    last_recording = user.recordings.order(date: :desc).first
+    activities << last_recording.date if last_recording
+    
+    last_task = user.tasks.order(updated_at: :desc).first
+    activities << last_task.updated_at.to_date if last_task
+    
+    last_customer_update = Customer.where(user: user).order(updated_at: :desc).first
+    activities << last_customer_update.updated_at.to_date if last_customer_update
+    
+    last_deal = user.deals.order(created_at: :desc).first
+    activities << last_deal.created_at.to_date if last_deal
+    
+    activities.compact.max
   end
 end
