@@ -1,4 +1,5 @@
 require "active_support/core_ext/integer/time"
+require Rails.root.join("lib", "multi_logger")
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
@@ -13,7 +14,8 @@ Rails.application.configure do
   config.eager_load = true
 
   # Full error reports are disabled and caching is turned on.
-  config.consider_all_requests_local = false
+  # Enable local requests for better debugging during crash investigation
+  config.consider_all_requests_local = ENV.fetch("RAILS_SHOW_FULL_ERRORS", "false") == "true"
   config.action_controller.perform_caching = true
 
   # Ensures that a master key has been made available in ENV["RAILS_MASTER_KEY"], config/master.key, or an environment
@@ -58,14 +60,25 @@ Rails.application.configure do
   # require "syslog/logger"
   # config.logger = ActiveSupport::TaggedLogging.new(Syslog::Logger.new "app-name")
 
+  # Configure logging to both file and STDOUT for better debugging
   if ENV["RAILS_LOG_TO_STDOUT"].present?
-    logger           = ActiveSupport::Logger.new(STDOUT)
-    logger.formatter = config.log_formatter
-    config.logger    = ActiveSupport::TaggedLogging.new(logger)
+    # Log to both STDOUT and file
+    file_logger = ActiveSupport::Logger.new(Rails.root.join("log", "production.log"))
+    file_logger.formatter = config.log_formatter
+    
+    stdout_logger = ActiveSupport::Logger.new(STDOUT)
+    stdout_logger.formatter = config.log_formatter
+    
+    # Create a custom logger that writes to both destinations
+    config.logger = ActiveSupport::Logger.new(MultiLogger.new(file_logger, stdout_logger))
+    config.logger.formatter = config.log_formatter
+    config.logger = ActiveSupport::TaggedLogging.new(config.logger)
+  else
+    # Default to file logging when RAILS_LOG_TO_STDOUT is not set
+    config.logger = ActiveSupport::Logger.new(Rails.root.join("log", "production.log"))
+    config.logger.formatter = config.log_formatter
+    config.logger = ActiveSupport::TaggedLogging.new(config.logger)
   end
-  # config.logger = ActiveSupport::Logger.new(STDOUT)
-  #   .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
-  #   .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
@@ -73,7 +86,8 @@ Rails.application.configure do
   # "info" includes generic and useful information about system operation, but avoids logging too much
   # information to avoid inadvertent exposure of personally identifiable information (PII). If you
   # want to log everything, set the level to "debug".
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  # Set to debug for crash investigation - can be changed back to info later
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug")
 
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
@@ -119,6 +133,9 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  # Additional error handling and logging configurations
+  config.force_ssl = false  # Temporarily disable for debugging if needed
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [
