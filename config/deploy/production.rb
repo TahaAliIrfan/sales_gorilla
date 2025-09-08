@@ -14,7 +14,7 @@ set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
   user: 'ubuntu',
-  keys: %w[./Desktop/tec_01.pem]
+  keys: %w[./Desktop/tecaudex_crm.pem]
 }
 server '3.82.141.0', port: 22, roles: [:web, :app, :db], primary: true
 
