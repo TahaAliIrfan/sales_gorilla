@@ -1,0 +1,103 @@
+<div class="max-w-7xl mx-auto">
+  <div class="md:flex md:items-center md:justify-between mb-8">
+    <div class="flex-1 min-w-0">
+      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+        Cost Estimates
+      </h2>
+      <p class="mt-2 text-sm text-gray-600">
+        View and manage your project cost estimates
+      </p>
+    </div>
+    <div class="mt-4 flex md:mt-0 md:ml-4">
+      <button 
+        type="button" 
+        data-action="click->cost-calculator#openModal"
+        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        New Estimate
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white shadow overflow-hidden sm:rounded-md">
+    <% if @cost_estimates.any? %>
+      <ul role="list" class="divide-y divide-gray-200">
+        <% @cost_estimates.each do |estimate| %>
+          <li>
+            <div class="px-4 py-4 flex items-center justify-between">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div class="flex items-center">
+                    <p class="text-sm font-medium text-gray-900 truncate">
+                      <%= estimate.app_type_display %>
+                    </p>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <%= estimate.scale_display %>
+                    </span>
+                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <%= estimate.total_hours %> hours
+                    </span>
+                  </div>
+                  <p class="text-sm text-gray-500 max-w-xl truncate">
+                    <%= estimate.description %>
+                  </p>
+                  <p class="text-xs text-gray-400 mt-1">
+                    Created <%= time_ago_in_words(estimate.created_at) %> ago
+                  </p>
+                </div>
+              </div>
+              <div class="flex items-center space-x-4">
+                <div class="text-right">
+                  <p class="text-lg font-semibold text-gray-900">
+                    <%= estimate.formatted_total_cost %>
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    $<%= estimate.hourly_rate %>/hour
+                  </p>
+                </div>
+                <div class="flex-shrink-0 flex items-center space-x-2">
+                  <%= link_to estimate, class: "text-blue-600 hover:text-blue-900 text-sm font-medium" do %>
+                    View
+                  <% end %>
+                  <%= link_to estimate, method: :delete, 
+                      confirm: "Are you sure you want to delete this estimate?",
+                      class: "text-red-600 hover:text-red-900 text-sm font-medium" do %>
+                    Delete
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No cost estimates</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by creating your first project estimate.</p>
+        <div class="mt-6">
+          <button 
+            type="button" 
+            data-action="click->cost-calculator#openModal"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Create Estimate
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -162,6 +162,13 @@ Rails.application.routes.draw do
   patch 'settings/update', to: 'settings#update', as: :update_settings
   delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
   
+  # Cost Calculator routes
+  resources :cost_estimates, only: [:index, :show, :create, :destroy] do
+    collection do
+      post 'analyze'
+    end
+  end
+  
   # Browser-based calling routes
   get 'calling', to: 'calling#index'
   get 'calling/token', to: 'calling#token'

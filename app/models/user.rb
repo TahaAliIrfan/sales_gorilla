@@ -7,6 +7,7 @@ class User < ApplicationRecord
   has_many :tasks, dependent: :nullify
   has_many :messages, dependent: :nullify
   has_many :notifications, dependent: :destroy
+  has_many :cost_estimates, dependent: :destroy
   
   # Pipeline assignments
   has_many :user_pipeline_assignments, dependent: :destroy

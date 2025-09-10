@@ -48,3 +48,6 @@ application.register("customer-documents", CustomerDocumentsController)
 
 import DocumentDeleteController from "./document_delete_controller"
 application.register("document-delete", DocumentDeleteController)
+
+import CostCalculatorController from "./cost_calculator_controller"
+application.register("cost-calculator", CostCalculatorController)

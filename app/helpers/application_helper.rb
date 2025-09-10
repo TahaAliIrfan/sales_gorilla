@@ -48,4 +48,17 @@ module ApplicationHelper
       "Other Number"
     end
   end
+  
+  # Helper for complexity color classes in cost estimates
+  def complexity_color(complexity)
+    case complexity&.downcase
+    when 'low'
+      'bg-green-100 text-green-800'
+    when 'high'
+      'bg-red-100 text-red-800'
+    when 'medium'
+    else
+      'bg-yellow-100 text-yellow-800'
+    end
+  end
 end

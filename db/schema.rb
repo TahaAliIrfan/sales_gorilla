@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
+ActiveRecord::Schema[7.1].define(version: 2025_09_10_233532) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -74,6 +74,20 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
     t.index ["customer_id"], name: "index_ai_conversations_on_customer_id"
     t.index ["status"], name: "index_ai_conversations_on_status"
     t.index ["user_id"], name: "index_ai_conversations_on_user_id"
+  end
+
+  create_table "cost_estimates", force: :cascade do |t|
+    t.string "app_type"
+    t.text "description"
+    t.text "features_json"
+    t.integer "total_hours"
+    t.decimal "hourly_rate"
+    t.decimal "total_cost"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "scale"
+    t.index ["user_id"], name: "index_cost_estimates_on_user_id"
   end
 
   create_table "customer_activities", force: :cascade do |t|
@@ -238,6 +252,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
     t.index ["user_id"], name: "index_deals_on_user_id"
   end
 
+  create_table "eleven_labs_calls", force: :cascade do |t|
+    t.string "call_id", null: false
+    t.string "to_number", null: false
+    t.string "status", default: "initiated", null: false
+    t.integer "duration"
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.bigint "customer_id", null: false
+    t.bigint "user_id", null: false
+    t.text "response_data"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "transcription"
+    t.index ["call_id"], name: "index_eleven_labs_calls_on_call_id", unique: true
+    t.index ["created_at"], name: "index_eleven_labs_calls_on_created_at"
+    t.index ["customer_id"], name: "index_eleven_labs_calls_on_customer_id"
+    t.index ["status"], name: "index_eleven_labs_calls_on_status"
+    t.index ["user_id"], name: "index_eleven_labs_calls_on_user_id"
+  end
+
   create_table "email_attachments", force: :cascade do |t|
     t.bigint "email_id", null: false
     t.string "filename"
@@ -332,6 +367,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_ndas_on_customer_id"
     t.index ["user_id"], name: "index_ndas_on_user_id"
+  end
+
+  create_table "notification_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "customer_id", null: false
+    t.string "notification_type", null: false
+    t.datetime "sent_at", null: false
+    t.text "message_preview"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_notification_logs_on_customer_id"
+    t.index ["user_id", "customer_id", "notification_type", "sent_at"], name: "idx_notification_logs_lookup"
+    t.index ["user_id"], name: "index_notification_logs_on_user_id"
   end
 
   create_table "notifications", force: :cascade do |t|
@@ -508,6 +556,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
   add_foreign_key "calls", "customers"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
+  add_foreign_key "cost_estimates", "users"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
   add_foreign_key "customer_locations", "customers"
@@ -521,6 +570,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
+  add_foreign_key "eleven_labs_calls", "customers"
+  add_foreign_key "eleven_labs_calls", "users"
   add_foreign_key "email_attachments", "emails"
   add_foreign_key "emails", "customers"
   add_foreign_key "emails", "users"
@@ -531,6 +582,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_08_30_001425) do
   add_foreign_key "messages", "users"
   add_foreign_key "ndas", "customers"
   add_foreign_key "ndas", "users"
+  add_foreign_key "notification_logs", "customers"
+  add_foreign_key "notification_logs", "users"
   add_foreign_key "notifications", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
