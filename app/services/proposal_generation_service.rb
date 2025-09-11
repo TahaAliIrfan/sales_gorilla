@@ -53,17 +53,21 @@ class ProposalGenerationService
 
   def sanitize_text(text)
     # Replace problematic UTF-8 characters with Windows-1252 compatible ones
-    text.to_s
+    cleaned_text = text.to_s
         .gsub(/["""]/, '"')      # Replace smart quotes
         .gsub(/[''']/, "'")      # Replace smart apostrophes
         .gsub(/–|—/, '-')        # Replace em/en dashes
         .gsub(/…/, '...')        # Replace ellipsis
         .gsub(/✓/, 'v')          # Replace checkmarks
         .gsub(/•/, '-')          # Replace bullet points
-        .gsub(/[^\u0000-\u00FF]/, '?') # Replace any remaining non-Windows-1252 chars
-        .encode('Windows-1252', 'UTF-8', invalid: :replace, undef: :replace)
-  rescue Encoding::UndefinedConversionError
-    text.to_s.encode('Windows-1252', 'UTF-8', invalid: :replace, undef: :replace, replace: '?')
+        .gsub(/[^\x00-\x7F]/, '')   # Remove non-ASCII characters instead of replacing with ?
+    
+    # Try encoding conversion, but fallback to original if it fails
+    begin
+      cleaned_text.encode('Windows-1252', 'UTF-8', invalid: :replace, undef: :replace, replace: '')
+    rescue Encoding::UndefinedConversionError
+      cleaned_text.gsub(/[^\x20-\x7E]/, '') # Keep only printable ASCII if encoding fails
+    end
   end
 
   def add_cover_page(pdf)
@@ -407,18 +411,16 @@ class ProposalGenerationService
         y_position = page_height - margin_top_overview
       end
 
-      # Draw background for header row
-      if row[:is_header]
-        pdf.fill_color GRAY_COLOR
-        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
-      elsif row[:is_total]
-        pdf.fill_color LIGHT_GRAY
+      # Draw background for different row types (remove grey, keep only light red for categories)
+      if row[:is_category]
+        # Add light red background for category headers only
+        pdf.fill_color "FEF2F2"  # Very light red background
         pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
       end
 
-      # Text color based on row type
-      text_color = if row[:is_header]
-                     WHITE_COLOR
+      # Text color based on row type (no special color for headers)
+      text_color = if row[:is_category]
+                     RED_COLOR  # Red text for categories
                    else
                      BLACK_COLOR
                    end
@@ -430,17 +432,21 @@ class ProposalGenerationService
                      :normal
                    end
 
+      # Clean the text to remove any "?" characters that might appear from encoding issues
+      clean_label = sanitize_text(row[:label]).gsub('?', '')
+      clean_value = sanitize_text(row[:value]).gsub('?', '')
+
       # Draw left column text (Features)
       pdf.fill_color text_color
       pdf.font_size font_size
-      pdf.text_box sanitize_text(row[:label]), 
+      pdf.text_box clean_label, 
         at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
         width: features_col_width - 10,
         style: font_style,
         color: text_color
 
       # Draw right column text (Hours)
-      pdf.text_box sanitize_text(row[:value]), 
+      pdf.text_box clean_value, 
         at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
         width: hours_col_width - 10,
         style: font_style,
@@ -603,20 +609,21 @@ class ProposalGenerationService
 
   def add_cost_estimates(pdf)
     page_height = pdf.bounds.height
+    page_width = pdf.bounds.width
     margin_top = page_height * 0.09
 
     # Page title
     add_page_title(pdf, "Project Cost & Estimation", margin_top)
 
-    # Table setup
-    page_width = pdf.bounds.width
-    margin = 100
+    # Setup table parameters (matching hours breakdown style)
+    margin_top_overview = page_height * 0.15
     horizontal_margin = 30
     table_width = page_width - 2 * horizontal_margin
-    col_width = table_width / 2
+    features_col_width = table_width * 0.7  # 70% for description
+    cost_col_width = table_width * 0.3      # 30% for cost/value
     row_height = 30
     font_size = 12
-    y_position = page_height - margin
+    y_position = page_height - margin_top_overview
 
     # Calculate costs with breakdown
     hourly_rate = @cost_estimate.hourly_rate
@@ -637,65 +644,71 @@ class ProposalGenerationService
       end
     end
 
-    # Enhanced table data with feature breakdown
+    # Simplified table data with only total hours and pricing structure
     table_data = [
-      { label: "Project Duration", value: "#{total_months} months" },
-      { label: "Total Hours", value: "#{total_hours} hours" },
-      { label: "Hours Summary", value: "", is_header: true }
+      { label: "Cost Breakdown", value: "Value", is_header: true },
+      { label: "Total Development Hours", value: "#{total_hours} hours", is_category: true },
+      { label: "Pricing Structure", value: "", is_category: true },
+      { label: "  → Development Rate", value: "$#{hourly_rate}/hour" },
+      { label: "  → Project Management", value: "Included" },
+      { label: "  → Quality Assurance", value: "Included" },
+      { label: "  → Documentation", value: "Included" },
+      { label: "Total Project Investment", value: "$#{number_with_commas(total_cost.to_i)}", is_total: true }
     ]
 
-    # Add feature breakdown if available
-    if feature_breakdown.any?
-      feature_breakdown.each do |category, hours|
-        table_data << { label: "#{category} Hours", value: "#{hours} hours" }
+    # Draw table (matching hours breakdown styling)
+    table_data.each_with_index do |row, index|
+      # Check if we need space (though cost table should fit on one page)
+      if y_position - row_height < 100
+        pdf.start_new_page
+        add_page_title(pdf, "Project Cost & Estimation (Continued)", margin_top)
+        y_position = page_height - margin_top_overview
       end
-    else
-      table_data << { label: "Development Hours", value: "#{total_hours} hours" }
-    end
 
-    # Add rate and cost information
-    table_data += [
-      { label: "Hourly Rate (Industry Average)", value: "", is_header: true },
-      { label: "Development Rate", value: "$#{hourly_rate}/hr" },
-      { label: "Project Management", value: "Included" },
-      { label: "Quality Assurance", value: "Included" },
-      { label: "Documentation", value: "Included" },
-      { label: "Total Project Cost (USD)", value: "$#{number_with_commas(total_cost.to_i)}", is_total: true }
-    ]
-
-    # Draw table
-    table_data.each do |row|
-      # Draw background for header row
-      if row[:is_header]
-        pdf.fill_color GRAY_COLOR
-        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+      # Draw background for different row types (remove grey backgrounds)
+      if row[:is_category]
+        # Light red background for category headers only
+        pdf.fill_color "FEF2F2"
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
       elsif row[:is_total]
-        pdf.fill_color LIGHT_GRAY
-        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+        pdf.fill_color RED_COLOR  # Red background for total cost
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
       end
 
-      # Draw left column text
-      text_color = if row[:is_header]
-                     WHITE_COLOR
+      # Text color based on row type (no grey backgrounds)
+      text_color = if row[:is_category]
+                     RED_COLOR
                    elsif row[:is_total]
-                     BLACK_COLOR
+                     WHITE_COLOR
                    else
                      BLACK_COLOR
                    end
 
+      # Font style
+      font_style = if row[:is_header] || row[:is_total] || row[:is_category]
+                     :bold
+                   else
+                     :normal
+                   end
+
+      # Clean the text
+      clean_label = sanitize_text(row[:label]).gsub('?', '')
+      clean_value = sanitize_text(row[:value]).gsub('?', '')
+
+      # Draw left column text
       pdf.fill_color text_color
       pdf.font_size font_size
-      font_style = (row[:is_header] || row[:is_total]) ? :bold : :normal
-      
-      pdf.text_box sanitize_text(row[:label]), 
+      pdf.text_box clean_label, 
         at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
+        width: features_col_width - 10,
         style: font_style,
         color: text_color
 
       # Draw right column text
       unless row[:value].empty?
-        pdf.text_box sanitize_text(row[:value]), 
-          at: [horizontal_margin + col_width + 5, y_position - row_height/2 + font_size/2], 
+        pdf.text_box clean_value, 
+          at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
+          width: cost_col_width - 10,
           style: font_style,
           color: text_color
       end
@@ -703,22 +716,23 @@ class ProposalGenerationService
       # Draw horizontal line
       pdf.stroke_color BLACK_COLOR
       pdf.line_width 1
-      pdf.stroke_line [horizontal_margin, y_position - row_height], [horizontal_margin + table_width, y_position - row_height]
+      pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
 
       y_position -= row_height
     end
 
-    # Draw vertical lines
-    pdf.stroke_line [horizontal_margin, page_height - margin], [horizontal_margin, y_position + row_height]
-    pdf.stroke_line [horizontal_margin + col_width, page_height - margin], [horizontal_margin + col_width, y_position + row_height]
-    pdf.stroke_line [horizontal_margin + table_width, page_height - margin], [horizontal_margin + table_width, y_position + row_height]
+    # Draw bottom line and vertical lines (matching hours breakdown)
+    pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
+    pdf.stroke_line [horizontal_margin, page_height - margin_top_overview], [horizontal_margin, y_position]
+    pdf.stroke_line [horizontal_margin + features_col_width, page_height - margin_top_overview], [horizontal_margin + features_col_width, y_position]
+    pdf.stroke_line [horizontal_margin + table_width, page_height - margin_top_overview], [horizontal_margin + table_width, y_position]
 
     # Cost analysis section
     y_position -= 40
     
     pdf.font_size 14
     pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text("COST ANALYSIS"), 
+    pdf.text_box sanitize_text("VALUE PROPOSITION"), 
       at: [horizontal_margin, y_position], 
       style: :bold,
       color: BLACK_COLOR
@@ -743,18 +757,6 @@ class ProposalGenerationService
       y_position -= 15
     end
 
-    # Bottom discount text
-    discount_rate = 0.1
-    discounted_cost = (total_cost * (1 - discount_rate)).to_i
-    bottom_text = "Save 10% today and get the SAME app built with top-tier quality at Tecaudex for just $#{number_with_commas(discounted_cost)}"
-    
-    pdf.font_size 12
-    pdf.fill_color RED_COLOR
-    pdf.text_box sanitize_text(bottom_text), 
-      at: [horizontal_margin, 130], 
-      width: table_width - 60,
-      style: :bold,
-      color: RED_COLOR
 
     add_page_footer(pdf)
   end
