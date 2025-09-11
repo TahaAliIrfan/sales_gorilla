@@ -10,7 +10,9 @@ export default class extends Controller {
     "costSummary", 
     "calculateButton", 
     "saveButton",
-    "proposalButton"
+    "proposalButton",
+    "customerNameField",
+    "designInfo"
   ]
 
   static values = {
@@ -51,12 +53,42 @@ export default class extends Controller {
     }
   }
 
+  toggleCustomerName() {
+    const customerSelect = this.formTarget.querySelector('select[name="customer_id"]')
+    const customerNameField = this.customerNameFieldTarget
+    
+    if (customerSelect.value) {
+      // If customer is selected, hide the name field
+      customerNameField.classList.add('hidden')
+      // Clear the customer name field
+      const nameInput = customerNameField.querySelector('input[name="customer_name"]')
+      if (nameInput) nameInput.value = ''
+    } else {
+      // If no customer selected, show the name field
+      customerNameField.classList.remove('hidden')
+    }
+  }
+
+  toggleDesignInfo() {
+    const designCheckbox = this.formTarget.querySelector('input[name="include_design"]')
+    const designInfo = this.designInfoTarget
+    
+    if (designCheckbox.checked) {
+      designInfo.classList.remove('hidden')
+    } else {
+      designInfo.classList.add('hidden')
+    }
+  }
+
   async calculateCost() {
     const formData = new FormData(this.formTarget)
     const appType = formData.get('app_type')
     const description = formData.get('description')
     const scale = formData.get('scale')
     const hourlyRate = formData.get('hourly_rate')
+    const includeDesign = formData.get('include_design') === '1'
+    const customerId = formData.get('customer_id')
+    const customerName = formData.get('customer_name')
 
     // Basic validation
     if (!appType) {
@@ -79,6 +111,12 @@ export default class extends Controller {
       return
     }
 
+    // Validate customer information
+    if (!customerId && !customerName) {
+      alert('Please either select an existing customer or provide a customer name')
+      return
+    }
+
     // Show loading state
     this.showLoadingState()
 
@@ -93,7 +131,10 @@ export default class extends Controller {
           app_type: appType,
           description: description,
           scale: scale,
-          hourly_rate: hourlyRate
+          hourly_rate: hourlyRate,
+          include_design: includeDesign,
+          customer_id: customerId,
+          customer_name: customerName
         })
       })
 
@@ -105,6 +146,9 @@ export default class extends Controller {
           description: description,
           scale: scale,
           hourly_rate: hourlyRate,
+          include_design: includeDesign,
+          customer_id: customerId,
+          customer_name: customerName,
           ...data
         }
         this.displayResults(data)
@@ -137,7 +181,10 @@ export default class extends Controller {
             app_type: this.currentEstimateValue.app_type,
             description: this.currentEstimateValue.description,
             scale: this.currentEstimateValue.scale,
-            hourly_rate: this.currentEstimateValue.hourly_rate
+            hourly_rate: this.currentEstimateValue.hourly_rate,
+            include_design: this.currentEstimateValue.include_design,
+            customer_id: this.currentEstimateValue.customer_id,
+            customer_name: this.currentEstimateValue.customer_name
           }
         })
       })

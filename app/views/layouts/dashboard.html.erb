@@ -566,35 +566,85 @@
                   </h3>
                   <div class="mt-4">
                     <%= form_with url: cost_estimates_path, method: :post, data: { cost_calculator_target: "form", turbo: false }, class: "space-y-4" do |form| %>
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <%= form.label :app_type, "Application Type", class: "block text-sm font-medium text-gray-700" %>
-                          <%= form.select :app_type, 
-                              options_for_select([
-                                ['Web Application', 'web'],
-                                ['Mobile Application (iOS)', 'mobile_ios'],
-                                ['Mobile Application (Android)', 'mobile_android'],
-                                ['Mobile Application (Cross-platform)', 'mobile_cross'],
-                                ['Desktop Application', 'desktop'],
-                                ['E-commerce Platform', 'ecommerce'],
-                                ['CRM System', 'crm'],
-                                ['API/Backend Service', 'api'],
-                                ['Custom Software', 'custom']
-                              ]), 
-                              { prompt: 'Select application type' },
-                              { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+                      <!-- Customer Information -->
+                      <div class="border-b border-gray-200 pb-4 mb-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Customer Information</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <%= form.label :customer_id, "Existing Customer (Optional)", class: "block text-sm font-medium text-gray-700" %>
+                            <%= form.select :customer_id, 
+                                options_from_collection_for_select(
+                                  current_user.admin? ? Customer.all.order(:name) : current_user.customers.order(:name), 
+                                  :id, :name
+                                ), 
+                                { prompt: 'Select existing customer (optional)' },
+                                { 
+                                  class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+                                  data: { action: "change->cost-calculator#toggleCustomerName" }
+                                } %>
+                          </div>
+                          
+                          <div data-cost-calculator-target="customerNameField">
+                            <%= form.label :customer_name, "Customer Name", class: "block text-sm font-medium text-gray-700" %>
+                            <%= form.text_field :customer_name, 
+                                placeholder: "Enter customer name for this estimate",
+                                class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+                            <p class="mt-1 text-xs text-gray-500">Used for PDF generation and record keeping</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Project Configuration -->
+                      <div class="border-b border-gray-200 pb-4 mb-4">
+                        <h4 class="text-sm font-medium text-gray-900 mb-3">Project Configuration</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <%= form.label :app_type, "Application Type", class: "block text-sm font-medium text-gray-700" %>
+                            <%= form.select :app_type, 
+                                options_for_select([
+                                  ['Web Application', 'web'],
+                                  ['Mobile Application (iOS)', 'mobile_ios'],
+                                  ['Mobile Application (Android)', 'mobile_android'],
+                                  ['Mobile Application (Cross-platform)', 'mobile_cross'],
+                                  ['Desktop Application', 'desktop'],
+                                  ['E-commerce Platform', 'ecommerce'],
+                                  ['CRM System', 'crm'],
+                                  ['API/Backend Service', 'api'],
+                                  ['Custom Software', 'custom']
+                                ]), 
+                                { prompt: 'Select application type' },
+                                { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+                          </div>
+                          
+                          <div>
+                            <%= form.label :scale, "Project Scale", class: "block text-sm font-medium text-gray-700" %>
+                            <%= form.select :scale, 
+                                options_for_select([
+                                  ['MVP (300-600 hours)', 'mvp'],
+                                  ['Moderate Scale (600-1500 hours)', 'moderate'],
+                                  ['Enterprise (1500+ hours)', 'enterprise']
+                                ]), 
+                                { prompt: 'Select project scale' },
+                                { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+                          </div>
                         </div>
                         
-                        <div>
-                          <%= form.label :scale, "Project Scale", class: "block text-sm font-medium text-gray-700" %>
-                          <%= form.select :scale, 
-                              options_for_select([
-                                ['MVP (300-600 hours)', 'mvp'],
-                                ['Moderate Scale (600-1500 hours)', 'moderate'],
-                                ['Enterprise (1500+ hours)', 'enterprise']
-                              ]), 
-                              { prompt: 'Select project scale' },
-                              { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+                        <!-- UI/UX Design Option -->
+                        <div class="mt-4">
+                          <div class="flex items-center">
+                            <%= form.check_box :include_design, 
+                                { class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" },
+                                { data: { action: "change->cost-calculator#toggleDesignInfo" } } %>
+                            <%= form.label :include_design, "Include UI/UX Design Estimates", class: "ml-2 block text-sm text-gray-900" %>
+                          </div>
+                          <p class="mt-1 text-xs text-gray-500">Include professional UI/UX design using Figma in your estimate</p>
+                          
+                          <div data-cost-calculator-target="designInfo" class="hidden mt-2 p-3 bg-blue-50 rounded-md">
+                            <p class="text-sm text-blue-700">
+                              <strong>UI/UX Design includes:</strong> User research, wireframes, high-fidelity mockups, 
+                              design system creation, responsive design, and Figma prototype development.
+                            </p>
+                          </div>
                         </div>
                       </div>
                       

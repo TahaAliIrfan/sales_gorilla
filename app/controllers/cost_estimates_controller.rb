@@ -18,12 +18,20 @@ class CostEstimatesController < ApplicationController
     analysis_result = ai_service.analyze_project(
       app_type: @cost_estimate.app_type,
       description: @cost_estimate.description,
-      scale: @cost_estimate.scale
+      scale: @cost_estimate.scale,
+      include_design: @cost_estimate.include_design
     )
     
     if analysis_result[:success]
       @cost_estimate.features = analysis_result[:features]
       @cost_estimate.total_hours = analysis_result[:total_hours]
+      @cost_estimate.project_name = analysis_result[:project_name]
+      @cost_estimate.project_overview = analysis_result[:project_overview]
+      @cost_estimate.technical_information_summary = analysis_result[:technical_information_summary]
+      @cost_estimate.estimated_timeline_weeks = analysis_result[:estimated_timeline_weeks]
+      @cost_estimate.team_composition = analysis_result[:team_composition]
+      @cost_estimate.development_methodology = analysis_result[:development_methodology]
+      @cost_estimate.key_technology_areas = analysis_result[:key_technology_areas]
       # hourly_rate is already set from the form
       
       if @cost_estimate.save
@@ -56,7 +64,8 @@ class CostEstimatesController < ApplicationController
     analysis_result = ai_service.analyze_project(
       app_type: params[:app_type],
       description: params[:description],
-      scale: params[:scale]
+      scale: params[:scale],
+      include_design: params[:include_design] == true
     )
     
     if analysis_result[:success]
@@ -103,7 +112,7 @@ class CostEstimatesController < ApplicationController
   end
   
   def cost_estimate_params
-    params.require(:cost_estimate).permit(:app_type, :description, :scale, :hourly_rate)
+    params.require(:cost_estimate).permit(:app_type, :description, :scale, :hourly_rate, :include_design, :customer_id, :customer_name)
   end
   
   def require_login

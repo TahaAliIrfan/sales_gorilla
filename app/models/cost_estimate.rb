@@ -1,5 +1,6 @@
 class CostEstimate < ApplicationRecord
   belongs_to :user
+  belongs_to :customer, optional: true
   
   validates :app_type, presence: true
   validates :description, presence: true, length: { minimum: 10 }
@@ -7,6 +8,10 @@ class CostEstimate < ApplicationRecord
   validates :total_hours, presence: true, numericality: { greater_than: 0 }
   validates :hourly_rate, presence: true, numericality: { greater_than: 0 }
   validates :total_cost, presence: true, numericality: { greater_than: 0 }
+  
+  # Customer validation: either customer_id or customer_name must be present
+  validates :customer_name, presence: true, unless: :customer_id?
+  validates :customer_id, presence: true, unless: :customer_name?
   
   before_validation :calculate_total_cost, if: :should_calculate_cost?
   
@@ -23,9 +28,9 @@ class CostEstimate < ApplicationRecord
   }.freeze
   
   SCALES = {
-    'mvp' => 'MVP (300-600 hours)',
-    'moderate' => 'Moderate Scale (600-1500 hours)',
-    'enterprise' => 'Enterprise (1500+ hours)'
+    'mvp' => 'MVP',
+    'moderate' => 'Moderate Scale',
+    'enterprise' => 'Enterprise'
   }.freeze
   
   def features
@@ -52,6 +57,18 @@ class CostEstimate < ApplicationRecord
   
   def formatted_total_cost
     "$#{total_cost.to_f.round(2)}"
+  end
+  
+  def customer_display_name
+    customer&.name || customer_name || "Unknown Customer"
+  end
+  
+  def customer_phone
+    customer&.phone_number || ""
+  end
+  
+  def customer_email
+    customer&.email || ""
   end
   
   private

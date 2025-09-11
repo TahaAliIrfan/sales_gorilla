@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_09_10_233532) do
+ActiveRecord::Schema[7.1].define(version: 2025_09_11_021020) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -87,6 +87,17 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_10_233532) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "scale"
+    t.boolean "include_design", default: false, null: false
+    t.integer "customer_id"
+    t.string "customer_name"
+    t.string "project_name"
+    t.text "project_overview"
+    t.text "technical_information_summary"
+    t.integer "estimated_timeline_weeks"
+    t.string "team_composition"
+    t.string "development_methodology"
+    t.string "key_technology_areas"
+    t.index ["customer_id"], name: "index_cost_estimates_on_customer_id"
     t.index ["user_id"], name: "index_cost_estimates_on_user_id"
   end
 
@@ -556,6 +567,7 @@ ActiveRecord::Schema[7.1].define(version: 2025_09_10_233532) do
   add_foreign_key "calls", "customers"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
+  add_foreign_key "cost_estimates", "customers", on_delete: :nullify
   add_foreign_key "cost_estimates", "users"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"

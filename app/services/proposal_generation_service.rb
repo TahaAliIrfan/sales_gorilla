@@ -100,11 +100,12 @@ class ProposalGenerationService
       pdf.fill_ellipse [mx + i * circle_spacing, circle_y], circle_radius, circle_radius * 1.7 * height_scales[i]
     end
 
-    # Project name
+    # Project name - use AI-generated project name or fallback to app type
     my = page_height * 0.4 - page_height * 0.1
     pdf.fill_color WHITE_COLOR
     pdf.font_size(page_width * 0.044)
-    pdf.text_box sanitize_text(@cost_estimate.app_type_display || "Untitled Project"), 
+    project_name = @cost_estimate.project_name.present? ? @cost_estimate.project_name : (@cost_estimate.app_type_display || "Untitled Project")
+    pdf.text_box sanitize_text(project_name), 
       at: [mx, my], 
       width: page_width - mx * 1.5,
       style: :bold,
@@ -243,10 +244,10 @@ class ProposalGenerationService
       style: :bold,
       color: BLACK_COLOR
 
-    # Project description (matching TypeScript layout with drawWrappedText equivalent)
-    description_text = @cost_estimate.description || "No description provided"
+    # Project description - use AI-generated project_overview or fallback to description
+    overview_text = @cost_estimate.project_overview.present? ? @cost_estimate.project_overview : @cost_estimate.description || "No description provided"
     pdf.font_size 12
-    pdf.text_box sanitize_text(description_text), 
+    pdf.text_box sanitize_text(overview_text), 
       at: [150, page_height - margin_top_overview], 
       width: 430,  # Match TypeScript width
       height: 100, # Allow for wrapping
@@ -254,7 +255,7 @@ class ProposalGenerationService
       leading: 5
 
     # Calculate height used by description (approximate)
-    description_height = (description_text.length / 70.0 * 20).ceil # Rough calculation
+    description_height = (overview_text.length / 70.0 * 20).ceil # Rough calculation
 
     # TECHNICAL INFORMATION section
     margin_top_technical_title = margin_top_overview + 30 + description_height
@@ -268,8 +269,10 @@ class ProposalGenerationService
     # Technical information content
     margin_top_technical_text = margin_top_technical_title + 30
     
-    # Build technical summary based on cost estimate data
-    tech_summary = build_technical_summary()
+    # Use AI-generated technical summary or build one from cost estimate data
+    tech_summary = @cost_estimate.technical_information_summary.present? ? 
+                   @cost_estimate.technical_information_summary : 
+                   build_technical_summary()
     
     pdf.font_size 12
     pdf.text_box sanitize_text(tech_summary), 
@@ -291,27 +294,40 @@ class ProposalGenerationService
     summary_parts << "Application Type: #{@cost_estimate.app_type_display}"
     summary_parts << "Project Scale: #{@cost_estimate.scale_display}"
     
-    # Development approach based on scale
-    case @cost_estimate.scale
-    when 'mvp'
-      summary_parts << "Development Approach: Rapid prototyping with core functionality focus, agile methodology with 2-week sprints."
-    when 'moderate'
-      summary_parts << "Development Approach: Balanced development with comprehensive testing, agile methodology with full feature implementation."
-    when 'enterprise'
-      summary_parts << "Development Approach: Enterprise-grade architecture with extensive quality assurance, security protocols, and scalability planning."
+    # Development approach - use AI-generated or fallback to scale-based
+    if @cost_estimate.development_methodology.present?
+      summary_parts << "Development Approach: #{@cost_estimate.development_methodology}"
     else
-      summary_parts << "Development Approach: Standard agile development with industry best practices."
+      case @cost_estimate.scale
+      when 'mvp'
+        summary_parts << "Development Approach: Rapid prototyping with core functionality focus, agile methodology with 2-week sprints."
+      when 'moderate'
+        summary_parts << "Development Approach: Balanced development with comprehensive testing, agile methodology with full feature implementation."
+      when 'enterprise'
+        summary_parts << "Development Approach: Enterprise-grade architecture with extensive quality assurance, security protocols, and scalability planning."
+      else
+        summary_parts << "Development Approach: Standard agile development with industry best practices."
+      end
     end
     
-    # Technology considerations
-    if @cost_estimate.features.any?
+    # Technology considerations - use AI-generated or fallback to feature categories
+    if @cost_estimate.key_technology_areas.present?
+      summary_parts << "Key Technology Areas: #{@cost_estimate.key_technology_areas}"
+    elsif @cost_estimate.features.any?
       categories = @cost_estimate.features.map { |f| f['category'] }.uniq.compact
       summary_parts << "Key Technology Areas: #{categories.join(', ')}"
     end
     
-    # Timeline and team info
-    timeline_weeks = (@cost_estimate.total_hours / 40.0).ceil
-    summary_parts << "Estimated Timeline: #{timeline_weeks} weeks with #{get_team_size_for_scale(@cost_estimate.scale)}"
+    # Timeline and team info - use AI-generated or calculated
+    timeline_weeks = @cost_estimate.estimated_timeline_weeks.present? ? 
+                     @cost_estimate.estimated_timeline_weeks : 
+                     (@cost_estimate.total_hours / 40.0).ceil
+    
+    team_info = @cost_estimate.team_composition.present? ? 
+                @cost_estimate.team_composition : 
+                get_team_size_for_scale(@cost_estimate.scale)
+    
+    summary_parts << "Estimated Timeline: #{timeline_weeks} weeks with #{team_info}"
     summary_parts << "Total Development Hours: #{@cost_estimate.total_hours} hours across all development phases"
     
     summary_parts.join(". ")
@@ -788,66 +804,15 @@ class ProposalGenerationService
     pdf.line_width 1
     pdf.stroke_line [start_x, footer_y + 25], [start_x + content_width, footer_y + 25]
 
-    # Footer sections
-    section_width = content_width / 3
-    label_size = 8
-    value_size = 9
-
-    # Customer data
-    customer_name = @user&.name || "Valued Client"
-    customer_phone = @user&.phone_number || "+1 (555) 123-4567"
-    customer_email = @user&.email || "contact@tecaudex.com"
-
-    # Name section
-    pdf.font_size label_size
+    # Simple centered footer with just company name
+    pdf.font_size 10
     pdf.fill_color GRAY_COLOR
-    pdf.text_box sanitize_text("NAME"), 
-      at: [start_x, footer_y + 8], 
-      color: GRAY_COLOR
-
-    pdf.font_size value_size
-    pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text(customer_name), 
-      at: [start_x, footer_y - 8], 
+    pdf.text_box sanitize_text("Tecaudex"), 
+      at: [start_x, footer_y], 
+      width: content_width,
+      align: :center,
       style: :bold,
-      color: BLACK_COLOR
-
-    # Contact section
-    phone_x = start_x + section_width
-    pdf.font_size label_size
-    pdf.fill_color GRAY_COLOR
-    pdf.text_box sanitize_text("CONTACT"), 
-      at: [phone_x, footer_y + 8], 
       color: GRAY_COLOR
-
-    pdf.font_size value_size
-    pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text(customer_phone), 
-      at: [phone_x, footer_y - 8], 
-      style: :bold,
-      color: BLACK_COLOR
-
-    # Email section
-    email_x = start_x + (2 * section_width)
-    pdf.font_size label_size
-    pdf.fill_color GRAY_COLOR
-    pdf.text_box sanitize_text("EMAIL"), 
-      at: [email_x, footer_y + 8], 
-      color: GRAY_COLOR
-
-    pdf.font_size value_size
-    pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text(customer_email), 
-      at: [email_x, footer_y - 8], 
-      style: :bold,
-      color: BLACK_COLOR
-
-    # Dot separators
-    [1, 2].each do |i|
-      dot_x = start_x + (i * section_width) - 15
-      pdf.fill_color GRAY_COLOR
-      pdf.fill_circle [dot_x, footer_y], 1.5
-    end
   end
 
   def number_with_commas(number)

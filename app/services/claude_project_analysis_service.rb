@@ -7,9 +7,9 @@ class ClaudeProjectAnalysisService
     raise "Anthropic API key not configured" unless @api_key
   end
   
-  def analyze_project(app_type:, description:, scale: 'moderate')
+  def analyze_project(app_type:, description:, scale: 'moderate', include_design: false)
     begin
-      prompt = build_analysis_prompt(app_type, description, scale)
+      prompt = build_analysis_prompt(app_type, description, scale, include_design)
       response = make_api_request(prompt)
       
       if response[:success]
@@ -25,47 +25,99 @@ class ClaudeProjectAnalysisService
   
   private
   
-  def build_analysis_prompt(app_type, description, scale)
+  def build_analysis_prompt(app_type, description, scale, include_design)
     app_type_context = get_app_type_context(app_type)
     scale_context = get_scale_context(scale)
+    design_context = include_design ? get_design_context() : ""
+    
+    adjustment_factor = get_scale_adjustment(scale)
     
     <<~PROMPT
-      You are a senior software architect and project estimator. Analyze the following project requirements and provide a detailed breakdown of features and time estimates.
-
-      Application Type: #{app_type_context}
-      Project Scale: #{scale_context}
-      Project Description: #{description}
-
-      Please analyze this project and return ONLY a valid JSON response with the following structure:
+      You are tasked with providing a detailed cost and time estimate for a software development company.
+      Your estimates should be based considering the developer is a senior developer.
+      Your estimates should give range of hours best case and worst case.
+      #{adjustment_factor}
+      Use the following input data to generate a JSON object with the estimate.
+      
+      The basic idea of the app:
+      #{description}
+      
+      Additional details:
+      - Platform Type: #{app_type_context}
+      - Project Scale: #{scale_context}
+      #{design_context}
+      
+      Generate an extensive scope of the complete project, and then based on the scope generate as many features for the frontend, backend#{include_design ? ", and app design" : ""} based on the app requirements.
+      
+      Guidelines:
+      Add the relevant App Features that are necessary to meet the app requirements and goals.
+      
+      Return ONLY a valid JSON response with the following structure:
       {
+        "project_name": "suggested_project_name_based_on_description",
+        "project_overview": "comprehensive_project_overview_paragraph",
+        "technical_information_summary": "detailed_technical_approach_and_architecture_description",
         "features": [
           {
             "category": "category_name",
-            "name": "feature_name",
+            "name": "feature_name", 
             "description": "brief_description",
             "hours": estimated_hours_as_number,
             "complexity": "Low|Medium|High"
           }
         ],
         "total_hours": total_estimated_hours_as_number,
+        "estimated_timeline_weeks": calculated_timeline_in_weeks,
+        "team_composition": "recommended_team_size_and_roles",
+        "development_methodology": "suggested_development_approach",
+        "key_technology_areas": "main_technology_categories_as_comma_separated_string",
         "assumptions": "key assumptions made in the estimate",
         "notes": "additional considerations or recommendations"
       }
-
-      Guidelines for estimation:
+      
+      Feature Categories Guidelines:
+      - Frontend Features: User interface components, responsive design, user interactions
+      - Backend Features: APIs, databases, server logic, authentication, integrations
+      #{include_design ? "- UI/UX Design Features: User research, wireframes, high-fidelity mockups, design systems, prototyping" : ""}
+      - Break down into logical categories (Authentication, Content Management, Communication, Analytics, etc.)
+      
+      Detailed Requirements for Each Field:
+      
+      project_name: Generate a concise, professional project name based on the app concept (2-4 words)
+      
+      project_overview: Write a comprehensive paragraph (3-4 sentences) describing:
+      - What the app does and its main purpose
+      - Target audience and key value proposition
+      - Core functionality and user experience
+      
+      technical_information_summary: Provide detailed technical overview including:
+      - Development approach and methodology (#{get_scale_methodology(scale)})
+      - Architecture and technology stack considerations
+      - Platform-specific implementation details
+      - Team structure and development timeline
+      - Key technology areas and integration points
+      
+      estimated_timeline_weeks: Calculate realistic timeline based on total hours (assuming 40-hour work weeks with team efficiency)
+      
+      team_composition: Specify recommended team size and roles for #{scale.upcase} project
+      
+      development_methodology: Describe the development approach suitable for this project scale
+      
+      key_technology_areas: List main categories like "Authentication, User Interface, Backend API, Database, Payment Processing" etc.
+      
+      Estimation Guidelines:
       - Be realistic and include buffer time for testing, debugging, and deployment
-      - Consider both frontend and backend development time
-      - Include time for basic security implementations
-      - Factor in responsive design for web applications
-      - Consider app store submission time for mobile apps
+      - Consider responsive design for web applications
+      - Consider app store submission time for mobile apps  
       - Include basic documentation and code review time
-      - Break down into logical feature categories (Authentication, UI/UX, Backend API, Database, Testing, etc.)
-      - IMPORTANT: Ensure total hours align with the specified project scale:
-        * MVP: 300-600 hours (basic functionality, minimal features)
-        * Moderate Scale: 600-1500 hours (standard features, good UX/UI)
-        * Enterprise: 1500+ hours (advanced features, high scalability, extensive testing)
-
-      IMPORTANT: Return ONLY the JSON response, no other text or explanations.
+      - Make sure estimates are tailored to the specified platform type
+      - Do not include any features for Testing/Debugging/CI-CD Pipelines
+      #{include_design ? "- If Design is included, focus on UI/UX designs using Figma, NO wireframes or sketches" : "- If Design Status is Not Chosen, skip providing any design-related estimates"}
+      
+      IMPORTANT: Ensure total hours align with the specified project scale:
+      #{get_scale_hours_guidance(scale)}
+      
+      Return only the JSON object. Do not include any markdown, text, or other formatting. The keys should be in lowercase.
     PROMPT
   end
   
@@ -93,6 +145,49 @@ class ClaudeProjectAnalysisService
     }
     
     contexts[scale] || 'Moderate Scale'
+  end
+  
+  def get_design_context
+    "- Design Status: UI/UX Design Required - Include professional UI/UX design using Figma"
+  end
+  
+  def get_scale_adjustment(scale)
+    case scale
+    when 'mvp'
+      "Apply a **strict 5% increase** to the hours you provide."
+    when 'moderate'
+      "Apply a **strict 5% reduction** to the hours you provide."
+    when 'enterprise'
+      "Apply optimistic estimates for the frontend and backend features."
+    else
+      ""
+    end
+  end
+  
+  def get_scale_methodology(scale)
+    case scale
+    when 'mvp'
+      "rapid prototyping with core functionality focus, agile methodology with 2-week sprints"
+    when 'moderate'
+      "balanced development with comprehensive testing, agile methodology with full feature implementation"
+    when 'enterprise'
+      "enterprise-grade architecture with extensive quality assurance, security protocols, and scalability planning"
+    else
+      "standard agile development with industry best practices"
+    end
+  end
+
+  def get_scale_hours_guidance(scale)
+    case scale
+    when 'mvp'
+      "* MVP: 300-600 hours (basic functionality, minimal features)"
+    when 'moderate'
+      "* Moderate Scale: 600-1500 hours (standard features, good UX/UI)"
+    when 'enterprise'
+      "* Enterprise: 1500+ hours (advanced features, high scalability, extensive testing)"
+    else
+      "* Standard: 600-1500 hours (balanced feature set)"
+    end
   end
   
   def make_api_request(prompt)
@@ -161,6 +256,13 @@ class ClaudeProjectAnalysisService
         success: true,
         features: features,
         total_hours: parsed['total_hours'].to_i,
+        project_name: parsed['project_name'] || '',
+        project_overview: parsed['project_overview'] || '',
+        technical_information_summary: parsed['technical_information_summary'] || '',
+        estimated_timeline_weeks: parsed['estimated_timeline_weeks'] || 0,
+        team_composition: parsed['team_composition'] || '',
+        development_methodology: parsed['development_methodology'] || '',
+        key_technology_areas: parsed['key_technology_areas'] || '',
         assumptions: parsed['assumptions'] || '',
         notes: parsed['notes'] || ''
       }
