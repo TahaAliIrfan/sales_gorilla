@@ -26,7 +26,7 @@ export default class extends Controller {
 
   connect() {
     this.device = null
-    this.currentConnection = null
+    this.currentCall = null
     this.setupDevice()
     this.fetchRecordings()
     this.updateCallButtonState()
@@ -143,10 +143,15 @@ export default class extends Controller {
       this.showStatus('Setting up phone service...')
       console.log('Token received, initializing device...')
       
-      this.device = new Twilio.Device(data.token, {
-        logLevel: 3,
-        enableRTCE: true,
-        debug: true
+      // Import Device from Twilio Voice SDK 2.x
+      if (!window.Twilio || !window.Twilio.Device) {
+        throw new Error('Twilio Voice SDK not loaded properly')
+      }
+      
+      // Create device instance with Voice SDK 2.x
+      this.device = new window.Twilio.Device(data.token, {
+        logLevel: 1, // 0=silent, 1=errors, 2=warnings, 3=info, 4=debug
+        codecPreferences: ['opus', 'pcmu']
       })
       
       this.setupDeviceListeners()
@@ -163,12 +168,17 @@ export default class extends Controller {
 
   // Set up event listeners for the Twilio Device
   setupDeviceListeners() {
-    this.device.on('ready', () => {
-      console.log('Phone device is ready')
+    // Device registered (ready to make calls)
+    this.device.on('registered', () => {
+      console.log('Device registered and ready')
+    })
+    
+    this.device.on('unregistered', () => {
+      console.log('Device unregistered')
     })
     
     this.device.on('error', (error) => {
-      console.error('Phone Device Error:', error)
+      console.error('Device Error:', error)
       let errorMessage = 'Error: '
       
       switch(error.code) {
@@ -197,22 +207,10 @@ export default class extends Controller {
       this.showError(errorMessage)
     })
     
-    this.device.on('connect', (conn) => {
-      this.currentConnection = conn
-      this.showStatus('Call in progress...', 'success')
-      this.callControlsTarget.classList.remove('hidden')
-    })
-    
-    this.device.on('disconnect', () => {
-      this.currentConnection = null
-      this.showStatus('Call ended', 'info')
-      this.callControlsTarget.classList.add('hidden')
-      
-      setTimeout(() => {
-        this.callStatusTarget.classList.add('hidden')
-      }, 3000)
-      
-      setTimeout(() => this.fetchRecordings(), 5000)
+    // Handle incoming calls (if supported)
+    this.device.on('incoming', (call) => {
+      console.log('Incoming call:', call)
+      // Handle incoming call logic here if needed
     })
   }
 
@@ -275,16 +273,17 @@ export default class extends Controller {
       
       if (this.device) {
         try {
-          this.currentConnection = this.device.connect(params)
-          
-          this.currentConnection.on('accept', () => {
-            console.log('Call accepted')
+          // Use Voice SDK 2.x API - device.connect() returns a Promise<Call>
+          this.currentCall = await this.device.connect({
+            params: params
           })
           
-          this.currentConnection.on('error', (error) => {
-            console.error('Call connection error:', error)
-            this.showError(`Call failed: ${error.message || 'Unknown error'}. Please try again.`)
-          })
+          // Set up call event listeners
+          this.setupCallListeners()
+          
+          this.showStatus('Call connecting...', 'info')
+          this.callControlsTarget.classList.remove('hidden')
+          
         } catch (error) {
           console.error('Error connecting call:', error)
           this.showError('Error connecting call: ' + error.message)
@@ -351,19 +350,62 @@ export default class extends Controller {
     }
   }
 
+  // Set up call event listeners
+  setupCallListeners() {
+    if (!this.currentCall) return
+    
+    this.currentCall.on('accept', () => {
+      console.log('Call accepted')
+      this.showStatus('Call in progress...', 'success')
+    })
+    
+    this.currentCall.on('disconnect', () => {
+      console.log('Call disconnected')
+      this.currentCall = null
+      this.showStatus('Call ended', 'info')
+      this.callControlsTarget.classList.add('hidden')
+      
+      setTimeout(() => {
+        this.callStatusTarget.classList.add('hidden')
+      }, 3000)
+      
+      setTimeout(() => this.fetchRecordings(), 5000)
+    })
+    
+    this.currentCall.on('error', (error) => {
+      console.error('Call error:', error)
+      this.showError(`Call failed: ${error.message || 'Unknown error'}. Please try again.`)
+      this.callControlsTarget.classList.add('hidden')
+    })
+    
+    this.currentCall.on('cancel', () => {
+      console.log('Call cancelled')
+      this.currentCall = null
+      this.showStatus('Call cancelled', 'info')
+      this.callControlsTarget.classList.add('hidden')
+    })
+    
+    this.currentCall.on('reject', () => {
+      console.log('Call rejected')
+      this.currentCall = null
+      this.showStatus('Call rejected', 'warning')
+      this.callControlsTarget.classList.add('hidden')
+    })
+  }
+  
   // Hang up the current call
   hangUp(event) {
     event.preventDefault()
-    if (this.currentConnection) {
-      this.currentConnection.disconnect()
+    if (this.currentCall) {
+      this.currentCall.disconnect()
     }
   }
 
   // Send DTMF tones
   sendDigit(event) {
     const digit = event.currentTarget.dataset.digit
-    if (this.currentConnection) {
-      this.currentConnection.sendDigits(digit)
+    if (this.currentCall) {
+      this.currentCall.sendDigits(digit)
     }
   }
 

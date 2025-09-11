@@ -21,9 +21,9 @@ document.addEventListener('turbo:load', function() {
   const recordingPlayer = document.getElementById('recording-player');
   const audioPlayer = document.getElementById('audio-player');
   
-  // Twilio Device (call connection)
+  // Twilio Device and Call
   let device;
-  let currentConnection = null;
+  let currentCall = null;
   
   // Initialize the Twilio Device
   function setupDevice() {
@@ -47,14 +47,14 @@ document.addEventListener('turbo:load', function() {
         statusMessage.textContent = 'Initializing device...';
         console.log('Token received, initializing device...');
         
-        // Initialize the Twilio Device with the token
-        device = new Twilio.Device(data.token, {
-          // Log level 0 is silent, 1 is errors only, 2 is warnings, 3 is info, 4 is debug
-          logLevel: 3, // Increase log level for debugging
-          // Use WebRTC Edge Helper for better WebRTC support
-          enableRTCE: true,
-          // Add debug option
-          debug: true
+        // Initialize the Twilio Voice Device with Voice SDK 2.x
+        if (!window.Twilio || !window.Twilio.Device) {
+          throw new Error('Twilio Voice SDK not loaded properly');
+        }
+        
+        device = new window.Twilio.Device(data.token, {
+          logLevel: 1, // 0=silent, 1=errors, 2=warnings, 3=info, 4=debug
+          codecPreferences: ['opus', 'pcmu']
         });
         
         // Setup event listeners for the device
@@ -75,15 +75,18 @@ document.addEventListener('turbo:load', function() {
   
   // Set up event listeners for the Twilio Device
   function setupDeviceListeners() {
-    device.on('ready', function() {
-      console.log('Twilio Device is ready');
+    device.on('registered', function() {
+      console.log('Device registered and ready');
+    });
+    
+    device.on('unregistered', function() {
+      console.log('Device unregistered');
     });
     
     device.on('error', function(error) {
-      console.error('Twilio Device Error:', error);
+      console.error('Device Error:', error);
       let errorMessage = 'Error: ';
       
-      // Add more detailed error messages based on error codes
       switch(error.code) {
         case 31000:
           errorMessage += 'Missing or invalid WebRTC requirements';
@@ -113,9 +116,18 @@ document.addEventListener('turbo:load', function() {
       callStatus.classList.add('bg-red-100', 'text-red-800');
     });
     
-    device.on('connect', function(conn) {
-      // When a call is connected
-      currentConnection = conn;
+    device.on('incoming', function(call) {
+      console.log('Incoming call:', call);
+      // Handle incoming call logic here if needed
+    });
+  }
+  
+  // Set up call event listeners
+  function setupCallListeners() {
+    if (!currentCall) return;
+    
+    currentCall.on('accept', function() {
+      console.log('Call accepted');
       statusMessage.textContent = 'Call in progress...';
       callStatus.classList.remove('hidden');
       callStatus.classList.remove('bg-blue-100', 'text-blue-800', 'bg-red-100', 'text-red-800');
@@ -125,9 +137,9 @@ document.addEventListener('turbo:load', function() {
       callControls.classList.remove('hidden');
     });
     
-    device.on('disconnect', function() {
-      // When a call is disconnected
-      currentConnection = null;
+    currentCall.on('disconnect', function() {
+      console.log('Call disconnected');
+      currentCall = null;
       statusMessage.textContent = 'Call ended';
       callStatus.classList.remove('hidden');
       callStatus.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
@@ -144,10 +156,32 @@ document.addEventListener('turbo:load', function() {
       // Refresh recordings after call ends (with a delay to allow processing)
       setTimeout(fetchRecordings, 5000);
     });
+    
+    currentCall.on('error', function(error) {
+      console.error('Call error:', error);
+      statusMessage.textContent = 'Error: ' + (error.message || 'Call failed');
+      callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+      callStatus.classList.add('bg-red-100', 'text-red-800');
+      callControls.classList.add('hidden');
+    });
+    
+    currentCall.on('cancel', function() {
+      console.log('Call cancelled');
+      currentCall = null;
+      statusMessage.textContent = 'Call cancelled';
+      callControls.classList.add('hidden');
+    });
+    
+    currentCall.on('reject', function() {
+      console.log('Call rejected');
+      currentCall = null;
+      statusMessage.textContent = 'Call rejected';
+      callControls.classList.add('hidden');
+    });
   }
   
   // Make an outgoing call
-  function makeCall() {
+  async function makeCall() {
     const phoneNumber = phoneNumberInput.value.trim();
     
     if (!phoneNumber) {
@@ -166,7 +200,6 @@ document.addEventListener('turbo:load', function() {
     
     // Make the call
     const params = {
-      // Pass the phone number to our voice endpoint
       To: phoneNumber,
       phone_number: '+447897021964'
     };
@@ -175,16 +208,16 @@ document.addEventListener('turbo:load', function() {
     
     if (device) {
       try {
-        currentConnection = device.connect(params);
-        
-        // Log connection events for debugging
-        currentConnection.on('accept', function() {
-          console.log('Call accepted');
+        // Use Voice SDK 2.x API - device.connect() returns a Promise<Call>
+        currentCall = await device.connect({
+          params: params
         });
         
-        currentConnection.on('error', function(error) {
-          console.error('Call connection error:', error);
-        });
+        // Set up call event listeners
+        setupCallListeners();
+        
+        statusMessage.textContent = 'Call connecting...';
+        
       } catch (error) {
         console.error('Error connecting call:', error);
         statusMessage.textContent = 'Error connecting call: ' + error.message;
@@ -200,15 +233,15 @@ document.addEventListener('turbo:load', function() {
   
   // Hang up the current call
   function hangUp() {
-    if (currentConnection) {
-      currentConnection.disconnect();
+    if (currentCall) {
+      currentCall.disconnect();
     }
   }
   
   // Send DTMF tones
   function sendDigit(digit) {
-    if (currentConnection) {
-      currentConnection.sendDigits(digit);
+    if (currentCall) {
+      currentCall.sendDigits(digit);
     }
   }
   
