@@ -26,17 +26,10 @@ class ProposalGenerationService
       pdf.start_new_page
       add_project_overview(pdf)
       
-      # Hours breakdown (if we have features)
+      # Hours breakdown (if we have features) - compact hierarchical view only
       if @cost_estimate.features.any?
         pdf.start_new_page
         add_hours_breakdown(pdf)
-        
-        # Feature details page (if we have complex features with descriptions)
-        complex_features = @cost_estimate.features.select { |f| f['description'].present? && f['description'].length > 20 }
-        if complex_features.count > 3
-          pdf.start_new_page
-          add_feature_details(pdf)
-        end
       end
       
       # Cost estimates
@@ -230,119 +223,94 @@ class ProposalGenerationService
   def add_project_overview(pdf)
     page_height = pdf.bounds.height
     margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
 
-    # Page title
-    add_page_title(pdf, "Project Overview", margin_top)
+    # Page title (matching TypeScript "Project Crux")
+    add_page_title(pdf, "Project Crux", margin_top)
 
-    current_y = page_height * 0.2
+    # Setup margins exactly like TypeScript
+    margin_top_overview = page_height * 0.2
 
-    # Overview section
-    pdf.font_size 16
+    # OVERVIEW section (exactly like TypeScript)
     pdf.fill_color BLACK_COLOR
+    pdf.font_size 16
     pdf.text_box sanitize_text("OVERVIEW"), 
-      at: [30, current_y], 
+      at: [30, page_height - margin_top_overview], 
       style: :bold,
       color: BLACK_COLOR
 
-    # Project description with proper wrapping
+    # Project description (matching TypeScript layout with drawWrappedText equivalent)
     description_text = @cost_estimate.description || "No description provided"
     pdf.font_size 12
-    
-    # Calculate text height for proper spacing
-    description_lines = description_text.length / 60 + 1 # Rough estimate
-    description_height = description_lines * 15
-    
     pdf.text_box sanitize_text(description_text), 
-      at: [150, current_y], 
-      width: 430,
-      height: description_height,
-      color: BLACK_COLOR
+      at: [150, page_height - margin_top_overview], 
+      width: 430,  # Match TypeScript width
+      height: 100, # Allow for wrapping
+      color: BLACK_COLOR,
+      leading: 5
 
-    current_y -= (description_height + 40)
+    # Calculate height used by description (approximate)
+    description_height = (description_text.length / 70.0 * 20).ceil # Rough calculation
 
-    # Technical Information Section
-    pdf.font_size 16
+    # TECHNICAL INFORMATION section
+    margin_top_technical_title = margin_top_overview + 30 + description_height
     pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text("PROJECT SPECIFICATIONS"), 
-      at: [30, current_y], 
+    pdf.font_size 16
+    pdf.text_box sanitize_text("TECHNICAL INFORMATION"), 
+      at: [30, page_height - margin_top_technical_title], 
       style: :bold,
       color: BLACK_COLOR
 
-    current_y -= 30
+    # Technical information content
+    margin_top_technical_text = margin_top_technical_title + 30
+    
+    # Build technical summary based on cost estimate data
+    tech_summary = build_technical_summary()
+    
+    pdf.font_size 12
+    pdf.text_box sanitize_text(tech_summary), 
+      at: [150, page_height - margin_top_technical_text], 
+      width: 430,
+      height: 200, # Allow for longer content
+      color: BLACK_COLOR,
+      leading: 5
 
-    # Project specifications table
-    specs = [
-      ["Application Type", @cost_estimate.app_type_display],
-      ["Project Scale", @cost_estimate.scale_display],
-      ["Estimated Duration", "#{(@cost_estimate.total_hours / 40.0).ceil} weeks"],
-      ["Total Development Hours", "#{@cost_estimate.total_hours} hours"],
-      ["Hourly Rate", "$#{@cost_estimate.hourly_rate}/hour"],
-      ["Total Investment", @cost_estimate.formatted_total_cost],
-      ["Team Size", get_team_size_for_scale(@cost_estimate.scale)],
-      ["Development Approach", get_development_approach(@cost_estimate.scale)]
-    ]
-
-    # Draw specifications table
-    specs.each do |spec|
-      # Label
-      pdf.font_size 11
-      pdf.fill_color GRAY_COLOR
-      pdf.text_box sanitize_text("#{spec[0]}:"), 
-        at: [30, current_y], 
-        width: 120,
-        style: :bold,
-        color: GRAY_COLOR
-
-      # Value
-      pdf.font_size 12
-      pdf.fill_color BLACK_COLOR
-      pdf.text_box sanitize_text(spec[1]), 
-        at: [160, current_y], 
-        width: 400,
-        color: BLACK_COLOR
-
-      current_y -= 20
-    end
-
-    current_y -= 20
-
-    # Feature Categories Summary
-    if @cost_estimate.features.any?
-      pdf.font_size 16
-      pdf.fill_color BLACK_COLOR
-      pdf.text_box sanitize_text("FEATURE CATEGORIES"), 
-        at: [30, current_y], 
-        style: :bold,
-        color: BLACK_COLOR
-
-      current_y -= 25
-
-      grouped_features = @cost_estimate.features.group_by { |f| f['category'] || 'General' }
-      
-      grouped_features.each do |category, features|
-        category_hours = features.sum { |f| f['hours'].to_i }
-        
-        # Category name
-        pdf.font_size 12
-        pdf.fill_color BLACK_COLOR
-        pdf.text_box sanitize_text("• #{category}"), 
-          at: [40, current_y], 
-          width: 200,
-          style: :bold,
-          color: BLACK_COLOR
-
-        # Feature count and hours
-        pdf.text_box sanitize_text("#{features.count} features (#{category_hours}h)"), 
-          at: [250, current_y], 
-          width: 200,
-          color: GRAY_COLOR
-
-        current_y -= 18
-      end
-    end
-
-    # Add footer
     add_page_footer(pdf)
+  end
+
+  private
+
+  def build_technical_summary
+    summary_parts = []
+    
+    # Application type info
+    summary_parts << "Application Type: #{@cost_estimate.app_type_display}"
+    summary_parts << "Project Scale: #{@cost_estimate.scale_display}"
+    
+    # Development approach based on scale
+    case @cost_estimate.scale
+    when 'mvp'
+      summary_parts << "Development Approach: Rapid prototyping with core functionality focus, agile methodology with 2-week sprints."
+    when 'moderate'
+      summary_parts << "Development Approach: Balanced development with comprehensive testing, agile methodology with full feature implementation."
+    when 'enterprise'
+      summary_parts << "Development Approach: Enterprise-grade architecture with extensive quality assurance, security protocols, and scalability planning."
+    else
+      summary_parts << "Development Approach: Standard agile development with industry best practices."
+    end
+    
+    # Technology considerations
+    if @cost_estimate.features.any?
+      categories = @cost_estimate.features.map { |f| f['category'] }.uniq.compact
+      summary_parts << "Key Technology Areas: #{categories.join(', ')}"
+    end
+    
+    # Timeline and team info
+    timeline_weeks = (@cost_estimate.total_hours / 40.0).ceil
+    summary_parts << "Estimated Timeline: #{timeline_weeks} weeks with #{get_team_size_for_scale(@cost_estimate.scale)}"
+    summary_parts << "Total Development Hours: #{@cost_estimate.total_hours} hours across all development phases"
+    
+    summary_parts.join(". ")
   end
 
   def get_team_size_for_scale(scale)
@@ -374,167 +342,167 @@ class ProposalGenerationService
   def add_hours_breakdown(pdf)
     page_height = pdf.bounds.height
     margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
 
-    # Page title
+    # Page title (exactly like TypeScript version)
     add_page_title(pdf, "Hours Breakdown", margin_top)
 
-    # Table setup
+    # Setup table parameters (matching TypeScript)
     margin_top_overview = page_height * 0.15
-    page_width = pdf.bounds.width
     horizontal_margin = 30
     table_width = page_width - 2 * horizontal_margin
-    features_col_width = table_width * 0.8
-    hours_col_width = table_width * 0.2
+    features_col_width = table_width * 0.8  # 80% for Features
+    hours_col_width = table_width * 0.2     # 20% for Hours
     row_height = 30
     font_size = 12
     y_position = page_height - margin_top_overview
 
     # Table header
-    pdf.fill_color GRAY_COLOR
-    pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+    table_data = [{ label: 'Features', value: 'Hours', is_header: true }]
 
-    pdf.fill_color WHITE_COLOR
-    pdf.font_size font_size
-    pdf.text_box sanitize_text("Features"), 
-      at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
-      style: :bold,
-      color: WHITE_COLOR
-
-    pdf.text_box sanitize_text("Hours"), 
-      at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
-      style: :bold,
-      color: WHITE_COLOR
-
-    y_position -= row_height
-
-    # Check if we need a new page for features
-    def check_page_space(pdf, y_position, rows_needed, row_height, page_height, margin_top_overview, horizontal_margin, table_width, features_col_width, margin_top)
-      space_needed = rows_needed * row_height + 100 # Footer space
-      if y_position - space_needed < 100
-        pdf.start_new_page
-        
-        # Recreate header on new page
-        add_page_title(pdf, "Hours Breakdown (Continued)", margin_top)
-        
-        y_position = page_height - margin_top_overview
-        
-        # Table header
-        pdf.fill_color GRAY_COLOR
-        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
-
-        pdf.fill_color WHITE_COLOR
-        pdf.font_size 12
-        pdf.text_box sanitize_text("Features"), 
-          at: [horizontal_margin + 5, y_position - row_height/2 + 6], 
-          style: :bold,
-          color: WHITE_COLOR
-
-        pdf.text_box sanitize_text("Hours"), 
-          at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + 6], 
-          style: :bold,
-          color: WHITE_COLOR
-
-        y_position -= row_height
-      end
-      y_position
-    end
-
-    # Features from AI analysis - show ALL individual features
-    total_hours = 0
+    # Add feature data to table (simple like TypeScript)
     grouped_features = @cost_estimate.features.group_by { |f| f['category'] || 'General' }
-    
+    total_hours = 0
+
     grouped_features.each do |category, features|
       category_hours = features.sum { |f| f['hours'].to_i }
       total_hours += category_hours
 
-      # Check if we need a new page (category + all features + total)
-      rows_needed = 1 + features.count + 1 # Category header + features + separator
-      y_position = check_page_space(pdf, y_position, rows_needed, row_height, page_height, margin_top_overview, horizontal_margin, table_width, features_col_width, margin_top)
+      # Add category as a main row
+      table_data << {
+        label: category,
+        value: "#{category_hours}h",
+        is_header: false,
+        is_category: true
+      }
 
-      # Category header row with background
-      pdf.fill_color LIGHT_GRAY
-      pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
-
-      pdf.fill_color BLACK_COLOR
-      pdf.stroke_color BLACK_COLOR
-      pdf.line_width 1
-      pdf.stroke_rectangle [horizontal_margin, y_position], table_width, row_height
-
-      pdf.font_size font_size
-      pdf.text_box sanitize_text("#{category.upcase} (#{features.count} features)"), 
-        at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
-        style: :bold,
-        color: BLACK_COLOR
-
-      pdf.text_box sanitize_text("#{category_hours}h"), 
-        at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
-        style: :bold,
-        color: BLACK_COLOR
-
-      y_position -= row_height
-
-      # Individual features under each category
+      # Add each feature under the category
       features.each do |feature|
+        feature_name = feature['name'] || 'Unnamed Feature'
         feature_hours = feature['hours'].to_i
         
-        pdf.fill_color WHITE_COLOR
-        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
-        
-        pdf.stroke_color BLACK_COLOR
-        pdf.line_width 1
-        pdf.stroke_rectangle [horizontal_margin, y_position], table_width, row_height
-
-        # Feature name (indented to show it's under category)
-        pdf.fill_color BLACK_COLOR
-        pdf.font_size 11
-        feature_name = feature['name'] || 'Unnamed Feature'
-        pdf.text_box sanitize_text("  • #{feature_name}"), 
-          at: [horizontal_margin + 15, y_position - row_height/2 + font_size/2], 
-          color: BLACK_COLOR
-
-        pdf.text_box sanitize_text("#{feature_hours}h"), 
-          at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
-          color: BLACK_COLOR
-
-        y_position -= row_height
+        table_data << {
+          label: "  → #{feature_name}",  # Indent with arrow
+          value: "#{feature_hours}h",
+          is_header: false,
+          is_category: false
+        }
       end
-
-      # Add some spacing between categories
-      y_position -= 5
     end
 
-    # Check space for total row
-    y_position = check_page_space(pdf, y_position, 1, row_height, page_height, margin_top_overview, horizontal_margin, table_width, features_col_width, margin_top)
+    # Add total hours row
+    table_data << {
+      label: 'Total Hours',
+      value: "#{total_hours}h",
+      is_header: false,
+      is_total: true
+    }
 
-    # Total row with emphasis
-    pdf.fill_color GRAY_COLOR
-    pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+    # Draw table (exactly like TypeScript implementation)
+    table_data.each_with_index do |row, index|
+      # Check if we need a new page
+      if y_position - row_height < 100
+        pdf.start_new_page
+        add_page_title(pdf, "Hours Breakdown (Continued)", margin_top)
+        y_position = page_height - margin_top_overview
+      end
 
-    pdf.stroke_color BLACK_COLOR
-    pdf.line_width 2
-    pdf.stroke_rectangle [horizontal_margin, y_position], table_width, row_height
+      # Draw background for header row
+      if row[:is_header]
+        pdf.fill_color GRAY_COLOR
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+      elsif row[:is_total]
+        pdf.fill_color LIGHT_GRAY
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+      end
 
-    pdf.fill_color WHITE_COLOR
-    pdf.font_size font_size
-    pdf.text_box sanitize_text("TOTAL PROJECT HOURS"), 
-      at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
-      style: :bold,
-      color: WHITE_COLOR
+      # Text color based on row type
+      text_color = if row[:is_header]
+                     WHITE_COLOR
+                   else
+                     BLACK_COLOR
+                   end
 
-    pdf.text_box sanitize_text("#{total_hours}h"), 
-      at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
-      style: :bold,
-      color: WHITE_COLOR
+      # Font style
+      font_style = if row[:is_header] || row[:is_total] || row[:is_category]
+                     :bold
+                   else
+                     :normal
+                   end
 
-    # Vertical lines for the entire table
-    start_y = page_height - margin_top_overview
-    end_y = y_position
+      # Draw left column text (Features)
+      pdf.fill_color text_color
+      pdf.font_size font_size
+      pdf.text_box sanitize_text(row[:label]), 
+        at: [horizontal_margin + 5, y_position - row_height/2 + font_size/2], 
+        width: features_col_width - 10,
+        style: font_style,
+        color: text_color
 
-    pdf.stroke_line [horizontal_margin, start_y], [horizontal_margin, end_y]
-    pdf.stroke_line [horizontal_margin + features_col_width, start_y], [horizontal_margin + features_col_width, end_y]
-    pdf.stroke_line [horizontal_margin + table_width, start_y], [horizontal_margin + table_width, end_y]
+      # Draw right column text (Hours)
+      pdf.text_box sanitize_text(row[:value]), 
+        at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
+        width: hours_col_width - 10,
+        style: font_style,
+        color: text_color
+
+      # Draw horizontal line
+      pdf.stroke_color BLACK_COLOR
+      pdf.line_width 1
+      pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
+
+      y_position -= row_height
+    end
+
+    # Draw bottom line
+    pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
+
+    # Draw vertical lines (matching TypeScript)
+    pdf.stroke_line [horizontal_margin, page_height - margin_top_overview], [horizontal_margin, y_position]
+    pdf.stroke_line [horizontal_margin + features_col_width, page_height - margin_top_overview], [horizontal_margin + features_col_width, y_position]
+    pdf.stroke_line [horizontal_margin + table_width, page_height - margin_top_overview], [horizontal_margin + table_width, y_position]
 
     add_page_footer(pdf)
+  end
+
+  # Extract sub-features from description text
+  def extract_sub_features(description)
+    sub_features = []
+    
+    # Common patterns for sub-features
+    patterns = [
+      /([^,]+registration[^,]*)/i,
+      /([^,]+verification[^,]*)/i,
+      /([^,]+profile[^,]*)/i,
+      /([^,]+login[^,]*)/i,
+      /([^,]+authentication[^,]*)/i,
+      /([^,]+messaging[^,]*)/i,
+      /([^,]+notification[^,]*)/i,
+      /([^,]+payment[^,]*)/i,
+      /([^,]+analytics[^,]*)/i,
+      /([^,]+admin[^,]*)/i
+    ]
+    
+    patterns.each do |pattern|
+      matches = description.scan(pattern)
+      matches.each do |match|
+        clean_match = match.first.to_s.strip.gsub(/^(and|with|or)\s+/i, '')
+        sub_features << clean_match if clean_match.length > 5 && clean_match.length < 40
+      end
+    end
+    
+    # If no pattern matches, split by common delimiters
+    if sub_features.empty?
+      potential_features = description.split(/[,;]/).map(&:strip)
+      potential_features.each do |feature|
+        if feature.length > 8 && feature.length < 50
+          sub_features << feature
+        end
+      end
+    end
+    
+    # Return max 3 sub-features
+    sub_features.uniq.first(3)
   end
 
   def add_feature_details(pdf)
