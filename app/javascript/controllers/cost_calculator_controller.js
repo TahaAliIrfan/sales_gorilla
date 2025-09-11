@@ -9,7 +9,8 @@ export default class extends Controller {
     "featuresDisplay", 
     "costSummary", 
     "calculateButton", 
-    "saveButton"
+    "saveButton",
+    "proposalButton"
   ]
 
   static values = {
@@ -160,6 +161,29 @@ export default class extends Controller {
     }
   }
 
+  async generateProposal() {
+    if (!this.currentEstimateValue || !this.currentEstimateValue.estimate_id) {
+      alert('Please save the estimate first before generating a proposal')
+      return
+    }
+
+    try {
+      // Create a temporary form and submit to generate PDF
+      const form = document.createElement('form')
+      form.method = 'GET'
+      form.action = `/cost_estimates/${this.currentEstimateValue.estimate_id}/generate_proposal`
+      form.target = '_blank'
+      
+      document.body.appendChild(form)
+      form.submit()
+      document.body.removeChild(form)
+      
+    } catch (error) {
+      console.error('Proposal generation error:', error)
+      this.showError('Failed to generate proposal. Please try again.')
+    }
+  }
+
   showLoadingState() {
     this.loadingStateTarget.classList.remove('hidden')
     this.resultsTarget.classList.add('hidden')
@@ -183,8 +207,9 @@ export default class extends Controller {
     // Display cost summary
     this.displayCostSummary(data)
     
-    // Show save button
+    // Show save and proposal buttons
     this.saveButtonTarget.classList.remove('hidden')
+    this.proposalButtonTarget.classList.remove('hidden')
   }
 
   displayFeatures(features) {
@@ -286,6 +311,10 @@ export default class extends Controller {
     
     if (this.hasSaveButtonTarget) {
       this.saveButtonTarget.classList.add('hidden')
+    }
+    
+    if (this.hasProposalButtonTarget) {
+      this.proposalButtonTarget.classList.add('hidden')
     }
     
     // Reset button state

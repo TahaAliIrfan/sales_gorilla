@@ -1,7 +1,7 @@
 class CostEstimatesController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_cost_estimate, only: [:show, :destroy]
+  before_action :set_cost_estimate, only: [:show, :destroy, :generate_proposal]
   
   def index
     @cost_estimates = current_user.cost_estimates.order(created_at: :desc).page(params[:page])
@@ -82,6 +82,18 @@ class CostEstimatesController < ApplicationController
   def destroy
     @cost_estimate.destroy
     redirect_to cost_estimates_path, notice: 'Cost estimate was successfully deleted.'
+  end
+  
+  def generate_proposal
+    proposal_service = ProposalGenerationService.new(@cost_estimate)
+    pdf = proposal_service.generate_pdf
+    
+    filename = "#{@cost_estimate.app_type}_proposal_#{Date.current.strftime('%Y%m%d')}.pdf"
+    
+    send_data pdf.render, 
+      filename: filename,
+      type: 'application/pdf',
+      disposition: 'attachment'
   end
   
   private

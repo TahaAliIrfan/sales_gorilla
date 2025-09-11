@@ -167,6 +167,9 @@ Rails.application.routes.draw do
     collection do
       post 'analyze'
     end
+    member do
+      get 'generate_proposal'
+    end
   end
   
   # Browser-based calling routes
