@@ -60,6 +60,16 @@ Rails.application.routes.draw do
   get 'settings/edit'
   get 'settings/update'
   
+  # CSV Import routes
+  resources :csv_imports, only: [:new] do
+    collection do
+      post 'upload'
+      get 'mapping'
+      post 'import'
+      delete 'cancel'
+    end
+  end
+
   # Add RESTful routes for our models
   resources :customers do
     member do

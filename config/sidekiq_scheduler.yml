@@ -7,4 +7,11 @@
 #   queue: low
 #   description: "Sends reminder emails for tasks due today and overdue tasks"
 
+# CSV cleanup - runs every 6 hours to clean up expired uploads
+csv_cleanup:
+  cron: "0 */6 * * *"  # Every 6 hours
+  class: CsvCleanupWorker
+  queue: default
+  description: "Cleans up expired CSV upload files"
+
 # You can add more scheduled jobs here as needed 

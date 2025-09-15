@@ -51,7 +51,10 @@ class Customer < ApplicationRecord
     'Inbound_1' => 'Inbound_1',
     'Inbound_2' => 'Inbound_2',
     'Inbound_3' => 'Inbound_3',
-    'WA' => 'WA'
+    'WA' => 'WA',
+    'Qatar_Web_summit' => 'Qatar_Web_summit',
+    'Leap' => 'Leap',
+    'Gitex' => 'Gitex',
   }.freeze
   
   PROJECT_TYPES = {
