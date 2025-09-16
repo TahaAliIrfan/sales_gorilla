@@ -496,8 +496,15 @@ class CustomersController < ApplicationController
     authorize @customer
 
     if @customer.whatsapp_chat_id.blank?
-      render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
-      return
+
+      if @customer.phone.present?
+        phone_without_plus = @customer.phone.gsub(/\A\+/, '')
+        whatsapp_chat_id = "#{phone_without_plus}@c.us"
+        @customer.update!(whatsapp_chat_id: whatsapp_chat_id)
+      else
+        render json: { success: false, error: "No WhatsApp chat ID available for this customer" }
+        return
+      end
     end
     
     message_text = params[:message]
