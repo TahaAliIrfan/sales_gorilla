@@ -473,6 +473,7 @@ class Customer < ApplicationRecord
     self.preferred_calling_time ||= 'Not Applicable'
     self.platform ||= 'Not Applicable'
     self.project_scope ||= 'Not Applicable'
+    self.repeat_lead = false if repeat_lead.nil?
   end
   
   def set_exhaust_date

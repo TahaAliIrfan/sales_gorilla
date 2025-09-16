@@ -32,7 +32,7 @@ module Api
             meta_ad_id: params[:meta_ad_id]
           )
         else
-          customer.update!(created_at: Time.current)
+          customer.update!(created_at: Time.current, repeat_lead: true)
         end
 
         if customer.save
