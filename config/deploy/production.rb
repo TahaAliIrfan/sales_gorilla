@@ -9,14 +9,15 @@
 
 set :stage, :production
 set :rails_env, :production
-set :branch, "master"
+set :branch, "new_whatsapp_imp"
 set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
   user: 'ubuntu',
-  keys: %w[./Desktop/tecaudex_crm.pem]
+  keys: %w[~/Desktop/crm_real.pem],
+  keys_only: true
 }
-server '3.82.141.0', port: 22, roles: [:web, :app, :db], primary: true
+server '54.91.79.118', port: 22, roles: [:web, :app, :db], primary: true
 
 # role-based syntax
 # ==================

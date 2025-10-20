@@ -37,8 +37,6 @@ application.register("followup-modal", FollowupModalController)
 import BulkAssignController from "./bulk_assign_controller"
 application.register("bulk-assign", BulkAssignController)
 
-import WhatsappChatController from "./whatsapp_chat_controller"
-application.register("whatsapp-chat", WhatsappChatController)
 
 import DropdownController from "./dropdown_controller"
 application.register("dropdown", DropdownController)
@@ -51,3 +49,6 @@ application.register("document-delete", DocumentDeleteController)
 
 import CostCalculatorController from "./cost_calculator_controller"
 application.register("cost-calculator", CostCalculatorController)
+
+import ChatController from "./chat_controller"
+application.register("chat", ChatController)

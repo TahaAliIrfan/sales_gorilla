@@ -29,7 +29,8 @@ set :rbenv_ruby, '3.3.0'
 #   https://github.com/capistrano/passenger
 require "capistrano/deploy"
 require 'capistrano/rails'
-require 'capistrano/passenger'
+# Note: Using Puma via systemd, not Passenger
+# require 'capistrano/passenger'
 require 'capistrano/rbenv'
 
 # require "capistrano/rvm"

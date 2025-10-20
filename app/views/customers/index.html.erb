@@ -46,6 +46,11 @@
             <% end %>
           </select>
         </div>
+      <% else %>
+        <!-- Hidden user target for regular users to prevent JS errors -->
+        <select data-customer-filter-target="user" class="hidden">
+          <option value=""></option>
+        </select>
       <% end %>
 
       <!-- Status Filter -->

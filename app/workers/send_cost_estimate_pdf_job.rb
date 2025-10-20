@@ -1,0 +1,137 @@
+class SendCostEstimatePdfJob
+  include Sidekiq::Job
+
+  sidekiq_options queue: :notifications, retry: 3
+
+  def perform(cost_estimate_id)
+    cost_estimate = CostEstimate.find_by(id: cost_estimate_id)
+
+    unless cost_estimate
+      Rails.logger.error("SendCostEstimatePdfJob: CostEstimate #{cost_estimate_id} not found")
+      return
+    end
+
+    customer = cost_estimate.customer
+
+    unless customer&.phone.present?
+      Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer&.id} has no phone number")
+      return
+    end
+
+    begin
+      # Generate AI content if not already present
+      if cost_estimate.app_name.blank?
+        Rails.logger.info("Generating AI content for cost estimate #{cost_estimate_id}")
+        ai_service = CostEstimateAiService.new
+
+        # Generate app name, similar apps, technical info, executive summary, and feature prioritization
+        analysis = ai_service.generate_project_analysis(cost_estimate)
+        if analysis
+          cost_estimate.update!(
+            app_name: analysis['app_name'],
+            similar_apps: analysis['similar_apps'].to_json,
+            technical_information_summary: analysis['technical_info'].to_json,
+            executive_summary: analysis['executive_summary'].to_json,
+            feature_prioritization: analysis['feature_prioritization'].to_json
+          )
+          Rails.logger.info("Generated app name: #{analysis['app_name']}")
+          Rails.logger.info("Generated technical information")
+          Rails.logger.info("Generated executive summary")
+          Rails.logger.info("Generated feature prioritization")
+        else
+          # Fallback if AI fails
+          cost_estimate.update!(
+            app_name: "#{customer.name}'s App",
+            similar_apps: [].to_json
+          )
+          Rails.logger.warn("AI analysis failed, using fallback app name")
+        end
+      end
+
+      # Generate the PDF
+      Rails.logger.info("Generating PDF for cost estimate #{cost_estimate_id}")
+      proposal_service = ProposalGenerationService.new(cost_estimate)
+      pdf = proposal_service.generate_pdf
+      pdf_content = pdf.render
+
+      # Generate filename using app_name for better WhatsApp display
+      app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
+      filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
+
+      # Save PDF using Active Storage
+
+      # Convert PDF to base64
+      pdf_base64 = Base64.strict_encode64(pdf_content)
+
+      # Send via WhatsApp
+      whatsapp_service = Whatsapp::ApiService.new
+      chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
+
+      # Get application types for the message
+      app_types = cost_estimate.application_types_array.any? ?
+                  cost_estimate.application_types_array.join(', ').upcase :
+                  cost_estimate.app_type_display
+
+      caption = "Hi #{customer.name}! 👋\n\n" \
+                "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
+                "📱 Project Type: #{app_types}\n" \
+                "📊 Scale: #{cost_estimate.scale.titleize}\n" \
+                "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
+                "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
+                "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
+                "Best regards,\nTecaudex Team"
+
+      response = whatsapp_service.send_media_base64(
+        chat_id,
+        pdf_base64,
+        filename,
+        caption,
+        'application/pdf'
+      )
+
+      cost_estimate.pdf_file.attach(
+        io: StringIO.new(pdf_content),
+        filename: filename,
+        content_type: 'application/pdf'
+      )
+      Rails.logger.info("PDF saved to Active Storage: #{filename}")
+
+      # Store public URL in pdf_url field for easy access
+      if cost_estimate.pdf_file.attached?
+        begin
+          # Use default_url_options from config
+          url_options = Rails.application.config.action_mailer.default_url_options || { host: 'localhost', port: 3000 }
+          cost_estimate.update_column(:pdf_url, Rails.application.routes.url_helpers.rails_blob_url(cost_estimate.pdf_file, **url_options))
+        rescue => e
+          Rails.logger.warn("Could not generate PDF URL: #{e.message}")
+          # Continue without URL - not critical since we're sending base64
+        end
+      end
+
+
+      if response[:success]
+        Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
+
+        # Create a customer activity
+        customer.customer_activities.create!(
+          user_id: cost_estimate.user_id,
+          action: "Cost Estimate PDF Sent",
+          details: "Sent cost estimate PDF via WhatsApp - Total: $#{cost_estimate.total_cost}"
+        )
+      else
+        Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
+        raise "WhatsApp API Error: #{response[:error]}"
+      end
+    rescue => e
+      Rails.logger.error("Error in SendCostEstimatePdfJob: #{e.message}")
+      Rails.logger.error(e.backtrace.join("\n"))
+      raise e # Re-raise to trigger Sidekiq retry
+    end
+  end
+
+  private
+
+  def number_with_commas(number)
+    number.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
+  end
+end

@@ -1,0 +1,161 @@
+<% if messages.any? %>
+  <% messages.each do |message| %>
+    <div class="message-item">
+      <% if message.direction == 'inbound' %>
+        <!-- Inbound Message -->
+        <div class="flex items-start space-x-3">
+          <div class="flex-shrink-0">
+            <div class="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
+              <span class="text-xs font-medium text-gray-700">
+                <%= message.customer&.name&.first&.upcase || '?' %>
+              </span>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="bg-gray-100 rounded-lg px-3 py-2 max-w-xs">
+              <div class="text-sm text-gray-900">
+                <% if message.message_type == 'text' %>
+                  <%= simple_format(h(message.content)) %>
+                <% else %>
+                  <% if message.document.attached? %>
+                    <div class="flex items-center space-x-2">
+                      <% case message.message_type %>
+                      <% when 'image' %>
+                        <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Image</span>
+                      <% when 'document' %>
+                        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Document</span>
+                      <% when 'audio' %>
+                        <svg class="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.686 9l3-3m0 0l3 3m-3-3v12"/>
+                        </svg>
+                        <span>Audio</span>
+                      <% when 'video' %>
+                        <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Video</span>
+                      <% else %>
+                        <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                        </svg>
+                        <span>File</span>
+                      <% end %>
+                      <%= link_to rails_blob_path(message.document, disposition: "attachment"), 
+                          target: "_blank", 
+                          class: "text-blue-600 hover:text-blue-800 underline" do %>
+                        Download
+                      <% end %>
+                    </div>
+                    
+                    <% if message.message_type == 'image' %>
+                      <div class="mt-2">
+                        <%= image_tag rails_blob_path(message.document), 
+                            class: "max-w-48 h-auto rounded-md border border-gray-200",
+                            loading: "lazy" %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <em class="text-gray-500"><%= message.content %></em>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+            <div class="text-xs text-gray-500 mt-1">
+              <%= message.created_at.strftime("%H:%M") %>
+              <% if message.status.present? %>
+                • <%= message.status.humanize %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <!-- Outbound Message -->
+        <div class="flex items-start justify-end space-x-3">
+          <div class="flex-1 min-w-0 flex justify-end">
+            <div class="bg-red-500 text-white rounded-lg px-3 py-2 max-w-xs">
+              <div class="text-sm">
+                <% if message.message_type == 'text' %>
+                  <%= simple_format(h(message.content)) %>
+                <% else %>
+                  <% if message.document.attached? %>
+                    <div class="flex items-center space-x-2">
+                      <% case message.message_type %>
+                      <% when 'image' %>
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Image</span>
+                      <% when 'document' %>
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Document</span>
+                      <% when 'audio' %>
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.686 9l3-3m0 0l3 3m-3-3v12"/>
+                        </svg>
+                        <span>Audio</span>
+                      <% when 'video' %>
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                        </svg>
+                        <span>Video</span>
+                      <% else %>
+                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+                        </svg>
+                        <span>File</span>
+                      <% end %>
+                      <%= link_to rails_blob_path(message.document, disposition: "attachment"), 
+                          target: "_blank", 
+                          class: "text-white underline hover:text-gray-200" do %>
+                        Download
+                      <% end %>
+                    </div>
+                    
+                    <% if message.message_type == 'image' %>
+                      <div class="mt-2">
+                        <%= image_tag rails_blob_path(message.document), 
+                            class: "max-w-48 h-auto rounded-md border border-red-300",
+                            loading: "lazy" %>
+                      </div>
+                    <% end %>
+                  <% else %>
+                    <em class="text-red-100"><%= message.content %></em>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+          <div class="flex-shrink-0">
+            <div class="h-8 w-8 bg-red-500 rounded-full flex items-center justify-center">
+              <span class="text-xs font-medium text-white">You</span>
+            </div>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500 mt-1 text-right">
+          <%= message.created_at.strftime("%H:%M") %>
+          <% if message.status.present? %>
+            • <%= message.status.humanize %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+<% else %>
+  <div class="flex justify-center items-center py-8">
+    <div class="text-center">
+      <svg class="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+      </svg>
+      <p class="text-gray-500 text-sm">No messages yet</p>
+      <p class="text-gray-400 text-xs mt-1">Start the conversation by sending a message</p>
+    </div>
+  </div>
+<% end %>

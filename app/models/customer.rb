@@ -1,4 +1,5 @@
 class Customer < ApplicationRecord
+  #relationship
   belongs_to :user, optional: true
   has_one :customer_location, dependent: :destroy
   has_many :deals
@@ -8,32 +9,21 @@ class Customer < ApplicationRecord
   has_many :messages, dependent: :destroy
   has_many :whatsapp_messages, dependent: :destroy
   has_many :emails, dependent: :destroy
+  has_many :cost_estimates, dependent: :destroy
   has_many_attached :documents
 
-  # Remove single file attachment as we're using documents now
-  #has_one_attached :file
-  
-  validates :name, presence: { message: "is required" }
-  validates :email, uniqueness: { case_sensitive: false, allow_blank: true },
-            format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
-  validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
-  
-  # Validate document types
-  validate :acceptable_documents
-  
-  before_validation :normalize_email
-  before_validation :normalize_phone
-  before_validation :set_default_values
-  before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
-  before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
-  before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
-  before_save :record_activity_changes
-  after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
-  after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
-  after_save :analyze_phone_number, if: -> { phone.present? && should_analyze_phone? }
-  after_save :track_meta_conversions_events
-  after_create :calculate_lead_score
-  
+  # Scopes
+  scope :assigned_to, ->(user_id) { where(user_id: user_id) if user_id.present? }
+  scope :search, ->(term) {
+    if term.present?
+      term = "%#{term.downcase}%"
+      where(
+        "LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(company) LIKE ?",
+        term, term, term, term
+      )
+    end
+  }
+
   # Constants for dropdown fields
   CUSTOMER_TYPES = {
     'Standard' => 'Standard',
@@ -53,10 +43,12 @@ class Customer < ApplicationRecord
     'Inbound_3' => 'Inbound_3',
     'WA' => 'WA',
     'Qatar_Web_summit' => 'Qatar_Web_summit',
+    'Web_Summit' => 'Web_Summit',
     'Leap' => 'Leap',
     'Gitex' => 'Gitex',
+    'Followup' => 'Followup'
   }.freeze
-  
+
   PROJECT_TYPES = {
     'Mobile App' => 'Mobile App',
     'Web App' => 'Web App',
@@ -65,7 +57,7 @@ class Customer < ApplicationRecord
     'TV App' => 'TV App',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   PLATFORMS = {
     'Mobile App' => 'Mobile App',
     'Web App' => 'Web App',
@@ -75,14 +67,14 @@ class Customer < ApplicationRecord
     'Frontend' => 'Frontend',
     'Not Applicable' => 'Not Applicable',
   }.freeze
-  
+
   PROJECT_SCOPES = {
     'Lean-Launch-MVP' => 'Lean-Launch-MVP',
     'Enterprise-Scale' => 'Enterprise-Scale',
     'Growth-Ready' => 'Growth-Ready',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   STATUSES = {
     'Pending' => 'Pending',
     'Contact Established' => 'Contact Established',
@@ -96,7 +88,7 @@ class Customer < ApplicationRecord
     'Retarget' => 'Retarget',
     'Exhausted_1' => 'Exhausted_1'
   }.freeze
-  
+
   CALL_STATUSES = {
     'Pending' => 'Pending',
     'Called' => 'Called',
@@ -105,7 +97,7 @@ class Customer < ApplicationRecord
     'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   EMAIL_STATUSES = {
     'Pending' => 'Pending',
     'Email Sent' => 'Email Sent',
@@ -114,7 +106,7 @@ class Customer < ApplicationRecord
     'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   WHATSAPP_STATUSES = {
     'Pending' => 'Pending',
     'Message Sent' => 'Message Sent',
@@ -123,7 +115,7 @@ class Customer < ApplicationRecord
     'Connected' => 'Connected',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   LINKEDIN_STATUSES = {
     'Pending' => 'Pending',
     'Message Sent' => 'Message Sent',
@@ -131,7 +123,7 @@ class Customer < ApplicationRecord
     'Conversation Initiated' => 'Conversation Initiated',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   UPWORK_PROFILES = {
     'Taha' => 'Taha',
     'Arham' => 'Arham',
@@ -139,14 +131,18 @@ class Customer < ApplicationRecord
     'Tecaudex' => 'Tecaudex',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
+
   EXHAUST_STATUSES = {
     'NA' => 'NA',
     'Exhausted' => 'Exhausted',
     'Not Applicable' => 'Not Applicable'
   }.freeze
-  
-  # Validations for dropdown fields
+
+  #validations
+  validates :name, presence: { message: "is required" }
+  validates :email, uniqueness: { case_sensitive: false, allow_blank: true }, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
+  validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
+  validate :acceptable_documents
   validates :customer_type, inclusion: { in: CUSTOMER_TYPES.values }
   validates :lead_source, inclusion: { in: LEAD_SOURCES.values }, allow_blank: true
   validates :project_type, inclusion: { in: PROJECT_TYPES.values }, allow_blank: true
@@ -159,25 +155,25 @@ class Customer < ApplicationRecord
   validates :exhaust_status, inclusion: { in: EXHAUST_STATUSES.values }, allow_blank: true
   validates :platform, inclusion: { in: PLATFORMS.values }, allow_blank: true
   validates :project_scope, inclusion: { in: PROJECT_SCOPES.values }, allow_blank: true
-  
-  # Scopes
-  scope :assigned_to, ->(user_id) { where(user_id: user_id) if user_id.present? }
-  scope :search, ->(term) {
-    if term.present?
-      term = "%#{term.downcase}%"
-      where(
-        "LOWER(name) LIKE ? OR LOWER(email) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(company) LIKE ?",
-        term, term, term, term
-      )
-    end
-  }
-  
-  # Returns the count of active deals for this customer
+
+  #callbacks
+  before_validation :normalize_email
+  before_validation :normalize_phone
+  before_validation :set_default_values
+  before_save :set_exhaust_date, if: -> { status_changed? && status == 'Exhausted' }
+  before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
+  before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
+  before_save :record_activity_changes
+  after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
+  after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
+  after_save :analyze_phone_number, if: -> { phone.present? && should_analyze_phone? }
+  after_save :track_meta_conversions_events
+  after_create :calculate_lead_score
+
   def active_deals_count
     deals.active.count
   end
-  
-  # Returns the current time in the customer's timezone
+
   def current_time_in_timezone
     if self.customer_location.present? && self.customer_location.timezone.present?
       tz = ActiveSupport::TimeZone.find_tzinfo(self.customer_location.timezone)
@@ -186,11 +182,22 @@ class Customer < ApplicationRecord
       nil
     end
   end
+
+  def update_whatsapp_chat_id
+    whatsapp_service = Whatsapp::ApiService.new
+
+    if whatsapp_service.is_registered_on_whatsapp!(phone)
+      chat_id = whatsapp_service.get_whatsapp_chat_id(phone)
+      self.update!(whatsapp_chat_id: chat_id)
+    end
+  end
   
   # Analyze the customer's phone number using comprehensive phone location services
   def analyze_phone_number
     return false unless phone.present?
-    
+
+    self.update_whatsapp_chat_id
+
     Rails.logger.info("Queuing comprehensive phone analysis for customer #{id} (#{name}) with phone #{phone}")
     
     # Enqueue the background job to analyze the phone number with new services
@@ -325,49 +332,31 @@ class Customer < ApplicationRecord
   def has_pending_followup?
     followup_date.present? && followup_date > Time.current
   end
-  
-  # Fetch and store WhatsApp messages
+
   def fetch_and_store_whatsapp_messages
     return [] if whatsapp_chat_id.blank?
-    
-    # Create a new instance of the WhatsApp API service
+
     whatsapp_service = Whatsapp::ApiService.new
-    
-    # Skip if credentials not configured
-    return [] unless whatsapp_service.credentials_configured?
-    
-    Rails.logger.info("Fetching WhatsApp messages from API for customer #{id} (#{name})")
-    
-    # Get the messages for this chat
+
     response = whatsapp_service.get_chat_room(whatsapp_chat_id)
-    
-    # Return empty array if API call was not successful
+
     if !response[:success] || !response[:data] || !response[:data][:data]
       Rails.logger.error("API call to get WhatsApp messages failed for customer #{id}: #{response[:error]}")
       return []
     end
-    
-    # Log the number of messages received
-    message_count = response[:data][:data].size
-    Rails.logger.info("Received #{message_count} WhatsApp messages from API for customer #{id}")
-    
-    # Import messages into the database
+
     stored_messages = WhatsappMessage.import_messages(self, response[:data][:data])
-    
+
     Rails.logger.info("Successfully stored #{stored_messages.size} WhatsApp messages in database for customer #{id}")
-    
-    # Return the WhatsApp messages from the database to ensure we're using the stored versions
+
     whatsapp_messages.ordered
   end
-  
-  # Get all WhatsApp messages for this customer from the database
-  # If force_refresh is true, it will fetch from API first
-  def get_whatsapp_messages(force_refresh: false)
-    if force_refresh || whatsapp_messages.count == 0
-      fetch_and_store_whatsapp_messages
-    end
+
+  # New method using the enhanced Message model and service
+  def sync_whatsapp_messages
+    return { success: false, error: "WhatsApp chat ID not set" } if whatsapp_chat_id.blank?
     
-    whatsapp_messages.ordered
+    WhatsappMessageService.new.fetch_and_store_messages(whatsapp_chat_id, self)
   end
   
   def document_types

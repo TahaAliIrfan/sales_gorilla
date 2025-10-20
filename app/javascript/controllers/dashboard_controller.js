@@ -148,8 +148,8 @@ export default class extends Controller {
             </div>
             <div class="ml-5 w-0 flex-1">
               <dl>
-                <dt class="text-sm font-medium text-gray-500 truncate">WhatsApp Conversations</dt>
-                <dd class="text-2xl font-semibold text-gray-900">${data.total_whatsapp_conversations || 0}</dd>
+                <dt class="text-sm font-medium text-gray-500 truncate">Total Customers</dt>
+                <dd class="text-2xl font-semibold text-gray-900">${data.total_customers || 0}</dd>
               </dl>
             </div>
           </div>
@@ -269,8 +269,8 @@ export default class extends Controller {
               <div>Connected: <span class="font-medium">${user.connected_calls}</span></div>
               <div>Deals Won: <span class="font-medium">${user.monthly_metrics.this_month.deals_won}</span></div>
               <div>Revenue: <span class="font-medium">$${(user.monthly_metrics.this_month.revenue_generated || 0).toLocaleString()}</span></div>
-              <div>WhatsApp: <span class="font-medium">${user.whatsapp_conversations}</span></div>
-              <div>Active Chat: <span class="font-medium">${user.active_whatsapp_conversations}</span></div>
+              <div>Total Customers: <span class="font-medium">${user.total_customers}</span></div>
+              <div>Active Deals: <span class="font-medium">${user.active_deals}</span></div>
             </div>
           </td>
         </tr>
@@ -287,7 +287,7 @@ export default class extends Controller {
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Performance Score</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Week</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month + WhatsApp</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">This Month</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
@@ -333,10 +333,10 @@ export default class extends Controller {
             <div class="text-sm text-gray-900 font-medium">${userData.deals_won}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 font-medium">${userData.whatsapp_conversations || 0}</div>
+            <div class="text-sm text-gray-900 font-medium">${userData.total_customers || 0}</div>
           </td>
           <td class="px-6 py-4 whitespace-nowrap">
-            <div class="text-sm text-gray-900 font-medium">${userData.active_whatsapp_conversations || 0}</div>
+            <div class="text-sm text-gray-900 font-medium">${userData.active_deals || 0}</div>
           </td>
         </tr>
       `
@@ -354,8 +354,8 @@ export default class extends Controller {
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customers Contacted</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Created</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals Won</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">WhatsApp Conversations</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Conversations</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Customers</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">

@@ -14,4 +14,11 @@ csv_cleanup:
   queue: default
   description: "Cleans up expired CSV upload files"
 
+# Server health monitoring - runs every 15 minutes
+server_health_monitor:
+  cron: "*/15 * * * *"  # Every 15 minutes
+  class: ServerHealthMonitorWorker
+  queue: default
+  description: "Monitors server health and sends Google Chat alerts if issues detected"
+
 # You can add more scheduled jobs here as needed 

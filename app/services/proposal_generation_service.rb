@@ -21,17 +21,35 @@ class ProposalGenerationService
       # Table of contents
       pdf.start_new_page
       add_table_of_contents(pdf)
-      
+
+      # Executive Summary (if available)
+      if @cost_estimate.executive_summary.present?
+        pdf.start_new_page
+        add_executive_summary(pdf)
+      end
+
       # Project overview/crux
       pdf.start_new_page
       add_project_overview(pdf)
-      
+
+      # Similar Apps section (if available)
+      if @cost_estimate.similar_apps.present?
+        pdf.start_new_page
+        add_similar_apps(pdf)
+      end
+
+      # Feature Prioritization (if available)
+      if @cost_estimate.feature_prioritization.present? && @cost_estimate.features.any?
+        pdf.start_new_page
+        add_feature_prioritization(pdf)
+      end
+
       # Hours breakdown (if we have features) - compact hierarchical view only
       if @cost_estimate.features.any?
         pdf.start_new_page
         add_hours_breakdown(pdf)
       end
-      
+
       # Cost estimates
       pdf.start_new_page
       add_cost_estimates(pdf)
@@ -83,8 +101,8 @@ class ProposalGenerationService
     # Main title
     pdf.fill_color WHITE_COLOR
     pdf.font_size(page_width * 0.08)
-    pdf.text_box sanitize_text("Cost Calculator Report!"), 
-      at: [mx, page_height * 0.85], 
+    pdf.text_box sanitize_text("Project Proposal"),
+      at: [mx, page_height * 0.85],
       width: page_width - mx * 1.8,
       style: :bold,
       color: WHITE_COLOR
@@ -100,21 +118,25 @@ class ProposalGenerationService
       pdf.fill_ellipse [mx + i * circle_spacing, circle_y], circle_radius, circle_radius * 1.7 * height_scales[i]
     end
 
-    # Project name - use AI-generated project name or fallback to app type
+    # Project name - use AI-generated app_name or fallback to project_name or app type
     my = page_height * 0.4 - page_height * 0.1
     pdf.fill_color WHITE_COLOR
     pdf.font_size(page_width * 0.044)
-    project_name = @cost_estimate.project_name.present? ? @cost_estimate.project_name : (@cost_estimate.app_type_display || "Untitled Project")
-    pdf.text_box sanitize_text(project_name), 
-      at: [mx, my], 
+    project_name = @cost_estimate.app_name.present? ?
+                   @cost_estimate.app_name :
+                   (@cost_estimate.project_name.present? ?
+                    @cost_estimate.project_name :
+                    (@cost_estimate.app_type_display || "Untitled Project"))
+    pdf.text_box sanitize_text(project_name),
+      at: [mx, my],
       width: page_width - mx * 1.5,
       style: :bold,
       color: WHITE_COLOR
 
     pdf.font_size 12
     pdf.fill_color GRAY_COLOR
-    pdf.text_box sanitize_text("Proposed App Name"), 
-      at: [mx, my + 30], 
+    pdf.text_box sanitize_text("Proposed App Name"),
+      at: [mx, my + 30],
       width: page_width - mx * 1.5,
       color: GRAY_COLOR
 
@@ -162,27 +184,27 @@ class ProposalGenerationService
 
     # Red header section
     pdf.fill_color RED_COLOR
-    pdf.fill_rectangle [0, page_height], page_width, page_height * 0.4
+    pdf.fill_rectangle [0, page_height], page_width, page_height * 0.35
 
-    # HTML-style brackets
-    bracket_size = page_width * 0.3
-    bracket_y = page_height - page_height * 0.3
-    bracket_spacing = bracket_size * 0.6
+    # HTML-style brackets - centered in red section
+    bracket_size = page_width * 0.25
+    bracket_y = page_height - page_height * 0.18  # Centered vertically in red section
+    bracket_spacing = bracket_size * 0.55
 
     pdf.fill_color WHITE_COLOR
     pdf.font_size bracket_size
-    pdf.text_box sanitize_text("<"), 
-      at: [30, bracket_y], 
+    pdf.text_box sanitize_text("<"),
+      at: [40, bracket_y],
       style: :bold,
       color: WHITE_COLOR
 
-    pdf.text_box sanitize_text("/"), 
-      at: [30 + bracket_spacing, bracket_y], 
+    pdf.text_box sanitize_text("/"),
+      at: [40 + bracket_spacing, bracket_y],
       style: :bold,
       color: WHITE_COLOR
 
-    pdf.text_box sanitize_text(">"), 
-      at: [30 + 1.8 * bracket_spacing, bracket_y], 
+    pdf.text_box sanitize_text(">"),
+      at: [40 + 1.8 * bracket_spacing, bracket_y],
       style: :bold,
       color: WHITE_COLOR
 
@@ -195,15 +217,31 @@ class ProposalGenerationService
       color: RED_COLOR
 
     # Contents items
-    items = [
-      "Project Overview",
-      "Hours Breakdown", 
-      "Project Cost & Estimation"
-    ]
+    items = []
 
-    if @cost_estimate.features.any?
-      items.insert(1, "Feature Analysis")
+    # Add Executive Summary if available
+    if @cost_estimate.executive_summary.present?
+      items << "Executive Summary"
     end
+
+    items << "Project Overview"
+
+    # Add Market Research if we have similar apps
+    if @cost_estimate.similar_apps.present?
+      items << "Market Research"
+    end
+
+    # Add Feature Analysis if we have features
+    if @cost_estimate.features.any?
+      # Add Feature Prioritization if available
+      if @cost_estimate.feature_prioritization.present?
+        items << "Strategic Roadmap"
+      end
+      items << "Feature Analysis"
+      items << "Hours Breakdown"
+    end
+
+    items << "Project Cost & Estimation"
 
     y_position = page_height - page_height * 0.55
     items.each_with_index do |item, index|
@@ -236,51 +274,103 @@ class ProposalGenerationService
     # Setup margins exactly like TypeScript
     margin_top_overview = page_height * 0.2
 
-    # OVERVIEW section (exactly like TypeScript)
+    # OVERVIEW section
     pdf.fill_color BLACK_COLOR
     pdf.font_size 16
-    pdf.text_box sanitize_text("OVERVIEW"), 
-      at: [30, page_height - margin_top_overview], 
+    pdf.text_box sanitize_text("Overview"),
+      at: [30, page_height - margin_top_overview],
+      width: 535,
       style: :bold,
       color: BLACK_COLOR
+
+    y_position = page_height - margin_top_overview - 30
 
     # Project description - use AI-generated project_overview or fallback to description
     overview_text = @cost_estimate.project_overview.present? ? @cost_estimate.project_overview : @cost_estimate.description || "No description provided"
-    pdf.font_size 12
-    pdf.text_box sanitize_text(overview_text), 
-      at: [150, page_height - margin_top_overview], 
-      width: 430,  # Match TypeScript width
-      height: 100, # Allow for wrapping
-      color: BLACK_COLOR,
-      leading: 5
+    pdf.font_size 11
+    pdf.fill_color "374151"
+    pdf.text_box sanitize_text(overview_text),
+      at: [30, y_position],
+      width: 535,
+      leading: 5,
+      color: "374151"
 
-    # Calculate height used by description (approximate)
-    description_height = (overview_text.length / 70.0 * 20).ceil # Rough calculation
+    # Calculate height used by description
+    description_lines = (overview_text.length / 90.0).ceil
+    y_position -= (15 + (description_lines * 16))
 
     # TECHNICAL INFORMATION section
-    margin_top_technical_title = margin_top_overview + 30 + description_height
+    y_position -= 20
     pdf.fill_color BLACK_COLOR
     pdf.font_size 16
-    pdf.text_box sanitize_text("TECHNICAL INFORMATION"), 
-      at: [30, page_height - margin_top_technical_title], 
+    pdf.text_box sanitize_text("Technical Information"),
+      at: [30, y_position],
+      width: 535,
       style: :bold,
       color: BLACK_COLOR
 
-    # Technical information content
-    margin_top_technical_text = margin_top_technical_title + 30
-    
-    # Use AI-generated technical summary or build one from cost estimate data
-    tech_summary = @cost_estimate.technical_information_summary.present? ? 
-                   @cost_estimate.technical_information_summary : 
-                   build_technical_summary()
-    
-    pdf.font_size 12
-    pdf.text_box sanitize_text(tech_summary), 
-      at: [150, page_height - margin_top_technical_text], 
-      width: 430,
-      height: 200, # Allow for longer content
-      color: BLACK_COLOR,
-      leading: 5
+    y_position -= 30
+
+    # Use AI-generated technical info or build fallback
+    if @cost_estimate.technical_information_summary.present?
+      begin
+        tech_info = JSON.parse(@cost_estimate.technical_information_summary)
+
+        # Format as structured bullet points
+        tech_items = [
+          { label: "Application Type:", value: tech_info['application_type'] },
+          { label: "Project Scale:", value: tech_info['project_scale'] },
+          { label: "Development Approach:", value: tech_info['development_approach'] },
+          { label: "Key Technology Areas:", value: tech_info['key_technology_areas'] },
+          { label: "Estimated Timeline:", value: tech_info['estimated_timeline'] },
+          { label: "Total Development Hours:", value: tech_info['total_hours'] }
+        ]
+
+        tech_items.each do |item|
+          # Label in bold
+          pdf.font_size 11
+          pdf.fill_color BLACK_COLOR
+          pdf.text_box sanitize_text(item[:label]),
+            at: [30, y_position],
+            width: 535,
+            style: :bold,
+            color: BLACK_COLOR
+
+          y_position -= 15
+
+          # Value in normal weight
+          pdf.font_size 11
+          pdf.fill_color "374151"
+          pdf.text_box sanitize_text(item[:value]),
+            at: [30, y_position],
+            width: 535,
+            color: "374151",
+            leading: 3
+
+          # Calculate height used by value text
+          value_lines = (item[:value].length / 90.0).ceil
+          y_position -= (10 + (value_lines * 15))
+        end
+      rescue JSON::ParserError
+        # Fallback to plain text if JSON parsing fails
+        pdf.font_size 11
+        pdf.fill_color "374151"
+        pdf.text_box sanitize_text(@cost_estimate.technical_information_summary),
+          at: [30, y_position],
+          width: 535,
+          color: "374151",
+          leading: 5
+      end
+    else
+      tech_summary = build_technical_summary()
+      pdf.font_size 12
+      pdf.text_box sanitize_text(tech_summary),
+        at: [150, y_position],
+        width: 430,
+        height: 200,
+        color: BLACK_COLOR,
+        leading: 5
+    end
 
     add_page_footer(pdf)
   end
@@ -364,17 +454,17 @@ class ProposalGenerationService
     margin_top = page_height * 0.09
     page_width = pdf.bounds.width
 
-    # Page title (exactly like TypeScript version)
-    add_page_title(pdf, "Hours Breakdown", margin_top)
+    # Page title
+    add_page_title(pdf, "Development Timeline", margin_top)
 
-    # Setup table parameters (matching TypeScript)
+    # Setup table parameters with better spacing
     margin_top_overview = page_height * 0.15
-    horizontal_margin = 30
+    horizontal_margin = 40
     table_width = page_width - 2 * horizontal_margin
-    features_col_width = table_width * 0.8  # 80% for Features
-    hours_col_width = table_width * 0.2     # 20% for Hours
-    row_height = 30
-    font_size = 12
+    features_col_width = table_width * 0.75  # 75% for Features
+    hours_col_width = table_width * 0.25     # 25% for Hours
+    row_height = 35  # Increased for better readability
+    font_size = 11
     y_position = page_height - margin_top_overview
 
     # Table header
@@ -418,27 +508,55 @@ class ProposalGenerationService
       is_total: true
     }
 
+    # Track table start position for borders
+    table_start_y = page_height - margin_top_overview
+    is_first_page = true
+
     # Draw table (exactly like TypeScript implementation)
     table_data.each_with_index do |row, index|
       # Check if we need a new page
       if y_position - row_height < 100
+        # No borders - just start new page
         pdf.start_new_page
         add_page_title(pdf, "Hours Breakdown (Continued)", margin_top)
         y_position = page_height - margin_top_overview
+        table_start_y = y_position
+        is_first_page = false  # Mark that we're no longer on first page
       end
 
-      # Draw background for different row types (remove grey, keep only light red for categories)
-      if row[:is_category]
-        # Add light red background for category headers only
-        pdf.fill_color "FEF2F2"  # Very light red background
+      # Premium row backgrounds with subtle gradients
+      if row[:is_header]
+        # Header with dark background
+        pdf.fill_color "1F2937"
+        pdf.fill_rounded_rectangle [horizontal_margin, y_position], table_width, row_height, 6
+      elsif row[:is_category]
+        # Category with light red/pink background
+        pdf.fill_color "FEF2F2"
         pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+        # Add subtle left border accent
+        pdf.fill_color RED_COLOR
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], 4, row_height
+      elsif row[:is_total]
+        # Total row - highlighted with dark background
+        pdf.fill_color "1F2937"
+        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+      else
+        # Alternate row colors for better readability
+        if index.even?
+          pdf.fill_color "FAFAFA"
+          pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+        end
       end
 
-      # Text color based on row type (no special color for headers)
-      text_color = if row[:is_category]
-                     RED_COLOR  # Red text for categories
+      # Text color based on row type
+      text_color = if row[:is_header]
+                     WHITE_COLOR
+                   elsif row[:is_category]
+                     RED_COLOR
+                   elsif row[:is_total]
+                     WHITE_COLOR
                    else
-                     BLACK_COLOR
+                     "374151"  # Dark gray
                    end
 
       # Font style
@@ -462,29 +580,35 @@ class ProposalGenerationService
         color: text_color
 
       # Draw right column text (Hours)
-      pdf.text_box clean_value, 
-        at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2], 
+      pdf.text_box clean_value,
+        at: [horizontal_margin + features_col_width + 5, y_position - row_height/2 + font_size/2],
         width: hours_col_width - 10,
         style: font_style,
         color: text_color
 
-      # Draw horizontal line
-      pdf.stroke_color BLACK_COLOR
-      pdf.line_width 1
-      pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
-
       y_position -= row_height
     end
 
-    # Draw bottom line
-    pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
-
-    # Draw vertical lines (matching TypeScript)
-    pdf.stroke_line [horizontal_margin, page_height - margin_top_overview], [horizontal_margin, y_position]
-    pdf.stroke_line [horizontal_margin + features_col_width, page_height - margin_top_overview], [horizontal_margin + features_col_width, y_position]
-    pdf.stroke_line [horizontal_margin + table_width, page_height - margin_top_overview], [horizontal_margin + table_width, y_position]
+    # No borders drawn - keeping clean design
 
     add_page_footer(pdf)
+  end
+
+  # Helper method to draw table borders
+  def draw_table_borders(pdf, horizontal_margin, table_width, col_divider_position, table_top, table_bottom)
+    pdf.stroke_color BLACK_COLOR
+    pdf.line_width 1
+
+    # Top border
+    pdf.stroke_line [horizontal_margin, table_top], [horizontal_margin + table_width, table_top]
+    # Bottom border
+    pdf.stroke_line [horizontal_margin, table_bottom], [horizontal_margin + table_width, table_bottom]
+    # Left border
+    pdf.stroke_line [horizontal_margin, table_top], [horizontal_margin, table_bottom]
+    # Right border
+    pdf.stroke_line [horizontal_margin + table_width, table_top], [horizontal_margin + table_width, table_bottom]
+    # Column divider
+    pdf.stroke_line [horizontal_margin + col_divider_position, table_top], [horizontal_margin + col_divider_position, table_bottom]
   end
 
   # Extract sub-features from description text
@@ -644,8 +768,10 @@ class ProposalGenerationService
     # Calculate costs with breakdown
     hourly_rate = @cost_estimate.hourly_rate
     total_hours = @cost_estimate.total_hours
-    total_cost = total_hours * hourly_rate
-    
+    development_cost = total_hours * hourly_rate
+    agency_fee = 250  # Processing Fee
+    total_cost = development_cost + agency_fee
+
     # Calculate months (assuming 172 hours per month with 0.8 efficiency factor)
     monthly_hours = 172
     total_months = (total_hours.to_f / monthly_hours * 0.8).ceil
@@ -663,41 +789,64 @@ class ProposalGenerationService
     # Simplified table data with only total hours and pricing structure
     table_data = [
       { label: "Cost Breakdown", value: "Value", is_header: true },
-      { label: "Total Development Hours", value: "#{total_hours} hours", is_category: true },
-      { label: "Pricing Structure", value: "", is_category: true },
-      { label: "  → Development Rate", value: "$#{hourly_rate}/hour" },
-      { label: "  → Project Management", value: "Included" },
-      { label: "  → Quality Assurance", value: "Included" },
-      { label: "  → Documentation", value: "Included" },
+      { label: "Total Development Hours", value: "#{total_hours} hours" },
+      { label: "Development Rate", value: "$#{hourly_rate}/hour" },
+      { label: "Development Cost", value: "$#{number_with_commas(development_cost.to_i)}" },
+      { label: "Processing Fee", value: "$#{number_with_commas(agency_fee)}" },
+      { label: "Quality Assurance", value: "Included" },
+      { label: "Documentation", value: "Included" },
       { label: "Total Project Investment", value: "$#{number_with_commas(total_cost.to_i)}", is_total: true }
     ]
+
+    # Track table start position for borders
+    table_start_y = page_height - margin_top_overview
+    is_first_page = true
 
     # Draw table (matching hours breakdown styling)
     table_data.each_with_index do |row, index|
       # Check if we need space (though cost table should fit on one page)
       if y_position - row_height < 100
+        # No borders - just start new page
         pdf.start_new_page
         add_page_title(pdf, "Project Cost & Estimation (Continued)", margin_top)
         y_position = page_height - margin_top_overview
+        table_start_y = y_position  # Reset table start for new page
+        is_first_page = false  # Mark that we're no longer on first page
       end
 
-      # Draw background for different row types (remove grey backgrounds)
-      if row[:is_category]
-        # Light red background for category headers only
+      # Draw background for different row types (matching hours breakdown style)
+      if row[:is_header]
+        # Header with dark background (matching hours breakdown)
+        pdf.fill_color "1F2937"
+        pdf.fill_rounded_rectangle [horizontal_margin, y_position], table_width, row_height, 6
+      elsif row[:is_category]
+        # Light red background for category headers
         pdf.fill_color "FEF2F2"
         pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+        # Add subtle left border accent
+        pdf.fill_color RED_COLOR
+        pdf.fill_rectangle [horizontal_margin, y_position - row_height], 4, row_height
       elsif row[:is_total]
-        pdf.fill_color RED_COLOR  # Red background for total cost
-        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+        # Total row - highlighted with dark background (matching hours breakdown)
+        pdf.fill_color "1F2937"
+        pdf.fill_rectangle [horizontal_margin, y_position], table_width, row_height
+      else
+        # Alternate row colors for better readability (matching hours breakdown)
+        if index.even?
+          pdf.fill_color "FAFAFA"
+          pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
+        end
       end
 
-      # Text color based on row type (no grey backgrounds)
-      text_color = if row[:is_category]
+      # Text color based on row type (matching hours breakdown)
+      text_color = if row[:is_header]
+                     WHITE_COLOR
+                   elsif row[:is_category]
                      RED_COLOR
                    elsif row[:is_total]
                      WHITE_COLOR
                    else
-                     BLACK_COLOR
+                     "374151"  # Dark gray
                    end
 
       # Font style
@@ -729,27 +878,51 @@ class ProposalGenerationService
           color: text_color
       end
 
-      # Draw horizontal line
-      pdf.stroke_color BLACK_COLOR
-      pdf.line_width 1
-      pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
-
       y_position -= row_height
     end
 
-    # Draw bottom line and vertical lines (matching hours breakdown)
-    pdf.stroke_line [horizontal_margin, y_position], [horizontal_margin + table_width, y_position]
-    pdf.stroke_line [horizontal_margin, page_height - margin_top_overview], [horizontal_margin, y_position]
-    pdf.stroke_line [horizontal_margin + features_col_width, page_height - margin_top_overview], [horizontal_margin + features_col_width, y_position]
-    pdf.stroke_line [horizontal_margin + table_width, page_height - margin_top_overview], [horizontal_margin + table_width, y_position]
+    # No borders drawn - keeping clean design
+
+    # Add Timeline section from Technical Information
+    if @cost_estimate.technical_information_summary.present?
+      begin
+        tech_info = JSON.parse(@cost_estimate.technical_information_summary)
+        if tech_info['estimated_timeline'].present?
+          y_position -= 40
+
+          pdf.font_size 14
+          pdf.fill_color BLACK_COLOR
+          pdf.text_box sanitize_text("Estimated Timeline"),
+            at: [horizontal_margin, y_position],
+            style: :bold,
+            color: BLACK_COLOR
+
+          y_position -= 30
+
+          # Timeline display
+          pdf.font_size 11
+          pdf.fill_color "374151"
+          pdf.text_box sanitize_text(tech_info['estimated_timeline']),
+            at: [horizontal_margin, y_position],
+            width: table_width,
+            leading: 4,
+            color: "374151"
+
+          timeline_lines = (tech_info['estimated_timeline'].length / 80.0).ceil
+          y_position -= (timeline_lines * 16)
+        end
+      rescue JSON::ParserError
+        # Skip timeline if parsing fails
+      end
+    end
 
     # Cost analysis section
     y_position -= 40
-    
+
     pdf.font_size 14
     pdf.fill_color BLACK_COLOR
-    pdf.text_box sanitize_text("VALUE PROPOSITION"), 
-      at: [horizontal_margin, y_position], 
+    pdf.text_box sanitize_text("Value Proposition"),
+      at: [horizontal_margin, y_position],
       style: :bold,
       color: BLACK_COLOR
 
@@ -760,7 +933,6 @@ class ProposalGenerationService
     cost_insights = [
       "• Industry-competitive hourly rate of $#{hourly_rate}",
       "• Comprehensive development including QA and documentation",
-      "• Estimated #{total_months}-month delivery timeline",
       "• Professional project management included"
     ]
 
@@ -773,6 +945,449 @@ class ProposalGenerationService
       y_position -= 15
     end
 
+
+    add_page_footer(pdf)
+  end
+
+  def add_similar_apps(pdf)
+    page_height = pdf.bounds.height
+    margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
+
+    # Page title
+    add_page_title(pdf, "Market Research", margin_top)
+
+    # Parse similar apps JSON
+    begin
+      similar_apps = JSON.parse(@cost_estimate.similar_apps)
+    rescue JSON::ParserError => e
+      Rails.logger.error("Failed to parse similar_apps: #{e.message}")
+      similar_apps = []
+    end
+
+    current_y = page_height - (page_height * 0.15)  # Start from top, leave margin
+    horizontal_margin = 40
+
+    # Premium section intro
+    pdf.font_size 15
+    pdf.fill_color BLACK_COLOR
+    pdf.text_box sanitize_text("Competitive Landscape"),
+      at: [horizontal_margin, current_y],
+      style: :bold,
+      color: BLACK_COLOR
+
+    current_y -= 30
+
+    pdf.font_size 11
+    pdf.fill_color GRAY_COLOR
+    pdf.text_box sanitize_text("We've conducted thorough market research and identified these comparable solutions that address similar challenges:"),
+      at: [horizontal_margin, current_y],
+      width: page_width - 2 * horizontal_margin,
+      color: GRAY_COLOR,
+      leading: 3
+
+    current_y -= 40
+
+    # Display similar apps in compact grid - all on one page
+    if similar_apps.any?
+      similar_apps.each_with_index do |app, index|
+        app_name = app['name'] || "Unknown App"
+        app_description = app['description'] || "No description available"
+
+        # Even more compact card design
+        card_height = 65
+        pdf.fill_color "F9FAFB"
+        pdf.fill_rounded_rectangle [horizontal_margin, current_y], page_width - 2 * horizontal_margin, card_height, 6
+
+        # Left accent bar
+        pdf.fill_color RED_COLOR
+        pdf.fill_rectangle [horizontal_margin, current_y], 4, card_height
+
+        # Number badge - compact circle
+        badge_size = 28
+        pdf.fill_color RED_COLOR
+        pdf.fill_circle [horizontal_margin + 25, current_y - card_height/2], badge_size/2
+
+        pdf.fill_color WHITE_COLOR
+        pdf.font_size 13
+        pdf.text_box sanitize_text((index + 1).to_s),
+          at: [horizontal_margin + 25 - badge_size/4, current_y - card_height/2 + 5],
+          width: badge_size/2,
+          align: :center,
+          style: :bold,
+          color: WHITE_COLOR
+
+        # App name
+        pdf.fill_color BLACK_COLOR
+        pdf.font_size 13
+        pdf.text_box sanitize_text(app_name),
+          at: [horizontal_margin + 55, current_y - 18],
+          width: page_width - 2 * horizontal_margin - 70,
+          style: :bold,
+          color: BLACK_COLOR
+
+        # App description - compact
+        pdf.font_size 9
+        pdf.fill_color "6B7280"
+        pdf.text_box sanitize_text(app_description),
+          at: [horizontal_margin + 55, current_y - 36],
+          width: page_width - 2 * horizontal_margin - 70,
+          height: 30,
+          color: "6B7280",
+          leading: 2,
+          overflow: :shrink_to_fit
+
+        current_y -= (card_height + 10)  # Tighter spacing
+      end
+    else
+      # No similar apps message
+      pdf.font_size 11
+      pdf.fill_color GRAY_COLOR
+      pdf.text_box sanitize_text("No comparable applications identified at this time."),
+        at: [horizontal_margin, current_y],
+        width: page_width - 2 * horizontal_margin,
+        color: GRAY_COLOR,
+        style: :italic
+    end
+
+    add_page_footer(pdf)
+  end
+
+  def add_mockups_section(pdf)
+    page_height = pdf.bounds.height
+    margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
+
+    # Page title
+    add_page_title(pdf, "Design Concepts", margin_top)
+
+    current_y = page_height * 0.2
+    horizontal_margin = 40
+
+    # Section intro
+    pdf.font_size 15
+    pdf.fill_color BLACK_COLOR
+    pdf.text_box sanitize_text("Visual Concept"),
+      at: [horizontal_margin, current_y],
+      style: :bold,
+      color: BLACK_COLOR
+
+    current_y -= 28
+
+    pdf.font_size 11
+    pdf.fill_color GRAY_COLOR
+    pdf.text_box sanitize_text("Below are conceptual mockups demonstrating the user interface design direction for #{@cost_estimate.app_name || 'your application'}:"),
+      at: [horizontal_margin, current_y],
+      width: page_width - 2 * horizontal_margin,
+      color: GRAY_COLOR,
+      leading: 3
+
+    current_y -= 45
+
+    app_types = @cost_estimate.application_types_array
+    features = @cost_estimate.proposed_features_array.presence || @cost_estimate.features
+
+    if app_types.any? { |type| type.downcase.include?('web') }
+      # WEB APPLICATION MOCKUP - Premium Design
+      pdf.font_size 13
+      pdf.fill_color BLACK_COLOR
+      pdf.text_box sanitize_text("WEB APPLICATION INTERFACE"),
+        at: [horizontal_margin, current_y],
+        style: :bold,
+        color: BLACK_COLOR
+
+      current_y -= 25
+
+      # Modern browser window with shadow effect
+      browser_width = page_width - 2 * horizontal_margin
+      browser_height = 240
+
+      # Shadow effect
+      pdf.fill_color "E5E7EB"
+      pdf.fill_rounded_rectangle [horizontal_margin + 2, current_y - 2], browser_width, browser_height, 8
+
+      # Browser chrome - modern gradient effect (simulated with layers)
+      pdf.fill_color "F9FAFB"
+      pdf.fill_rounded_rectangle [horizontal_margin, current_y], browser_width, browser_height, 8
+
+      # Top bar
+      pdf.fill_color "FFFFFF"
+      pdf.fill_rounded_rectangle [horizontal_margin, current_y], browser_width, 35, 8
+
+      # Browser controls
+      3.times do |i|
+        color = ['EF4444', 'F59E0B', '10B981'][i]
+        pdf.fill_color color
+        pdf.fill_circle [horizontal_margin + 15 + (i * 18), current_y - 17], 5
+      end
+
+      # URL bar
+      pdf.fill_color "F3F4F6"
+      pdf.fill_rounded_rectangle [horizontal_margin + 80, current_y - 26], browser_width - 200, 18, 9
+      pdf.fill_color "9CA3AF"
+      pdf.font_size 8
+      pdf.text_box sanitize_text("https://#{(@cost_estimate.app_name || 'app').downcase.gsub(' ', '')}.com"),
+        at: [horizontal_margin + 90, current_y - 14],
+        color: "9CA3AF"
+
+      # Main content area with gradient header
+      content_y = current_y - 35
+
+      # Hero section with gradient (simulated)
+      pdf.fill_color "DC2626"
+      pdf.fill_rectangle [horizontal_margin, content_y], browser_width, 60
+      pdf.fill_color "EF4444"
+      pdf.fill_rectangle [horizontal_margin, content_y - 30], browser_width, 30
+
+      # Hero text
+      pdf.fill_color WHITE_COLOR
+      pdf.font_size 14
+      pdf.text_box sanitize_text(@cost_estimate.app_name || "Your Application"),
+        at: [horizontal_margin + 20, content_y - 15],
+        width: browser_width - 40,
+        style: :bold,
+        color: WHITE_COLOR
+
+      pdf.font_size 9
+      pdf.text_box sanitize_text("Transforming your business workflow"),
+        at: [horizontal_margin + 20, content_y - 35],
+        width: browser_width - 40,
+        color: WHITE_COLOR
+
+      # Feature cards section
+      card_y = content_y - 70
+      pdf.fill_color WHITE_COLOR
+      pdf.fill_rectangle [horizontal_margin, card_y], browser_width, 135
+
+      # Three feature cards
+      card_width = (browser_width - 60) / 3
+      feature_names = features.first(3).map { |f| f['name'] || f[:name] }
+
+      3.times do |i|
+        card_x = horizontal_margin + 15 + (i * (card_width + 15))
+
+        # Card with subtle shadow
+        pdf.fill_color "F9FAFB"
+        pdf.fill_rounded_rectangle [card_x, card_y - 10], card_width, 110, 6
+
+        # Red accent top border
+        pdf.fill_color RED_COLOR
+        pdf.fill_rounded_rectangle [card_x, card_y - 10], card_width, 3, 1
+
+        # Icon placeholder (circle)
+        pdf.fill_color "FEE2E2"
+        pdf.fill_circle [card_x + card_width/2, card_y - 35], 15
+        pdf.fill_color RED_COLOR
+        pdf.fill_circle [card_x + card_width/2, card_y - 35], 12
+
+        # Feature name
+        pdf.fill_color BLACK_COLOR
+        pdf.font_size 9
+        feature_text = feature_names[i] || "Feature #{i + 1}"
+        pdf.text_box sanitize_text(feature_text),
+          at: [card_x + 5, card_y - 60],
+          width: card_width - 10,
+          height: 40,
+          align: :center,
+          style: :bold,
+          overflow: :shrink_to_fit,
+          color: BLACK_COLOR
+      end
+
+      current_y -= (browser_height + 30)
+    end
+
+    if app_types.any? { |type| type.downcase.include?('mobile') }
+      if current_y < 350
+        pdf.start_new_page
+        add_page_title(pdf, "Design Concepts (Continued)", margin_top)
+        current_y = page_height * 0.2
+      end
+
+      # MOBILE APPLICATION MOCKUP - Premium Design
+      pdf.font_size 13
+      pdf.fill_color BLACK_COLOR
+      pdf.text_box sanitize_text("MOBILE APPLICATION INTERFACE"),
+        at: [horizontal_margin, current_y],
+        style: :bold,
+        color: BLACK_COLOR
+
+      current_y -= 30
+
+      # Two phone mockups side by side
+      phone_width = 160
+      phone_height = 300
+      spacing = 40
+      total_width = phone_width * 2 + spacing
+      start_x = (page_width - total_width) / 2
+
+      # Left phone - Dashboard view
+      phone_x = start_x
+
+      # Phone shadow
+      pdf.fill_color "D1D5DB"
+      pdf.fill_rounded_rectangle [phone_x + 3, current_y - 3], phone_width, phone_height, 25
+
+      # Phone frame
+      pdf.fill_color "1F2937"
+      pdf.fill_rounded_rectangle [phone_x, current_y], phone_width, phone_height, 25
+
+      # Notch
+      pdf.fill_color BLACK_COLOR
+      notch_width = 80
+      pdf.fill_rounded_rectangle [phone_x + (phone_width - notch_width)/2, current_y], notch_width, 18, 9
+
+      # Screen
+      pdf.fill_color WHITE_COLOR
+      pdf.fill_rounded_rectangle [phone_x + 10, current_y - 20], phone_width - 20, phone_height - 40, 20
+
+      # Status bar
+      pdf.fill_color RED_COLOR
+      pdf.fill_rectangle [phone_x + 10, current_y - 20], phone_width - 20, 35
+
+      # App name on status bar
+      pdf.fill_color WHITE_COLOR
+      pdf.font_size 11
+      pdf.text_box sanitize_text(@cost_estimate.app_name || "App"),
+        at: [phone_x + 20, current_y - 35],
+        width: phone_width - 40,
+        style: :bold,
+        align: :center,
+        color: WHITE_COLOR
+
+      # Dashboard content
+      screen_y = current_y - 55
+
+      # Stats cards
+      2.times do |i|
+        card_y = screen_y - (i * 60)
+        pdf.fill_color "F9FAFB"
+        pdf.fill_rounded_rectangle [phone_x + 20, card_y], phone_width - 40, 50, 8
+
+        # Red accent
+        pdf.fill_color RED_COLOR
+        pdf.fill_rounded_rectangle [phone_x + 20, card_y], 3, 50, 1
+
+        # Stat text
+        pdf.fill_color BLACK_COLOR
+        pdf.font_size 8
+        stat_names = features.first(2).map { |f| (f['name'] || f[:name]).to_s.split(' ').first(2).join(' ') }
+        pdf.text_box sanitize_text(stat_names[i] || "Feature #{i + 1}"),
+          at: [phone_x + 30, card_y - 12],
+          width: phone_width - 60,
+          color: BLACK_COLOR,
+          style: :bold
+
+        pdf.fill_color RED_COLOR
+        pdf.font_size 14
+        pdf.text_box sanitize_text("#{(i + 1) * 10}+"),
+          at: [phone_x + 30, card_y - 32],
+          width: phone_width - 60,
+          color: RED_COLOR,
+          style: :bold
+      end
+
+      # Bottom navigation
+      nav_y = current_y - phone_height + 50
+      pdf.fill_color "F9FAFB"
+      pdf.fill_rectangle [phone_x + 10, nav_y], phone_width - 20, 35
+
+      4.times do |i|
+        icon_x = phone_x + 20 + (i * 30)
+        color = i == 0 ? RED_COLOR : "9CA3AF"
+        pdf.fill_color color
+        pdf.fill_circle [icon_x, nav_y - 17], 6
+      end
+
+      # Right phone - Detail view
+      phone_x = start_x + phone_width + spacing
+
+      # Phone shadow
+      pdf.fill_color "D1D5DB"
+      pdf.fill_rounded_rectangle [phone_x + 3, current_y - 3], phone_width, phone_height, 25
+
+      # Phone frame
+      pdf.fill_color "1F2937"
+      pdf.fill_rounded_rectangle [phone_x, current_y], phone_width, phone_height, 25
+
+      # Notch
+      pdf.fill_color BLACK_COLOR
+      pdf.fill_rounded_rectangle [phone_x + (phone_width - notch_width)/2, current_y], notch_width, 18, 9
+
+      # Screen
+      pdf.fill_color WHITE_COLOR
+      pdf.fill_rounded_rectangle [phone_x + 10, current_y - 20], phone_width - 20, phone_height - 40, 20
+
+      # Header with back button
+      pdf.fill_color WHITE_COLOR
+      pdf.fill_rectangle [phone_x + 10, current_y - 20], phone_width - 20, 40
+
+      # Back arrow
+      pdf.fill_color BLACK_COLOR
+      pdf.fill_circle [phone_x + 25, current_y - 40], 8
+      pdf.stroke_color WHITE_COLOR
+      pdf.line_width 2
+      pdf.stroke_line [phone_x + 28, current_y - 40], [phone_x + 22, current_y - 40]
+
+      # Page title
+      pdf.fill_color BLACK_COLOR
+      pdf.font_size 10
+      pdf.text_box sanitize_text("Details"),
+        at: [phone_x + 45, current_y - 36],
+        width: phone_width - 80,
+        style: :bold,
+        color: BLACK_COLOR
+
+      # Content area with list items
+      list_y = current_y - 70
+
+      3.times do |i|
+        item_y = list_y - (i * 55)
+
+        # List item card
+        pdf.fill_color "F9FAFB"
+        pdf.fill_rounded_rectangle [phone_x + 20, item_y], phone_width - 40, 45, 6
+
+        # Image placeholder
+        pdf.fill_color "FEE2E2"
+        pdf.fill_rounded_rectangle [phone_x + 28, item_y - 8], 30, 30, 4
+        pdf.fill_color RED_COLOR
+        pdf.fill_circle [phone_x + 43, item_y - 23], 8
+
+        # Text
+        pdf.fill_color BLACK_COLOR
+        pdf.font_size 8
+        feature_text = features[i] ? (features[i]['name'] || features[i][:name]).to_s.split(' ').first(3).join(' ') : "Item #{i + 1}"
+        pdf.text_box sanitize_text(feature_text),
+          at: [phone_x + 65, item_y - 12],
+          width: phone_width - 90,
+          color: BLACK_COLOR,
+          style: :bold
+
+        pdf.fill_color GRAY_COLOR
+        pdf.font_size 7
+        pdf.text_box sanitize_text("View details"),
+          at: [phone_x + 65, item_y - 25],
+          width: phone_width - 90,
+          color: GRAY_COLOR
+      end
+
+      current_y -= (phone_height + 20)
+    end
+
+    # Footer note
+    if current_y < 100
+      pdf.start_new_page
+      current_y = page_height - 100
+    end
+
+    pdf.font_size 9
+    pdf.fill_color GRAY_COLOR
+    pdf.text_box sanitize_text("* These are conceptual mockups. Final designs will be created during the development phase based on your brand guidelines and preferences."),
+      at: [horizontal_margin, current_y - 20],
+      width: page_width - 2 * horizontal_margin,
+      color: GRAY_COLOR,
+      style: :italic
 
     add_page_footer(pdf)
   end
@@ -791,6 +1406,229 @@ class ProposalGenerationService
     pdf.stroke_color RED_COLOR
     pdf.line_width 6
     pdf.stroke_line [30, page_height - margin_top + 30], [170, page_height - margin_top + 30]
+  end
+
+  def add_executive_summary(pdf)
+    page_height = pdf.bounds.height
+    margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
+
+    # Page title
+    add_page_title(pdf, "Executive Summary", margin_top)
+
+    # Parse executive summary JSON
+    begin
+      exec_summary = JSON.parse(@cost_estimate.executive_summary)
+
+      margin_top_content = page_height * 0.2
+      y_position = page_height - margin_top_content
+
+      # THE OPPORTUNITY section
+      pdf.fill_color BLACK_COLOR
+      pdf.font_size 16
+      pdf.text_box sanitize_text("The Opportunity"),
+        at: [30, y_position],
+        width: 535,
+        style: :bold,
+        color: BLACK_COLOR
+
+      y_position -= 30
+
+      pdf.font_size 11
+      pdf.fill_color "374151"
+      pdf.text_box sanitize_text(exec_summary['problem_statement']),
+        at: [30, y_position],
+        width: 535,
+        leading: 5,
+        color: "374151"
+
+      problem_lines = (exec_summary['problem_statement'].length / 90.0).ceil
+      y_position -= (15 + (problem_lines * 16))
+
+      # OUR SOLUTION section
+      pdf.fill_color BLACK_COLOR
+      pdf.font_size 16
+      pdf.text_box sanitize_text("Our Solution"),
+        at: [30, y_position],
+        width: 535,
+        style: :bold,
+        color: BLACK_COLOR
+
+      y_position -= 30
+
+      pdf.font_size 11
+      pdf.fill_color "374151"
+      pdf.text_box sanitize_text(exec_summary['proposed_solution']),
+        at: [30, y_position],
+        width: 535,
+        leading: 5,
+        color: "374151"
+
+      solution_lines = (exec_summary['proposed_solution'].length / 90.0).ceil
+      y_position -= (15 + (solution_lines * 16))
+
+      # KEY BENEFITS section
+      pdf.fill_color BLACK_COLOR
+      pdf.font_size 16
+      pdf.text_box sanitize_text("Key Benefits"),
+        at: [30, y_position],
+        width: 535,
+        style: :bold,
+        color: BLACK_COLOR
+
+      y_position -= 30
+
+      exec_summary['key_value_propositions'].each_with_index do |vp, index|
+        # Red number
+        pdf.fill_color RED_COLOR
+        pdf.font "Helvetica", style: :bold
+        pdf.font_size 11
+        pdf.text_box "#{index + 1}.",
+          at: [35, y_position],
+          width: 15,
+          color: RED_COLOR
+
+        # Value proposition text
+        pdf.font "Helvetica"
+        pdf.font_size 11
+        pdf.fill_color "374151"
+        pdf.text_box sanitize_text(vp),
+          at: [55, y_position],
+          width: 510,
+          leading: 4,
+          color: "374151"
+
+        vp_lines = (vp.length / 87.0).ceil
+        y_position -= (vp_lines * 16)
+      end
+
+      y_position -= 20
+
+      # INVESTMENT POTENTIAL section
+      pdf.fill_color BLACK_COLOR
+      pdf.font_size 16
+      pdf.text_box sanitize_text("Investment Potential"),
+        at: [30, y_position],
+        width: 535,
+        style: :bold,
+        color: BLACK_COLOR
+
+      y_position -= 30
+
+      pdf.font_size 11
+      pdf.fill_color "374151"
+      pdf.text_box sanitize_text(exec_summary['roi_potential']),
+        at: [30, y_position],
+        width: 535,
+        leading: 5,
+        color: "374151"
+
+    rescue JSON::ParserError => e
+      # Fallback if JSON parsing fails
+      pdf.font_size 11
+      pdf.text_box sanitize_text("Executive summary data unavailable."),
+        at: [30, page_height - page_height * 0.2],
+        width: 535,
+        color: GRAY_COLOR
+    end
+
+    add_page_footer(pdf)
+  end
+
+  def add_feature_prioritization(pdf)
+    page_height = pdf.bounds.height
+    margin_top = page_height * 0.09
+    page_width = pdf.bounds.width
+
+    # Page title
+    add_page_title(pdf, "Strategic Roadmap", margin_top)
+
+    # Parse feature prioritization JSON
+    begin
+      prioritization = JSON.parse(@cost_estimate.feature_prioritization)
+
+      margin_top_content = page_height * 0.2
+      y_position = page_height - margin_top_content
+
+      # Iterate through the three phases
+      phases = [
+        { key: 'phase_1_mvp', title: 'Phase 1: MVP Launch', icon: '🚀' },
+        { key: 'phase_2_growth', title: 'Phase 2: Growth & Engagement', icon: '📈' },
+        { key: 'phase_3_scale', title: 'Phase 3: Scale & Leadership', icon: '🏆' }
+      ]
+
+      phases.each_with_index do |phase_info, phase_index|
+        phase = prioritization[phase_info[:key]]
+        next unless phase
+
+        # Check if we need a new page
+        if y_position < 250
+          pdf.start_new_page
+          add_page_title(pdf, "Strategic Roadmap (Continued)", margin_top)
+          y_position = page_height - margin_top_content
+        end
+
+        # Phase header with icon
+        pdf.fill_color BLACK_COLOR
+        pdf.font_size 16
+        pdf.text_box sanitize_text("#{phase_info[:icon]} #{phase_info[:title]}"),
+          at: [30, y_position],
+          width: 535,
+          style: :bold,
+          color: BLACK_COLOR
+
+        y_position -= 30
+
+        # Description
+        pdf.font_size 11
+        pdf.fill_color "6B7280"
+        pdf.text_box sanitize_text(phase['description']),
+          at: [30, y_position],
+          width: 535,
+          leading: 4,
+          color: "6B7280"
+
+        desc_lines = (phase['description'].length / 90.0).ceil
+        y_position -= (10 + (desc_lines * 14))
+
+        # Features list with numbered bullets
+        phase['features'].each_with_index do |feature, index|
+          # Red number
+          pdf.fill_color RED_COLOR
+          pdf.font "Helvetica", style: :bold
+          pdf.font_size 11
+          pdf.text_box "#{index + 1}.",
+            at: [35, y_position],
+            width: 15,
+            color: RED_COLOR
+
+          # Feature text
+          pdf.font "Helvetica"
+          pdf.font_size 11
+          pdf.fill_color BLACK_COLOR
+          pdf.text_box sanitize_text(feature),
+            at: [55, y_position],
+            width: 510,
+            color: BLACK_COLOR
+
+          feature_lines = (feature.length / 87.0).ceil
+          y_position -= (feature_lines * 16)
+        end
+
+        # Add spacing between phases
+        y_position -= 20
+      end
+
+    rescue JSON::ParserError => e
+      # Fallback if JSON parsing fails
+      pdf.font_size 11
+      pdf.text_box sanitize_text("Feature prioritization data unavailable."),
+        at: [30, page_height - page_height * 0.2],
+        width: 535,
+        color: GRAY_COLOR
+    end
+
+    add_page_footer(pdf)
   end
 
   def add_page_footer(pdf)

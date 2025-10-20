@@ -80,5 +80,6 @@ test:
 production:
   <<: *default
   database: tecaudex_crm_production
-  username: tecaudex_crm
-  password: <%= ENV["TECAUDEX_CRM_DATABASE_PASSWORD"] %>
+  username: postgres
+  password: <%= Rails.application.credentials.dig(:TECAUDEX_CRM_DATABASE_PASSWORD) %>
+  host: <%= Rails.application.credentials.dig(:CRM_DB_URL) %>

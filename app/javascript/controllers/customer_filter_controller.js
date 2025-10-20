@@ -62,7 +62,7 @@ export default class extends Controller {
     
     // Set user dropdown from URL parameter
     const userIdParam = urlParams.get('user_id')
-    if (userIdParam) {
+    if (userIdParam && this.hasUserTarget) {
       this.userTarget.value = userIdParam
     }
     
@@ -298,8 +298,10 @@ export default class extends Controller {
   }
   
   clearUser() {
-    this.userTarget.value = ''
-    this.filter()
+    if (this.hasUserTarget) {
+      this.userTarget.value = ''
+      this.filter()
+    }
   }
   
   clearStatus() {

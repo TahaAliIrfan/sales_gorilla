@@ -576,4 +576,14 @@ class Api::V1::WhatsappController < Api::V1::BaseController
       { success: false, error: "Failed to send WhatsApp media: #{result[:error]}" }
     end
   end
+  
+  def status
+    begin
+      # Simple status endpoint
+      render_success({ status: 'active', service: 'whatsapp' }, "WhatsApp service is running")
+    rescue => e
+      Rails.logger.error "WhatsApp status error: #{e.message}"
+      render_error("WhatsApp service status unavailable: #{e.message}", nil, :service_unavailable)
+    end
+  end
 end

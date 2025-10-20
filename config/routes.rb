@@ -70,14 +70,13 @@ Rails.application.routes.draw do
     end
   end
 
+  match 'webhook', to: 'messages#webhook', via: [:get, :post]
+
   # Add RESTful routes for our models
   resources :customers do
     member do
       patch 'update_status'
       patch 'update_communication_status'
-      get 'whatsapp_messages'
-      post 'send_whatsapp_text'
-      post 'send_whatsapp_media'
       post 'analyze_phone'
       post 'ai_call'
       post 'calculate_lead_score'
@@ -93,6 +92,13 @@ Rails.application.routes.draw do
       end
       member do
         post 'mark_as_read'
+      end
+    end
+    
+    # Add routes for messages (WhatsApp)
+    resources :messages, only: [:index, :create] do
+      collection do
+        patch 'sync'
       end
     end
     
@@ -172,6 +178,22 @@ Rails.application.routes.draw do
   patch 'settings/update', to: 'settings#update', as: :update_settings
   delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
   
+  # TecaudexChat routes
+  resources :tecaudex_chat, only: [:index], path: 'tecaudex_chat', constraints: { id: /[^\/]+/ } do
+    member do
+      get 'load_chat'
+      post 'send_message'
+      post 'send_media'
+      get 'refresh_messages'
+    end
+    collection do
+      get 'refresh_chat_list'
+    end
+  end
+  
+  # Keep show route separate to avoid conflicts  
+  get 'tecaudex_chat/:id', to: 'tecaudex_chat#show', as: 'tecaudex_chat_show', constraints: { id: /[^\/]+/ }
+
   # Cost Calculator routes
   resources :cost_estimates, only: [:index, :show, :create, :destroy] do
     collection do
@@ -200,14 +222,16 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'inbound_lead', to: 'cost_calculator#inbound_lead'
-      
-      # WhatsApp routes (no authentication required)
+      post 'init_estimates', to: 'cost_calculator#init_estimates'
+      post 'submit_estimate', to: 'cost_calculator#submit_estimate'
+
       resources :whatsapp, only: [:index] do
         collection do
           get 'customer/:customer_id/messages', to: 'whatsapp#show_customer_messages', as: :customer_messages
           post 'customer/:customer_id/send_text', to: 'whatsapp#send_text_message', as: :send_text
           post 'customer/:customer_id/send_image', to: 'whatsapp#send_image_message', as: :send_image
           post 'customer/:customer_id/sync', to: 'whatsapp#sync_messages', as: :sync_messages
+          get 'status', to: 'whatsapp#status'
         end
       end
     end
@@ -266,13 +290,11 @@ Rails.application.routes.draw do
       resources :notifications
       resources :emails
       
-      # WhatsApp routes
       resources :whatsapp, only: [:index] do
         collection do
-          get 'customer/:customer_id/messages', to: 'whatsapp#show_customer_messages', as: :customer_messages
-          post 'customer/:customer_id/send_text', to: 'whatsapp#send_text_message', as: :send_text
-          post 'customer/:customer_id/send_image', to: 'whatsapp#send_image_message', as: :send_image
-          post 'customer/:customer_id/sync', to: 'whatsapp#sync_messages', as: :sync_messages
+          get 'customer/:customer_id', to: 'whatsapp#show', as: :customer_messages
+          post 'customer/:customer_id', to: 'whatsapp#create', as: :send_message
+          patch 'customer/:customer_id/sync', to: 'whatsapp#sync', as: :sync_messages
         end
       end
       
@@ -309,23 +331,7 @@ Rails.application.routes.draw do
     end
   end
 
-  # WhatsApp Chat routes (authenticated)
-  get 'whatsapp_chat', to: 'chats#index', as: :whatsapp_chat
   
-  # Chat routes
-  resources :chats, only: [:index, :show] do
-    member do
-      post 'send_message'
-      post 'send_media'
-      post 'mark_as_seen'
-    end
-    collection do
-      get 'get_chat_id'
-    end
-  end
-  
-  # Webhook routes
-  post '/chats/messaged_recieve', to: 'webhooks#message_received'
   
   # Development login gateway (only available in development)
   if Rails.env.development?

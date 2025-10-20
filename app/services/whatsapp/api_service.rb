@@ -7,168 +7,85 @@ module Whatsapp
     attr_reader :instance_id, :api_token
     
     def initialize(instance_id = nil, api_token = nil)
-      @instance_id = instance_id || Rails.application.credentials.dig(:WAAPI_INSTANCE_ID)
-      @api_token = api_token || Rails.application.credentials.dig(:WAAPI_AUTH_TOKEN)
-      @base_url = "https://waapi.app/api/v1/instances/#{@instance_id}"
+      @device_id = 'TCDX'
+      @api_token = api_token || Rails.application.credentials.dig(:TCDX_KEY)
+      @base_url = "https://nucleus.tecaudex.com/api/whatsapp"
     end
-    
+
     # Check if the API credentials are configured
     def credentials_configured?
-      @instance_id.present? && @api_token.present?
+      @api_token.present?
     end
-    
-    # Get client status (connected/disconnected)
-    def get_client_status
-      response = get_request("client/status")
-      handle_response(response)
-    end
-    
+
     # Get all chats from WhatsApp instance
     def get_chats()
-      response = post_request("client/action/get-chats")
-
+      response = get_request("chats?deviceId=#{@device_id}")
       handle_response(response)
     end
 
     def get_chat_room(chat_id)
-      response = post_request("client/action/fetch-messages", {
-        chatId: chat_id
-      })
+      response = get_request("messages/#{chat_id}/complete?deviceId=#{@device_id}&limit=10000&offset=10000&includeMedia=true")
+      handle_response(response)
+    end
 
+    def get_chat_media(chat_id, message_id)
+      response = get_request("messages/#{chat_id}/#{message_id}/download?deviceId=#{@device_id}")
       handle_response(response)
     end
-    # Get messages for a specific chat
-    def get_chat_messages(chat_id, limit: 50)
-      response = post_request("message/action/fetch-messages", {
-        chatId: chat_id,
-        limit: limit
-      })
-      
-      handle_response(response)
-    end
-    
-    # Send text message
+
+
     def send_text_message(chat_id, content)
-      response = post_request("client/action/send-message", {
-        chatId: chat_id,
-        message: content
-      })
-      
+      response = post_request("send", { chatId: chat_id, content: content, deviceId: @device_id })
       handle_response(response)
     end
-    
-    # Send media message using base64 data (images, videos, audio, documents)
-    def send_media_base64(chat_id, media_base64, filename, caption = nil)
+
+    def send_media_base64(chat_id, media_base64, filename, caption = nil, mime_type = nil)
       payload = {
         chatId: chat_id,
         mediaBase64: media_base64,
-        mediaName: filename  # WhatsApp API expects 'medianame' field for base64 uploads
+        filename: filename,
+        deviceId: @device_id,
+        mimeType: mime_type,
       }
-      
-      # Add caption if provided
+
       payload[:caption] = caption if caption.present?
 
-      response = post_request("client/action/send-media", payload)
+      response = post_request("send-media", payload)
       handle_response(response)
     end
 
-    # Send media message using URL (kept for backward compatibility)
-    def send_media_message(chat_id, media_url, caption = nil, filename = nil)
-      payload = {
-        chatId: chat_id,
-        mediaUrl: media_url
-      }
-      
-      # Add caption if provided
-      payload[:caption] = caption if caption.present?
-      
-      # Add filename if provided
-      payload[:filename] = filename if filename.present?
 
-      response = post_request("client/action/send-media", payload)
-      handle_response(response)
+    def get_whatsapp_chat_id(phone_number)
+      phone_without_plus = phone_number.gsub(/\A\+/, '')
+      "#{phone_without_plus}@c.us"
     end
-    
-    # Mark messages as seen
-    def mark_messages_as_seen(chat_id)
-      response = post_request("chat/action/mark-as-seen", {
-        chatId: chat_id
+
+    def is_registered_on_whatsapp!(phone_number)
+      cleaned_number = get_whatsapp_chat_id(phone_number)
+
+      response = post_request("client/action/is-registered-user", {
+        contactId: cleaned_number
       })
-      
-      handle_response(response)
+
+      response = handle_response(response)
+
+      if response[:success]
+        response[:data][:data][:isRegisteredUser]
+      else
+        false
+      end
     end
-    
-    # Get chat details by ID
-    def get_chat_by_id(chat_id)
-      response = post_request("chat/action/get-chat-by-id", {
-        chatId: chat_id
-      })
-      
-      handle_response(response)
-    end
-    
-    # Convert a phone number to WhatsApp chat ID
-    def get_chat_id_from_phone(phone_number)
-      # Remove any non-digit characters except the + sign
-      cleaned_number = phone_number.gsub(/[^\d+]/, '')
-      
-      # Make sure the number starts with +
-      cleaned_number = "+#{cleaned_number}" unless cleaned_number.start_with?('+')
-      
-      response = post_request("number/action/get-whatsapp-id", {
-        phone: cleaned_number
-      })
-      
-      result = handle_response(response)
-      result[:data][:chatId] if result[:success]
-    end
-    
-    # Check if a number is registered on WhatsApp
-    def is_registered_on_whatsapp(phone_number)
-      # Remove any non-digit characters except the + sign
-      cleaned_number = phone_number.gsub(/[^\d+]/, '')
-      
-      # Make sure the number starts with +
-      cleaned_number = "+#{cleaned_number}" unless cleaned_number.start_with?('+')
-      
-      response = post_request("contact/action/is-registered-user", {
-        phone: cleaned_number
-      })
-      
-      result = handle_response(response)
-      result[:data][:isRegistered] if result[:success]
-    end
-    
-    # Send typing state to a chat
-    def send_typing(chat_id)
-      response = post_request("chat/action/send-typing", {
-        chatId: chat_id
-      })
-      
-      handle_response(response)
-    end
-    
-    # Stop typing indicator
-    def stop_typing(chat_id)
-      response = post_request("chat/action/stop-typing", {
-        chatId: chat_id
-      })
-      
-      handle_response(response)
-    end
-    
+
     private
     
     def post_request(endpoint, params = {})
       uri = URI.parse("#{@base_url}/#{endpoint}")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      
       request = Net::HTTP::Post.new(uri)
       request["accept"] = 'application/json'
       request["content-type"] = 'application/json'
       request['authorization'] = "Bearer #{@api_token}"
-      # Ensure URLs are properly encoded for JSON
       request.body = JSON.generate(params)
 
 
