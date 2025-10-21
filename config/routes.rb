@@ -70,6 +70,25 @@ Rails.application.routes.draw do
     end
   end
 
+  # Campaign routes
+  resources :customer_groups do
+    member do
+      post 'add_customer'
+      delete 'remove_customer'
+    end
+  end
+
+  resources :campaigns do
+    member do
+      post 'send_now'
+      post 'schedule'
+      post 'restart'
+      post 'stop'
+      post 'add_customers'
+      delete 'remove_customer'
+    end
+  end
+
   match 'webhook', to: 'messages#webhook', via: [:get, :post]
 
   # Add RESTful routes for our models

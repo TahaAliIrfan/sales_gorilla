@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_17_021019) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_20_203609) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -76,6 +76,44 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_17_021019) do
     t.index ["user_id"], name: "index_ai_conversations_on_user_id"
   end
 
+  create_table "campaign_executions", force: :cascade do |t|
+    t.bigint "campaign_id", null: false
+    t.bigint "customer_id", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "scheduled_at", null: false
+    t.datetime "executed_at"
+    t.text "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id", "customer_id"], name: "index_campaign_executions_unique", unique: true
+    t.index ["campaign_id"], name: "index_campaign_executions_on_campaign_id"
+    t.index ["customer_id"], name: "index_campaign_executions_on_customer_id"
+    t.index ["scheduled_at"], name: "index_campaign_executions_on_scheduled_at"
+    t.index ["status"], name: "index_campaign_executions_on_status"
+  end
+
+  create_table "campaign_groups", force: :cascade do |t|
+    t.bigint "campaign_id", null: false
+    t.bigint "customer_group_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["campaign_id"], name: "index_campaign_groups_on_campaign_id"
+    t.index ["customer_group_id"], name: "index_campaign_groups_on_customer_group_id"
+  end
+
+  create_table "campaigns", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "message", null: false
+    t.string "status", default: "draft", null: false
+    t.datetime "scheduled_at"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["scheduled_at"], name: "index_campaigns_on_scheduled_at"
+    t.index ["status"], name: "index_campaigns_on_status"
+    t.index ["user_id"], name: "index_campaigns_on_user_id"
+  end
+
   create_table "cost_estimates", force: :cascade do |t|
     t.string "app_type"
     t.text "description"
@@ -137,6 +175,26 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_17_021019) do
     t.datetime "updated_at", null: false
     t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
     t.index ["user_id"], name: "index_customer_activities_on_user_id"
+  end
+
+  create_table "customer_group_memberships", force: :cascade do |t|
+    t.bigint "customer_group_id", null: false
+    t.bigint "customer_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_group_id", "customer_id"], name: "index_customer_group_memberships_unique", unique: true
+    t.index ["customer_group_id"], name: "index_customer_group_memberships_on_customer_group_id"
+    t.index ["customer_id"], name: "index_customer_group_memberships_on_customer_id"
+  end
+
+  create_table "customer_groups", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.bigint "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "name"], name: "index_customer_groups_on_user_id_and_name"
+    t.index ["user_id"], name: "index_customer_groups_on_user_id"
   end
 
   create_table "customer_locations", force: :cascade do |t|
@@ -595,11 +653,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_17_021019) do
   add_foreign_key "calls", "customers"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
+  add_foreign_key "campaign_executions", "campaigns"
+  add_foreign_key "campaign_executions", "customers"
+  add_foreign_key "campaign_groups", "campaigns"
+  add_foreign_key "campaign_groups", "customer_groups"
+  add_foreign_key "campaigns", "users"
   add_foreign_key "cost_estimates", "customers", on_delete: :nullify
   add_foreign_key "cost_estimates", "users"
   add_foreign_key "csv_uploads", "users"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
+  add_foreign_key "customer_group_memberships", "customer_groups"
+  add_foreign_key "customer_group_memberships", "customers"
+  add_foreign_key "customer_groups", "users"
   add_foreign_key "customer_locations", "customers"
   add_foreign_key "customers", "users"
   add_foreign_key "deal_activities", "deals"

@@ -8,19 +8,23 @@ class User < ApplicationRecord
   has_many :messages, dependent: :nullify
   has_many :notifications, dependent: :destroy
   has_many :cost_estimates, dependent: :destroy
-  
+
   # Pipeline assignments
   has_many :user_pipeline_assignments, dependent: :destroy
   has_many :assigned_pipelines, through: :user_pipeline_assignments, source: :pipeline
-  
+
   # Role relationships
   has_many :role_assignments, dependent: :destroy
   has_many :roles, through: :role_assignments
   has_many :assigned_roles, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
-  
-  # Associate relationships 
+
+  # Associate relationships
   has_many :manager_assignments, -> { where(role: Role.associate) }, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
   has_many :associates, through: :manager_assignments, source: :user
+
+  # Campaign relationships
+  has_many :customer_groups, dependent: :destroy
+  has_many :campaigns, dependent: :destroy
 
   # Validate phone number format
   validates :phone_number, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }

@@ -12,6 +12,12 @@ class Customer < ApplicationRecord
   has_many :cost_estimates, dependent: :destroy
   has_many_attached :documents
 
+  # Campaign relationships
+  has_many :customer_group_memberships, dependent: :destroy
+  has_many :customer_groups, through: :customer_group_memberships
+  has_many :campaign_executions, dependent: :destroy
+  has_many :campaigns, through: :campaign_executions
+
   # Scopes
   scope :assigned_to, ->(user_id) { where(user_id: user_id) if user_id.present? }
   scope :search, ->(term) {

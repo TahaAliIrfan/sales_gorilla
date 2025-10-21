@@ -3,6 +3,7 @@
 :queues:
   - meta_conversions
   - notifications
+  - campaigns
   - recordings
   - emails
   - whatsapp_analysis
