@@ -19,7 +19,7 @@
         <%= link_to "Edit", edit_campaign_path(@campaign),
             class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
         <%= button_to "Send Now", send_now_campaign_path(@campaign), method: :post,
-            form: { data: { turbo_confirm: "Are you sure you want to send this campaign now? This will queue #{@campaign.total_recipients} message(s) with 30-second intervals." } },
+            form: { data: { turbo_confirm: "Are you sure you want to send this campaign now? This will queue #{@campaign.total_recipients} message(s) with random intervals (15-55 seconds between each)." } },
             class: "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" %>
       <% elsif @campaign.scheduled? %>
         <div class="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded font-semibold">

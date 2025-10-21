@@ -17,15 +17,17 @@ class Campaign < ApplicationRecord
   def add_customers(customer_ids)
     return if customer_ids.blank?
 
-    # Calculate scheduled times with 30 second intervals
+    # Calculate scheduled times with random intervals (15-55 seconds)
     base_time = scheduled_at || Time.current
-    existing_count = campaign_executions.count
+    current_time = base_time
 
-    customer_ids.each_with_index do |customer_id, index|
-      execution_time = base_time + ((existing_count + index) * 30).seconds
+    customer_ids.each do |customer_id|
+      # Add random interval between 15 and 55 seconds
+      random_interval = rand(15..55)
+      current_time = current_time + random_interval.seconds
 
       campaign_executions.find_or_create_by(customer_id: customer_id) do |execution|
-        execution.scheduled_at = execution_time
+        execution.scheduled_at = current_time
         execution.status = 'pending'
       end
     end
@@ -58,12 +60,16 @@ class Campaign < ApplicationRecord
       return false
     end
 
-    # Create executions with scheduled times
-    base_time = scheduled_at
+    # Create executions with scheduled times using random intervals
+    current_time = scheduled_at
     campaign_executions.pending.order(:id).each_with_index do |execution, index|
-      execution_time = base_time + (index * 30).seconds
-      execution.update(scheduled_at: execution_time)
-      puts "Execution #{index + 1}: Customer #{execution.customer.name} at #{execution_time}"
+      # Add random interval between 15 and 55 seconds (except for first customer)
+      if index > 0
+        random_interval = rand(15..55)
+        current_time = current_time + random_interval.seconds
+      end
+      execution.update(scheduled_at: current_time)
+      puts "Execution #{index + 1}: Customer #{execution.customer.name} at #{current_time}"
     end
 
     # Update campaign status
@@ -86,11 +92,13 @@ class Campaign < ApplicationRecord
     # Clear any existing scheduled jobs for this campaign
     clear_scheduled_jobs!
 
-    # Reschedule all pending executions to start now with 30-second intervals
-    base_time = Time.current
-    campaign_executions.pending.order(:scheduled_at).each_with_index do |execution, index|
-      new_scheduled_time = base_time + (index * 30).seconds
-      execution.update(scheduled_at: new_scheduled_time)
+    # Reschedule all pending executions to start now with random intervals (15-55 seconds)
+    current_time = Time.current
+    campaign_executions.pending.order(:scheduled_at).each do |execution|
+      # Add random interval between 15 and 55 seconds
+      random_interval = rand(15..55)
+      current_time = current_time + random_interval.seconds
+      execution.update(scheduled_at: current_time)
     end
 
     update(status: 'in_progress')
