@@ -136,20 +136,23 @@ export default class extends Controller {
       }
       
       const data = await response.json()
-      if (!data.token) {
+      // Support both old and new token response formats
+      const token = data.data?.token || data.token
+
+      if (!token) {
         throw new Error('No token received from server')
       }
-      
+
       this.showStatus('Setting up phone service...')
       console.log('Token received, initializing device...')
-      
+
       // Import Device from Twilio Voice SDK 2.x
       if (!window.Twilio || !window.Twilio.Device) {
         throw new Error('Twilio Voice SDK not loaded properly')
       }
-      
+
       // Create device instance with Voice SDK 2.x
-      this.device = new window.Twilio.Device(data.token, {
+      this.device = new window.Twilio.Device(token, {
         logLevel: 1, // 0=silent, 1=errors, 2=warnings, 3=info, 4=debug
         codecPreferences: ['opus', 'pcmu']
       })

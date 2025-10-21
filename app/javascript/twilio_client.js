@@ -40,19 +40,22 @@ document.addEventListener('turbo:load', function() {
         return response.json();
       })
       .then(data => {
-        if (!data.token) {
+        // Support both old and new token response formats
+        const token = data.data?.token || data.token;
+
+        if (!token) {
           throw new Error('No token received from server');
         }
-        
+
         statusMessage.textContent = 'Initializing device...';
         console.log('Token received, initializing device...');
-        
+
         // Initialize the Twilio Voice Device with Voice SDK 2.x
         if (!window.Twilio || !window.Twilio.Device) {
           throw new Error('Twilio Voice SDK not loaded properly');
         }
-        
-        device = new window.Twilio.Device(data.token, {
+
+        device = new window.Twilio.Device(token, {
           logLevel: 1, // 0=silent, 1=errors, 2=warnings, 3=info, 4=debug
           codecPreferences: ['opus', 'pcmu']
         });

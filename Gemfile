@@ -49,7 +49,7 @@ gem "bootsnap", require: false
 gem "chartkick", "~> 5.0"
 
 # Twilio for browser-based calling
-gem "twilio-ruby", "~> 6.0"
+gem "twilio-ruby", "~> 7.8"
 
 # HTTP client for Ruby
 gem "httparty", "~> 0.21.0"

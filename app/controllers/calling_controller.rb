@@ -39,36 +39,71 @@ class CallingController < ApplicationController
     end
   end
 
-  # Generate a capability token
+  # Generate an access token
   def token
     begin
-      token = twilio_service.generate_capability_token
-      render json: { token: token }
+      # Use current user's ID or email as identity
+      identity = current_user&.id&.to_s || current_user&.email || 'web_user'
+      token = twilio_service.generate_capability_token(identity)
+
+      render json: {
+        success: true,
+        data: {
+          token: token
+        }
+      }
     rescue => e
       Rails.logger.error("Error generating token: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
-      render json: { error: "Unable to generate calling token. Please try again later." }, status: :service_unavailable
+      render json: {
+        success: false,
+        error: "Unable to generate calling token. Please try again later."
+      }, status: :service_unavailable
     end
   end
 
   def voice
     begin
-      phone_number = params[:To]
+      # Get parameters from Twilio
+      to = params[:To]
+      from = params[:From]
       caller_id = params[:caller_id]
+      customer_id = params[:customer_id]
+      user_id = params[:user_id]
 
-      if params[:controller] == 'calling' && params[:customer_id].present?
+      Rails.logger.info("Incoming call request - To: #{to}, From: #{from}, CallerId: #{caller_id}, CustomerId: #{customer_id}, UserId: #{user_id}")
 
-        customer = Customer.find_by(id: params[:customer_id])
+      # Check if this is a client-to-PSTN call (from web/mobile app)
+      # Client calls have From starting with "client:"
+      is_client_call = from&.start_with?('client:')
 
-        if customer.present? && customer.user_id.nil?
-          user_id = User.find_by(email: 'sarmad.mansoor@tecaudex.com').id
+      # Handle outgoing calls (from web/mobile client to PSTN)
+      if is_client_call
+        # Find or create customer
+        if customer_id.present?
+          customer = Customer.find_by(id: customer_id)
         else
-          user_id = customer.user_id
+          # Try to find customer by phone number
+          customer = Customer.find_by(phone: to)
         end
 
-        response = twilio_service.generate_voice_response(phone_number, caller_id, params[:customer_id], user_id)
+        # Determine user_id
+        if user_id.present?
+          user_id = user_id.to_i
+        elsif customer.present? && customer.user_id.present?
+          user_id = customer.user_id
+        else
+          # Extract user ID from client identity (e.g., "client:2" -> user_id: 2)
+          identity = from.gsub('client:', '')
+          user_id = identity.to_i > 0 ? identity.to_i : 1
+        end
+
+        Rails.logger.info("Client-to-PSTN call - User: #{user_id}, Customer: #{customer_id}")
+
+        response = twilio_service.generate_voice_response(to, caller_id, customer&.id, user_id)
         render xml: response.to_s
       else
+        # Handle incoming calls (from PSTN to sales rep)
         customer = Customer.find_by(phone: params[:Caller])
         # Default user
         user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
@@ -84,18 +119,20 @@ class CallingController < ApplicationController
           customer = Customer.create(name: 'Unknown Caller', phone: params[:Caller])
         end
 
+        Rails.logger.info("PSTN-to-Sales call - Caller: #{params[:Caller]}, Sales Rep: #{user_phone_number}")
+
         response = twilio_service.call_sales_rep(params[:Caller], user_phone_number, user_id, customer.id)
         render xml: response.to_s
       end
     rescue => e
       Rails.logger.error("Error in voice action: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
-      
+
       # Provide a basic TwiML response that informs the caller of the error
       response = Twilio::TwiML::VoiceResponse.new do |r|
-        r.say('We are sorry, but there was an error processing your call. Please try again later.', voice: 'alice')
+        r.say('An error occurred while processing your call. Please try again later.')
       end
-      
+
       render xml: response.to_s
     end
   end
@@ -106,10 +143,15 @@ class CallingController < ApplicationController
     call_sid = params[:CallSid]
     duration = params[:RecordingDuration].to_i
     url = params[:RecordingUrl]
+    customer_id = params[:customer_id]
+    user_id = params[:user_id]
 
-    # Find the customer associated with this call
-    customer = Customer.find_by(id: params[:customer_id])
-    user = User.find_by(id: params[:user_id])
+    Rails.logger.info("Recording completed - SID: #{recording_sid}, CallSID: #{call_sid}, CustomerId: #{customer_id}, UserId: #{user_id}")
+
+    # Find the customer and user associated with this call
+    customer = Customer.find_by(id: customer_id)
+    user = User.find_by(id: user_id)
+
     if customer.present? && user.present?
       recording = Recording.create(
         sid: recording_sid,
@@ -121,6 +163,8 @@ class CallingController < ApplicationController
         customer: customer
       )
 
+      Rails.logger.info("Recording saved to database - ID: #{recording.id}")
+
       # Queue the storage process to run in background
       RecordingStorageWorker.perform_async(recording.id)
 
@@ -129,9 +173,15 @@ class CallingController < ApplicationController
         details: "Call recording saved (#{duration} seconds)",
         user: user
       )
+    else
+      Rails.logger.warn("Customer or User not found for recording - CustomerId: #{customer_id}, UserId: #{user_id}")
     end
 
-    head :ok
+    render json: { success: true }
+  rescue => e
+    Rails.logger.error("Error handling recording status: #{e.message}")
+    Rails.logger.error(e.backtrace.join("\n"))
+    render json: { success: false, error: e.message }, status: :internal_server_error
   end
 
   # Fetch available Twilio phone numbers
