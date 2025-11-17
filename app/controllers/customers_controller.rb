@@ -46,8 +46,11 @@ class CustomersController < ApplicationController
       @customers = @customers.where(status: params[:status])
     end
     
-    # Filter by lead source if provided
-    @customers = @customers.where(lead_source: params[:lead_source]) if params[:lead_source].present?
+    # Filter by lead source if provided (supports multiple selections)
+    if params[:lead_source].present?
+      lead_sources = params[:lead_source].is_a?(Array) ? params[:lead_source].reject(&:blank?) : [params[:lead_source]].reject(&:blank?)
+      @customers = @customers.where(lead_source: lead_sources) if lead_sources.any?
+    end
     
     # Filter by customer type (high value leads) if provided
     @customers = @customers.where(customer_type: params[:customer_type]) if params[:customer_type].present?

@@ -74,17 +74,35 @@
       </div>
 
       <!-- Lead Source Filter -->
-      <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200">
-        <label for="lead-source-filter" class="block text-xs font-medium text-gray-500 mb-1">Lead Source</label>
-        <select id="lead-source-filter"
-                class="block w-full border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0"
-                data-customer-filter-target="leadSource"
-                data-action="change->customer-filter#filter">
-          <option value="">All Sources</option>
-          <% Customer::LEAD_SOURCES.each do |key, value| %>
-            <option value="<%= value %>"><%= value %></option>
-          <% end %>
-        </select>
+      <div class="px-3 py-2 border-b md:border-b-0 md:border-r border-gray-200 relative"
+           data-controller="multiselect-dropdown"
+           data-customer-filter-target="leadSourceContainer">
+        <label class="block text-xs font-medium text-gray-500 mb-1">Lead Source</label>
+        <button type="button"
+                class="w-full text-left border-0 focus:ring-0 focus:outline-none text-sm py-1 px-0 flex items-center justify-between"
+                data-multiselect-dropdown-target="button"
+                data-action="click->multiselect-dropdown#toggle">
+          <span data-multiselect-dropdown-target="buttonText">All Sources</span>
+          <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <div data-multiselect-dropdown-target="menu" class="hidden absolute z-50 mt-1 w-64 bg-white rounded-md shadow-lg border border-gray-200 max-h-64 overflow-y-auto">
+          <div class="py-1">
+            <% Customer::LEAD_SOURCES.each do |key, value| %>
+              <label class="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                <input type="checkbox"
+                       value="<%= value %>"
+                       data-label="<%= value %>"
+                       data-multiselect-dropdown-target="checkbox"
+                       data-customer-filter-target="leadSourceCheckbox"
+                       data-action="change->multiselect-dropdown#checkboxChanged change->customer-filter#filter"
+                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <span class="ml-2 text-sm text-gray-700"><%= value %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
       </div>
 
       <!-- Customer Type Filter (High Value Leads) -->

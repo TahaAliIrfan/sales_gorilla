@@ -2,19 +2,21 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "search", 
-    "user", 
+    "search",
+    "user",
     "leadSource",
+    "leadSourceCheckbox",
+    "leadSourceContainer",
     "customerType",
     "status",
-    "direction", 
-    "customersList", 
-    "noResults", 
-    "resultsCount", 
-    "activeFilters", 
-    "searchBadge", 
-    "searchText", 
-    "userBadge", 
+    "direction",
+    "customersList",
+    "noResults",
+    "resultsCount",
+    "activeFilters",
+    "searchBadge",
+    "searchText",
+    "userBadge",
     "userText",
     "statusBadge",
     "statusText",
@@ -72,10 +74,14 @@ export default class extends Controller {
       this.statusTarget.value = statusParam
     }
     
-    // Set lead source dropdown from URL parameter
-    const leadSourceParam = urlParams.get('lead_source')
-    if (leadSourceParam) {
-      this.leadSourceTarget.value = leadSourceParam
+    // Set lead source checkboxes from URL parameter
+    const leadSourceParams = urlParams.getAll('lead_source[]')
+    if (leadSourceParams.length > 0 && this.hasLeadSourceCheckboxTarget) {
+      this.leadSourceCheckboxTargets.forEach(checkbox => {
+        checkbox.checked = leadSourceParams.includes(checkbox.value)
+      })
+      // Trigger multiselect dropdown update
+      this.updateMultiselectButtonText()
     }
     
     // Set customer type dropdown from URL parameter
@@ -109,9 +115,12 @@ export default class extends Controller {
       if (storedFilters.status) {
         this.statusTarget.value = storedFilters.status
       }
-      
-      if (storedFilters.leadSource) {
-        this.leadSourceTarget.value = storedFilters.leadSource
+
+      if (storedFilters.leadSources && Array.isArray(storedFilters.leadSources) && this.hasLeadSourceCheckboxTarget) {
+        this.leadSourceCheckboxTargets.forEach(checkbox => {
+          checkbox.checked = storedFilters.leadSources.includes(checkbox.value)
+        })
+        this.updateMultiselectButtonText()
       }
       
       if (storedFilters.customerType) {
@@ -131,10 +140,10 @@ export default class extends Controller {
   
   hasStoredFilters(filters) {
     return filters && (
-      filters.search || 
-      filters.userId || 
+      filters.search ||
+      filters.userId ||
       filters.status ||
-      filters.leadSource || 
+      (filters.leadSources && filters.leadSources.length > 0) ||
       filters.customerType ||
       (filters.sortDirection && filters.sortDirection !== 'desc')
     )
@@ -144,16 +153,16 @@ export default class extends Controller {
     const filters = {
       search: this.searchTarget.value.trim(),
       status: this.statusTarget.value,
-      leadSource: this.leadSourceTarget.value,
+      leadSources: this.getSelectedLeadSources(),
       customerType: this.customerTypeTarget.value,
       sortDirection: this.directionTarget.value
     }
-    
+
     // Only add userId if user target exists (admin only)
     if (this.hasUserTarget) {
       filters.userId = this.userTarget.value
     }
-    
+
     // Store in sessionStorage
     sessionStorage.setItem('customerFilters', JSON.stringify(filters))
   }
@@ -166,64 +175,66 @@ export default class extends Controller {
   filter() {
     const searchTerm = this.searchTarget.value.trim()
     const status = this.statusTarget.value
-    const leadSource = this.leadSourceTarget.value
+    const leadSources = this.getSelectedLeadSources()
     const customerType = this.customerTypeTarget.value
     const sortDirection = this.directionTarget.value
-    
+
     // Only use userId if the user target exists (for admin users)
     const userId = this.hasUserTarget ? this.userTarget.value : null
-    
+
     // Debug logging
     console.log("Filter values:", {
       searchTerm,
       userId,
       status,
-      leadSource,
+      leadSources,
       customerType,
       sortDirection,
       hasUserTarget: this.hasUserTarget
     })
-    
+
     // Save filters to sessionStorage for persistence
     this.saveFiltersToStorage()
-    
+
     // Build URL parameters
     const params = new URLSearchParams()
-    
+
     // Add search param if present
     if (searchTerm) {
       params.append('search', searchTerm)
     }
-    
+
     // Add user_id param if present and user has access to user filter
     if (userId && this.hasUserTarget) {
       params.append('user_id', userId)
     }
-    
+
     // Add status param if present
     if (status) {
       console.log("Adding status to params:", status)
       params.append('status', status)
     }
-    
-    // Add lead_source param if present
-    if (leadSource) {
-      params.append('lead_source', leadSource)
+
+    // Add lead_source params if present (multiple values)
+    if (leadSources.length > 0) {
+      leadSources.forEach(source => {
+        params.append('lead_source[]', source)
+      })
     }
-    
+
     // Add customer_type param if present
     if (customerType) {
       params.append('customer_type', customerType)
     }
-    
+
     // Add direction param
     if (sortDirection) {
       params.append('direction', sortDirection)
     }
-    
+
     // Debug logging
     console.log("Final URL params:", params.toString())
-    
+
     // Navigate to the filtered URL
     window.location.href = `${window.location.pathname}?${params.toString()}`
   }
@@ -243,24 +254,24 @@ export default class extends Controller {
   
   updateActiveFilters() {
     const searchTerm = this.searchTarget.value.trim()
-    
+
     // Only get user value if target exists (admin only)
     const userId = this.hasUserTarget ? this.userTarget.value : null
     const userText = userId && this.hasUserTarget ? this.userTarget.options[this.userTarget.selectedIndex].text : ''
-    
+
     const status = this.statusTarget.value
     const statusText = status ? this.statusTarget.options[this.statusTarget.selectedIndex].text : ''
-    const leadSource = this.leadSourceTarget.value
-    const leadSourceText = leadSource ? this.leadSourceTarget.options[this.leadSourceTarget.selectedIndex].text : ''
+    const leadSources = this.getSelectedLeadSources()
+    const leadSourceText = leadSources.length > 0 ? (leadSources.length === 1 ? leadSources[0] : `${leadSources.length} Sources`) : ''
     const customerType = this.customerTypeTarget.value
     const customerTypeText = customerType ? this.customerTypeTarget.options[this.customerTypeTarget.selectedIndex].text : ''
-    
+
     // Update search badge
     this.searchBadgeTarget.classList.toggle('hidden', !searchTerm)
     if (searchTerm) {
       this.searchTextTarget.textContent = `Search: ${searchTerm}`
     }
-    
+
     // Update user badge only if target exists (admin only)
     if (this.hasUserTarget) {
       this.userBadgeTarget.classList.toggle('hidden', !userId)
@@ -268,27 +279,27 @@ export default class extends Controller {
         this.userTextTarget.textContent = `Assigned to: ${userText}`
       }
     }
-    
+
     // Update status badge
     this.statusBadgeTarget.classList.toggle('hidden', !status)
     if (status) {
       this.statusTextTarget.textContent = `Status: ${statusText}`
     }
-    
+
     // Update lead source badge
-    this.leadSourceBadgeTarget.classList.toggle('hidden', !leadSource)
-    if (leadSource) {
+    this.leadSourceBadgeTarget.classList.toggle('hidden', leadSources.length === 0)
+    if (leadSources.length > 0) {
       this.leadSourceTextTarget.textContent = `Lead Source: ${leadSourceText}`
     }
-    
+
     // Update customer type badge
     this.customerTypeBadgeTarget.classList.toggle('hidden', !customerType)
     if (customerType) {
       this.customerTypeTextTarget.textContent = `Lead Type: ${customerTypeText}`
     }
-    
+
     // Show/hide active filters section
-    const hasActiveFilters = searchTerm || userId || status || leadSource || customerType
+    const hasActiveFilters = searchTerm || userId || status || leadSources.length > 0 || customerType
     this.activeFiltersTarget.classList.toggle('hidden', !hasActiveFilters)
   }
   
@@ -310,15 +321,20 @@ export default class extends Controller {
   }
   
   clearLeadSource() {
-    this.leadSourceTarget.value = ''
+    if (this.hasLeadSourceCheckboxTarget) {
+      this.leadSourceCheckboxTargets.forEach(checkbox => {
+        checkbox.checked = false
+      })
+      this.updateMultiselectButtonText()
+    }
     this.filter()
   }
-  
+
   clearCustomerType() {
     this.customerTypeTarget.value = ''
     this.filter()
   }
-  
+
   clearAll() {
     this.searchTarget.value = ''
     // Only clear user if target exists (admin only)
@@ -326,13 +342,38 @@ export default class extends Controller {
       this.userTarget.value = ''
     }
     this.statusTarget.value = ''
-    this.leadSourceTarget.value = ''
+    if (this.hasLeadSourceCheckboxTarget) {
+      this.leadSourceCheckboxTargets.forEach(checkbox => {
+        checkbox.checked = false
+      })
+      this.updateMultiselectButtonText()
+    }
     this.customerTypeTarget.value = ''
     this.directionTarget.value = 'desc'
-    
+
     // Clear stored filters
     sessionStorage.removeItem('customerFilters')
-    
+
     this.filter()
+  }
+
+  getSelectedLeadSources() {
+    if (!this.hasLeadSourceCheckboxTarget) return []
+    return this.leadSourceCheckboxTargets
+      .filter(checkbox => checkbox.checked)
+      .map(checkbox => checkbox.value)
+  }
+
+  updateMultiselectButtonText() {
+    if (!this.hasLeadSourceContainerTarget) return
+
+    const multiselectController = this.application.getControllerForElementAndIdentifier(
+      this.leadSourceContainerTarget,
+      'multiselect-dropdown'
+    )
+
+    if (multiselectController && multiselectController.updateButtonText) {
+      multiselectController.updateButtonText()
+    }
   }
 } 
