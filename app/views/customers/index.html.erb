@@ -427,7 +427,16 @@
                         <%= customer.user.name %>
                       </span>
                     <% else %>
-                      <span class="text-gray-500">Unassigned</span>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-gray-500">Unassigned</span>
+                        <% if policy(customer).assign_to_self? %>
+                          <%= link_to "Assign to Me", assign_to_self_customer_path(customer),
+                              method: :post,
+                              data: { turbo_method: :post, turbo_confirm: "Assign this customer to yourself?" },
+                              class: "inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 border border-green-700 rounded hover:bg-green-700 transition-colors duration-150",
+                              title: "Assign this customer to yourself" %>
+                        <% end %>
+                      </div>
                     <% end %>
                   </div>
                 </td>
@@ -513,13 +522,22 @@
                   <% end %>
                 </div>
 
-                <div class="flex justify-between text-sm">
+                <div class="flex justify-between text-sm items-center">
                   <span class="text-gray-500">Assigned To:</span>
                   <span class="text-gray-900">
                     <% if customer.user %>
                       <%= customer.user.name %>
                     <% else %>
-                      <span class="text-gray-500">Unassigned</span>
+                      <div class="flex items-center space-x-2">
+                        <span class="text-gray-500">Unassigned</span>
+                        <% if policy(customer).assign_to_self? %>
+                          <%= link_to "Assign to Me", assign_to_self_customer_path(customer),
+                              method: :post,
+                              data: { turbo_method: :post, turbo_confirm: "Assign this customer to yourself?" },
+                              class: "inline-flex items-center px-2 py-1 text-xs font-medium text-white bg-green-600 border border-green-700 rounded hover:bg-green-700 transition-colors duration-150",
+                              title: "Assign this customer to yourself" %>
+                        <% end %>
+                      </div>
                     <% end %>
                   </span>
                 </div>

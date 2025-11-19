@@ -1,5 +1,5 @@
 class Api::V2::CustomersController < Api::V2::BaseController
-  before_action :set_customer, only: [:show, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :whatsapp_messages, :send_whatsapp_text, :send_whatsapp_media]
+  before_action :set_customer, only: [:show, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :whatsapp_messages, :send_whatsapp_text, :send_whatsapp_media, :assign_to_self]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -299,14 +299,14 @@ class Api::V2::CustomersController < Api::V2::BaseController
 
   def recordings
     authorize @customer
-    
+
     recordings = @customer.recordings.includes(:user)
-    
+
     # Apply pagination
     page = params[:page] || 1
     per_page = params[:per_page] || 20
     recordings = recordings.page(page).per(per_page)
-    
+
     render_success({
       recordings: recordings.as_json(
         include: {
@@ -320,6 +320,25 @@ class Api::V2::CustomersController < Api::V2::BaseController
         per_page: recordings.limit_value
       }
     })
+  end
+
+  def assign_to_self
+    authorize @customer
+
+    # Use update_column to bypass validations since we're only changing assignment
+    # This avoids triggering document validations and other unrelated checks
+    if @customer.update_column(:user_id, current_user.id)
+      # Reload to get the updated association
+      @customer.reload
+      render_success(
+        {
+          customer: @customer.as_json(include: { user: { only: [:id, :name] } })
+        },
+        'Customer successfully assigned to you'
+      )
+    else
+      render_error('Failed to assign customer', ['Assignment failed'], :unprocessable_entity)
+    end
   end
 
   private

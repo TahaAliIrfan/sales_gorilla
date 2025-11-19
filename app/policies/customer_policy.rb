@@ -6,11 +6,12 @@ class CustomerPolicy < ApplicationPolicy
       if user.admin?
         scope.all
       elsif user.manager?
-        # Managers can see their own customers and customers of their associates
+        # Managers can see their own customers, customers of their associates, and unassigned customers
         associate_ids = user.associates.pluck(:id)
-        scope.where(user_id: [user.id] + associate_ids)
+        scope.where(user_id: [user.id] + associate_ids + [nil])
       else
-        scope.where(user_id: user.id)
+        # Associates can see their own customers and unassigned customers
+        scope.where(user_id: [user.id, nil])
       end
     end
   end
@@ -87,5 +88,10 @@ class CustomerPolicy < ApplicationPolicy
   
   def bulk_status_change?
     user.admin? || user.manager?
+  end
+
+  def assign_to_self?
+    # Allow any user to assign unassigned customers to themselves
+    record.user_id.nil?
   end
 end 

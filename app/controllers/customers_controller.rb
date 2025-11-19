@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone, :ai_call, :calculate_lead_score]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone, :ai_call, :calculate_lead_score, :assign_to_self]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -497,30 +497,48 @@ class CustomersController < ApplicationController
 
   def calculate_lead_score
     authorize @customer
-    
+
     begin
      @customer.calculate_lead_score
-      
+
       respond_to do |format|
         format.html { redirect_to @customer, notice: 'Lead score calculated successfully.' }
-        format.json { 
-          render json: { 
-            success: true, 
+        format.json {
+          render json: {
+            success: true,
             lead_score: @customer.lead_score,
             geographic_score: @customer.geographic_score,
             description_score: @customer.description_score,
             lead_score_badge: @customer.lead_score_badge,
             lead_score_color: @customer.lead_score_color,
             updated_at: @customer.lead_score_updated_at&.strftime('%b %d, %Y at %I:%M %p')
-          } 
+          }
         }
       end
     rescue => e
       Rails.logger.error("Failed to calculate lead score for customer #{@customer.id}: #{e.message}")
-      
+
       respond_to do |format|
         format.html { redirect_to @customer, alert: "Failed to calculate lead score: #{e.message}" }
         format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def assign_to_self
+    authorize @customer
+
+    # Use update_column to bypass validations since we're only changing assignment
+    # This avoids triggering document validations and other unrelated checks
+    if @customer.update_column(:user_id, current_user.id)
+      respond_to do |format|
+        format.html { redirect_to customers_path, notice: "Customer '#{@customer.name}' successfully assigned to you." }
+        format.json { render json: { success: true, user_id: current_user.id, user_name: current_user.name } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to customers_path, alert: 'Failed to assign customer.' }
+        format.json { render json: { success: false, errors: ['Assignment failed'] }, status: :unprocessable_entity }
       end
     end
   end

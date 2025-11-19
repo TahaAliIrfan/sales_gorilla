@@ -99,6 +99,7 @@ Rails.application.routes.draw do
       post 'analyze_phone'
       post 'ai_call'
       post 'calculate_lead_score'
+      post 'assign_to_self'
     end
     
     # Add routes for follow-ups
@@ -266,12 +267,13 @@ Rails.application.routes.draw do
       resources :customers do
         member do
           patch 'update_status'
-          patch 'update_communication_status' 
+          patch 'update_communication_status'
           get 'whatsapp_messages'
           post 'send_whatsapp_text'
           post 'send_whatsapp_media'
           post 'analyze_phone'
           get 'recordings'
+          post 'assign_to_self'
         end
         collection do
           post 'bulk_assign'
