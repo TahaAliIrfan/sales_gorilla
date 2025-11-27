@@ -100,6 +100,12 @@ class CallingController < ApplicationController
 
         Rails.logger.info("Client-to-PSTN call - User: #{user_id}, Customer: #{customer_id}")
 
+        # Track call attempt as soon as the call is initiated
+        if customer.present?
+          customer.track_call_attempt!
+          Rails.logger.info("Call attempt tracked for Customer ID: #{customer.id}")
+        end
+
         response = twilio_service.generate_voice_response(to, caller_id, customer&.id, user_id)
         render xml: response.to_s
       else

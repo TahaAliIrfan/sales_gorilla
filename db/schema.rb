@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_20_203609) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -290,6 +290,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_20_203609) do
     t.integer "description_score"
     t.datetime "lead_score_updated_at"
     t.boolean "repeat_lead", default: false, null: false
+    t.integer "total_call_attempts", default: 0, null: false
+    t.integer "successful_call_attempts", default: 0, null: false
+    t.datetime "last_call_attempt_at"
+    t.datetime "last_successful_call_at"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["facebook_click_id"], name: "index_customers_on_facebook_click_id"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"

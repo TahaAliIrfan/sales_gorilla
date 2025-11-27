@@ -9,7 +9,8 @@ class Recording < ApplicationRecord
   
   # Add ActiveStorage attachment for recording file
   has_one_attached :audio_file
-  
+
+  after_create :track_successful_call
   after_create :update_lead_score_for_successful_call
   
   scope :recent, -> { order(date: :desc) }
@@ -27,15 +28,24 @@ class Recording < ApplicationRecord
   end
   
   private
-  
+
+  # Track successful call when recording is created (only if duration >= 60 seconds)
+  def track_successful_call
+    return unless customer.present?
+
+    # Only track as successful if call duration exceeds 60 seconds
+    if duration.present? && duration >= 60
+      customer.track_successful_call!
+    end
+  end
 
   # Updates customer lead score for successful calls (90+ seconds)
   def update_lead_score_for_successful_call
-    return unless customer.present? && duration.present? && duration >=  150
+    return unless customer.present? && duration.present? && duration >= 150
 
     current_score = customer.lead_score || 0
     new_score = [current_score + 10, 100].min  # Cap at 100
-    
+
     customer.update_column(:lead_score, new_score)
   end
 end

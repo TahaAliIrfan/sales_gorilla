@@ -396,7 +396,7 @@ class Customer < ApplicationRecord
   
   def lead_score_badge
     return 'N/A' unless lead_score
-    
+
     case lead_score
     when 80..100 then 'Excellent'
     when 60..79 then 'Good'
@@ -405,7 +405,39 @@ class Customer < ApplicationRecord
     else 'Very Poor'
     end
   end
-  
+
+  # Track a call attempt - called whenever a user tries to call a customer
+  def track_call_attempt!
+    increment!(:total_call_attempts)
+    update_column(:last_call_attempt_at, Time.current)
+
+    # Log the activity
+    customer_activities.create!(
+      action: "Call attempted",
+      details: "Call attempt ##{total_call_attempts}",
+      user_id: user_id || User.first&.id
+    )
+  end
+
+  # Track a successful call - called when a call exceeds 60 seconds
+  def track_successful_call!
+    increment!(:successful_call_attempts)
+    update_column(:last_successful_call_at, Time.current)
+
+    # Log the activity
+    customer_activities.create!(
+      action: "Successful call completed",
+      details: "Total successful calls: #{successful_call_attempts}",
+      user_id: user_id || User.first&.id
+    )
+  end
+
+  # Calculate call success rate as a percentage
+  def call_success_rate
+    return 0 if total_call_attempts.zero?
+    ((successful_call_attempts.to_f / total_call_attempts) * 100).round(2)
+  end
+
   private
   
   def acceptable_documents
