@@ -77,11 +77,11 @@ class CustomersController < ApplicationController
     @emails = @customer.emails.recent.limit(5)
 
     if @customer.email.present?
-      CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
+      #CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
 
-      Rails.cache.write("customer_#{@customer.id}_email_count_before", @customer.emails.count)
+      # Rails.cache.write("customer_#{@customer.id}_email_count_before", @customer.emails.count)
 
-      @email_fetching_active = true
+      # @email_fetching_active = true
     end
   end
 
