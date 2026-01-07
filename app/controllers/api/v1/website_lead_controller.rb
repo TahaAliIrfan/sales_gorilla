@@ -9,30 +9,15 @@ module Api
                                    phone: params[:phone],
                                    lead_source: 'Website',
                                    notes: params[:message],
-                                   status: params[:]
-                                   )
+                                   status: params[:status])
+          if @customer.save
+            render json: { success: true, message: "Successfully created" }, status: :created
+          end
+        else
+          render json: { success: false, errors: "Unable to add" }, status: :unprocessable_entity
         end
       end
 
     end
   end
 end
-
-
-create_table "customers", force: :cascade do |t|
-  t.string "name"
-  t.string "email"
-  t.string "phone"
-  t.text "address"
-  t.string "company"
-  t.datetime "created_at", null: false
-  t.datetime "updated_at", null: false
-  t.text "notes"
-  t.bigint "user_id"
-  t.string "lead_source", default: ""
-  t.string "country_code"
-  t.string "linkedin_url"
-  t.string "ccr_link"
-  t.decimal "project_estimated_cost", precision: 10, scale: 2
-  t.string "project_type", default: "Not Applicable"
-  t.text "idea_description"
