@@ -233,7 +233,11 @@ class WhatsappMessageService
     message_id = message[:idMessage]
     whatsapp_chat_id = message[:chatId]
     timestamp = Time.at(message[:timestamp])
-    status = message[:statusMessage]
+    if message[:statusMessage].present?
+      status = message[:statusMessage]
+    else
+      status = 'read'
+    end
 
     # Base message attributes
     message_attrs = {
