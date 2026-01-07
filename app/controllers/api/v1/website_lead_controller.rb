@@ -4,9 +4,10 @@ module Api
 
       def create
         if params[:email].present?
+
           @customer = Customer.new(name: params[:name],
                                    email: params[:email],
-                                   phone: params[:phone],
+                                   phone: params[:phone_number],
                                    lead_source: 'Website',
                                    notes: params[:message],
                                    status: params[:status])
