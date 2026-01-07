@@ -9,8 +9,7 @@ module Api
                                    email: params[:email],
                                    phone: params[:phone_number],
                                    lead_source: 'Website',
-                                   notes: params[:message],
-                                   status: params[:status])
+                                   notes: params[:message])
           if @customer.save
             render json: { success: true, message: "Successfully created" }, status: :created
           end
