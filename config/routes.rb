@@ -112,16 +112,18 @@ Rails.application.routes.draw do
       end
       member do
         post 'mark_as_read'
+        get 'export_pdf'
+        post 'send_draft'
       end
     end
-    
+
     # Add routes for messages (WhatsApp)
     resources :messages, only: [:index, :create] do
       collection do
         patch 'sync'
       end
     end
-    
+
     collection do
       post 'bulk_assign'
       post 'bulk_status_change'
@@ -153,7 +155,7 @@ Rails.application.routes.draw do
       patch 'assign_user'
     end
   end
-  
+
   # Notification routes
   resources :notifications, only: [:index, :show] do
     member do
@@ -163,7 +165,7 @@ Rails.application.routes.draw do
       post 'mark_all_as_read'
     end
   end
-  
+
   # Root path route ("/")
   root "home#index"
 
@@ -178,7 +180,7 @@ Rails.application.routes.draw do
   get 'dashboard', to: 'dashboard#index', as: :admin_dashboard
   get 'dashboard/reports', to: 'dashboard#reports', as: :reports
   get 'dashboard/my_reports', to: 'dashboard#my_reports', as: :my_reports
-  
+
   # Dashboard AJAX endpoints
   get 'dashboard/team_overview', to: 'dashboard#team_overview', as: :dashboard_team_overview
   get 'dashboard/user_performance', to: 'dashboard#user_performance', as: :dashboard_user_performance
@@ -186,18 +188,18 @@ Rails.application.routes.draw do
   get 'dashboard/deal_analytics', to: 'dashboard#deal_analytics', as: :dashboard_deal_analytics
   get 'dashboard/quick_data', to: 'dashboard#quick_data', as: :dashboard_quick_data
   get 'dashboard/team_performance', to: 'dashboard#team_performance', as: :dashboard_team_performance
-  
+
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
-  
+
   # My Tasks Dashboard route
   get 'my_tasks_dashboard', to: 'my_tasks_dashboard#index', as: :my_tasks_dashboard
-  
+
   # Settings routes
   get 'settings', to: 'settings#edit', as: :settings
   patch 'settings/update', to: 'settings#update', as: :update_settings
   delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
-  
+
   # TecaudexChat routes
   resources :tecaudex_chat, only: [:index], path: 'tecaudex_chat', constraints: { id: /[^\/]+/ } do
     member do
@@ -210,8 +212,8 @@ Rails.application.routes.draw do
       get 'refresh_chat_list'
     end
   end
-  
-  # Keep show route separate to avoid conflicts  
+
+  # Keep show route separate to avoid conflicts
   get 'tecaudex_chat/:id', to: 'tecaudex_chat#show', as: 'tecaudex_chat_show', constraints: { id: /[^\/]+/ }
 
   # Cost Calculator routes
@@ -223,24 +225,25 @@ Rails.application.routes.draw do
       get 'generate_proposal'
     end
   end
-  
+
   # Browser-based calling routes
   get 'calling', to: 'calling#index'
   get 'calling/token', to: 'calling#token'
   match 'calling/voice', to: 'calling#voice', via: [:get, :post]
   get 'calling/available_numbers', to: 'calling#available_numbers'
   post 'calling/store_customer_id', to: 'calling#store_customer_id'
-  
+
   # Call recording routes
   get 'calling/recordings', to: 'calling#recordings'
   get 'calling/recording/:sid', to: 'calling#recording', as: :get_recording
   get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :calling_play_recording
   post 'calling/recording_status', to: 'calling#recording_status'
-  
+
   # API routes
   namespace :api do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
+      post 'website_lead', to: 'website_lead#create'
       post 'inbound_lead', to: 'cost_calculator#inbound_lead'
       post 'init_estimates', to: 'cost_calculator#init_estimates'
       post 'submit_estimate', to: 'cost_calculator#submit_estimate'
