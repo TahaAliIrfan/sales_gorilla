@@ -9,7 +9,11 @@ module Whatsapp
     def initialize(instance_id = nil, api_token = nil)
       @device_id = 'TCDX'
       @api_token = api_token || Rails.application.credentials.dig(:TCDX_KEY)
-      @base_url = "https://nucleus.tecaudex.com/api/whatsapp"
+      # @base_url = "https://nucleus.tecaudex.com/api/whatsapp"
+      @instance_id = "7105323361"
+      @api_token = "66ea6d5a06db48b5886a5a2ee08c8840721c794eec684e9e92"
+      @base_url = "https://7105.api.greenapi.com/waInstance#{@instance_id}"
+      @media_url = "https://7105.media.greenapi.com"
     end
 
     # Check if the API credentials are configured
@@ -24,7 +28,7 @@ module Whatsapp
     end
 
     def get_chat_room(chat_id)
-      response = get_request("messages/#{chat_id}/complete?deviceId=#{@device_id}&limit=10000&offset=10000&includeMedia=true")
+      response = post_request("getChatHistory/#{@api_token}", { chatId: chat_id})
       handle_response(response)
     end
 
@@ -35,7 +39,7 @@ module Whatsapp
 
 
     def send_text_message(chat_id, content)
-      response = post_request("send", { chatId: chat_id, content: content, deviceId: @device_id })
+      response = post_request("sendMessage/#{@api_token}", { chatId: chat_id, message: content})
       handle_response(response)
     end
 
@@ -80,12 +84,11 @@ module Whatsapp
     
     def post_request(endpoint, params = {})
       uri = URI.parse("#{@base_url}/#{endpoint}")
+
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       request = Net::HTTP::Post.new(uri)
-      request["accept"] = 'application/json'
       request["content-type"] = 'application/json'
-      request['authorization'] = "Bearer #{@api_token}"
       request.body = JSON.generate(params)
 
 
@@ -109,7 +112,7 @@ module Whatsapp
       
       
       if response.code.to_i == 200
-        { success: true, data: parsed_response[:data] }
+        { success: true, data: parsed_response }
       else
         error_message = parsed_response[:message] || "Unknown error occurred"
         Rails.logger.error("WhatsApp API Error: #{error_message}")
