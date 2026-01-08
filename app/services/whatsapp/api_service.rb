@@ -43,18 +43,15 @@ module Whatsapp
       handle_response(response)
     end
 
-    def send_media_base64(chat_id, media_base64, filename, caption = nil, mime_type = nil)
-      payload = {
-        chatId: chat_id,
-        mediaBase64: media_base64,
+    def send_media_base64(chat_id, file_data, filename, caption = nil, mime_type = nil)
+      response = post_multipart_request(
+        "sendFileByUpload/#{@api_token}",
+        chat_id: chat_id,
+        file_data: file_data,
         filename: filename,
-        deviceId: @device_id,
-        mimeType: mime_type,
-      }
-
-      payload[:caption] = caption if caption.present?
-
-      response = post_request("send-media", payload)
+        caption: caption,
+        mime_type: mime_type
+      )
       handle_response(response)
     end
 
@@ -91,6 +88,51 @@ module Whatsapp
       request["content-type"] = 'application/json'
       request.body = JSON.generate(params)
 
+
+      http.request(request)
+    end
+
+    def post_multipart_request(endpoint, chat_id:, file_data:, filename:, caption: nil, mime_type: nil)
+      uri = URI.parse("#{@media_url}/#{endpoint}")
+
+      boundary = "----WebKitFormBoundary#{SecureRandom.hex(16)}"
+
+      body = []
+
+      # Add chatId field
+      body << "--#{boundary}\r\n"
+      body << "Content-Disposition: form-data; name=\"chatId\"\r\n\r\n"
+      body << "#{chat_id}\r\n"
+
+      # Add caption field if present
+      if caption.present?
+        body << "--#{boundary}\r\n"
+        body << "Content-Disposition: form-data; name=\"caption\"\r\n\r\n"
+        body << "#{caption}\r\n"
+      end
+
+      # Add fileName field
+      body << "--#{boundary}\r\n"
+      body << "Content-Disposition: form-data; name=\"fileName\"\r\n\r\n"
+      body << "#{filename}\r\n"
+
+      # Add file field
+      content_type = mime_type || 'application/octet-stream'
+      body << "--#{boundary}\r\n"
+      body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n"
+      body << "Content-Type: #{content_type}\r\n\r\n"
+      body << file_data
+      body << "\r\n"
+
+      # Close boundary
+      body << "--#{boundary}--\r\n"
+
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+
+      request = Net::HTTP::Post.new(uri)
+      request["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
+      request.body = body.join
 
       http.request(request)
     end
