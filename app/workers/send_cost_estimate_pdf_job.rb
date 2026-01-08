@@ -52,7 +52,7 @@ class SendCostEstimatePdfJob
       Rails.logger.info("Generating PDF for cost estimate #{cost_estimate_id}")
       proposal_service = ProposalGenerationService.new(cost_estimate)
       pdf = proposal_service.generate_pdf
-      pdf_content = pdf.render
+      pdf_content = pdf.render.force_encoding('BINARY')
 
       # Generate filename using app_name for better WhatsApp display
       app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
@@ -76,6 +76,8 @@ class SendCostEstimatePdfJob
                 "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
                 "Best regards,\nTecaudex Team"
 
+      Rails.logger.info("SendCostEstimatePdfJob: Sending PDF to chat_id: #{chat_id}, filename: #{filename}, pdf_size: #{pdf_content.bytesize} bytes")
+
       response = whatsapp_service.send_file(
         chat_id,
         pdf_content,
@@ -83,6 +85,8 @@ class SendCostEstimatePdfJob
         caption,
         'application/pdf'
       )
+
+      Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")
 
       cost_estimate.pdf_file.attach(
         io: StringIO.new(pdf_content),

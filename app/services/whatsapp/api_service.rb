@@ -99,43 +99,45 @@ module Whatsapp
       uri = URI.parse("#{@media_url}/#{endpoint}")
 
       boundary = "----WebKitFormBoundary#{SecureRandom.hex(16)}"
+      content_type = mime_type || 'application/octet-stream'
 
-      body = []
+      # Build multipart body with consistent binary encoding
+      body = "".dup.force_encoding('BINARY')
 
       # Add chatId field
-      body << "--#{boundary}\r\n"
-      body << "Content-Disposition: form-data; name=\"chatId\"\r\n\r\n"
-      body << "#{chat_id}\r\n"
+      body << "--#{boundary}\r\n".force_encoding('BINARY')
+      body << "Content-Disposition: form-data; name=\"chatId\"\r\n\r\n".force_encoding('BINARY')
+      body << "#{chat_id}\r\n".force_encoding('BINARY')
 
       # Add caption field if present
       if caption.present?
-        body << "--#{boundary}\r\n"
-        body << "Content-Disposition: form-data; name=\"caption\"\r\n\r\n"
-        body << "#{caption}\r\n"
+        body << "--#{boundary}\r\n".force_encoding('BINARY')
+        body << "Content-Disposition: form-data; name=\"caption\"\r\n\r\n".force_encoding('BINARY')
+        body << caption.to_s.encode('UTF-8').force_encoding('BINARY')
+        body << "\r\n".force_encoding('BINARY')
       end
 
       # Add fileName field
-      body << "--#{boundary}\r\n"
-      body << "Content-Disposition: form-data; name=\"fileName\"\r\n\r\n"
-      body << "#{filename}\r\n"
+      body << "--#{boundary}\r\n".force_encoding('BINARY')
+      body << "Content-Disposition: form-data; name=\"fileName\"\r\n\r\n".force_encoding('BINARY')
+      body << "#{filename}\r\n".force_encoding('BINARY')
 
       # Add file field
-      content_type = mime_type || 'application/octet-stream'
-      body << "--#{boundary}\r\n"
-      body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n"
-      body << "Content-Type: #{content_type}\r\n\r\n"
-      body << file_data
-      body << "\r\n"
+      body << "--#{boundary}\r\n".force_encoding('BINARY')
+      body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n".force_encoding('BINARY')
+      body << "Content-Type: #{content_type}\r\n\r\n".force_encoding('BINARY')
+      body << file_data.force_encoding('BINARY')
+      body << "\r\n".force_encoding('BINARY')
 
       # Close boundary
-      body << "--#{boundary}--\r\n"
+      body << "--#{boundary}--\r\n".force_encoding('BINARY')
 
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
 
       request = Net::HTTP::Post.new(uri)
       request["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
-      request.body = body.join
+      request.body = body
 
       http.request(request)
     end
