@@ -43,7 +43,7 @@ module Whatsapp
       handle_response(response)
     end
 
-    def send_media_base64(chat_id, file_data, filename, caption = nil, mime_type = nil)
+    def send_file(chat_id, file_data, filename, caption = nil, mime_type = nil)
       response = post_multipart_request(
         "waInstance#{@instance_id}/sendFileByUpload/#{@api_token}",
         chat_id: chat_id,
@@ -54,6 +54,9 @@ module Whatsapp
       )
       handle_response(response)
     end
+
+    # Alias for backwards compatibility
+    alias_method :send_media_base64, :send_file
 
 
     def get_whatsapp_chat_id(phone_number)
