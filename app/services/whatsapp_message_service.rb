@@ -159,24 +159,19 @@ class WhatsappMessageService
     return { success: false, error: "WhatsApp chat ID cannot be blank" } if whatsapp_chat_id.blank?
 
     begin
-      # Convert file data to base64 if it's not already
-      base64_data = if file_data.is_a?(String) && is_base64?(file_data)
-                      file_data
-                    else
-                      Base64.strict_encode64(file_data)
-                    end
+      # Ensure we have raw binary data
+      raw_data = file_data.is_a?(String) ? file_data.dup.force_encoding('BINARY') : file_data
 
-      mine_type = detect_format(base64_data)
+      # Detect format from raw bytes
+      format_info = detect_format_from_bytes(raw_data)
 
-      # Send media message via WhatsApp API using send_media_base64 method
-      response = @api_service.send_media_base64(whatsapp_chat_id, base64_data, filename, caption, mine_type[:content_type])
+      # Send media message via WhatsApp API (multipart upload)
+      response = @api_service.send_file(whatsapp_chat_id, raw_data, filename, caption, format_info[:content_type])
 
       if response[:success]
-
-        message_type = detect_format(base64_data)
-        message_id = response[:data][:id]
-        whatsapp_chat_id = response[:data][:chatId]
-        timestamp = Time.at(response[:data][:timestamp])
+        message_id = response[:data][:idMessage]
+        chat_id = response[:data][:chatId] || whatsapp_chat_id
+        timestamp = Time.current
 
         # Base message attributes
         message_attrs = {
@@ -184,9 +179,9 @@ class WhatsappMessageService
           customer: customer,
           direction: 'outbound',
           status: 'delivered',
-          message_type: message_type[:type],
+          message_type: format_info[:type],
           content: caption.present? ? caption : filename,
-          whatsapp_chat_id: whatsapp_chat_id,
+          whatsapp_chat_id: chat_id,
           created_at: timestamp,
           updated_at: timestamp,
         }
@@ -194,19 +189,11 @@ class WhatsappMessageService
         message = Message.new(message_attrs)
 
         if message.save
-          attachment_success = attach_base64_to_message(base64_data, message)
-          if attachment_success
-            {
-              success: true,
-              message: "Media message sent successfully",
-            }
-          else
-            {
-              success: false,
-              error: "Failed to attach media file to message",
-              message_data: response[:data]
-            }
-          end
+          attachment_success = attach_file_to_message(raw_data, filename, format_info[:content_type], message)
+          {
+            success: true,
+            message: "Media message sent successfully",
+          }
         else
           {
             success: false,
@@ -222,6 +209,7 @@ class WhatsappMessageService
 
     rescue StandardError => e
       Rails.logger.error("WhatsappMessageService send_media_message error: #{e.message}")
+      Rails.logger.error(e.backtrace.first(5).join("\n"))
       { success: false, error: e.message }
     end
   end
@@ -344,6 +332,48 @@ class WhatsappMessageService
       Customer.where("phone LIKE ?", "%#{last_10}").first
     else
       nil
+    end
+  end
+
+  def detect_format_from_bytes(raw_data)
+    return { type: 'document', content_type: 'application/octet-stream' } if raw_data.blank?
+
+    # Read first 8 bytes to check magic numbers
+    hex = raw_data.bytes.first(8).map { |b| b.to_s(16).rjust(2, '0') }.join.upcase
+
+    case hex
+    when /^FFD8FF/
+      { type: 'image', content_type: 'image/jpeg' }
+    when /^89504E47/
+      { type: 'image', content_type: 'image/png' }
+    when /^47494638/
+      { type: 'image', content_type: 'image/gif' }
+    when /^25504446/
+      { type: 'document', content_type: 'application/pdf' }
+    when /^504B0304/
+      { type: 'document', content_type: 'application/zip' }
+    when /^00000.*66747970/
+      { type: 'video', content_type: 'video/mp4' }
+    when /^494433/, /^FFFB/, /^FFF3/
+      { type: 'audio', content_type: 'audio/mpeg' }
+    else
+      { type: 'document', content_type: 'application/octet-stream' }
+    end
+  end
+
+  def attach_file_to_message(file_data, filename, content_type, message)
+    return false if file_data.blank? || message.nil?
+
+    begin
+      message.attachment.attach(
+        io: StringIO.new(file_data),
+        filename: filename,
+        content_type: content_type
+      )
+      true
+    rescue => e
+      Rails.logger.error("Failed to attach file to message: #{e.message}")
+      false
     end
   end
 end

@@ -76,12 +76,11 @@ class TecaudexChatController < ApplicationController
     end
 
     begin
-      # Read and encode file to base64
+      # Read raw file data
       file_data = uploaded_file.read
-      base64_data = Base64.strict_encode64(file_data)
       filename = uploaded_file.original_filename
 
-      result = @whatsapp_service.send_media_message(@chat_id, base64_data, filename, caption, @customer)
+      result = @whatsapp_service.send_media_message(@chat_id, file_data, filename, caption, @customer)
       
       if result[:success]
         render json: { 

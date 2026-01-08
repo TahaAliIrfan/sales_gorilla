@@ -106,50 +106,55 @@ class Api::V1::WhatsappController < Api::V1::BaseController
       # File upload case
       uploaded_file = params[:file]
       caption = params[:caption]&.strip
-      
+
       # Validate file size (max 10MB as per CLAUDE.md)
       max_size = 10.megabytes
       if uploaded_file.size > max_size
         return render_error("File size too large. Maximum size allowed is 10MB.", nil, :unprocessable_entity)
       end
-      
+
       begin
-        # Convert file to base64 and send via WhatsApp API
-        media_base64 = Base64.strict_encode64(uploaded_file.read)
+        # Read raw file data and send via WhatsApp API
+        file_data = uploaded_file.read
         filename = uploaded_file.original_filename
-        
-        result = send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
-        
+        content_type = uploaded_file.content_type
+
+        result = send_file_via_whatsapp(customer, file_data, filename, caption, content_type)
+
         if result[:success]
           render_success(result[:data], "Media file sent successfully")
         else
           render_error(result[:error], nil, :service_unavailable)
         end
-        
+
       rescue => e
         Rails.logger.error "Media upload error: #{e.message}"
         render_error("Failed to process media file: #{e.message}", nil, :internal_server_error)
       end
-      
+
     elsif params[:media_base64].present? && params[:filename].present?
-      # Base64 data case
+      # Base64 data case (for API clients sending base64)
       media_base64 = params[:media_base64]&.strip
       filename = params[:filename]&.strip
       caption = params[:caption]&.strip
-      
+
       if media_base64.blank? || filename.blank?
         return render_error("Both 'media_base64' and 'filename' are required", nil, :unprocessable_entity)
       end
-      
+
       begin
-        result = send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
-        
+        # Decode base64 to raw data
+        file_data = Base64.strict_decode64(media_base64)
+        content_type = determine_content_type_from_filename(filename)
+
+        result = send_file_via_whatsapp(customer, file_data, filename, caption, content_type)
+
         if result[:success]
           render_success(result[:data], "Media message sent successfully")
         else
           render_error(result[:error], nil, :service_unavailable)
         end
-        
+
       rescue => e
         Rails.logger.error "Base64 media error: #{e.message}"
         render_error("Failed to process base64 media: #{e.message}", nil, :internal_server_error)
@@ -418,43 +423,39 @@ class Api::V1::WhatsappController < Api::V1::BaseController
     response
   end
   
-  def send_media_base64_via_whatsapp(customer, media_base64, filename, caption)
-    # Initialize WhatsApp API service
+  def send_file_via_whatsapp(customer, file_data, filename, caption, content_type = nil)
     whatsapp_service = Whatsapp::ApiService.new
-    
+
     unless whatsapp_service.credentials_configured?
       return { success: false, error: "WhatsApp API credentials not configured" }
     end
-    
-    # Get or set WhatsApp chat ID for customer
+
     chat_id = get_or_set_chat_id(customer, whatsapp_service)
-    
+
     unless chat_id
       return { success: false, error: "Could not determine WhatsApp chat ID for customer" }
     end
 
-    # Send media message via WhatsApp API using base64
-    result = whatsapp_service.send_media_base64(chat_id, media_base64, filename, caption)
-    
+    content_type ||= determine_content_type_from_filename(filename)
+    media_type = determine_media_type_from_content_type(content_type)
+
+    # Send file via WhatsApp API (multipart upload)
+    result = whatsapp_service.send_file(chat_id, file_data, filename, caption, content_type)
+
     if result[:success]
-      # Decode base64 to create Active Storage blob for local storage
       begin
-        decoded_data = Base64.strict_decode64(media_base64)
-        content_type = determine_content_type_from_filename(filename)
-        media_type = determine_media_type_from_content_type(content_type)
-        
-        # Create blob from decoded data
+        # Create Active Storage blob for local storage
         blob = ActiveStorage::Blob.create_and_upload!(
-          io: StringIO.new(decoded_data),
+          io: StringIO.new(file_data),
           filename: "whatsapp_media/#{Time.current.strftime('%Y%m%d_%H%M%S')}_#{SecureRandom.hex(8)}_#{filename}",
           content_type: content_type
         )
-        
+
         media_url = blob.url
-        
-        # Create WhatsApp message record with media info
+
+        # Create WhatsApp message record
         message = customer.whatsapp_messages.create!(
-          message_id: SecureRandom.uuid,
+          message_id: result[:data][:idMessage] || SecureRandom.uuid,
           body: caption || "[#{media_type.capitalize} sent]",
           direction: 'outbound',
           status: 'sent',
@@ -464,11 +465,11 @@ class Api::V1::WhatsappController < Api::V1::BaseController
             media_type: media_type,
             filename: filename,
             content_type: content_type,
-            size: decoded_data.size,
+            size: file_data.size,
             blob_id: blob.id
           }.compact
         )
-        
+
         {
           success: true,
           data: {
@@ -486,20 +487,16 @@ class Api::V1::WhatsappController < Api::V1::BaseController
           }
         }
       rescue => e
-        Rails.logger.error "Failed to create blob from base64: #{e.message}"
-        # Still create message record even if blob creation fails
+        Rails.logger.error "Failed to create blob: #{e.message}"
         message = customer.whatsapp_messages.create!(
-          message_id: SecureRandom.uuid,
+          message_id: result[:data][:idMessage] || SecureRandom.uuid,
           body: caption || "[Media sent]",
           direction: 'outbound',
           status: 'sent',
           timestamp: Time.current,
-          metadata: {
-            filename: filename,
-            media_type: 'document'
-          }
+          metadata: { filename: filename, media_type: media_type }
         )
-        
+
         {
           success: true,
           data: {

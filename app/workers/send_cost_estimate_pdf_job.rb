@@ -58,12 +58,7 @@ class SendCostEstimatePdfJob
       app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
       filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
 
-      # Save PDF using Active Storage
-
-      # Convert PDF to base64
-      pdf_base64 = Base64.strict_encode64(pdf_content)
-
-      # Send via WhatsApp
+      # Send via WhatsApp (send_media_base64 now expects raw binary data)
       whatsapp_service = Whatsapp::ApiService.new
       chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
 
@@ -81,9 +76,9 @@ class SendCostEstimatePdfJob
                 "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
                 "Best regards,\nTecaudex Team"
 
-      response = whatsapp_service.send_media_base64(
+      response = whatsapp_service.send_file(
         chat_id,
-        pdf_base64,
+        pdf_content,
         filename,
         caption,
         'application/pdf'
