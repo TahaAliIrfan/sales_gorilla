@@ -9,9 +9,8 @@ module Whatsapp
     def initialize(instance_id = nil, api_token = nil)
       @device_id = 'TCDX'
       @api_token = api_token || Rails.application.credentials.dig(:TCDX_KEY)
-      # @base_url = "https://nucleus.tecaudex.com/api/whatsapp"
-      @instance_id = "7105323361"
-      @api_token = "66ea6d5a06db48b5886a5a2ee08c8840721c794eec684e9e92"
+      @instance_id = Rails.application.credentials.dig(:GREEN_INSTANCE_ID)
+      @api_token = Rails.application.credentials.dig(:GREEN_AUTH_TOKEN)
       @base_url = "https://7105.api.greenapi.com/waInstance#{@instance_id}"
       @media_url = "https://7105.media.greenapi.com"
     end

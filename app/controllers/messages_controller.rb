@@ -134,15 +134,16 @@ class MessagesController < ApplicationController
     Rails.logger.info "Headers: #{request.headers.to_h.select { |k,v| k.start_with?('HTTP_') }}"
     Rails.logger.info "Params: #{params.inspect}"
 
-    if params[:event] == "messageReceived"
-      customer = Customer.find_by(whatsapp_chat_id: params[:data][:chatId])
+    if params[:typeWebhook] == "incomingMessageReceived"
+      customer = Customer.find_by(whatsapp_chat_id: params[:senderData][:chatId])
 
-      Rails.logger.info "Csutomer: #{customer.inspect}"
+      Rails.logger.info "Customer: #{customer.inspect}"
 
+      return if customer.nil?
 
       message = Message.new(customer_id: customer.id,
-                            content: params[:data][:content],
-                            message_id: params[:data][:messageId],
+                            content:  params[:messageData][:extendedTextMessageData][:text],
+                            message_id: params[:idMessage],
                             direction: 'inbound',
                             message_type: 'text',
                             status: 'pending')
@@ -153,6 +154,18 @@ class MessagesController < ApplicationController
         else
           UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:content]).deliver_now
         end
+      end
+    elsif params[:incomingCall] == "incomingCall"
+
+      customer = Customer.find_by(whatsapp_chat_id: params[:from])
+      if customer.present?
+        if customer.user.present?
+          UserMailer.whatsapp_call_notification(customer.user, customer).deliver_now
+        else
+          UserMailer.whatsapp_call_notification('sarmad.mansoor@tecaudex.com', customer).deliver_now
+        end
+      else
+        UserMailer.whatsapp_call_notification('sarmad.mansoor@tecaudex.com', customer).deliver_now
       end
     end
     head :ok

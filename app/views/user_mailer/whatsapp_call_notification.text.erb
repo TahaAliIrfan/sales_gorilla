@@ -1,0 +1,15 @@
+Call recieved - TecAudex CRM
+
+Hello <%= @email %>
+
+<% if @customer.present? %>
+  User <%= @customer.name %> is calling you please check.
+<% else %>
+  A new client is calling you
+<% end %>
+
+Best regards,
+TecAudex Team
+
+---
+This is an automated message from the TecAudex CRM system.
