@@ -45,7 +45,7 @@ module Whatsapp
 
     def send_media_base64(chat_id, file_data, filename, caption = nil, mime_type = nil)
       response = post_multipart_request(
-        "sendFileByUpload/#{@api_token}",
+        "waInstance#{@instance_id}/sendFileByUpload/#{@api_token}",
         chat_id: chat_id,
         file_data: file_data,
         filename: filename,
@@ -150,9 +150,11 @@ module Whatsapp
     end
     
     def handle_response(response)
+      Rails.logger.info("WhatsApp API Response Code: #{response.code}")
+      Rails.logger.info("WhatsApp API Response Body: #{response.body[0, 500]}") if response.body.present?
+
       parsed_response = JSON.parse(response.body, symbolize_names: true)
-      
-      
+
       if response.code.to_i == 200
         { success: true, data: parsed_response }
       else
@@ -162,6 +164,7 @@ module Whatsapp
       end
     rescue JSON::ParserError => e
       Rails.logger.error("WhatsApp API JSON Parse Error: #{e.message}")
+      Rails.logger.error("WhatsApp API Raw Response: #{response.body[0, 1000]}") if response.body.present?
       { success: false, error: "Failed to parse API response" }
     rescue StandardError => e
       Rails.logger.error("WhatsApp API Error: #{e.message}")
