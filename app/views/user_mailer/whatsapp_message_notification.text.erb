@@ -5,9 +5,18 @@ Hello <%= @email %>,
 You have received a new WhatsApp message from one of your assigned customers.
 
 Customer Information:
+<% if @customer.present? %>
+
 - Name: <%= @customer.name %>
 - Phone: <%= @customer.phone || 'Not specified' %>
 - Country: <%= @customer.country || 'Not specified' %>
+
+<% else %>
+
+  A new User messaged make sure to check crm
+
+<% end %>
+
 
 Message Preview:
 <%= @message_preview %>

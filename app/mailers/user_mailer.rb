@@ -12,13 +12,17 @@ class UserMailer < ApplicationMailer
     )
   end
 
-  def whatsapp_message_notification(email, customer, message_preview)
+  def whatsapp_message_notification(email, customer=nil, message_preview)
     
     @email = email
     @customer = customer
     @message_preview = message_preview
 
-    subject_line = "WhatsApp Messages: #{@customer.name}"
+    if customer.present? && customer.name.present?
+      subject_line = "WhatsApp Messages: #{@customer.name}"
+    else
+      subject_line = "NEW Client has messaged you"
+    end
     
     mail(
       to: @email,
@@ -31,7 +35,7 @@ class UserMailer < ApplicationMailer
     @customer = customer
     @message_preview = message_preview
 
-    if customer.present?
+    if customer.name.present?
       subject_line = "Client #{@customer.name} is calling you"
     else
       subject_line = "NEW Client is calling you"

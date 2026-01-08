@@ -139,28 +139,26 @@ class MessagesController < ApplicationController
 
       Rails.logger.info "Customer: #{customer.inspect}"
 
-      return if customer.nil?
-
-      message = Message.new(customer_id: customer.id,
-                            content:  params[:messageData][:extendedTextMessageData][:text],
+      message = Message.new(customer: customer,
+                            content:  params[:messageData][:textMessageData][:textMessage],
                             message_id: params[:idMessage],
                             direction: 'inbound',
                             message_type: 'text',
                             status: 'pending')
 
       if message.save
-        if customer.user.present?
-          UserMailer.whatsapp_message_notification(customer.user, customer, params[:data][:content]).deliver_now
+        if customer.present? && customer.user.present?
+          UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
         else
-          UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:content]).deliver_now
+          UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer,  params[:messageData][:textMessageData][:textMessage]).deliver_now
         end
       end
-    elsif params[:incomingCall] == "incomingCall"
+    elsif params[:typeWebhook] == "incomingCall"
 
       customer = Customer.find_by(whatsapp_chat_id: params[:from])
       if customer.present?
         if customer.user.present?
-          UserMailer.whatsapp_call_notification(customer.user, customer).deliver_now
+          UserMailer.whatsapp_call_notification(customer.user.email, customer).deliver_now
         else
           UserMailer.whatsapp_call_notification('sarmad.mansoor@tecaudex.com', customer).deliver_now
         end
