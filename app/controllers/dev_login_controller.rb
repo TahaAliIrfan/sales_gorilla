@@ -2,7 +2,7 @@ class DevLoginController < ApplicationController
   # Skip common before actions to avoid dependencies
   skip_before_action :set_tasks_notification_counts
   skip_before_action :set_notification_counts
-  #before_action :development_only!
+  before_action :development_only!
   
   def show
     # Show the development login form
