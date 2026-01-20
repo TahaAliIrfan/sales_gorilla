@@ -1,29 +1,15 @@
 Rails.application.routes.draw do
   get 'manager/dashboard', to: 'manager#dashboard', as: 'manager_dashboard'
-  get 'manager/team_hierarchy', to: 'manager#team_hierarchy', as: 'team_hierarchy'
   get 'users/index'
   get 'users/show'
   get 'users/associates'
   get 'users/managers'
-  # Remove auto-generated routes
-  # get 'role_assignments/create'
-  # get 'role_assignments/destroy'
-  # get 'roles/index'
-  # get 'roles/new'
-  # get 'roles/create'
-  # get 'roles/edit'
-  # get 'roles/update'
-  # get 'roles/destroy'
   
-  # Add proper resources for roles and role assignments
-  resources :roles
-  resources :role_assignments, only: [:create, :destroy]
-  
-  # Add a route for user management with role assignment
+  # User management routes
   resources :users, only: [:index, :show] do
     member do
-      post :assign_role
-      delete :remove_role
+      post :update_role
+      post :toggle_active
       get :manage_associates
       post :assign_associate
       delete :remove_associate
@@ -97,9 +83,9 @@ Rails.application.routes.draw do
       patch 'update_status'
       patch 'update_communication_status'
       post 'analyze_phone'
-      post 'ai_call'
       post 'calculate_lead_score'
       post 'assign_to_self'
+      post 'upload_documents'
     end
     
     # Add routes for follow-ups
@@ -114,6 +100,11 @@ Rails.application.routes.draw do
         post 'mark_as_read'
         get 'export_pdf'
         post 'send_draft'
+      end
+      resources :attachments, controller: 'email_attachments', only: [:show] do
+        member do
+          get 'download'
+        end
       end
     end
 
@@ -176,18 +167,9 @@ Rails.application.routes.draw do
   get '/signin', to: 'sessions#new', as: :signin
   get '/auth/google_oauth2', to: 'sessions#new', as: :google_oauth2
 
-  # Dashboard routes
-  get 'dashboard', to: 'dashboard#index', as: :admin_dashboard
-  get 'dashboard/reports', to: 'dashboard#reports', as: :reports
-  get 'dashboard/my_reports', to: 'dashboard#my_reports', as: :my_reports
-
-  # Dashboard AJAX endpoints
-  get 'dashboard/team_overview', to: 'dashboard#team_overview', as: :dashboard_team_overview
-  get 'dashboard/user_performance', to: 'dashboard#user_performance', as: :dashboard_user_performance
-  get 'dashboard/communication_analytics', to: 'dashboard#communication_analytics', as: :dashboard_communication_analytics
-  get 'dashboard/deal_analytics', to: 'dashboard#deal_analytics', as: :dashboard_deal_analytics
-  get 'dashboard/quick_data', to: 'dashboard#quick_data', as: :dashboard_quick_data
-  get 'dashboard/team_performance', to: 'dashboard#team_performance', as: :dashboard_team_performance
+  # Reports routes
+  get 'reports', to: 'reports#index', as: :reports
+  get 'reports/my_reports', to: 'reports#my_reports', as: :my_reports
 
   # User Dashboard routes
   get 'my_dashboard', to: 'user_dashboard#index', as: :dashboard
@@ -200,21 +182,6 @@ Rails.application.routes.draw do
   patch 'settings/update', to: 'settings#update', as: :update_settings
   delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
 
-  # TecaudexChat routes
-  resources :tecaudex_chat, only: [:index], path: 'tecaudex_chat', constraints: { id: /[^\/]+/ } do
-    member do
-      get 'load_chat'
-      post 'send_message'
-      post 'send_media'
-      get 'refresh_messages'
-    end
-    collection do
-      get 'refresh_chat_list'
-    end
-  end
-
-  # Keep show route separate to avoid conflicts
-  get 'tecaudex_chat/:id', to: 'tecaudex_chat#show', as: 'tecaudex_chat_show', constraints: { id: /[^\/]+/ }
 
   # Cost Calculator routes
   resources :cost_estimates, only: [:index, :show, :create, :destroy] do
@@ -342,20 +309,8 @@ Rails.application.routes.draw do
       get :my_recordings
     end
     
-    resources :ai_analyses, only: [:create, :show]
   end
 
-  # AI Calls routes
-  resources :ai_calls, only: [:index, :show] do
-    collection do
-      post :sync
-    end
-    member do
-      get :audio
-    end
-  end
-
-  
   
   # Development login gateway (only available in development)
   if Rails.env.development?

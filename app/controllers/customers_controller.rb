@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :analyze_phone, :ai_call, :calculate_lead_score, :assign_to_self]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -74,7 +74,8 @@ class CustomersController < ApplicationController
     @activities = @customer.customer_activities.recent.limit(10)
     @recordings = @customer.recordings.recent.limit(20)
     @tasks = @customer.tasks.order(due_date: :asc)
-    @emails = @customer.emails.recent.limit(5)
+    # Eager load attachments to prevent N+1 queries
+    @emails = @customer.emails.with_attached_attachments.recent.limit(5)
 
     if @customer.email.present?
       #CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
@@ -180,16 +181,28 @@ class CustomersController < ApplicationController
     begin
       # Use save! to raise an exception on validation failure
       @customer.save!
-      redirect_to @customer, notice: 'Customer was successfully updated.'
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Customer was successfully updated.' }
+        format.json { render json: { success: true, message: 'Customer was successfully updated.' } }
+      end
     rescue ActiveRecord::RecordInvalid
       # Log validation errors for debugging
       Rails.logger.error("Customer update failed: #{@customer.errors.full_messages.join(', ')}")
-      render :edit, status: :unprocessable_entity
+      
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { success: false, error: @customer.errors.full_messages.join(', ') }, status: :unprocessable_entity }
+      end
     rescue => e
       # Log any unexpected errors
       Rails.logger.error("Error updating customer: #{e.message}")
       @customer.errors.add(:base, "An unexpected error occurred: #{e.message}")
-      render :edit, status: :unprocessable_entity
+      
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -214,17 +227,33 @@ class CustomersController < ApplicationController
         if attachment
           Rails.logger.info "Found attachment, purging..."
           attachment.purge
-          redirect_to @customer, notice: 'Document was successfully removed.'
+          
+          respond_to do |format|
+            format.html { redirect_to @customer, notice: 'Document was successfully removed.' }
+            format.json { render json: { success: true, message: 'Document was successfully removed.' } }
+          end
         else
           Rails.logger.error "Attachment not found for blob #{blob.id}"
-          redirect_to @customer, alert: 'Document not found.'
+          
+          respond_to do |format|
+            format.html { redirect_to @customer, alert: 'Document not found.' }
+            format.json { render json: { success: false, error: 'Document not found.' }, status: :not_found }
+          end
         end
       rescue ActiveStorage::InvalidSignature => e
         Rails.logger.error "Invalid signed ID: #{e.message}"
-        redirect_to @customer, alert: 'Invalid document reference.'
+        
+        respond_to do |format|
+          format.html { redirect_to @customer, alert: 'Invalid document reference.' }
+          format.json { render json: { success: false, error: 'Invalid document reference.' }, status: :unprocessable_entity }
+        end
       rescue => e
         Rails.logger.error "Error removing document: #{e.message}"
-        redirect_to @customer, alert: 'Failed to remove document.'
+        
+        respond_to do |format|
+          format.html { redirect_to @customer, alert: 'Failed to remove document.' }
+          format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+        end
       end
     else
       authorize @customer, :destroy?
@@ -466,35 +495,6 @@ class CustomersController < ApplicationController
     end
   end
 
-  def ai_call
-    authorize @customer
-    
-    if @customer.phone.blank?
-      respond_to do |format|
-        format.html { redirect_to @customer, alert: 'Customer does not have a phone number.' }
-        format.json { render json: { success: false, error: 'Customer does not have a phone number.' }, status: :unprocessable_entity }
-      end
-      return
-    end
-    
-    begin
-      eleven_labs_service = ElevenLabsService.new
-      result = eleven_labs_service.make_outbound_call(@customer.phone)
-      
-      respond_to do |format|
-        format.html { redirect_to @customer, notice: 'AI call has been initiated successfully.' }
-        format.json { render json: { success: true, data: result } }
-      end
-    rescue => e
-      Rails.logger.error("Failed to initiate AI call for customer #{@customer.id}: #{e.message}")
-      
-      respond_to do |format|
-        format.html { redirect_to @customer, alert: "Failed to initiate AI call: #{e.message}" }
-        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
-      end
-    end
-  end
-
   def calculate_lead_score
     authorize @customer
 
@@ -540,6 +540,35 @@ class CustomersController < ApplicationController
         format.html { redirect_to customers_path, alert: 'Failed to assign customer.' }
         format.json { render json: { success: false, errors: ['Assignment failed'] }, status: :unprocessable_entity }
       end
+    end
+  end
+
+  def upload_documents
+    authorize @customer, :update?
+    
+    if params[:documents].present?
+      uploaded_count = 0
+      
+      params[:documents].each do |document|
+        @customer.documents.attach(document)
+        uploaded_count += 1
+      end
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: "Successfully uploaded #{uploaded_count} document(s)." }
+        format.json { render json: { success: true, count: uploaded_count, message: "Successfully uploaded #{uploaded_count} document(s)." } }
+      end
+    else
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'No documents selected.' }
+        format.json { render json: { success: false, error: 'No documents selected.' }, status: :unprocessable_entity }
+      end
+    end
+  rescue => e
+    Rails.logger.error("Error uploading documents: #{e.message}")
+    respond_to do |format|
+      format.html { redirect_to @customer, alert: 'Failed to upload documents.' }
+      format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
     end
   end
 

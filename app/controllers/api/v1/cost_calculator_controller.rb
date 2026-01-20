@@ -59,6 +59,9 @@ module Api
         begin
           customer = Customer.find_by(email: email)
 
+          phone_without_plus = phone_number.gsub(/\A\+/, '')
+          whatsapp_chat_id = "#{phone_without_plus}@c.us"
+
           if customer.present?
             # Update existing customer
             customer.update!(
@@ -66,7 +69,8 @@ module Api
               phone: phone_number,
               repeat_lead: true,
               lead_source: 'CCR',
-              created_at: Time.current
+              created_at: Time.current,
+              whatsapp_chat_id: whatsapp_chat_id
             )
           else
             # Create new customer
@@ -76,7 +80,8 @@ module Api
               phone: phone_number,
               lead_source: 'Website',
               status: 'CCR',
-              idea_description: params[:description]
+              idea_description: params[:description],
+              whatsapp_chat_id: whatsapp_chat_id
             )
           end
 

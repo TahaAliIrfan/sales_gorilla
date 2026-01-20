@@ -29,12 +29,8 @@ class DevLoginController < ApplicationController
     # Log in the user
     session[:user_id] = user.id
     
-    # Redirect to appropriate dashboard
-    if user.admin?
-      redirect_to admin_dashboard_path, notice: "Development login successful! Logged in as #{user.email} (Admin)"
-    else
-      redirect_to dashboard_path, notice: "Development login successful! Logged in as #{user.email}"
-    end
+    # Redirect to dashboard
+    redirect_to dashboard_path, notice: "Development login successful! Logged in as #{user.email}"
   end
   
   private

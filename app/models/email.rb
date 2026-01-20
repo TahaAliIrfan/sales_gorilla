@@ -1,8 +1,8 @@
 class Email < ApplicationRecord
   belongs_to :customer
   belongs_to :user
-  has_many :email_attachments, dependent: :destroy
   has_one_attached :raw_message
+  has_many_attached :attachments
   
   validates :message_id, presence: true, uniqueness: true
   validates :from_email, :to_email, presence: true
@@ -45,5 +45,30 @@ class Email < ApplicationRecord
   # Get the receiver's name or email
   def receiver_name
     to_name.present? ? to_name : to_email
+  end
+  
+  # Check if this email has actual downloadable attachments (not just flagged)
+  def has_downloadable_attachments?
+    attachments.any?
+  end
+  
+  # Get the count of actual attachments
+  def attachments_count
+    attachments.count
+  end
+  
+  # Serialize attachments for JSON responses
+  def attachments_json
+    attachments.map do |attachment|
+      {
+        id: attachment.id,
+        filename: attachment.filename.to_s,
+        content_type: attachment.content_type,
+        byte_size: attachment.byte_size,
+        human_size: ActiveSupport::NumberHelper.number_to_human_size(attachment.byte_size),
+        download_url: Rails.application.routes.url_helpers.rails_blob_path(attachment, disposition: 'attachment', only_path: true),
+        created_at: attachment.created_at
+      }
+    end
   end
 end 

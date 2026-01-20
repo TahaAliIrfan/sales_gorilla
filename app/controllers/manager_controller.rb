@@ -63,36 +63,6 @@ class ManagerController < ApplicationController
     @total_deal_value = @associates.sum { |a| a.deals.where(status: 'won').where("updated_at >= ?", 30.days.ago).sum(:amount) }
   end
 
-  # Team hierarchy visualization
-  def team_hierarchy
-    # For admins, show all managers and their associates
-    if current_user.admin?
-      @admins = User.joins(:role_assignments)
-                   .where(role_assignments: { role: Role.admin })
-                   .distinct
-                   .order(:name)
-                   
-      @managers = User.joins(:role_assignments)
-                     .where(role_assignments: { role: Role.manager })
-                     .distinct
-                     .order(:name)
-                     
-      @associates = User.joins(:role_assignments)
-                       .where(role_assignments: { role: Role.associate })
-                       .distinct
-      
-      # Find associates who are not assigned to any manager
-      assigned_associates = @managers.map(&:associates).flatten.uniq
-      @unassigned_associates = @associates.where.not(id: assigned_associates.map(&:id))
-      
-    # For managers, show only their associates
-    else
-      @admins = []
-      @managers = [current_user]
-      @associates = current_user.associates
-      @unassigned_associates = []
-    end
-  end
 
   private
   

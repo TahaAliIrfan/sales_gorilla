@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
+ActiveRecord::Schema[7.1].define(version: 2026_01_20_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -42,38 +42,27 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "ai_analyses", force: :cascade do |t|
-    t.bigint "recording_id", null: false
-    t.text "summary"
-    t.integer "interest_score"
-    t.text "improvement_points"
-    t.text "next_steps"
-    t.text "followup_message"
-    t.text "followup_email"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["recording_id"], name: "index_ai_analyses_on_recording_id"
-  end
-
-  create_table "ai_conversations", force: :cascade do |t|
-    t.string "conversation_id", null: false
-    t.string "status"
-    t.integer "duration_seconds"
-    t.string "agent_id"
-    t.string "call_from"
-    t.string "call_to"
-    t.datetime "conversation_date"
-    t.jsonb "transcript"
-    t.jsonb "raw_data"
-    t.bigint "user_id"
+  create_table "calls", force: :cascade do |t|
+    t.bigint "caller_id", null: false
+    t.bigint "receiver_id"
     t.bigint "customer_id"
+    t.integer "status", default: 0
+    t.integer "call_type", default: 0
+    t.datetime "started_at"
+    t.datetime "ended_at"
+    t.string "twilio_call_sid"
+    t.string "webrtc_session_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["conversation_date"], name: "index_ai_conversations_on_conversation_date"
-    t.index ["conversation_id"], name: "index_ai_conversations_on_conversation_id", unique: true
-    t.index ["customer_id"], name: "index_ai_conversations_on_customer_id"
-    t.index ["status"], name: "index_ai_conversations_on_status"
-    t.index ["user_id"], name: "index_ai_conversations_on_user_id"
+    t.string "phone_number"
+    t.index ["call_type"], name: "index_calls_on_call_type"
+    t.index ["caller_id", "status"], name: "index_calls_on_caller_id_and_status"
+    t.index ["caller_id"], name: "index_calls_on_caller_id"
+    t.index ["customer_id"], name: "index_calls_on_customer_id"
+    t.index ["receiver_id", "status"], name: "index_calls_on_receiver_id_and_status"
+    t.index ["receiver_id"], name: "index_calls_on_receiver_id"
+    t.index ["status"], name: "index_calls_on_status"
+    t.index ["twilio_call_sid"], name: "index_calls_on_twilio_call_sid"
   end
 
   create_table "campaign_executions", force: :cascade do |t|
@@ -374,17 +363,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
     t.index ["user_id"], name: "index_eleven_labs_calls_on_user_id"
   end
 
-  create_table "email_attachments", force: :cascade do |t|
-    t.bigint "email_id", null: false
-    t.string "filename"
-    t.string "content_type"
-    t.string "attachment_id"
-    t.integer "size"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["email_id"], name: "index_email_attachments_on_email_id"
-  end
-
   create_table "emails", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.bigint "user_id", null: false
@@ -628,6 +606,8 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
     t.string "google_token"
     t.string "google_refresh_token"
     t.datetime "google_token_expires_at"
+    t.boolean "active", default: true, null: false
+    t.index ["active"], name: "index_users_on_active"
     t.index ["fcm_token"], name: "index_users_on_fcm_token"
     t.index ["voip_device_id"], name: "index_users_on_voip_device_id"
   end
@@ -651,9 +631,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "ai_analyses", "recordings"
-  add_foreign_key "ai_conversations", "customers"
-  add_foreign_key "ai_conversations", "users"
   add_foreign_key "calls", "customers"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
@@ -683,7 +660,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_11_27_102852) do
   add_foreign_key "deals", "users"
   add_foreign_key "eleven_labs_calls", "customers"
   add_foreign_key "eleven_labs_calls", "users"
-  add_foreign_key "email_attachments", "emails"
   add_foreign_key "emails", "customers"
   add_foreign_key "emails", "users"
   add_foreign_key "google_meets", "users"

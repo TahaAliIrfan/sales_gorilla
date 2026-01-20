@@ -1,0 +1,261 @@
+<!-- Email Tab Content -->
+<div class="space-y-4">
+  <!-- Email Actions Bar -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <!-- Filter Tabs -->
+    <div class="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+      <button type="button" data-email-filter="all" class="email-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white text-gray-900 shadow-sm">
+        All
+      </button>
+      <button type="button" data-email-filter="inbox" class="email-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-900">
+        Inbox
+      </button>
+      <button type="button" data-email-filter="sent" class="email-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-900">
+        Sent
+      </button>
+      <button type="button" data-email-filter="unread" class="email-filter-btn px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-900">
+        Unread
+      </button>
+    </div>
+    
+    <!-- Search & Actions -->
+    <div class="flex items-center space-x-3">
+      <div class="relative">
+        <input type="text" id="email-search" placeholder="Search emails..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+      
+      <%= form_with url: fetch_customer_emails_path(customer), method: :post, local: true, class: "inline-flex" do %>
+        <button type="submit" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+          <svg class="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Sync
+        </button>
+      <% end %>
+      
+      <button type="button" id="open-compose-modal-btn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors shadow-sm">
+        <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        Compose
+      </button>
+    </div>
+  </div>
+
+  <!-- Email List -->
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <% if customer.emails.any? %>
+      <div class="divide-y divide-gray-100" id="email-list">
+        <% customer.emails.order(date: :desc).limit(50).each do |email| %>
+          <div 
+            data-email-id="<%= email.id %>" 
+            data-email-direction="<%= email.direction %>"
+            data-email-read="<%= email.is_read %>"
+            data-email-subject="<%= email.subject&.downcase %>"
+            data-email-from="<%= email.from_address&.downcase %>"
+            class="email-row flex items-start p-4 hover:bg-gray-50 cursor-pointer transition-colors <%= email.is_read ? 'bg-white' : 'bg-blue-50 border-l-4 border-blue-500' %>"
+          >
+            <!-- Direction indicator -->
+            <div class="flex-shrink-0 mr-3">
+              <% if email.direction == 'inbound' %>
+                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center" title="Received">
+                  <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              <% else %>
+                <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center" title="Sent">
+                  <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </div>
+              <% end %>
+            </div>
+            
+            <!-- Email Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center space-x-2">
+                  <span class="font-medium text-gray-900 truncate <%= email.is_read ? '' : 'font-semibold' %>">
+                    <%= email.direction == 'inbound' ? email.from_address : "To: #{email.to_address}" %>
+                  </span>
+                  <% unless email.is_read %>
+                    <span class="unread-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      New
+                    </span>
+                  <% end %>
+                </div>
+                <span class="text-xs text-gray-500 flex-shrink-0 ml-2">
+                  <%= email.date&.strftime("%b %d, %Y %l:%M %p") %>
+                </span>
+              </div>
+              
+              <div class="text-sm <%= email.is_read ? 'text-gray-700' : 'text-gray-900 font-medium' %> truncate">
+                <%= email.subject || "(No Subject)" %>
+              </div>
+              
+              <div class="text-xs text-gray-500 truncate mt-1">
+                <%= truncate(email.snippet || email.body_text || "", length: 100) %>
+              </div>
+            </div>
+            
+            <!-- Attachment indicator -->
+            <% if email.attachments.attached? %>
+              <div class="flex-shrink-0 ml-3">
+                <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Has attachments">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No emails</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by syncing or composing an email.</p>
+        <div class="mt-6 flex items-center justify-center space-x-3">
+          <%= form_with url: fetch_customer_emails_path(customer), method: :post, local: true, class: "inline-flex" do %>
+            <button type="submit" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+              <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Sync Emails
+            </button>
+          <% end %>
+          <button type="button" id="empty-compose-btn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors">
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Compose Email
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('turbo:load', function() {
+  // Email filtering
+  const filterBtns = document.querySelectorAll('.email-filter-btn');
+  const emailRows = document.querySelectorAll('.email-row');
+  
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', function() {
+      const filter = this.dataset.emailFilter;
+      
+      // Update active button state
+      filterBtns.forEach(b => {
+        b.classList.remove('bg-white', 'text-gray-900', 'shadow-sm');
+        b.classList.add('text-gray-600', 'hover:text-gray-900');
+      });
+      this.classList.add('bg-white', 'text-gray-900', 'shadow-sm');
+      this.classList.remove('text-gray-600', 'hover:text-gray-900');
+      
+      // Filter emails
+      emailRows.forEach(row => {
+        const direction = row.dataset.emailDirection;
+        const isRead = row.dataset.emailRead === 'true';
+        
+        let show = true;
+        switch(filter) {
+          case 'inbox':
+            show = direction === 'inbound';
+            break;
+          case 'sent':
+            show = direction === 'outbound';
+            break;
+          case 'unread':
+            show = !isRead;
+            break;
+          case 'all':
+          default:
+            show = true;
+        }
+        
+        row.style.display = show ? '' : 'none';
+      });
+    });
+  });
+
+  // Email search
+  const searchInput = document.getElementById('email-search');
+  searchInput?.addEventListener('input', function() {
+    const query = this.value.toLowerCase().trim();
+    
+    emailRows.forEach(row => {
+      const subject = row.dataset.emailSubject || '';
+      const from = row.dataset.emailFrom || '';
+      const snippet = row.querySelector('.text-xs.text-gray-500.truncate')?.textContent?.toLowerCase() || '';
+      
+      const matches = subject.includes(query) || from.includes(query) || snippet.includes(query);
+      row.style.display = matches ? '' : 'none';
+    });
+  });
+
+  // Open compose modal buttons
+  const openComposeBtn = document.getElementById('open-compose-modal-btn');
+  const emptyComposeBtn = document.getElementById('empty-compose-btn');
+  const composeModal = document.getElementById('compose-modal');
+  const closeComposeModalBtn = document.getElementById('close-compose-modal');
+  const cancelComposeBtn = document.getElementById('cancel-compose');
+  
+  function openComposeModal() {
+    if (composeModal) {
+      composeModal.classList.remove('hidden');
+      composeModal.classList.add('flex');
+      // Clear previous content
+      document.getElementById('compose-subject').value = '';
+      document.getElementById('compose-editor').innerHTML = '';
+      document.getElementById('attachment-list').innerHTML = '';
+      document.getElementById('compose-attachments').value = '';
+      // Focus subject
+      setTimeout(() => document.getElementById('compose-subject')?.focus(), 100);
+    }
+  }
+  
+  function closeComposeModal() {
+    if (composeModal) {
+      composeModal.classList.add('hidden');
+      composeModal.classList.remove('flex');
+    }
+  }
+
+  openComposeBtn?.addEventListener('click', openComposeModal);
+  emptyComposeBtn?.addEventListener('click', openComposeModal);
+  closeComposeModalBtn?.addEventListener('click', closeComposeModal);
+  cancelComposeBtn?.addEventListener('click', closeComposeModal);
+  
+  // Close modal when clicking outside
+  composeModal?.addEventListener('click', function(e) {
+    if (e.target === composeModal) {
+      closeComposeModal();
+    }
+  });
+  
+  // Close with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && composeModal && !composeModal.classList.contains('hidden')) {
+      closeComposeModal();
+    }
+  });
+
+  // Handle URL parameters for compose
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('compose') === 'true') {
+    // Wait a moment for the page to fully render
+    setTimeout(openComposeModal, 200);
+    // Clean up URL
+    const url = new URL(window.location);
+    url.searchParams.delete('compose');
+    window.history.replaceState({}, '', url);
+  }
+});
+</script>

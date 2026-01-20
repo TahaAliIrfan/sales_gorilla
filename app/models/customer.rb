@@ -170,7 +170,6 @@ class Customer < ApplicationRecord
   before_save :sync_whatsapp_status, if: -> { call_status_changed? && call_status == 'Incorrect Number' }
   before_save :sync_whatsapp_chat_id, if: -> { phone_changed? && phone.present? }
   before_save :record_activity_changes
-  after_save :create_task_on_user_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :notify_user_of_assignment, if: -> { saved_change_to_user_id? && user_id.present? }
   after_save :analyze_phone_number, if: -> { phone.present? && should_analyze_phone? }
   after_save :track_meta_conversions_events
@@ -544,19 +543,6 @@ class Customer < ApplicationRecord
         )
       end
     end
-  end
-  
-  # Create a task when a customer is assigned to a user
-  def create_task_on_user_assignment
-    Task.create!(
-      title: "Follow up with new customer: #{name}",
-      description: "Contact new customer #{name} (#{company}) and establish connection.",
-      due_date: Time.current + 1.day,
-      status: 'pending',
-      priority: 'High',
-      user_id: user_id,
-      customer_id: id
-    )
   end
   
   # Create a notification and send an email when a customer is assigned to a user

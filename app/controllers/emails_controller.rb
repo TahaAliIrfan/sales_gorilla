@@ -5,11 +5,18 @@ class EmailsController < ApplicationController
   before_action :set_email, only: [:show, :mark_as_read]
   
   def index
-    @emails = @customer.emails.includes(:email_attachments).order(created_at: :desc).page(params[:page]).per(20)
-    
     respond_to do |format|
-      format.html
-      format.json { render json: @emails.to_json(include: :email_attachments) }
+      format.html { redirect_to customer_path(@customer, anchor: 'emails') }
+      format.json { 
+        @emails = @customer.emails.with_attached_attachments.order(created_at: :desc).page(params[:page]).per(20)
+        # Build JSON with attachments
+        emails_json = @emails.map do |email|
+          email_json = email.as_json
+          email_json['attachments'] = email.attachments_json
+          email_json
+        end
+        render json: emails_json
+      }
     end
   end
   
@@ -17,69 +24,145 @@ class EmailsController < ApplicationController
     @email.mark_as_read! if @email.received?
     
     respond_to do |format|
-      format.html
-      format.json { render json: @email.to_json(include: :email_attachments) }
+      format.html { redirect_to customer_path(@customer, anchor: 'emails') }
+      format.json { 
+        # Include thread emails if gmail_thread_id exists
+        thread_emails = []
+        if @email.gmail_thread_id.present?
+          thread_emails = @customer.emails
+            .with_attached_attachments
+            .where(gmail_thread_id: @email.gmail_thread_id)
+            .where.not(id: @email.id)
+            .order(created_at: :asc)
+            .limit(20)
+        end
+        
+        # Build email JSON with attachments
+        email_json = @email.as_json(
+          only: [:id, :subject, :from_email, :to_email, :from_name, :to_name, 
+                 :body_html, :body_text, :snippet, :status, :message_id,
+                 :gmail_thread_id, :read_at, :sent_at, :received_at, :created_at, :has_attachments],
+          methods: [:display_subject, :sender_name, :receiver_name, :formatted_date]
+        )
+        
+        # Add attachments
+        email_json['attachments'] = @email.attachments_json
+        
+        # Build thread emails JSON with attachments
+        thread_emails_json = thread_emails.map do |thread_email|
+          te_json = thread_email.as_json(
+            only: [:id, :subject, :from_email, :to_email, :from_name, :to_name,
+                   :body_html, :body_text, :snippet, :status, :sent_at, :received_at, :created_at, :has_attachments],
+            methods: [:display_subject, :sender_name, :receiver_name, :formatted_date]
+          )
+          te_json['attachments'] = thread_email.attachments_json
+          te_json
+        end
+        
+        render json: email_json.merge(thread_emails: thread_emails_json)
+      }
     end
   end
   
   def new
-    @email = Email.new(customer: @customer, user: current_user)
+    # Redirect to customer show page - compose functionality is now in a modal
+    redirect_to customer_path(@customer, anchor: 'emails', compose: true)
   end
   
   def create
+    # Extract email params (support both nested and flat params)
+    email_params = params[:email] || params
+    subject = email_params[:subject]
+    body = email_params[:body_text] || email_params[:body] || email_params[:body_html]
+    
     # Validate parameters
-    unless params[:subject].present? && params[:body].present?
-      flash[:error] = "Subject and body are required"
-      render :new and return
+    unless subject.present? && body.present?
+      respond_to do |format|
+        format.html {
+          flash[:error] = "Subject and body are required"
+          render :new
+        }
+        format.json { render json: { error: "Subject and body are required" }, status: :unprocessable_entity }
+      end
+      return
     end
     
-    # Handle file attachments
+    # Handle file attachments - store content in memory to avoid temp file issues
     attachment_data = []
-    if params[:attachments].present?
-      params[:attachments].each do |attachment|
-        # Create a temporary file
-        temp_file = Tempfile.new(['attachment', File.extname(attachment.original_filename)])
-        temp_file.binmode
-        temp_file.write(attachment.read)
-        temp_file.rewind
+    attachments_param = email_params[:attachments] || params[:attachments]
+    Rails.logger.info("Attachments param: #{attachments_param.inspect}")
+    
+    if attachments_param.present?
+      attachments_param.each do |attachment|
+        Rails.logger.info("Processing attachment: #{attachment.class.name}")
         
-        # Add to attachment data
+        # Skip if attachment is not a valid file upload (e.g., empty string)
+        next unless attachment.respond_to?(:original_filename) && attachment.original_filename.present?
+        
+        Rails.logger.info("Valid attachment found: #{attachment.original_filename} (#{attachment.content_type})")
+        
+        # Read the file content into memory
+        file_content = attachment.read
+        Rails.logger.info("Read #{file_content.bytesize} bytes into memory")
+        
+        # Add to attachment data with content instead of path
         attachment_data << {
           filename: attachment.original_filename,
           content_type: attachment.content_type,
-          path: temp_file.path
+          content: file_content,
+          size: file_content.bytesize
         }
       end
     end
     
-    # Send the email
+    Rails.logger.info("Total attachments to send: #{attachment_data.length}")
+    
+    # Send the email (with thread info if replying)
     gmail_service = GmailService.new(current_user)
+    
+    # Pass thread parameters if this is a reply
+    thread_options = {}
+    # Support both nested and flat params for thread options
+    in_reply_to = email_params[:in_reply_to] || params[:in_reply_to]
+    gmail_thread_id = email_params[:gmail_thread_id] || params[:gmail_thread_id]
+    
+    thread_options[:in_reply_to] = in_reply_to if in_reply_to.present?
+    thread_options[:thread_id] = gmail_thread_id if gmail_thread_id.present?
+    
     @email = gmail_service.send_email(
       @customer,
-      params[:subject],
-      params[:body],
+      subject,
+      body,
       nil, # Let the service generate the plain text version
-      attachment_data
+      attachment_data,
+      thread_options
     )
     
-    # Clean up temp files
-    attachment_data.each do |attachment|
-      File.unlink(attachment[:path]) if File.exist?(attachment[:path])
-    end
+    # No temp file cleanup needed - we store content in memory now
     
     if @email
-      flash[:success] = "Email successfully sent"
-      redirect_to customer_emails_path(@customer)
+      respond_to do |format|
+        format.html {
+          flash[:success] = "Email successfully sent"
+          redirect_to customer_path(@customer, anchor: 'emails')
+        }
+        format.json { render json: { success: true, message: "Email sent successfully" } }
+      end
     else
-      flash[:error] = "Failed to send email"
-      render :new
+      respond_to do |format|
+        format.html {
+          flash[:error] = "Failed to send email"
+          redirect_to customer_path(@customer, anchor: 'emails')
+        }
+        format.json { render json: { error: "Failed to send email" }, status: :unprocessable_entity }
+      end
     end
   end
   
   def fetch
     unless current_user.google_auth_configured?
       flash[:error] = "Google OAuth is not configured for your account"
-      redirect_to customer_emails_path(@customer) and return
+      redirect_to customer_path(@customer, anchor: 'emails') and return
     end
 
     gmail_service = GmailService.new(current_user)
@@ -91,14 +174,14 @@ class EmailsController < ApplicationController
       flash[:notice] = "No new emails found"
     end
     
-    redirect_to customer_emails_path(@customer)
+    redirect_to customer_path(@customer, anchor: 'emails')
   end
   
   def mark_as_read
     @email.mark_as_read!
     
     respond_to do |format|
-      format.html { redirect_to customer_email_path(@customer, @email) }
+      format.html { redirect_to customer_path(@customer, anchor: 'emails') }
       format.json { render json: { success: true } }
     end
   end

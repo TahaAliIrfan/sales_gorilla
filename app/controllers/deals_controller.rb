@@ -459,7 +459,10 @@ class DealsController < ApplicationController
         end
       end
       
-      redirect_to @deal, notice: 'Deal was successfully updated.'
+      respond_to do |format|
+        format.html { redirect_to @deal, notice: 'Deal was successfully updated.' }
+        format.json { render json: { success: true, message: 'Deal was successfully updated.' } }
+      end
     rescue ActiveRecord::RecordInvalid
       # Get data for form
       if current_user&.admin?
@@ -476,7 +479,11 @@ class DealsController < ApplicationController
       end
       
       set_deal_stages_for_form
-      render :edit, status: :unprocessable_entity
+      
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { success: false, error: @deal.errors.full_messages.join(', ') }, status: :unprocessable_entity }
+      end
     rescue => e
       Rails.logger.error("Error updating deal: #{e.message}")
       @deal.errors.add(:base, "An unexpected error occurred: #{e.message}")
@@ -496,7 +503,11 @@ class DealsController < ApplicationController
       end
       
       set_deal_stages_for_form
-      render :edit, status: :unprocessable_entity
+      
+      respond_to do |format|
+        format.html { render :edit, status: :unprocessable_entity }
+        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
     end
   end
 

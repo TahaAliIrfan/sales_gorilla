@@ -3,45 +3,94 @@ class UserDashboardController < ApplicationController
   before_action :require_login
 
   def index
-    # Get the current user's customers
-    @my_customers = current_user.customers.order(created_at: :desc).limit(5)
-    @total_customers = current_user.customers.count
+    # Date ranges
+    @today = Date.current
+    @this_week_start = @today.beginning_of_week
+    @this_month_start = @today.beginning_of_month
     
-    # Get the current user's deals
-    @my_deals = current_user.deals.active.order(expected_close_date: :asc).limit(5)
+    # === CUSTOMER STATS ===
+    @total_customers = current_user.customers.count
+    @customers_this_month = current_user.customers.where(created_at: @this_month_start..Time.current).count
+    
+    # Customer status breakdown
+    @customer_status_counts = {
+      pending: current_user.customers.where(status: 'Pending').count,
+      contact_established: current_user.customers.where(status: 'Contact Established').count,
+      contact_not_established: current_user.customers.where(status: ['Contact Not Established', 'Unresponsive']).count,
+      not_interested: current_user.customers.where(status: 'Not Interested').count,
+      converted: current_user.customers.where(status: 'Converted').count,
+      exhausted: current_user.customers.where(status: 'Exhausted').count
+    }
+    
+    # === DEAL STATS ===
     @total_deals = current_user.deals.count
     @active_deals = current_user.deals.active.count
     @won_deals = current_user.deals.won.count
     @lost_deals = current_user.deals.lost.count
-    
-    # Get value metrics
     @total_deal_value = current_user.deals.sum(:amount)
     @won_deal_value = current_user.deals.won.sum(:amount)
+    @active_deal_value = current_user.deals.active.sum(:amount)
     
-    # Get deals by stage for a simple pipeline overview
+    # Deals this month
+    @deals_created_this_month = current_user.deals.where(created_at: @this_month_start..Time.current).count
+    @deals_won_this_month = current_user.deals.won.where(closing_date: @this_month_start..@today).count
+    @revenue_this_month = current_user.deals.won.where(closing_date: @this_month_start..@today).sum(:amount)
+    
+    # Win rate calculation
+    closed_deals = @won_deals + @lost_deals
+    @win_rate = closed_deals > 0 ? ((@won_deals.to_f / closed_deals) * 100).round(1) : 0
+    
+    # Deal stages for pipeline
     @deal_stages = DealStage.all
     @deals_by_stage = {}
     @deal_stages.each do |stage|
       @deals_by_stage[stage.id] = current_user.deals.active.by_stage(stage).count
     end
     
-    # Check for deals and customers that need attention
+    # === CALL STATS ===
+    my_recordings = Recording.where(user: current_user)
+    my_recordings_today = my_recordings.where(date: @today.beginning_of_day..@today.end_of_day)
+    my_recordings_this_week = my_recordings.where(date: @this_week_start..@today.end_of_day)
+    my_recordings_this_month = my_recordings.where(date: @this_month_start..@today.end_of_day)
+    
+    # Today's calls
+    @calls_today = my_recordings_today.count
+    @connected_calls_today = my_recordings_today.where("duration >= ?", 120).count
+    @attempted_calls_today = my_recordings_today.where("duration >= ? AND duration < ?", 40, 120).count
+    @failed_calls_today = my_recordings_today.where("duration < ?", 40).count
+    
+    # This week's calls
+    @calls_this_week = my_recordings_this_week.count
+    @connected_calls_this_week = my_recordings_this_week.where("duration >= ?", 120).count
+    
+    # This month's calls
+    @calls_this_month = my_recordings_this_month.count
+    @connected_calls_this_month = my_recordings_this_month.where("duration >= ?", 120).count
+    @attempted_calls_this_month = my_recordings_this_month.where("duration >= ? AND duration < ?", 40, 120).count
+    @failed_calls_this_month = my_recordings_this_month.where("duration < ?", 40).count
+    
+    # Call success rate
+    @call_success_rate = @calls_this_month > 0 ? ((@connected_calls_this_month.to_f / @calls_this_month) * 100).round(1) : 0
+    
+    # === TASK STATS ===
+    @pending_tasks_count = current_user.tasks.pending.count
+    @today_tasks_count = current_user.tasks.for_today.count
+    @overdue_tasks_count = current_user.tasks.overdue.count
+    @completed_tasks_this_month = current_user.tasks.where(status: 'completed', updated_at: @this_month_start..Time.current).count
+    
+    # Task lists
+    @today_tasks = current_user.tasks.for_today.order(due_date: :asc).limit(5)
+    @overdue_tasks = current_user.tasks.overdue.order(due_date: :asc).limit(5)
+    @pending_tasks = current_user.tasks.pending.order(due_date: :asc).limit(5)
+    
+    # === ITEMS NEEDING ATTENTION ===
     @deals_needing_attention = deals_needing_attention
     @customers_needing_attention = customers_needing_attention
     @needs_attention = @deals_needing_attention.any? || @customers_needing_attention.any?
     
-    # Get tasks for the user
-    @pending_tasks = current_user.tasks.pending.order(due_date: :asc).limit(5)
-    @today_tasks = current_user.tasks.for_today.order(due_date: :asc)
-    @overdue_tasks = current_user.tasks.overdue.order(due_date: :asc)
-    
-    # Summary counts
-    @pending_tasks_count = current_user.pending_tasks.count
-    @today_tasks_count = current_user.tasks_for_today.count
-    @overdue_tasks_count = current_user.overdue_tasks.count
-    
-    # Call success rate calculations
-    calculate_call_success_rates
+    # === RECENT ACTIVITY ===
+    @recent_customers = current_user.customers.order(updated_at: :desc).limit(5)
+    @recent_deals = current_user.deals.order(updated_at: :desc).limit(5)
   end
 
   private
@@ -57,30 +106,8 @@ class UserDashboardController < ApplicationController
     @current_user ||= User.find_by(id: session[:user_id])
   end
   
-  def calculate_call_success_rates
-    # Get recordings for the current user
-    my_recordings = Recording.where(user: current_user)
-    @my_successful_calls = my_recordings.where("duration >= ?", 60).count
-    @my_failed_calls = my_recordings.where("duration < ?", 60).count
-    
-    # Calculate success rate for the current user
-    total_my_calls = @my_successful_calls + @my_failed_calls
-    @my_success_rate = total_my_calls.zero? ? 0 : ((@my_successful_calls.to_f / total_my_calls) * 100).round
-    
-    # Calculate team success rate
-    all_recordings = Recording.all
-    team_successful_calls = all_recordings.where("duration >= ?", 60).count
-    total_team_calls = all_recordings.count
-    @team_success_rate = total_team_calls.zero? ? 0 : ((team_successful_calls.to_f / total_team_calls) * 100).round
-  end
-  
   def deals_needing_attention
     return [] unless current_user
-    
-    # Deals that need attention criteria:
-    # 1. Active deals assigned to current user
-    # 2. Expected close date is within 7 days or has passed
-    # 3. No activity in the last 3 days
     
     today = Date.today
     
@@ -88,7 +115,6 @@ class UserDashboardController < ApplicationController
         .active
         .where("expected_close_date <= ?", today + 7.days)
         .select do |deal|
-          # Check if there's no recent activity
           last_activity = deal.deal_activities.order(created_at: :desc).first
           last_activity.nil? || last_activity.created_at < 3.days.ago
         end
@@ -97,17 +123,11 @@ class UserDashboardController < ApplicationController
   def customers_needing_attention
     return [] unless current_user
     
-    # Customers that need attention criteria:
-    # 1. Assigned to current user
-    # 2. Status is 'Pending' or 'Connection Established'
-    # 3. No activity in the last 5 days
-    
     Customer.where(user_id: current_user.id)
             .where(status: ['Pending', 'Connection Established'])
             .select do |customer|
-              # Check if there's no recent activity
               last_activity = customer.customer_activities.order(created_at: :desc).first
               last_activity.nil? || last_activity.created_at < 5.days.ago
             end
   end
-end 
+end
