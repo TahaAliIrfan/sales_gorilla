@@ -639,50 +639,169 @@
 
         <!-- Call Recordings Tab -->
         <div data-tabs-target="content" data-tab-id="recordings" class="tab-content hidden">
-          <h3 class="text-lg font-semibold text-gray-900 mb-6">Call Recordings</h3>
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Call Recordings</h3>
+            <% if @recordings.any? %>
+              <span class="text-sm text-gray-500"><%= pluralize(@recordings.count, 'recording') %></span>
+            <% end %>
+          </div>
+          
           <% if @recordings.any? %>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="space-y-4">
               <% @recordings.each do |recording| %>
-                <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                  <div class="flex items-start space-x-3">
-                    <div class="flex-shrink-0">
-                      <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden" 
+                     data-controller="recording-player" 
+                     data-recording-player-recording-id-value="<%= recording.id %>">
+                  <!-- Recording Header (Always Visible) -->
+                  <div class="p-4 cursor-pointer hover:bg-gray-50 transition-colors" data-action="click->recording-player#toggle">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-4 flex-1">
+                        <div class="flex-shrink-0">
+                          <div class="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-sm">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                          </div>
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                          <div class="flex items-center space-x-3">
+                            <h4 class="font-semibold text-gray-900"><%= recording.date.strftime('%b %d, %Y') %></h4>
+                            <span class="text-sm text-gray-500"><%= recording.date.strftime('%I:%M %p') %></span>
+                          </div>
+                          <div class="mt-1 flex items-center space-x-3">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <svg class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              <%= recording.duration %>s
+                            </span>
+                            <% if recording.user.present? %>
+                              <span class="text-xs text-gray-500">by <%= recording.user.name %></span>
+                            <% end %>
+                            <% if recording.transcribed? %>
+                              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <svg class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Transcribed
+                              </span>
+                            <% end %>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="flex items-center space-x-2">
+                        <!-- Expand/Collapse Icon -->
+                        <div class="flex-shrink-0 text-gray-400">
+                          <svg data-recording-player-target="expandIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                          <svg data-recording-player-target="collapseIcon" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                          </svg>
+                        </div>
                       </div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-start justify-between">
-                        <div>
-                          <h4 class="font-medium text-gray-900 text-sm"><%= recording.date.strftime('%b %d, %Y') %></h4>
-                          <p class="text-xs text-gray-500 mt-1"><%= recording.date.strftime('%I:%M %p') %></p>
+                  </div>
+                  
+                  <!-- Expandable Content -->
+                  <div data-recording-player-target="content" class="hidden border-t border-gray-200">
+                    <div class="p-6 bg-gray-50">
+                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Audio Player Section -->
+                        <div class="bg-white rounded-lg p-4 shadow-sm">
+                          <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                            <svg class="h-4 w-4 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Audio Player
+                          </h4>
+                          <% if recording.audio_file.attached? %>
+                            <audio controls class="w-full" controlsList="nodownload">
+                              <source src="<%= rails_blob_url(recording.audio_file) %>" type="audio/mpeg">
+                              Your browser does not support the audio element.
+                            </audio>
+                            <div class="mt-3">
+                              <%= link_to download_recording_path(recording), class: "inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium" do %>
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download Recording
+                              <% end %>
+                            </div>
+                          <% else %>
+                            <div class="text-center py-4 text-sm text-gray-500">
+                              Audio file not available
+                            </div>
+                          <% end %>
                         </div>
-                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          <%= recording.duration %>s
-                        </span>
+                        
+                        <!-- Recording Details -->
+                        <div class="bg-white rounded-lg p-4 shadow-sm">
+                          <h4 class="text-sm font-semibold text-gray-900 mb-3">Recording Details</h4>
+                          <dl class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                              <dt class="text-gray-500">Duration</dt>
+                              <dd class="text-gray-900 font-medium">
+                                <%= (recording.duration.to_i / 60).to_s.rjust(2, '0') %>:<%= (recording.duration.to_i % 60).to_s.rjust(2, '0') %>
+                              </dd>
+                            </div>
+                            <% if recording.user.present? %>
+                              <div class="flex justify-between text-sm">
+                                <dt class="text-gray-500">Caller</dt>
+                                <dd class="text-gray-900 font-medium"><%= recording.user.name %></dd>
+                              </div>
+                            <% end %>
+                            <div class="flex justify-between text-sm">
+                              <dt class="text-gray-500">Date & Time</dt>
+                              <dd class="text-gray-900 font-medium"><%= recording.date.strftime('%b %d, %Y %I:%M %p') %></dd>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-gray-200">
+                              <%= link_to recording_path(recording), class: "inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium", target: "_blank" do %>
+                                <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                </svg>
+                                View Full Details
+                              <% end %>
+                            </div>
+                          </dl>
+                        </div>
                       </div>
-                      <div class="mt-3">
-                        <%= link_to recording_path(recording), class: "inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800" do %>
-                          <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          Play Recording
-                        <% end %>
-                      </div>
+                      
+                      <!-- Transcript Section -->
+                      <% if recording.transcribed? %>
+                        <div class="mt-6 bg-white rounded-lg p-4 shadow-sm">
+                          <h4 class="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+                            <svg class="h-4 w-4 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Conversation Transcript
+                          </h4>
+                          <div class="max-h-96 overflow-y-auto" data-recording-player-target="transcriptContainer">
+                            <!-- Transcript will be loaded here -->
+                          </div>
+                        </div>
+                      <% else %>
+                        <div class="mt-6 bg-white rounded-lg p-4 shadow-sm">
+                          <div class="text-center py-6 text-sm text-gray-500">
+                            Transcript is not available for this recording.
+                          </div>
+                        </div>
+                      <% end %>
                     </div>
                   </div>
                 </div>
               <% end %>
             </div>
           <% else %>
-            <div class="text-center py-12 bg-gray-50 rounded-lg">
+            <div class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
               <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">No call recordings</h3>
-              <p class="mt-1 text-sm text-gray-500">Call recordings will appear here after phone calls</p>
+              <h3 class="mt-4 text-sm font-medium text-gray-900">No call recordings</h3>
+              <p class="mt-2 text-sm text-gray-500">Call recordings will appear here after phone calls with this customer</p>
             </div>
           <% end %>
         </div>

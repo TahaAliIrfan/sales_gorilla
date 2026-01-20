@@ -93,6 +93,9 @@ application.register("phone-modal", PhoneModalController)
 import RecordingController from "./recording_controller"
 application.register("recording", RecordingController)
 
+import RecordingPlayerController from "./recording_player_controller"
+application.register("recording-player", RecordingPlayerController)
+
 import StatusUpdaterController from "./status_updater_controller"
 application.register("status-updater", StatusUpdaterController)
 
