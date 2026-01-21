@@ -225,12 +225,21 @@
         </div>
 
         <script>
-          document.addEventListener('DOMContentLoaded', function() {
+          // Support both regular page loads and Turbo navigation
+          let statusChartsInstances = {};
+          
+          function initializeStatusCharts() {
             // Check if Chart.js is loaded
             if (typeof Chart === 'undefined') {
               console.error('Chart.js is not loaded!');
               return;
             }
+
+            // Destroy existing charts before creating new ones
+            Object.values(statusChartsInstances).forEach(chart => {
+              if (chart) chart.destroy();
+            });
+            statusChartsInstances = {};
 
             // Prepare data for charts
             const users = <%= raw @users.map(&:name).to_json %>;
@@ -273,7 +282,7 @@
               return;
             }
             const teamStatusCtx = teamStatusCanvas.getContext('2d');
-            new Chart(teamStatusCtx, {
+            statusChartsInstances.teamStatus = new Chart(teamStatusCtx, {
               type: 'bar',
               data: {
                 labels: users,
@@ -376,7 +385,7 @@
             const statusDistCanvas = document.getElementById('statusDistributionChart');
             if (statusDistCanvas) {
               const statusDistCtx = statusDistCanvas.getContext('2d');
-              new Chart(statusDistCtx, {
+              statusChartsInstances.statusDist = new Chart(statusDistCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Pending', 'Contact Established', 'No Contact', 'Exhausted', 'Invalid'],
@@ -436,7 +445,7 @@
             const dealsDistCanvas = document.getElementById('dealsDistributionChart');
             if (dealsDistCanvas) {
               const dealsDistCtx = dealsDistCanvas.getContext('2d');
-              new Chart(dealsDistCtx, {
+              statusChartsInstances.dealsDist = new Chart(dealsDistCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Deals Won', 'Deals In Progress'],
@@ -481,7 +490,11 @@
               }
             });
             }
-          });
+          }
+
+          // Initialize on both DOMContentLoaded and turbo:load
+          document.addEventListener('DOMContentLoaded', initializeStatusCharts);
+          document.addEventListener('turbo:load', initializeStatusCharts);
         </script>
       <% end %>
     </div>
@@ -717,12 +730,21 @@
         </div>
 
         <script>
-          document.addEventListener('DOMContentLoaded', function() {
+          // Support both regular page loads and Turbo navigation
+          let communicationChartsInstances = {};
+          
+          function initializeCommunicationCharts() {
             // Check if Chart.js is loaded
             if (typeof Chart === 'undefined') {
               console.error('Chart.js is not loaded!');
               return;
             }
+
+            // Destroy existing charts before creating new ones
+            Object.values(communicationChartsInstances).forEach(chart => {
+              if (chart) chart.destroy();
+            });
+            communicationChartsInstances = {};
 
             // Prepare data from Rails
             const userNames = <%= raw @user_call_reports.values.map { |r| r[:name] }.to_json %>;
@@ -739,7 +761,7 @@
               return;
             }
             const commActivityCtx = commActivityCanvas.getContext('2d');
-            new Chart(commActivityCtx, {
+            communicationChartsInstances.commActivity = new Chart(commActivityCtx, {
               type: 'bar',
               data: {
                 labels: userNames,
@@ -815,7 +837,7 @@
             const assignedVsCanvas = document.getElementById('assignedVsCompletedChart');
             if (assignedVsCanvas) {
               const assignedVsCtx = assignedVsCanvas.getContext('2d');
-              new Chart(assignedVsCtx, {
+              communicationChartsInstances.assignedCompleted = new Chart(assignedVsCtx, {
               type: 'bar',
               data: {
                 labels: userNames,
@@ -879,7 +901,7 @@
             const commMixCanvas = document.getElementById('communicationMixChart');
             if (commMixCanvas) {
               const commMixCtx = commMixCanvas.getContext('2d');
-              new Chart(commMixCtx, {
+              communicationChartsInstances.commMix = new Chart(commMixCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Calls', 'Emails', 'WhatsApp'],
@@ -926,7 +948,11 @@
               }
             });
             }
-          });
+          }
+
+          // Initialize on both DOMContentLoaded and turbo:load
+          document.addEventListener('DOMContentLoaded', initializeCommunicationCharts);
+          document.addEventListener('turbo:load', initializeCommunicationCharts);
         </script>
       </div>
     <% end %>
