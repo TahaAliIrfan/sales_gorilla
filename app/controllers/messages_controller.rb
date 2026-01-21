@@ -143,20 +143,23 @@ class MessagesController < ApplicationController
       end
 
       Rails.logger.info "Customer: #{customer.inspect}"
+      if params[:messageData][:textMessageData][:textMessage].present?
+        message = Message.new(customer: customer,
+                              content:  params[:messageData][:textMessageData][:textMessage],
+                              message_id: params[:idMessage],
+                              direction: 'inbound',
+                              message_type: 'text',
+                              status: 'pending')
 
-      message = Message.new(customer: customer,
-                            content:  params[:messageData][:textMessageData][:textMessage],
-                            message_id: params[:idMessage],
-                            direction: 'inbound',
-                            message_type: 'text',
-                            status: 'pending')
-
-      if message.save
-        if customer.user.present?
-          UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
-        else
-          UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
+        if message.save
+          if customer.user.present?
+            UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
+          else
+            UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
+          end
         end
+      else
+        return
       end
     elsif params[:typeWebhook] == "incomingCall"
 
