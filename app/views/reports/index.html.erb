@@ -137,42 +137,327 @@
           </div>
         </div>
       <% else %>
-        <!-- Team Overview -->
+        <!-- Team Overview with Charts -->
+        <div class="space-y-6">
+          <!-- Team Performance Bar Chart -->
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Team Customer Status Comparison</h3>
+              <div class="flex items-center space-x-2 text-xs text-gray-500">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Hover over bars for details</span>
+              </div>
+            </div>
+            <canvas id="teamStatusChart" style="max-height: 400px;"></canvas>
+          </div>
+
+          <!-- Overall Team Distribution Donut Charts -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Overall Customer Status Distribution</h3>
+              <canvas id="statusDistributionChart" style="max-height: 300px;"></canvas>
+            </div>
+            
         <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider sticky left-0 bg-gray-50">Team Member</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Pending</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-green-700 uppercase tracking-wider">Contact Est.</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-yellow-700 uppercase tracking-wider">No Contact</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-red-700 uppercase tracking-wider">Exhausted</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Invalid</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-blue-700 uppercase tracking-wider">Deals Created</th>
-                  <th class="px-6 py-3 text-center text-xs font-semibold text-green-700 uppercase tracking-wider">Deals Won</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <% @users.each do |user| %>
-                  <% metrics = @user_progression_metrics[user.id] || {} %>
-                  <tr class="hover:bg-gray-50 transition-colors">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 sticky left-0 bg-white">
-                      <%= user.name %>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 font-semibold"><%= metrics['Pending'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-semibold"><%= metrics['Contact Established'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-yellow-600 font-semibold"><%= metrics['Contact Not Established / Unresponsive'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-semibold"><%= metrics['Exhausted'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 font-semibold"><%= metrics['Invalid'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-blue-600 font-semibold"><%= metrics['Deals Created'] || 0 %></td>
-                    <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-bold text-lg"><%= metrics['Deals Won'] || 0 %></td>
-                  </tr>
-                <% end %>
-              </tbody>
-            </table>
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Deals Overview</h3>
+              <canvas id="dealsDistributionChart" style="max-height: 300px;"></canvas>
+            </div>
+          </div>
+
+          <!-- Summary Cards Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            <%
+              total_pending = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Pending'] || 0 }
+              total_contact = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Contact Established'] || 0 }
+              total_no_contact = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Contact Not Established / Unresponsive'] || 0 }
+              total_exhausted = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Exhausted'] || 0 }
+              total_invalid = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Invalid'] || 0 }
+              total_deals_created = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Deals Created'] || 0 }
+              total_deals_won = @users.sum { |u| (@user_progression_metrics[u.id] || {})['Deals Won'] || 0 }
+            %>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
+              <div class="text-2xl font-bold text-gray-600"><%= total_pending %></div>
+              <div class="text-xs font-medium text-gray-600 mt-1">Pending</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-green-200 text-center">
+              <div class="text-2xl font-bold text-green-600"><%= total_contact %></div>
+              <div class="text-xs font-medium text-green-700 mt-1">Contact Est.</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-yellow-200 text-center">
+              <div class="text-2xl font-bold text-yellow-600"><%= total_no_contact %></div>
+              <div class="text-xs font-medium text-yellow-700 mt-1">No Contact</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-red-200 text-center">
+              <div class="text-2xl font-bold text-red-600"><%= total_exhausted %></div>
+              <div class="text-xs font-medium text-red-700 mt-1">Exhausted</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200 text-center">
+              <div class="text-2xl font-bold text-gray-600"><%= total_invalid %></div>
+              <div class="text-xs font-medium text-gray-600 mt-1">Invalid</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-blue-200 text-center">
+              <div class="text-2xl font-bold text-blue-600"><%= total_deals_created %></div>
+              <div class="text-xs font-medium text-blue-700 mt-1">Deals Created</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-green-300 text-center">
+              <div class="text-2xl font-bold text-green-600"><%= total_deals_won %></div>
+              <div class="text-xs font-medium text-green-700 mt-1">Deals Won</div>
+            </div>
           </div>
         </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // Prepare data for charts
+            const users = <%= raw @users.map(&:name).to_json %>;
+            const userMetrics = <%= raw @user_progression_metrics.to_json %>;
+            
+            // Extract metrics for each user
+            const pending = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Pending'] || 0;
+            });
+            const contactEst = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Contact Established'] || 0;
+            });
+            const noContact = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Contact Not Established / Unresponsive'] || 0;
+            });
+            const exhausted = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Exhausted'] || 0;
+            });
+            const invalid = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Invalid'] || 0;
+            });
+            const dealsCreated = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Deals Created'] || 0;
+            });
+            const dealsWon = users.map((name, i) => {
+              const userId = <%= raw @users.map(&:id).to_json %>[i];
+              return (userMetrics[userId] || {})['Deals Won'] || 0;
+            });
+
+            // Team Status Comparison Bar Chart
+            const teamStatusCtx = document.getElementById('teamStatusChart').getContext('2d');
+            new Chart(teamStatusCtx, {
+              type: 'bar',
+              data: {
+                labels: users,
+                datasets: [
+                  {
+                    label: 'Pending',
+                    data: pending,
+                    backgroundColor: 'rgba(107, 114, 128, 0.8)',
+                    borderColor: 'rgb(107, 114, 128)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Contact Established',
+                    data: contactEst,
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'No Contact',
+                    data: noContact,
+                    backgroundColor: 'rgba(234, 179, 8, 0.8)',
+                    borderColor: 'rgb(234, 179, 8)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Exhausted',
+                    data: exhausted,
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    borderColor: 'rgb(239, 68, 68)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Invalid',
+                    data: invalid,
+                    backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                    borderColor: 'rgb(156, 163, 175)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Deals Created',
+                    data: dealsCreated,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Deals Won',
+                    data: dealsWon,
+                    backgroundColor: 'rgba(16, 185, 129, 0.9)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 2
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      boxWidth: 12,
+                      padding: 10,
+                      font: {
+                        size: 11
+                      }
+                    }
+                  },
+                  tooltip: {
+                    mode: 'index',
+                    intersect: false
+                  }
+                },
+                scales: {
+                  x: {
+                    stacked: false,
+                    grid: {
+                      display: false
+                    }
+                  },
+                  y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+
+            // Overall Status Distribution Donut Chart
+            const totalPending = pending.reduce((a, b) => a + b, 0);
+            const totalContact = contactEst.reduce((a, b) => a + b, 0);
+            const totalNoContact = noContact.reduce((a, b) => a + b, 0);
+            const totalExhausted = exhausted.reduce((a, b) => a + b, 0);
+            const totalInvalid = invalid.reduce((a, b) => a + b, 0);
+
+            const statusDistCtx = document.getElementById('statusDistributionChart').getContext('2d');
+            new Chart(statusDistCtx, {
+              type: 'doughnut',
+              data: {
+                labels: ['Pending', 'Contact Established', 'No Contact', 'Exhausted', 'Invalid'],
+                datasets: [{
+                  data: [totalPending, totalContact, totalNoContact, totalExhausted, totalInvalid],
+                  backgroundColor: [
+                    'rgba(107, 114, 128, 0.8)',
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(234, 179, 8, 0.8)',
+                    'rgba(239, 68, 68, 0.8)',
+                    'rgba(156, 163, 175, 0.8)'
+                  ],
+                  borderColor: [
+                    'rgb(107, 114, 128)',
+                    'rgb(34, 197, 94)',
+                    'rgb(234, 179, 8)',
+                    'rgb(239, 68, 68)',
+                    'rgb(156, 163, 175)'
+                  ],
+                  borderWidth: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    labels: {
+                      padding: 15,
+                      font: {
+                        size: 11
+                      }
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                      }
+                    }
+                  }
+                }
+              }
+            });
+
+            // Deals Distribution Donut Chart
+            const totalDealsCreated = dealsCreated.reduce((a, b) => a + b, 0);
+            const totalDealsWon = dealsWon.reduce((a, b) => a + b, 0);
+            const dealsInProgress = totalDealsCreated - totalDealsWon;
+
+            const dealsDistCtx = document.getElementById('dealsDistributionChart').getContext('2d');
+            new Chart(dealsDistCtx, {
+              type: 'doughnut',
+              data: {
+                labels: ['Deals Won', 'Deals In Progress'],
+                datasets: [{
+                  data: [totalDealsWon, dealsInProgress],
+                  backgroundColor: [
+                    'rgba(16, 185, 129, 0.8)',
+                    'rgba(59, 130, 246, 0.8)'
+                  ],
+                  borderColor: [
+                    'rgb(16, 185, 129)',
+                    'rgb(59, 130, 246)'
+                  ],
+                  borderWidth: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    labels: {
+                      padding: 15,
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          });
+        </script>
       <% end %>
     </div>
 
@@ -337,37 +622,270 @@
     </div>
 
     <% unless @selected_user %>
-      <!-- Team Call Performance -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 class="text-xl font-bold text-gray-900 mb-6">Team Call Performance</h3>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Team Member</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Last Day Calls</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-green-700 uppercase tracking-wider">Day Success</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-red-700 uppercase tracking-wider">Day Failed</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Month Calls</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-green-700 uppercase tracking-wider">Month Success</th>
-                <th class="px-6 py-3 text-center text-xs font-semibold text-red-700 uppercase tracking-wider">Month Failed</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <% @user_call_reports.each do |user_id, report| %>
-                <tr class="hover:bg-gray-50 transition-colors">
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= report[:name] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 font-semibold"><%= report[:last_day_calls] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-semibold"><%= report[:last_day_successful_calls] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-semibold"><%= report[:last_day_failed_calls] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-600 font-semibold"><%= report[:last_month_calls] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-green-600 font-semibold"><%= report[:last_month_successful_calls] %></td>
-                  <td class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-600 font-semibold"><%= report[:last_month_failed_calls] %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
+      <!-- Team Communication Performance -->
+      <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg border border-purple-200 p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+          <svg class="h-6 w-6 mr-3 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+          Team Communication Performance
+        </h2>
+        
+        <div class="space-y-6">
+          <!-- Communication Activity Comparison Chart -->
+          <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Communication Activities by Team Member</h3>
+              <div class="flex items-center space-x-2 text-xs text-gray-500">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Calls, Emails & WhatsApp Messages</span>
+              </div>
+            </div>
+            <canvas id="communicationActivityChart" style="max-height: 400px;"></canvas>
+          </div>
+
+          <!-- Assigned vs Completed Activities -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Leads Assigned vs Activities Done</h3>
+              <canvas id="assignedVsCompletedChart" style="max-height: 300px;"></canvas>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Communication Mix</h3>
+              <canvas id="communicationMixChart" style="max-height: 300px;"></canvas>
+            </div>
+          </div>
+
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <%
+              total_calls = @user_call_reports.values.sum { |r| r[:last_month_calls] }
+              total_emails_sent = @user_call_reports.values.sum { |r| r[:total_emails] }
+              total_whatsapp_sent = @user_call_reports.values.sum { |r| r[:total_whatsapp] }
+              total_assigned_leads = @user_call_reports.values.sum { |r| r[:total_assigned] }
+              total_activities_done = @user_call_reports.values.sum { |r| r[:total_activities] }
+            %>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-blue-200 text-center">
+              <div class="text-2xl font-bold text-blue-600"><%= total_calls %></div>
+              <div class="text-xs font-medium text-blue-700 mt-1">Total Calls</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-green-200 text-center">
+              <div class="text-2xl font-bold text-green-600"><%= total_emails_sent %></div>
+              <div class="text-xs font-medium text-green-700 mt-1">Emails Sent</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-purple-200 text-center">
+              <div class="text-2xl font-bold text-purple-600"><%= total_whatsapp_sent %></div>
+              <div class="text-xs font-medium text-purple-700 mt-1">WhatsApp Messages</div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-orange-200 text-center">
+              <div class="text-2xl font-bold text-orange-600"><%= total_activities_done %></div>
+              <div class="text-xs font-medium text-orange-700 mt-1">Total Activities</div>
+            </div>
+          </div>
         </div>
+
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            // Prepare data from Rails
+            const userNames = <%= raw @user_call_reports.values.map { |r| r[:name] }.to_json %>;
+            const userCalls = <%= raw @user_call_reports.values.map { |r| r[:last_month_calls] }.to_json %>;
+            const userEmails = <%= raw @user_call_reports.values.map { |r| r[:total_emails] }.to_json %>;
+            const userWhatsApp = <%= raw @user_call_reports.values.map { |r| r[:total_whatsapp] }.to_json %>;
+            const userAssigned = <%= raw @user_call_reports.values.map { |r| r[:total_assigned] }.to_json %>;
+            const userActivities = <%= raw @user_call_reports.values.map { |r| r[:total_activities] }.to_json %>;
+
+            // Communication Activity Bar Chart
+            const commActivityCtx = document.getElementById('communicationActivityChart').getContext('2d');
+            new Chart(commActivityCtx, {
+              type: 'bar',
+              data: {
+                labels: userNames,
+                datasets: [
+                  {
+                    label: 'Calls',
+                    data: userCalls,
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Emails',
+                    data: userEmails,
+                    backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                    borderColor: 'rgb(34, 197, 94)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'WhatsApp',
+                    data: userWhatsApp,
+                    backgroundColor: 'rgba(168, 85, 247, 0.8)',
+                    borderColor: 'rgb(168, 85, 247)',
+                    borderWidth: 1
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                    labels: {
+                      boxWidth: 12,
+                      padding: 15,
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                      footer: function(items) {
+                        let sum = 0;
+                        items.forEach(item => sum += item.parsed.y);
+                        return 'Total: ' + sum + ' activities';
+                      }
+                    }
+                  }
+                },
+                scales: {
+                  x: {
+                    stacked: false,
+                    grid: {
+                      display: false
+                    }
+                  },
+                  y: {
+                    stacked: false,
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+
+            // Assigned vs Completed Bar Chart
+            const assignedVsCtx = document.getElementById('assignedVsCompletedChart').getContext('2d');
+            new Chart(assignedVsCtx, {
+              type: 'bar',
+              data: {
+                labels: userNames,
+                datasets: [
+                  {
+                    label: 'Leads Assigned',
+                    data: userAssigned,
+                    backgroundColor: 'rgba(156, 163, 175, 0.6)',
+                    borderColor: 'rgb(156, 163, 175)',
+                    borderWidth: 1
+                  },
+                  {
+                    label: 'Activities Completed',
+                    data: userActivities,
+                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                    borderColor: 'rgb(16, 185, 129)',
+                    borderWidth: 2
+                  }
+                ]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    labels: {
+                      padding: 15,
+                      font: {
+                        size: 11
+                      }
+                    }
+                  },
+                  tooltip: {
+                    mode: 'index',
+                    intersect: false
+                  }
+                },
+                scales: {
+                  x: {
+                    grid: {
+                      display: false
+                    }
+                  },
+                  y: {
+                    beginAtZero: true,
+                    ticks: {
+                      stepSize: 1
+                    }
+                  }
+                }
+              }
+            });
+
+            // Communication Mix Donut Chart
+            const totalCalls = userCalls.reduce((a, b) => a + b, 0);
+            const totalEmails = userEmails.reduce((a, b) => a + b, 0);
+            const totalWhatsApp = userWhatsApp.reduce((a, b) => a + b, 0);
+
+            const commMixCtx = document.getElementById('communicationMixChart').getContext('2d');
+            new Chart(commMixCtx, {
+              type: 'doughnut',
+              data: {
+                labels: ['Calls', 'Emails', 'WhatsApp'],
+                datasets: [{
+                  data: [totalCalls, totalEmails, totalWhatsApp],
+                  backgroundColor: [
+                    'rgba(59, 130, 246, 0.8)',
+                    'rgba(34, 197, 94, 0.8)',
+                    'rgba(168, 85, 247, 0.8)'
+                  ],
+                  borderColor: [
+                    'rgb(59, 130, 246)',
+                    'rgb(34, 197, 94)',
+                    'rgb(168, 85, 247)'
+                  ],
+                  borderWidth: 2
+                }]
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    position: 'bottom',
+                    labels: {
+                      padding: 15,
+                      font: {
+                        size: 12
+                      }
+                    }
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function(context) {
+                        const label = context.label || '';
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                        return label + ': ' + value + ' (' + percentage + '%)';
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          });
+        </script>
       </div>
     <% end %>
   </div>

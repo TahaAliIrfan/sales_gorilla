@@ -250,6 +250,12 @@ class ReportsController < ApplicationController
       last_month_successful_calls = last_month_recordings.where("duration >= ?", 120).count
       last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
       
+      # Add email and WhatsApp metrics for user
+      total_assigned = Customer.where(user_id: user.id, created_at: @start_date..@end_date).count
+      total_emails = Email.joins(:customer).where(customers: { user_id: user.id }).where(emails: { created_at: @start_date..@end_date, status: 'sent' }).count
+      total_whatsapp = WhatsappMessage.joins(:customer).where(customers: { user_id: user.id }).where(whatsapp_messages: { created_at: @start_date..@end_date, direction: 'outbound' }).count
+      total_activities = last_month_calls + total_emails + total_whatsapp
+      
       @user_call_reports[user.id] = {
         name: user.name,
         last_day_calls: last_day_calls,
@@ -257,7 +263,11 @@ class ReportsController < ApplicationController
         last_day_successful_calls: last_day_successful_calls,
         last_day_failed_calls: last_day_failed_calls,
         last_month_successful_calls: last_month_successful_calls,
-        last_month_failed_calls: last_month_failed_calls
+        last_month_failed_calls: last_month_failed_calls,
+        total_assigned: total_assigned,
+        total_emails: total_emails,
+        total_whatsapp: total_whatsapp,
+        total_activities: total_activities
       }
     else
       User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id)).each do |u|
@@ -271,6 +281,12 @@ class ReportsController < ApplicationController
         last_month_successful_calls = last_month_recordings.where("duration >= ?", 120).count
         last_month_failed_calls = last_month_recordings.where("duration < ?", 40).count
         
+        # Add email and WhatsApp metrics for each user
+        total_assigned = Customer.where(user_id: u.id, created_at: @start_date..@end_date).count
+        total_emails = Email.joins(:customer).where(customers: { user_id: u.id }).where(emails: { created_at: @start_date..@end_date, status: 'sent' }).count
+        total_whatsapp = WhatsappMessage.joins(:customer).where(customers: { user_id: u.id }).where(whatsapp_messages: { created_at: @start_date..@end_date, direction: 'outbound' }).count
+        total_activities = last_month_calls + total_emails + total_whatsapp
+        
         @user_call_reports[u.id] = {
           name: u.name,
           last_day_calls: last_day_calls,
@@ -278,7 +294,11 @@ class ReportsController < ApplicationController
           last_day_successful_calls: last_day_successful_calls,
           last_day_failed_calls: last_day_failed_calls,
           last_month_successful_calls: last_month_successful_calls,
-          last_month_failed_calls: last_month_failed_calls
+          last_month_failed_calls: last_month_failed_calls,
+          total_assigned: total_assigned,
+          total_emails: total_emails,
+          total_whatsapp: total_whatsapp,
+          total_activities: total_activities
         }
       end
     end
