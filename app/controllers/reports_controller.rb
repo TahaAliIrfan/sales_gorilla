@@ -11,6 +11,12 @@ class ReportsController < ApplicationController
     
     # Set date range based on filter
     case @filter_range
+    when 'today'
+      @start_date = Time.current.beginning_of_day
+      @end_date = Time.current.end_of_day
+    when 'last_week'
+      @start_date = 1.week.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
     when '30'
       @start_date = 30.days.ago.beginning_of_day
       @end_date = Time.current.end_of_day
@@ -46,6 +52,12 @@ class ReportsController < ApplicationController
     
     # Set date range based on filter
     case @filter_range
+    when 'today'
+      @start_date = Time.current.beginning_of_day
+      @end_date = Time.current.end_of_day
+    when 'last_week'
+      @start_date = 1.week.ago.beginning_of_day
+      @end_date = Time.current.end_of_day
     when '30'
       @start_date = 30.days.ago.beginning_of_day
       @end_date = Time.current.end_of_day
