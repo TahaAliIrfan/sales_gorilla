@@ -1,3 +1,6 @@
+<!-- Load Chart.js globally -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <div class="min-h-screen bg-gray-50 py-8">
   <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Header -->
@@ -221,9 +224,14 @@
           </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
         <script>
           document.addEventListener('DOMContentLoaded', function() {
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+              console.error('Chart.js is not loaded!');
+              return;
+            }
+
             // Prepare data for charts
             const users = <%= raw @users.map(&:name).to_json %>;
             const userMetrics = <%= raw @user_progression_metrics.to_json %>;
@@ -259,7 +267,12 @@
             });
 
             // Team Status Comparison Bar Chart
-            const teamStatusCtx = document.getElementById('teamStatusChart').getContext('2d');
+            const teamStatusCanvas = document.getElementById('teamStatusChart');
+            if (!teamStatusCanvas) {
+              console.error('teamStatusChart canvas not found');
+              return;
+            }
+            const teamStatusCtx = teamStatusCanvas.getContext('2d');
             new Chart(teamStatusCtx, {
               type: 'bar',
               data: {
@@ -360,8 +373,10 @@
             const totalExhausted = exhausted.reduce((a, b) => a + b, 0);
             const totalInvalid = invalid.reduce((a, b) => a + b, 0);
 
-            const statusDistCtx = document.getElementById('statusDistributionChart').getContext('2d');
-            new Chart(statusDistCtx, {
+            const statusDistCanvas = document.getElementById('statusDistributionChart');
+            if (statusDistCanvas) {
+              const statusDistCtx = statusDistCanvas.getContext('2d');
+              new Chart(statusDistCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Pending', 'Contact Established', 'No Contact', 'Exhausted', 'Invalid'],
@@ -411,14 +426,17 @@
                 }
               }
             });
+            }
 
             // Deals Distribution Donut Chart
             const totalDealsCreated = dealsCreated.reduce((a, b) => a + b, 0);
             const totalDealsWon = dealsWon.reduce((a, b) => a + b, 0);
             const dealsInProgress = totalDealsCreated - totalDealsWon;
 
-            const dealsDistCtx = document.getElementById('dealsDistributionChart').getContext('2d');
-            new Chart(dealsDistCtx, {
+            const dealsDistCanvas = document.getElementById('dealsDistributionChart');
+            if (dealsDistCanvas) {
+              const dealsDistCtx = dealsDistCanvas.getContext('2d');
+              new Chart(dealsDistCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Deals Won', 'Deals In Progress'],
@@ -462,6 +480,7 @@
                 }
               }
             });
+            }
           });
         </script>
       <% end %>
@@ -699,6 +718,12 @@
 
         <script>
           document.addEventListener('DOMContentLoaded', function() {
+            // Check if Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+              console.error('Chart.js is not loaded!');
+              return;
+            }
+
             // Prepare data from Rails
             const userNames = <%= raw @user_call_reports.values.map { |r| r[:name] }.to_json %>;
             const userCalls = <%= raw @user_call_reports.values.map { |r| r[:last_month_calls] }.to_json %>;
@@ -708,7 +733,12 @@
             const userActivities = <%= raw @user_call_reports.values.map { |r| r[:total_activities] }.to_json %>;
 
             // Communication Activity Bar Chart
-            const commActivityCtx = document.getElementById('communicationActivityChart').getContext('2d');
+            const commActivityCanvas = document.getElementById('communicationActivityChart');
+            if (!commActivityCanvas) {
+              console.error('communicationActivityChart canvas not found');
+              return;
+            }
+            const commActivityCtx = commActivityCanvas.getContext('2d');
             new Chart(commActivityCtx, {
               type: 'bar',
               data: {
@@ -782,8 +812,10 @@
             });
 
             // Assigned vs Completed Bar Chart
-            const assignedVsCtx = document.getElementById('assignedVsCompletedChart').getContext('2d');
-            new Chart(assignedVsCtx, {
+            const assignedVsCanvas = document.getElementById('assignedVsCompletedChart');
+            if (assignedVsCanvas) {
+              const assignedVsCtx = assignedVsCanvas.getContext('2d');
+              new Chart(assignedVsCtx, {
               type: 'bar',
               data: {
                 labels: userNames,
@@ -837,14 +869,17 @@
                 }
               }
             });
+            }
 
             // Communication Mix Donut Chart
             const totalCalls = userCalls.reduce((a, b) => a + b, 0);
             const totalEmails = userEmails.reduce((a, b) => a + b, 0);
             const totalWhatsApp = userWhatsApp.reduce((a, b) => a + b, 0);
 
-            const commMixCtx = document.getElementById('communicationMixChart').getContext('2d');
-            new Chart(commMixCtx, {
+            const commMixCanvas = document.getElementById('communicationMixChart');
+            if (commMixCanvas) {
+              const commMixCtx = commMixCanvas.getContext('2d');
+              new Chart(commMixCtx, {
               type: 'doughnut',
               data: {
                 labels: ['Calls', 'Emails', 'WhatsApp'],
@@ -890,6 +925,7 @@
                 }
               }
             });
+            }
           });
         </script>
       </div>
