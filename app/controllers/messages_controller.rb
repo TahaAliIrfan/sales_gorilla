@@ -137,6 +137,10 @@ class MessagesController < ApplicationController
     if params[:typeWebhook] == "incomingMessageReceived"
       customer = Customer.find_by(whatsapp_chat_id: params[:senderData][:chatId])
 
+      if customer.blank?
+        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:senderData][:chatId])
+      end
+
       Rails.logger.info "Customer: #{customer.inspect}"
 
       message = Message.new(customer: customer,
@@ -147,10 +151,10 @@ class MessagesController < ApplicationController
                             status: 'pending')
 
       if message.save
-        if customer.present? && customer.user.present?
+        if customer.user.present?
           UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
         else
-          UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer,  params[:messageData][:textMessageData][:textMessage]).deliver_now
+          UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
         end
       end
     elsif params[:typeWebhook] == "incomingCall"
