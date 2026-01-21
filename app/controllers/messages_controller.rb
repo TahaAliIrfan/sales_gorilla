@@ -138,7 +138,8 @@ class MessagesController < ApplicationController
       customer = Customer.find_by(whatsapp_chat_id: params[:senderData][:chatId])
 
       if customer.blank?
-        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:senderData][:chatId])
+        phone = params[:senderData][:chatId].gsub("c.us", "")
+        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:senderData][:chatId], phone: "+#{phone}")
       end
 
       Rails.logger.info "Customer: #{customer.inspect}"
