@@ -377,8 +377,8 @@ class Customer < ApplicationRecord
   end
 
   def calculate_lead_score
-    scoring_service = LeadScoringService.new(self)
-    scoring_service.calculate_score
+    #scoring_service = LeadScoringService.new(self)
+    #scoring_service.calculate_score
   end
 
   def lead_score_color
