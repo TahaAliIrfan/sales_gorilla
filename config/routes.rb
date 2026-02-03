@@ -112,6 +112,7 @@ Rails.application.routes.draw do
     resources :messages, only: [:index, :create] do
       collection do
         patch 'sync'
+        delete 'refresh'
       end
     end
 

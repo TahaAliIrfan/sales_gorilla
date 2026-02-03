@@ -217,6 +217,7 @@ class WhatsappMessageService
   private
 
   def process_message(message, customer, direction)
+
     message_type = determine_message_type(message[:typeMessage])
     message_id = message[:idMessage]
     whatsapp_chat_id = message[:chatId]

@@ -1,7 +1,7 @@
 class MessagesController < ApplicationController
   layout 'dashboard'
   before_action :require_login, except: :webhook
-  before_action :set_customer, only: [:index, :create, :sync]
+  before_action :set_customer, only: [:index, :create, :sync, :refresh]
   skip_before_action :verify_authenticity_token, only: [:webhook, :sync]
   after_action :verify_authorized, except: :webhook
 
@@ -123,6 +123,47 @@ class MessagesController < ApplicationController
       
       respond_to do |format|
         format.html { redirect_to @customer, alert: "Failed to sync messages: #{e.message}" }
+        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def refresh
+    authorize @customer, :show?
+    
+    if @customer.whatsapp_chat_id.blank?
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Customer does not have a WhatsApp chat ID.' }
+        format.json { render json: { success: false, error: 'Customer does not have a WhatsApp chat ID.' }, status: :unprocessable_entity }
+      end
+      return
+    end
+    
+    begin
+      # Delete all existing messages for this customer
+      deleted_count = @customer.messages.destroy_all.count
+      Rails.logger.info("Deleted #{deleted_count} messages for customer #{@customer.id}")
+      
+      # Fetch new messages from WhatsApp API
+      whatsapp_service = WhatsappMessageService.new
+      result = whatsapp_service.fetch_and_store_messages(@customer.whatsapp_chat_id, @customer)
+      
+      if result[:success]
+        respond_to do |format|
+          format.html { redirect_to @customer, notice: "Refreshed chats: deleted #{deleted_count} old messages, fetched #{result[:messages_count]} new messages." }
+          format.json { render json: { success: true, deleted_count: deleted_count, fetched_count: result[:messages_count] } }
+        end
+      else
+        respond_to do |format|
+          format.html { redirect_to @customer, alert: "Deleted #{deleted_count} messages but failed to fetch new ones: #{result[:error]}" }
+          format.json { render json: { success: false, deleted_count: deleted_count, error: result[:error] }, status: :unprocessable_entity }
+        end
+      end
+    rescue => e
+      Rails.logger.error("Failed to refresh WhatsApp messages for customer #{@customer.id}: #{e.message}")
+      
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: "Failed to refresh messages: #{e.message}" }
         format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
       end
     end
