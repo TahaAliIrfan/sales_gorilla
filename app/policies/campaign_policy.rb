@@ -18,7 +18,7 @@ class CampaignPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || record.user == user || user.manages?(record.user)
+    user.admin? || record.user == user || user.manages?(record.user) || record.user == nil
   end
 
   def create?
