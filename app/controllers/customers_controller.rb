@@ -69,7 +69,9 @@ class CustomersController < ApplicationController
   end
 
   def show
-    authorize @customer
+    if @customer.user_id.present?
+      authorize @customer
+    end
     @deals = @customer.deals
     @activities = @customer.customer_activities.recent.limit(10)
     @recordings = @customer.recordings.recent.limit(20)
