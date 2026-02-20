@@ -30,6 +30,8 @@ module Api
             facebook_click_id: params[:facebook_click_id],
             browser_id: params[:browser_id],
             meta_campaign_id: params[:meta_campaign_id],
+            utm_campaign: params[:utm_campaign],
+            utm_term: params[:utm_term],
             meta_adset_id: params[:meta_adset_id],
             meta_ad_id: params[:meta_ad_id]
           )
@@ -70,7 +72,9 @@ module Api
               repeat_lead: true,
               lead_source: 'CCR',
               created_at: Time.current,
-              whatsapp_chat_id: whatsapp_chat_id
+              whatsapp_chat_id: whatsapp_chat_id,
+              utm_campaign: params[:utm_campaign],
+              utm_term: params[:utm_term],
             )
           else
             # Create new customer
@@ -81,7 +85,9 @@ module Api
               lead_source: 'Website',
               status: 'CCR',
               idea_description: params[:description],
-              whatsapp_chat_id: whatsapp_chat_id
+              whatsapp_chat_id: whatsapp_chat_id,
+              utm_campaign: params[:utm_campaign],
+              utm_term: params[:utm_term],
             )
           end
 

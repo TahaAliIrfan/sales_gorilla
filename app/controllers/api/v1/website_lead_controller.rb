@@ -4,11 +4,12 @@ module Api
 
       def create
         if params[:email].present?
-
           @customer = Customer.new(name: params[:name],
                                    email: params[:email],
                                    phone: params[:phone_number],
                                    lead_source: 'Website',
+                                   utm_campaign: params[:utm_campaign],
+                                   utm_term: params[:utm_term],
                                    notes: params[:message])
           if @customer.save
             render json: { success: true, message: "Successfully created" }, status: :created
