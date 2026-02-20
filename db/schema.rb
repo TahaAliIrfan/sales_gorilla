@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_20_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -285,8 +285,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000001) do
     t.datetime "last_successful_call_at"
     t.string "utm_campaign"
     t.string "utm_term"
+    t.string "gclid", limit: 512
+    t.string "gbraid", limit: 512
+    t.string "wbraid", limit: 512
+    t.string "fbclid", limit: 512
+    t.string "msclkid", limit: 512
+    t.string "utm_source", limit: 255
+    t.string "utm_medium", limit: 255
+    t.string "utm_content", limit: 255
+    t.text "landing_page"
+    t.string "traffic_source", limit: 255
+    t.string "lead_quality"
+    t.datetime "lead_quality_marked_at"
+    t.bigint "lead_quality_marked_by_id"
+    t.datetime "google_conversion_sent_at"
+    t.string "google_conversion_status"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["facebook_click_id"], name: "index_customers_on_facebook_click_id"
+    t.index ["gclid"], name: "index_customers_on_gclid"
+    t.index ["google_conversion_status"], name: "index_customers_on_google_conversion_status"
+    t.index ["lead_quality"], name: "index_customers_on_lead_quality"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
     t.index ["user_id"], name: "index_customers_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
@@ -651,6 +669,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000001) do
   add_foreign_key "customer_groups", "users"
   add_foreign_key "customer_locations", "customers"
   add_foreign_key "customers", "users"
+  add_foreign_key "customers", "users", column: "lead_quality_marked_by_id"
   add_foreign_key "deal_activities", "deals"
   add_foreign_key "deal_activities", "users"
   add_foreign_key "deal_recordings", "deal_stages"
