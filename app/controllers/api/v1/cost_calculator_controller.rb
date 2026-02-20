@@ -30,10 +30,9 @@ module Api
             facebook_click_id: params[:facebook_click_id],
             browser_id: params[:browser_id],
             meta_campaign_id: params[:meta_campaign_id],
-            utm_campaign: params[:utm_campaign],
-            utm_term: params[:utm_term],
             meta_adset_id: params[:meta_adset_id],
-            meta_ad_id: params[:meta_ad_id]
+            meta_ad_id: params[:meta_ad_id],
+            **tracking_params
           )
 
           if customer.save
@@ -73,8 +72,7 @@ module Api
               lead_source: 'CCR',
               created_at: Time.current,
               whatsapp_chat_id: whatsapp_chat_id,
-              utm_campaign: params[:utm_campaign],
-              utm_term: params[:utm_term],
+              **tracking_params
             )
           else
             # Create new customer
@@ -86,8 +84,7 @@ module Api
               status: 'CCR',
               idea_description: params[:description],
               whatsapp_chat_id: whatsapp_chat_id,
-              utm_campaign: params[:utm_campaign],
-              utm_term: params[:utm_term],
+              **tracking_params
             )
           end
 
@@ -175,7 +172,8 @@ module Api
             customer.update!(
               name: name,
               phone: phone_number,
-              lead_source: 'CCR'
+              lead_source: 'CCR',
+              **tracking_params
             )
           else
             # Create new customer
@@ -186,7 +184,8 @@ module Api
               lead_source: 'CCR',
               status: 'Pending',
               idea_description: params[:description],
-              repeat_lead: false
+              repeat_lead: false,
+              **tracking_params
             )
             Rails.logger.info("Created new customer #{customer.id}")
           end
@@ -314,6 +313,23 @@ module Api
         rescue
           return nil
         end
+      end
+
+      def tracking_params
+        {
+          gclid: params[:gclid],
+          gbraid: params[:gbraid],
+          wbraid: params[:wbraid],
+          fbclid: params[:fbclid],
+          msclkid: params[:msclkid],
+          utm_source: params[:utm_source],
+          utm_medium: params[:utm_medium],
+          utm_campaign: params[:utm_campaign],
+          utm_term: params[:utm_term],
+          utm_content: params[:utm_content],
+          landing_page: params[:landing_page],
+          traffic_source: params[:traffic_source]
+        }.compact
       end
     end
   end

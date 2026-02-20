@@ -89,4 +89,9 @@ class CustomerPolicy < ApplicationPolicy
     # Allow any user to assign unassigned customers to themselves
     record.user_id.nil?
   end
-end 
+
+  def mark_lead_quality?
+    # Only admins can mark lead quality for Google Ads offline conversions
+    user.admin?
+  end
+end

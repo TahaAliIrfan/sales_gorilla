@@ -94,6 +94,29 @@
                     🔄 Repeat Lead
                   </span>
                 <% end %>
+                
+                <%# Lead Quality buttons - only for admins and when gclid is present %>
+                <% if current_user&.admin? && @customer.gclid.present? %>
+                  <div data-controller="lead-quality" data-lead-quality-customer-id-value="<%= @customer.id %>" class="inline-flex items-center">
+                    <% if @customer.lead_quality.present? %>
+                      <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium <%= @customer.lead_quality == 'good' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                        <%= @customer.lead_quality == 'good' ? '✓ Good Lead' : '✗ Bad Lead' %>
+                        <% if @customer.google_conversion_sent_at.present? %>
+                          <svg class="ml-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20" title="Sent to Google Ads">
+                            <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                          </svg>
+                        <% end %>
+                      </span>
+                    <% else %>
+                      <button data-action="click->lead-quality#markGood" class="px-3 py-1 bg-green-600 text-white rounded-l-full text-xs font-medium hover:bg-green-700 transition-colors">
+                        Good
+                      </button>
+                      <button data-action="click->lead-quality#markBad" class="px-3 py-1 bg-red-600 text-white rounded-r-full text-xs font-medium hover:bg-red-700 transition-colors">
+                        Bad
+                      </button>
+                    <% end %>
+                  </div>
+                <% end %>
               </div>
             </div>
             

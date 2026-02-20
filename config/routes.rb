@@ -86,6 +86,7 @@ Rails.application.routes.draw do
       post 'calculate_lead_score'
       post 'assign_to_self'
       post 'upload_documents'
+      post 'mark_lead_quality'
     end
     
     # Add routes for follow-ups

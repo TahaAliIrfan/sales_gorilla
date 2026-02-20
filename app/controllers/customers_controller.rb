@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
   after_action :verify_authorized, except: :index
   after_action :verify_policy_scoped, only: :index
 
@@ -569,6 +569,44 @@ class CustomersController < ApplicationController
     respond_to do |format|
       format.html { redirect_to @customer, alert: 'Failed to upload documents.' }
       format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+    end
+  end
+
+  def mark_lead_quality
+    authorize @customer
+
+    quality = params[:quality]
+
+    unless %w[good bad].include?(quality)
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Invalid lead quality value.' }
+        format.json { render json: { success: false, error: 'Invalid quality value. Must be "good" or "bad".' }, status: :unprocessable_entity }
+      end
+      return
+    end
+
+    begin
+      @customer.update!(
+        lead_quality: quality,
+        lead_quality_marked_at: Time.current,
+        lead_quality_marked_by_id: current_user.id
+      )
+
+      # Trigger Google Ads conversion upload if gclid is present
+      if @customer.gclid.present? || @customer.gbraid.present? || @customer.wbraid.present?
+        GoogleAdsConversionWorker.perform_async(@customer.id)
+      end
+
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: "Lead marked as #{quality}." }
+        format.json { render json: { success: true, quality: quality } }
+      end
+    rescue => e
+      Rails.logger.error("Error marking lead quality for customer #{@customer.id}: #{e.message}")
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: 'Failed to update lead quality.' }
+        format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
     end
   end
 

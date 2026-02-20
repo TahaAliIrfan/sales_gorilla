@@ -66,6 +66,9 @@ application.register("followup-modal", FollowupModalController)
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 
+import LeadQualityController from "./lead_quality_controller"
+application.register("lead-quality", LeadQualityController)
+
 import LeadSourceController from "./lead_source_controller"
 application.register("lead-source", LeadSourceController)
 
