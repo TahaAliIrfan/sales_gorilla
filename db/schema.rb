@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_26_100004) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -278,6 +278,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
     t.integer "geographic_score"
     t.integer "description_score"
     t.datetime "lead_score_updated_at"
+    t.string "state"
+    t.string "city"
+    t.string "area_code"
+    t.string "geo_name"
+    t.decimal "latitude", precision: 10, scale: 6
+    t.decimal "longitude", precision: 10, scale: 6
+    t.string "carrier"
+    t.string "phone_type"
+    t.decimal "timezone_offset", precision: 4, scale: 2
+    t.string "timezone_abbreviation"
+    t.datetime "phone_analysis_completed_at"
+    t.string "phone_analysis_version", default: "1.0"
     t.boolean "repeat_lead", default: false, null: false
     t.integer "total_call_attempts", default: 0, null: false
     t.integer "successful_call_attempts", default: 0, null: false
@@ -300,12 +312,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
     t.bigint "lead_quality_marked_by_id"
     t.datetime "google_conversion_sent_at"
     t.string "google_conversion_status"
+    t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
+    t.index ["carrier"], name: "index_customers_on_carrier"
+    t.index ["city"], name: "index_customers_on_city"
     t.index ["facebook_click_id"], name: "index_customers_on_facebook_click_id"
     t.index ["gclid"], name: "index_customers_on_gclid"
     t.index ["google_conversion_status"], name: "index_customers_on_google_conversion_status"
+    t.index ["latitude", "longitude"], name: "index_customers_on_coordinates"
     t.index ["lead_quality"], name: "index_customers_on_lead_quality"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
+    t.index ["phone_analysis_completed_at"], name: "index_customers_on_phone_analysis_completed_at"
+    t.index ["state"], name: "index_customers_on_state"
     t.index ["user_id"], name: "index_customers_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_customers_on_whatsapp_chat_id"
   end
@@ -424,6 +442,40 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
     t.index ["user_id"], name: "index_google_meets_on_user_id"
   end
 
+  create_table "invoice_line_items", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.bigint "milestone_item_id"
+    t.string "description", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_line_items_on_invoice_id"
+    t.index ["milestone_item_id"], name: "index_invoice_line_items_on_milestone_item_id"
+    t.index ["position"], name: "index_invoice_line_items_on_position"
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "milestone_id", null: false
+    t.bigint "user_id", null: false
+    t.string "invoice_number", null: false
+    t.string "project_name"
+    t.text "description"
+    t.date "issue_date", null: false
+    t.date "due_date", null: false
+    t.decimal "tax_rate", precision: 5, scale: 2, default: "0.0"
+    t.decimal "tax_amount", precision: 12, scale: 2, default: "0.0"
+    t.decimal "total", precision: 12, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_invoices_on_customer_id"
+    t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
+    t.index ["issue_date"], name: "index_invoices_on_issue_date"
+    t.index ["milestone_id"], name: "index_invoices_on_milestone_id"
+    t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
   create_table "meeting_participants", force: :cascade do |t|
     t.bigint "google_meet_id", null: false
     t.bigint "user_id", null: false
@@ -453,6 +505,36 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
     t.index ["message_id"], name: "index_messages_on_message_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
+  end
+
+  create_table "milestone_items", force: :cascade do |t|
+    t.bigint "milestone_id", null: false
+    t.decimal "amount", precision: 12, scale: 2, null: false
+    t.date "due_date"
+    t.string "description", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["milestone_id"], name: "index_milestone_items_on_milestone_id"
+    t.index ["position"], name: "index_milestone_items_on_position"
+  end
+
+  create_table "milestones", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.decimal "total_amount", precision: 12, scale: 2, null: false
+    t.string "schedule_type", default: "milestone", null: false
+    t.string "status", default: "unpaid", null: false
+    t.datetime "paid_at"
+    t.string "currency", default: "USD"
+    t.text "notes"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_milestones_on_customer_id"
+    t.index ["schedule_type"], name: "index_milestones_on_schedule_type"
+    t.index ["status"], name: "index_milestones_on_status"
+    t.index ["user_id"], name: "index_milestones_on_user_id"
   end
 
   create_table "ndas", force: :cascade do |t|
@@ -684,10 +766,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_20_000002) do
   add_foreign_key "emails", "customers"
   add_foreign_key "emails", "users"
   add_foreign_key "google_meets", "users"
+  add_foreign_key "invoice_line_items", "invoices"
+  add_foreign_key "invoice_line_items", "milestone_items"
+  add_foreign_key "invoices", "customers"
+  add_foreign_key "invoices", "milestones"
+  add_foreign_key "invoices", "users"
   add_foreign_key "meeting_participants", "google_meets"
   add_foreign_key "meeting_participants", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
+  add_foreign_key "milestone_items", "milestones"
+  add_foreign_key "milestones", "customers"
+  add_foreign_key "milestones", "users"
   add_foreign_key "ndas", "customers"
   add_foreign_key "ndas", "users"
   add_foreign_key "notification_logs", "customers"

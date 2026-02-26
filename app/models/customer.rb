@@ -10,6 +10,8 @@ class Customer < ApplicationRecord
   has_many :whatsapp_messages, dependent: :destroy
   has_many :emails, dependent: :destroy
   has_many :cost_estimates, dependent: :destroy
+  has_many :milestones, dependent: :destroy
+  has_many :invoices, dependent: :destroy
   has_many_attached :documents
 
   # Campaign relationships
@@ -177,6 +179,10 @@ class Customer < ApplicationRecord
 
   def active_deals_count
     deals.active.count
+  end
+
+  def unpaid_milestones_count
+    milestones.unpaid.count
   end
 
   def current_time_in_timezone

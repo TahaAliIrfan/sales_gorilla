@@ -222,6 +222,23 @@
             </svg>
             Documents
           </button>
+          <button data-action="click->tabs#switch" data-tabs-target="tab" data-tab-id="invoices" class="tab-button group inline-flex items-center py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+            <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Invoices
+            <span class="ml-2 bg-gray-100 text-gray-800 py-0.5 px-2 rounded-full text-xs font-medium"><%= @customer.invoices.count %></span>
+          </button>
+          <button data-action="click->tabs#switch" data-tabs-target="tab" data-tab-id="milestones" class="tab-button group inline-flex items-center py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+            <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Milestones
+            <span class="ml-2 bg-gray-100 text-gray-800 py-0.5 px-2 rounded-full text-xs font-medium"><%= @customer.milestones.count %></span>
+            <% if @customer.unpaid_milestones_count > 0 %>
+              <span class="ml-2 bg-amber-100 text-amber-800 py-0.5 px-2 rounded-full text-xs font-medium"><%= @customer.unpaid_milestones_count %> unpaid</span>
+            <% end %>
+          </button>
         </nav>
       </div>
 
@@ -230,6 +247,19 @@
         <!-- Overview Tab -->
         <div data-tabs-target="content" data-tab-id="overview" class="tab-content">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <% if @customer.unpaid_milestones_count > 0 %>
+              <div class="lg:col-span-2">
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+                  <div class="flex items-center">
+                    <svg class="h-5 w-5 text-amber-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="text-sm font-medium text-amber-800"><%= @customer.unpaid_milestones_count %> unpaid milestone<%= @customer.unpaid_milestones_count == 1 ? '' : 's' %></span>
+                  </div>
+                  <%= link_to "View Milestones", customer_milestones_path(@customer), class: "text-sm font-medium text-amber-700 hover:text-amber-900 underline" %>
+                </div>
+              </div>
+            <% end %>
             <!-- Stats Cards -->
             <div class="grid grid-cols-2 gap-4">
               <div class="bg-blue-50 rounded-lg p-4">
@@ -1080,6 +1110,88 @@
               <span class="text-sm font-medium text-blue-900">Uploading documents...</span>
             </div>
           </div>
+        </div>
+
+        <!-- Invoices Tab -->
+        <div data-tabs-target="content" data-tab-id="invoices" class="tab-content hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Invoices</h3>
+            <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" do %>
+              <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              New Invoice
+            <% end %>
+          </div>
+          <% if @customer.invoices.any? %>
+            <div class="space-y-3">
+              <% @customer.invoices.order(created_at: :desc).each do |invoice| %>
+                <div class="bg-white rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-200 flex items-center justify-between">
+                  <div>
+                    <p class="font-semibold text-gray-900"><%= invoice.invoice_number %></p>
+                    <p class="text-sm text-gray-500"><%= invoice.project_name.presence || invoice.milestone.name %> • <%= number_to_currency(invoice.total) %></p>
+                  </div>
+                  <div class="flex gap-2">
+                    <%= link_to "Edit", edit_customer_invoice_path(@customer, invoice), class: "text-sm text-blue-600 hover:text-blue-800 font-medium" %>
+                    <%= link_to "Download PDF", download_pdf_customer_invoice_path(@customer, invoice), class: "text-sm text-purple-600 hover:text-purple-800 font-medium" %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-500">No invoices yet. Create an invoice from a milestone.</p>
+              <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium" do %>
+                New Invoice
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Milestones Tab -->
+        <div data-tabs-target="content" data-tab-id="milestones" class="tab-content hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-semibold text-gray-900">Milestones</h3>
+            <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" do %>
+              <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              New Milestone
+            <% end %>
+          </div>
+          <% if @customer.milestones.any? %>
+            <div class="space-y-4">
+              <% @customer.milestones.order(created_at: :desc).each do |milestone| %>
+                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <p class="font-semibold text-gray-900"><%= milestone.name %></p>
+                      <p class="text-sm text-gray-500"><%= number_to_currency(milestone.total_amount) %> • <%= milestone.schedule_type.titleize %></p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium <%= milestone.paid? ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
+                        <%= milestone.status.titleize %>
+                      </span>
+                      <% if milestone.paid? %>
+                        <%= button_to "Mark Unpaid", mark_unpaid_customer_milestone_path(@customer, milestone), method: :patch, class: "text-sm px-2 py-1 bg-gray-200 rounded hover:bg-gray-300" %>
+                      <% else %>
+                        <%= button_to "Mark Paid", mark_paid_customer_milestone_path(@customer, milestone), method: :patch, class: "text-sm px-2 py-1 bg-green-600 text-white rounded hover:bg-green-700" %>
+                      <% end %>
+                      <%= link_to "Edit", edit_customer_milestone_path(@customer, milestone), class: "text-sm text-blue-600 hover:text-blue-800 font-medium" %>
+                      <%= link_to "Create Invoice", new_customer_invoice_path(@customer, milestone_id: milestone.id), class: "text-sm text-purple-600 hover:text-purple-800 font-medium" %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-12 bg-gray-50 rounded-lg">
+              <p class="text-sm text-gray-500">No milestones yet. Create a milestone to track payments.</p>
+              <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium" do %>
+                New Milestone
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </div>
     </div>

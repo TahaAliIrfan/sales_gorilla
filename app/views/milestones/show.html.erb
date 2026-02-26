@@ -1,0 +1,70 @@
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="mb-6">
+    <%= link_to customer_milestones_path(@customer), class: "text-sm text-gray-600 hover:text-gray-900 flex items-center mb-2" do %>
+      <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Milestones
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900"><%= @milestone.name %></h1>
+        <div class="flex items-center gap-2 mt-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @milestone.paid? ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
+            <%= @milestone.status.titleize %>
+          </span>
+          <span class="text-sm text-gray-500"><%= @milestone.schedule_type.titleize %></span>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <% if @milestone.paid? %>
+          <%= button_to "Mark Unpaid", mark_unpaid_customer_milestone_path(@customer, @milestone), method: :patch, class: "px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm" %>
+        <% else %>
+          <%= button_to "Mark Paid", mark_paid_customer_milestone_path(@customer, @milestone), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm" %>
+        <% end %>
+        <%= link_to "Edit", edit_customer_milestone_path(@customer, @milestone), class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" %>
+        <%= link_to "Create Invoice", new_customer_invoice_path(@customer, milestone_id: @milestone.id), class: "px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm" %>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <p class="text-3xl font-bold text-gray-900"><%= number_to_currency(@milestone.total_amount) %></p>
+      <% if @milestone.paid_at.present? %>
+        <p class="text-sm text-gray-500 mt-1">Paid on <%= @milestone.paid_at.strftime('%B %d, %Y') %></p>
+      <% end %>
+    </div>
+
+    <% if @milestone.notes.present? %>
+      <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+        <p class="text-sm text-gray-700"><%= @milestone.notes %></p>
+      </div>
+    <% end %>
+
+    <h3 class="text-sm font-medium text-gray-700 uppercase mb-3">Payment Schedule</h3>
+    <% if @milestone.milestone_items.any? %>
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Due Date</th>
+            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          <% @milestone.milestone_items.each do |item| %>
+            <tr>
+              <td class="px-4 py-3 text-sm text-gray-900"><%= item.description %></td>
+              <td class="px-4 py-3 text-sm text-gray-500"><%= item.due_date&.strftime('%b %d, %Y') || '-' %></td>
+              <td class="px-4 py-3 text-sm font-medium text-gray-900 text-right"><%= number_to_currency(item.amount) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-sm text-gray-500">No items yet. Edit this milestone to add payment schedule items.</p>
+    <% end %>
+  </div>
+</div>

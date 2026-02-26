@@ -88,6 +88,17 @@ Rails.application.routes.draw do
       post 'upload_documents'
       post 'mark_lead_quality'
     end
+
+    resources :invoices do
+      member { get :download_pdf }
+    end
+    resources :milestones do
+      member do
+        patch :mark_paid
+        patch :mark_unpaid
+      end
+      resources :milestone_items, only: [:create, :update]
+    end
     
     # Add routes for follow-ups
     resources :followups, controller: 'customer_followups', only: [:new, :create]

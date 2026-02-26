@@ -1,0 +1,64 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  <div class="mb-6">
+    <%= link_to customer_invoices_path(@customer), class: "text-sm text-gray-600 hover:text-gray-900 flex items-center mb-2" do %>
+      <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back to Invoices
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div class="flex justify-between items-start mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Invoice <%= @invoice.invoice_number %></h1>
+        <p class="text-gray-600 mt-1"><%= @invoice.project_name.presence || @invoice.milestone.name %></p>
+      </div>
+      <div class="flex gap-2">
+        <%= link_to "Edit", edit_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm" %>
+        <%= link_to "Download PDF", download_pdf_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm" %>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-6 mb-8">
+      <div>
+        <h3 class="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
+        <p class="font-medium text-gray-900"><%= @customer.name %></p>
+        <%= @customer.company if @customer.company.present? %><br>
+        <%= @customer.email if @customer.email.present? %><br>
+        <%= @customer.address if @customer.address.present? %>
+      </div>
+      <div>
+        <p class="text-sm text-gray-500">Issue Date: <span class="font-medium text-gray-900"><%= @invoice.issue_date.strftime('%B %d, %Y') %></span></p>
+        <p class="text-sm text-gray-500 mt-1">Due Date: <span class="font-medium text-gray-900"><%= @invoice.due_date.strftime('%B %d, %Y') %></span></p>
+      </div>
+    </div>
+
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @invoice.invoice_line_items.each do |item| %>
+          <tr>
+            <td class="px-4 py-3 text-sm text-gray-900"><%= item.description %></td>
+            <td class="px-4 py-3 text-sm text-gray-900 text-right"><%= number_to_currency(item.amount) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div class="mt-6 flex justify-end">
+      <div class="w-48 space-y-2 text-right">
+        <p class="text-sm text-gray-600">Subtotal: <span class="font-medium"><%= number_to_currency(@invoice.subtotal) %></span></p>
+        <% if @invoice.tax_amount.to_f > 0 %>
+          <p class="text-sm text-gray-600">Tax (<%= @invoice.tax_rate %>%): <span class="font-medium"><%= number_to_currency(@invoice.tax_amount) %></span></p>
+        <% end %>
+        <p class="text-lg font-bold text-gray-900">Total: <%= number_to_currency(@invoice.total) %></p>
+      </div>
+    </div>
+  </div>
+</div>
