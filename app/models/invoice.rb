@@ -4,6 +4,7 @@ class Invoice < ApplicationRecord
   belongs_to :user
   has_many :invoice_line_items, -> { order(:position) }, dependent: :destroy
   has_one_attached :pdf_file
+  has_one_attached :payment_proof
 
   enum status: { pending: 'pending', paid: 'paid' }
 
@@ -15,7 +16,16 @@ class Invoice < ApplicationRecord
   accepts_nested_attributes_for :invoice_line_items, allow_destroy: true
 
   before_validation :set_invoice_number, on: :create
+  before_validation :set_public_token, on: :create
   before_validation :recalculate_totals
+
+  def publicly_viewable?
+    pending? && !expired?
+  end
+
+  def expired?
+    due_date < Date.current
+  end
 
   def subtotal
     invoice_line_items.map(&:amount).compact.sum
@@ -42,6 +52,15 @@ class Invoice < ApplicationRecord
 
   def set_invoice_number
     self.invoice_number ||= self.class.next_invoice_number
+  end
+
+  def set_public_token
+    return if public_token.present?
+    return unless Invoice.column_names.include?("public_token")
+    loop do
+      self.public_token = SecureRandom.urlsafe_base64(24).tr("-_", "").first(32)
+      break unless self.class.exists?(public_token: public_token)
+    end
   end
 
   def recalculate_totals

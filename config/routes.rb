@@ -80,6 +80,11 @@ Rails.application.routes.draw do
   # Global Invoices index (sidebar)
   get 'invoices', to: 'all_invoices#index', as: :invoices
 
+  # Public invoice view (masked URL for clients – view, download PDF, upload payment proof)
+  get 'i/:token/pdf', to: 'public_invoices#download_pdf', as: :public_invoice_pdf
+  get 'i/:token', to: 'public_invoices#show', as: :public_invoice
+  post 'i/:token/payment_proof', to: 'public_invoices#upload_payment_proof', as: :public_invoice_payment_proof
+
   # Add RESTful routes for our models
   resources :customers do
     member do

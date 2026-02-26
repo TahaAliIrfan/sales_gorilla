@@ -1,0 +1,122 @@
+<div class="max-w-2xl mx-auto">
+  <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+    <% if flash[:notice] %>
+      <div class="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+    <% if flash[:error] %>
+      <div class="mx-6 mt-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm">
+        <%= flash[:error] %>
+      </div>
+    <% end %>
+
+    <div class="p-8 sm:p-10">
+      <div class="flex items-center justify-between mb-8">
+        <img src="/tecaudex.svg" alt="Tecaudex" class="h-10 w-auto" onerror="this.style.display='none'" />
+        <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice</span>
+      </div>
+
+      <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Invoice <%= @invoice.invoice_number %></h1>
+          <p class="text-slate-600 mt-1"><%= @invoice.project_name.presence || @invoice.milestone.name %></p>
+        </div>
+        <%= link_to public_invoice_pdf_path(@invoice.public_token), class: "inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium text-sm" do %>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+          Download PDF
+        <% end %>
+      </div>
+
+      <% @customer = @invoice.customer %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+        <div>
+          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Bill To</h3>
+          <p class="font-medium text-slate-900"><%= @customer.name %></p>
+          <%= tag.p @customer.company, class: "text-slate-600" if @customer.company.present? %>
+          <%= tag.p @customer.email, class: "text-slate-600" if @customer.email.present? %>
+          <%= tag.p @customer.address, class: "text-slate-600" if @customer.address.present? %>
+        </div>
+        <div>
+          <p class="text-sm text-slate-500">Issue Date: <span class="font-medium text-slate-900"><%= @invoice.issue_date.strftime('%B %d, %Y') %></span></p>
+          <p class="text-sm text-slate-500 mt-1">Due Date: <span class="font-medium text-slate-900"><%= @invoice.due_date.strftime('%B %d, %Y') %></span></p>
+        </div>
+      </div>
+
+      <div class="border border-slate-200 rounded-xl overflow-hidden mb-8">
+        <table class="min-w-full divide-y divide-slate-200">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
+              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 bg-white">
+            <% @invoice.invoice_line_items.each do |item| %>
+              <tr>
+                <td class="px-4 py-3 text-sm text-slate-900"><%= item.description %></td>
+                <td class="px-4 py-3 text-sm text-slate-900 text-right"><%= number_to_currency(item.amount) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <% if @invoice.payment_link.present? %>
+        <div class="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+          <p class="text-sm font-medium text-blue-900 mb-2">Pay online</p>
+          <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener", class: "text-blue-600 hover:text-blue-800 break-all text-sm font-medium" %>
+        </div>
+      <% end %>
+
+      <div class="flex justify-end mb-10">
+        <div class="w-48 space-y-2 text-right">
+          <p class="text-sm text-slate-600">Subtotal: <span class="font-medium text-slate-900"><%= number_to_currency(@invoice.subtotal) %></span></p>
+          <% if @invoice.tax_amount.to_f > 0 %>
+            <p class="text-sm text-slate-600">Tax (<%= @invoice.tax_rate %>%): <span class="font-medium text-slate-900"><%= number_to_currency(@invoice.tax_amount) %></span></p>
+          <% end %>
+          <p class="text-lg font-bold text-slate-900">Total: <%= number_to_currency(@invoice.total) %></p>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-slate-200">
+        <div id="payment-proof-card" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-8">
+          <h3 class="text-lg font-semibold text-slate-800 mb-2">Payment proof</h3>
+          <p class="text-sm text-slate-600 mb-6">Upload a screenshot or receipt of your payment (image or PDF, max 10MB)</p>
+          <% if @invoice.payment_proof.attached? %>
+            <div class="mb-6 p-4 bg-white border border-emerald-200 rounded-xl flex items-center justify-between gap-4">
+              <div>
+                <p class="font-medium text-emerald-800">Submitted</p>
+                <p class="text-sm text-slate-600"><%= @invoice.payment_proof.filename %> · <%= number_to_human_size(@invoice.payment_proof.byte_size) %></p>
+              </div>
+              <button type="button" id="replace-toggle" onclick="var f=document.getElementById('replace-form'); f.classList.toggle('hidden'); this.textContent=f.classList.contains('hidden')?'Replace file':'Cancel';" class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-50">
+                Replace file
+              </button>
+            </div>
+            <div id="replace-form" class="hidden">
+          <% end %>
+          <%= form_tag public_invoice_payment_proof_path(@invoice.public_token), method: :post, multipart: true, data: { turbo: false }, class: "space-y-4" do %>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <label class="flex-1 cursor-pointer block">
+                <span class="sr-only">Choose file</span>
+                <span class="flex items-center justify-center gap-2 w-full py-6 px-4 border-2 border-slate-300 border-dashed rounded-xl bg-white hover:bg-slate-50 hover:border-blue-400 transition-colors text-slate-600 hover:text-blue-600 font-medium">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                  <span id="file-label"><%= @invoice.payment_proof.attached? ? "Choose new file" : "Click to choose file" %></span>
+                </span>
+                <%= file_field_tag "invoice[payment_proof]", accept: "image/*,.pdf", required: true, class: "hidden", data: { file_label: "file-label" }, onchange: "document.getElementById('file-label').textContent = this.files[0] ? this.files[0].name : 'Click to choose file'" %>
+              </label>
+              <button type="submit" class="shrink-0 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-sm">
+                <%= @invoice.payment_proof.attached? ? "Replace & Submit" : "Submit" %>
+              </button>
+            </div>
+          <% end %>
+          <% if @invoice.payment_proof.attached? %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="mt-6 text-center text-xs text-slate-400">Tecaudex · Invoice <%= @invoice.invoice_number %></p>
+</div>
