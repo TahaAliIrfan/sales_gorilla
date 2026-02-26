@@ -27,6 +27,10 @@ class InvoicePolicy < ApplicationPolicy
     customer_accessible?
   end
 
+  def mark_paid?
+    customer_accessible?
+  end
+
   private
 
   def customer_accessible?

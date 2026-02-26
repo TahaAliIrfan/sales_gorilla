@@ -14,9 +14,15 @@
         <h1 class="text-2xl font-bold text-gray-900">Invoice <%= @invoice.invoice_number %></h1>
         <p class="text-gray-600 mt-1"><%= @invoice.project_name.presence || @invoice.milestone.name %></p>
       </div>
-      <div class="flex gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @invoice.paid? ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
+          <%= @invoice.status.titleize %>
+        </span>
         <%= link_to "Edit", edit_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm" %>
         <%= link_to "Download PDF", download_pdf_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm" %>
+        <% if @invoice.pending? %>
+          <%= button_to "Mark Paid", mark_paid_customer_invoice_path(@customer, @invoice), method: :patch, class: "inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm" %>
+        <% end %>
       </div>
     </div>
 
@@ -50,6 +56,13 @@
         <% end %>
       </tbody>
     </table>
+
+    <% if @invoice.payment_link.present? %>
+      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+        <p class="text-sm font-medium text-gray-700">Payment Link</p>
+        <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener", class: "text-blue-600 hover:text-blue-800 break-all" %>
+      </div>
+    <% end %>
 
     <div class="mt-6 flex justify-end">
       <div class="w-48 space-y-2 text-right">

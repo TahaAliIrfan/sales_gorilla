@@ -5,6 +5,8 @@ class Invoice < ApplicationRecord
   has_many :invoice_line_items, -> { order(:position) }, dependent: :destroy
   has_one_attached :pdf_file
 
+  enum status: { pending: 'pending', paid: 'paid' }
+
   validates :invoice_number, presence: true, uniqueness: true
   validates :issue_date, presence: true
   validates :due_date, presence: true

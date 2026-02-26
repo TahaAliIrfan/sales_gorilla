@@ -133,6 +133,10 @@ class InvoicePdfService
     pdf.line_width 1
     pdf.stroke_horizontal_rule
     pdf.move_down 15
+    if @invoice.payment_link.present?
+      pdf.text "Pay online: #{sanitize(@invoice.payment_link)}", align: :center, size: 8
+      pdf.move_down 8
+    end
     pdf.text "Thank you for your business.", align: :center
     pdf.text "Tecaudex", align: :center, style: :bold
   end

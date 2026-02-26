@@ -4,7 +4,7 @@ class InvoicesController < ApplicationController
   layout 'dashboard'
   before_action :require_login
   before_action :set_customer
-  before_action :set_invoice, only: [:show, :edit, :update, :download_pdf]
+  before_action :set_invoice, only: [:show, :edit, :update, :download_pdf, :mark_paid]
 
   def index
     @invoices = @customer.invoices.includes(:milestone, :user).order(created_at: :desc)
@@ -71,6 +71,12 @@ class InvoicesController < ApplicationController
     end
   end
 
+  def mark_paid
+    authorize @invoice
+    @invoice.update!(status: 'paid')
+    redirect_back fallback_location: customer_invoice_path(@customer, @invoice), notice: "Invoice marked as paid."
+  end
+
   def download_pdf
     authorize @invoice
 
@@ -102,7 +108,7 @@ class InvoicesController < ApplicationController
 
   def invoice_params
     params.require(:invoice).permit(
-      :project_name, :description, :issue_date, :due_date, :tax_rate,
+      :project_name, :description, :issue_date, :due_date, :tax_rate, :payment_link, :status,
       invoice_line_items_attributes: [:id, :description, :amount, :position, :_destroy]
     )
   end

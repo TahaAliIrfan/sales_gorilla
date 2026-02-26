@@ -77,6 +77,9 @@ Rails.application.routes.draw do
 
   match 'webhook', to: 'messages#webhook', via: [:get, :post]
 
+  # Global Invoices index (sidebar)
+  get 'invoices', to: 'all_invoices#index', as: :invoices
+
   # Add RESTful routes for our models
   resources :customers do
     member do
@@ -90,7 +93,10 @@ Rails.application.routes.draw do
     end
 
     resources :invoices do
-      member { get :download_pdf }
+      member do
+        get :download_pdf
+        patch :mark_paid
+      end
     end
     resources :milestones do
       member do

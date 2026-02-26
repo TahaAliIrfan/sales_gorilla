@@ -34,10 +34,13 @@
   </div>
 
   <div>
-    <h3 class="text-sm font-medium text-gray-700 mb-3">Payment Schedule Items</h3>
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-medium text-gray-700">Payment Schedule Items</h3>
+      <button type="button" id="add-milestone-item" class="text-sm text-blue-600 hover:text-blue-800 font-medium">+ Add Item</button>
+    </div>
     <div id="milestone-items" class="space-y-3">
       <%= f.fields_for :milestone_items do |item_f| %>
-        <div class="flex gap-4 items-end p-3 bg-gray-50 rounded-lg">
+        <div class="milestone-item-row flex gap-4 items-end p-3 bg-gray-50 rounded-lg">
           <div class="flex-1">
             <%= item_f.label :description, "Description", class: "block text-xs font-medium text-gray-500 mb-1" %>
             <%= item_f.text_field :description, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "e.g., Design Phase" %>
@@ -50,16 +53,70 @@
             <%= item_f.label :due_date, "Due Date", class: "block text-xs font-medium text-gray-500 mb-1" %>
             <%= item_f.date_field :due_date, class: "block w-full rounded-lg border-gray-300 shadow-sm" %>
           </div>
-          <% if milestone.persisted? %>
-            <div class="flex items-center">
-              <%= item_f.check_box :_destroy, class: "rounded border-gray-300" %>
-              <%= item_f.label :_destroy, "Remove", class: "ml-1 text-sm text-red-600" %>
-            </div>
-          <% end %>
+          <div class="flex items-center">
+            <% if milestone.persisted? %>
+              <%= item_f.check_box :_destroy, class: "rounded border-gray-300 hidden destroy-checkbox" %>
+            <% end %>
+            <button type="button" class="remove-milestone-item text-sm text-red-600 hover:text-red-800 font-medium">Remove</button>
+          </div>
         </div>
       <% end %>
     </div>
   </div>
+
+  <template id="milestone-item-template">
+    <%= f.fields_for :milestone_items, MilestoneItem.new, child_index: "NEW_ITEM_INDEX" do |item_f| %>
+      <div class="milestone-item-row flex gap-4 items-end p-3 bg-gray-50 rounded-lg">
+        <%= item_f.hidden_field :position, value: "NEW_POSITION" %>
+        <div class="flex-1">
+          <%= item_f.label :description, "Description", class: "block text-xs font-medium text-gray-500 mb-1" %>
+          <%= item_f.text_field :description, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "e.g., Design Phase" %>
+        </div>
+        <div class="w-32">
+          <%= item_f.label :amount, class: "block text-xs font-medium text-gray-500 mb-1" %>
+          <%= item_f.number_field :amount, step: 0.01, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "0" %>
+        </div>
+        <div class="w-40">
+          <%= item_f.label :due_date, "Due Date", class: "block text-xs font-medium text-gray-500 mb-1" %>
+          <%= item_f.date_field :due_date, class: "block w-full rounded-lg border-gray-300 shadow-sm" %>
+        </div>
+        <div class="flex items-center">
+          <button type="button" class="remove-milestone-item text-sm text-red-600 hover:text-red-800 font-medium">Remove</button>
+        </div>
+      </div>
+    <% end %>
+  </template>
+
+  <script>
+  (function() {
+    const container = document.getElementById('milestone-items');
+    const addBtn = document.getElementById('add-milestone-item');
+    const template = document.getElementById('milestone-item-template');
+    if (!container || !addBtn || !template) return;
+
+    addBtn.addEventListener('click', function() {
+      const index = new Date().getTime();
+      const position = container.querySelectorAll('.milestone-item-row').length;
+      const html = template.innerHTML
+        .replace(/NEW_ITEM_INDEX/g, index)
+        .replace(/NEW_POSITION/g, position);
+      container.insertAdjacentHTML('beforeend', html);
+    });
+
+    container.addEventListener('click', function(e) {
+      if (e.target.classList.contains('remove-milestone-item')) {
+        const row = e.target.closest('.milestone-item-row');
+        const destroyCheckbox = row && row.querySelector('.destroy-checkbox');
+        if (destroyCheckbox) {
+          destroyCheckbox.checked = true;
+          row.style.display = 'none';
+        } else {
+          row.remove();
+        }
+      }
+    });
+  })();
+  </script>
 
   <div class="flex gap-3 pt-4">
     <%= f.submit milestone.persisted? ? "Update Milestone" : "Create Milestone", class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer" %>
