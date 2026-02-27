@@ -134,7 +134,8 @@ class InvoicePdfService
     pdf.stroke_horizontal_rule
     pdf.move_down 15
     if @invoice.payment_link.present?
-      pdf.text "Pay online: #{sanitize(@invoice.payment_link)}", align: :center, size: 8
+      label = @invoice.payment_link_label.present? ? "Pay online (#{sanitize(@invoice.payment_link_label)}): " : "Pay online: "
+      pdf.text "#{label}#{sanitize(@invoice.payment_link)}", align: :center, size: 8
       pdf.move_down 8
     end
     pdf.text "Thank you for your business.", align: :center

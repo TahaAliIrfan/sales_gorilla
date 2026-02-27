@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_26_120002) do
+ActiveRecord::Schema[7.1].define(version: 2026_02_26_130001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -472,6 +472,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_120002) do
     t.string "payment_link"
     t.string "status", default: "pending", null: false
     t.string "public_token"
+    t.string "payment_link_label"
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
     t.index ["issue_date"], name: "index_invoices_on_issue_date"

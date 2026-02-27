@@ -64,7 +64,7 @@
 
       <% if @invoice.payment_link.present? %>
         <div class="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-          <p class="text-sm font-medium text-blue-900 mb-2">Pay online</p>
+          <p class="text-sm font-medium text-blue-900 mb-2">Pay online<% if @invoice.payment_link_label.present? %> — <%= @invoice.payment_link_label %><% end %></p>
           <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener", class: "text-blue-600 hover:text-blue-800 break-all text-sm font-medium" %>
         </div>
       <% end %>
