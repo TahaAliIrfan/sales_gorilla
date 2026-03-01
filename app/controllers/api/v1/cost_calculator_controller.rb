@@ -51,6 +51,7 @@ module Api
         name = contact_info[:name]
         email = contact_info[:email]
         phone_number = contact_info[:phone_number]
+        gclid = params[:gclid]
 
         if name.blank? || email.blank?
           render json: { success: false, error: "Name and email are required" }, status: :unprocessable_entity
@@ -71,6 +72,7 @@ module Api
               repeat_lead: true,
               lead_source: 'CCR',
               created_at: Time.current,
+              gclid: gclid,
               whatsapp_chat_id: whatsapp_chat_id,
               **tracking_params
             )
@@ -82,6 +84,7 @@ module Api
               phone: phone_number,
               lead_source: 'Website',
               status: 'CCR',
+              gclid: gclid,
               idea_description: params[:description],
               whatsapp_chat_id: whatsapp_chat_id,
               **tracking_params
@@ -157,6 +160,7 @@ module Api
         name = contact_info[:name]
         email = contact_info[:email]
         phone_number = contact_info[:phone_number]
+        gclid = params[:gclid]
 
         if name.blank? || email.blank?
           render json: { success: false, error: "Name and email are required" }, status: :unprocessable_entity
@@ -173,6 +177,7 @@ module Api
               name: name,
               phone: phone_number,
               lead_source: 'CCR',
+              gclid: params[:gclid],
               **tracking_params
             )
           else
@@ -183,6 +188,7 @@ module Api
               phone: phone_number,
               lead_source: 'CCR',
               status: 'Pending',
+              gclid: params[:gclid],
               idea_description: params[:description],
               repeat_lead: false,
               **tracking_params
