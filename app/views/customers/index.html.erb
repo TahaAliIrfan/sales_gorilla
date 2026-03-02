@@ -116,6 +116,25 @@
           <% end %>
         </select>
 
+      <!-- Date Range Filters -->
+          <div class="flex items-center gap-2">
+            <input type="date"
+                   class="border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                   data-customer-filter-target="startDate"
+                   data-action="change->customer-filter#filter"
+                   title="From date"
+                   placeholder="Start date"
+                   value="<%= params[:start_date] %>">
+            <span class="text-gray-400 text-xs">to</span>
+            <input type="date"
+                   class="border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                   data-customer-filter-target="endDate"
+                   data-action="change->customer-filter#filter"
+                   title="To date"
+                   placeholder="End date"
+                   value="<%= params[:end_date] %>">
+          </div>
+
       <!-- Sort Direction -->
         <select id="direction-filter"
                   class="border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
@@ -167,6 +186,15 @@
           </svg>
         </button>
       </span>
+
+          <span data-customer-filter-target="dateRangeBadge" class="hidden inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-700">
+            <span data-customer-filter-target="dateRangeText"></span>
+            <button type="button" data-action="click->customer-filter#clearDateRange" class="ml-1.5 text-teal-600 hover:text-teal-800">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </span>
 
           <span data-customer-filter-target="customerTypeBadge" class="hidden inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
         <span data-customer-filter-target="customerTypeText"></span>

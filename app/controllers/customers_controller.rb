@@ -55,6 +55,14 @@ class CustomersController < ApplicationController
     # Filter by customer type (high value leads) if provided
     @customers = @customers.where(customer_type: params[:customer_type]) if params[:customer_type].present?
     
+    # Filter by date range if provided
+    if params[:start_date].present?
+      @customers = @customers.where('customers.created_at >= ?', Date.parse(params[:start_date]).beginning_of_day)
+    end
+    if params[:end_date].present?
+      @customers = @customers.where('customers.created_at <= ?', Date.parse(params[:end_date]).end_of_day)
+    end
+    
     # Apply sorting - always sort by created_at since we removed the sort column
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("created_at #{sort_direction}")
@@ -65,7 +73,8 @@ class CustomersController < ApplicationController
     # Track filter state for the view
     @filter_applied = params[:search].present? || params[:user_id].present? || 
                       params[:status].present? || params[:lead_source].present? ||
-                      params[:customer_type].present?
+                      params[:customer_type].present? || params[:start_date].present? ||
+                      params[:end_date].present?
   end
 
   def show

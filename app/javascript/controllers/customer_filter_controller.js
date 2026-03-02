@@ -10,6 +10,8 @@ export default class extends Controller {
     "customerType",
     "status",
     "direction",
+    "startDate",
+    "endDate",
     "customersList",
     "noResults",
     "resultsCount",
@@ -22,6 +24,8 @@ export default class extends Controller {
     "statusText",
     "leadSourceBadge",
     "leadSourceText",
+    "dateRangeBadge",
+    "dateRangeText",
     "customerTypeBadge",
     "customerTypeText"
   ]
@@ -49,7 +53,8 @@ export default class extends Controller {
     const urlParams = new URLSearchParams(window.location.search)
     return urlParams.has('search') || urlParams.has('user_id') || 
            urlParams.has('status') || urlParams.has('lead_source') || 
-           urlParams.has('customer_type') || urlParams.has('direction')
+           urlParams.has('customer_type') || urlParams.has('direction') ||
+           urlParams.has('start_date') || urlParams.has('end_date')
   }
   
   initializeFromUrlParams() {
@@ -90,6 +95,16 @@ export default class extends Controller {
       this.customerTypeTarget.value = customerTypeParam
     }
     
+    // Set date range parameters
+    const startDateParam = urlParams.get('start_date')
+    if (startDateParam && this.hasStartDateTarget) {
+      this.startDateTarget.value = startDateParam
+    }
+    const endDateParam = urlParams.get('end_date')
+    if (endDateParam && this.hasEndDateTarget) {
+      this.endDateTarget.value = endDateParam
+    }
+
     // Set direction parameter
     const directionParam = urlParams.get('direction')
     if (directionParam && this.directionTarget.querySelector(`option[value="${directionParam}"]`)) {
@@ -127,6 +142,13 @@ export default class extends Controller {
         this.customerTypeTarget.value = storedFilters.customerType
       }
       
+      if (storedFilters.startDate && this.hasStartDateTarget) {
+        this.startDateTarget.value = storedFilters.startDate
+      }
+      if (storedFilters.endDate && this.hasEndDateTarget) {
+        this.endDateTarget.value = storedFilters.endDate
+      }
+
       if (storedFilters.sortDirection && this.directionTarget.querySelector(`option[value="${storedFilters.sortDirection}"]`)) {
         this.directionTarget.value = storedFilters.sortDirection
       }
@@ -145,6 +167,8 @@ export default class extends Controller {
       filters.status ||
       (filters.leadSources && filters.leadSources.length > 0) ||
       filters.customerType ||
+      filters.startDate ||
+      filters.endDate ||
       (filters.sortDirection && filters.sortDirection !== 'desc')
     )
   }
@@ -155,6 +179,8 @@ export default class extends Controller {
       status: this.statusTarget.value,
       leadSources: this.getSelectedLeadSources(),
       customerType: this.customerTypeTarget.value,
+      startDate: this.hasStartDateTarget ? this.startDateTarget.value : '',
+      endDate: this.hasEndDateTarget ? this.endDateTarget.value : '',
       sortDirection: this.directionTarget.value
     }
 
@@ -177,6 +203,8 @@ export default class extends Controller {
     const status = this.statusTarget.value
     const leadSources = this.getSelectedLeadSources()
     const customerType = this.customerTypeTarget.value
+    const startDate = this.hasStartDateTarget ? this.startDateTarget.value : ''
+    const endDate = this.hasEndDateTarget ? this.endDateTarget.value : ''
     const sortDirection = this.directionTarget.value
 
     // Only use userId if the user target exists (for admin users)
@@ -189,6 +217,8 @@ export default class extends Controller {
       status,
       leadSources,
       customerType,
+      startDate,
+      endDate,
       sortDirection,
       hasUserTarget: this.hasUserTarget
     })
@@ -225,6 +255,14 @@ export default class extends Controller {
     // Add customer_type param if present
     if (customerType) {
       params.append('customer_type', customerType)
+    }
+
+    // Add date range params if present
+    if (startDate) {
+      params.append('start_date', startDate)
+    }
+    if (endDate) {
+      params.append('end_date', endDate)
     }
 
     // Add direction param
@@ -292,6 +330,23 @@ export default class extends Controller {
       this.leadSourceTextTarget.textContent = `Lead Source: ${leadSourceText}`
     }
 
+    // Update date range badge
+    const startDate = this.hasStartDateTarget ? this.startDateTarget.value : ''
+    const endDate = this.hasEndDateTarget ? this.endDateTarget.value : ''
+    const hasDateRange = startDate || endDate
+    this.dateRangeBadgeTarget.classList.toggle('hidden', !hasDateRange)
+    if (hasDateRange) {
+      let dateText = 'Dates: '
+      if (startDate && endDate) {
+        dateText += `${startDate} to ${endDate}`
+      } else if (startDate) {
+        dateText += `from ${startDate}`
+      } else {
+        dateText += `until ${endDate}`
+      }
+      this.dateRangeTextTarget.textContent = dateText
+    }
+
     // Update customer type badge
     this.customerTypeBadgeTarget.classList.toggle('hidden', !customerType)
     if (customerType) {
@@ -299,7 +354,7 @@ export default class extends Controller {
     }
 
     // Show/hide active filters section
-    const hasActiveFilters = searchTerm || userId || status || leadSources.length > 0 || customerType
+    const hasActiveFilters = searchTerm || userId || status || leadSources.length > 0 || hasDateRange || customerType
     this.activeFiltersTarget.classList.toggle('hidden', !hasActiveFilters)
   }
   
@@ -330,6 +385,12 @@ export default class extends Controller {
     this.filter()
   }
 
+  clearDateRange() {
+    if (this.hasStartDateTarget) this.startDateTarget.value = ''
+    if (this.hasEndDateTarget) this.endDateTarget.value = ''
+    this.filter()
+  }
+
   clearCustomerType() {
     this.customerTypeTarget.value = ''
     this.filter()
@@ -349,6 +410,8 @@ export default class extends Controller {
       this.updateMultiselectButtonText()
     }
     this.customerTypeTarget.value = ''
+    if (this.hasStartDateTarget) this.startDateTarget.value = ''
+    if (this.hasEndDateTarget) this.endDateTarget.value = ''
     this.directionTarget.value = 'desc'
 
     // Clear stored filters
