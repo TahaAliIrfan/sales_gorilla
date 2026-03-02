@@ -142,6 +142,7 @@ Rails.application.routes.draw do
     collection do
       post 'bulk_assign'
       post 'bulk_status_change'
+      get 'export_csv'
     end
   end
   resources :pipelines do

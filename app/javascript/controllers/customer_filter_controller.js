@@ -27,7 +27,8 @@ export default class extends Controller {
     "dateRangeBadge",
     "dateRangeText",
     "customerTypeBadge",
-    "customerTypeText"
+    "customerTypeText",
+    "exportLink"
   ]
 
   connect() {   
@@ -44,6 +45,9 @@ export default class extends Controller {
     
     // Initialize filter state
     this.updateActiveFilters()
+    
+    // Sync export link with current URL params on load
+    this.updateExportLinkFromUrl()
     
     // Set up debounce for search input
     this.searchDebounceTimeout = null
@@ -273,6 +277,9 @@ export default class extends Controller {
     // Debug logging
     console.log("Final URL params:", params.toString())
 
+    // Update export CSV link with current filters
+    this.updateExportLink(params)
+
     // Navigate to the filtered URL
     window.location.href = `${window.location.pathname}?${params.toString()}`
   }
@@ -438,5 +445,19 @@ export default class extends Controller {
     if (multiselectController && multiselectController.updateButtonText) {
       multiselectController.updateButtonText()
     }
+  }
+
+  updateExportLink(params) {
+    if (!this.hasExportLinkTarget) return
+    const baseUrl = this.exportLinkTarget.href.split('?')[0]
+    const queryString = params.toString()
+    this.exportLinkTarget.href = queryString ? `${baseUrl}?${queryString}` : baseUrl
+  }
+
+  updateExportLinkFromUrl() {
+    if (!this.hasExportLinkTarget) return
+    const currentParams = window.location.search
+    const baseUrl = this.exportLinkTarget.href.split('?')[0]
+    this.exportLinkTarget.href = currentParams ? `${baseUrl}${currentParams}` : baseUrl
   }
 } 

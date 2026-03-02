@@ -2,8 +2,8 @@ class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
   before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
-  after_action :verify_authorized, except: :index
-  after_action :verify_policy_scoped, only: :index
+  after_action :verify_authorized, except: [:index, :export_csv]
+  after_action :verify_policy_scoped, only: [:index, :export_csv]
 
   def index
     @users = if current_user&.admin?
@@ -27,43 +27,9 @@ class CustomersController < ApplicationController
       return
     end
     
-    # For regular requests, apply server-side filtering
-    @customers = policy_scope(Customer)
-    
-    # Apply filters using scopes
-    if params[:user_id].present? && (current_user&.admin? || current_user&.manager?)
-      if params[:user_id] == 'unassigned'
-        @customers = @customers.where(user_id: nil)
-      else
-        @customers = @customers.assigned_to(params[:user_id])
-      end
-    end
-    @customers = @customers.search(params[:search])
-    
-    # Filter by status if provided (for all users, not just admins)
-    if params[:status].present?
-      Rails.logger.debug("Filtering by status: #{params[:status]}")
-      @customers = @customers.where(status: params[:status])
-    end
-    
-    # Filter by lead source if provided (supports multiple selections)
-    if params[:lead_source].present?
-      lead_sources = params[:lead_source].is_a?(Array) ? params[:lead_source].reject(&:blank?) : [params[:lead_source]].reject(&:blank?)
-      @customers = @customers.where(lead_source: lead_sources) if lead_sources.any?
-    end
-    
-    # Filter by customer type (high value leads) if provided
-    @customers = @customers.where(customer_type: params[:customer_type]) if params[:customer_type].present?
-    
-    # Filter by date range if provided
-    if params[:start_date].present?
-      @customers = @customers.where('customers.created_at >= ?', Date.parse(params[:start_date]).beginning_of_day)
-    end
-    if params[:end_date].present?
-      @customers = @customers.where('customers.created_at <= ?', Date.parse(params[:end_date]).end_of_day)
-    end
-    
-    # Apply sorting - always sort by created_at since we removed the sort column
+    @customers = apply_filters(policy_scope(Customer))
+
+    # Apply sorting
     sort_direction = %w[asc desc].include?(params[:direction]) ? params[:direction] : 'desc'
     @customers = @customers.order("created_at #{sort_direction}")
     
@@ -75,6 +41,65 @@ class CustomersController < ApplicationController
                       params[:status].present? || params[:lead_source].present? ||
                       params[:customer_type].present? || params[:start_date].present? ||
                       params[:end_date].present?
+  end
+
+  def export_csv
+    authorize Customer, :export_csv?
+
+    customers = apply_filters(policy_scope(Customer))
+      .includes(:user)
+      .order(created_at: :desc)
+
+    require 'csv'
+
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'ID', 'Name', 'Email', 'Phone', 'Company', 'Country', 'Status',
+        'Lead Source', 'Customer Type', 'Lead Quality', 'Platform',
+        'Project Type', 'Project Scope', 'Project Estimated Cost',
+        'Call Status', 'Email Status', 'WhatsApp Status', 'LinkedIn Status',
+        'Total Call Attempts', 'Successful Call Attempts',
+        'Assigned To', 'UTM Campaign', 'UTM Term', 'UTM Source', 'UTM Medium',
+        'Created At', 'Updated At'
+      ]
+
+      customers.find_each do |customer|
+        csv << [
+          customer.id,
+          customer.name,
+          customer.email,
+          customer.phone,
+          customer.company,
+          customer.country,
+          customer.status,
+          customer.lead_source,
+          customer.customer_type,
+          customer.lead_quality,
+          customer.platform,
+          customer.project_type,
+          customer.project_scope,
+          customer.project_estimated_cost,
+          customer.call_status,
+          customer.email_status,
+          customer.whatsapp_status,
+          customer.linkedin_status,
+          customer.total_call_attempts,
+          customer.successful_call_attempts,
+          customer.user&.name,
+          customer.utm_campaign,
+          customer.utm_term,
+          customer.utm_source,
+          customer.utm_medium,
+          customer.created_at&.strftime('%Y-%m-%d %H:%M'),
+          customer.updated_at&.strftime('%Y-%m-%d %H:%M')
+        ]
+      end
+    end
+
+    send_data csv_data,
+              filename: "customers_export_#{Date.today.strftime('%Y%m%d')}.csv",
+              type: 'text/csv',
+              disposition: 'attachment'
   end
 
   def show
@@ -644,6 +669,35 @@ class CustomersController < ApplicationController
     params.require(:customer).permit(permitted_params)
   end
   
+  def apply_filters(scope)
+    if params[:user_id].present? && (current_user&.admin? || current_user&.manager?)
+      if params[:user_id] == 'unassigned'
+        scope = scope.where(user_id: nil)
+      else
+        scope = scope.assigned_to(params[:user_id])
+      end
+    end
+    scope = scope.search(params[:search])
+
+    scope = scope.where(status: params[:status]) if params[:status].present?
+
+    if params[:lead_source].present?
+      lead_sources = params[:lead_source].is_a?(Array) ? params[:lead_source].reject(&:blank?) : [params[:lead_source]].reject(&:blank?)
+      scope = scope.where(lead_source: lead_sources) if lead_sources.any?
+    end
+
+    scope = scope.where(customer_type: params[:customer_type]) if params[:customer_type].present?
+
+    if params[:start_date].present?
+      scope = scope.where('customers.created_at >= ?', Date.parse(params[:start_date]).beginning_of_day)
+    end
+    if params[:end_date].present?
+      scope = scope.where('customers.created_at <= ?', Date.parse(params[:end_date]).end_of_day)
+    end
+
+    scope
+  end
+
   def require_login
     unless session[:user_id]
       flash[:error] = "You must be logged in to access this section"

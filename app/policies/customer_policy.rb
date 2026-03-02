@@ -91,7 +91,10 @@ class CustomerPolicy < ApplicationPolicy
   end
 
   def mark_lead_quality?
-    # Only admins can mark lead quality for Google Ads offline conversions
+    user.admin?
+  end
+
+  def export_csv?
     user.admin?
   end
 end
