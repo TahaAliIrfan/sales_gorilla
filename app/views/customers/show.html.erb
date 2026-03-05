@@ -442,6 +442,198 @@
               </div>
             </div>
 
+            <% if current_user&.admin? %>
+              <% has_google_ads = @customer.gclid.present? || @customer.gbraid.present? || @customer.wbraid.present? %>
+              <% has_facebook_ads = @customer.fbclid.present? || @customer.facebook_click_id.present? || @customer.meta_lead_id.present? || @customer.meta_campaign_id.present? %>
+              <% has_utm = @customer.utm_source.present? || @customer.utm_medium.present? || @customer.utm_campaign.present? %>
+              <% if has_google_ads || has_facebook_ads || has_utm %>
+                <div class="bg-gradient-to-br from-slate-50 to-gray-50 rounded-lg p-6 lg:col-span-2 border border-gray-200">
+                  <div class="flex items-center space-x-2 mb-5">
+                    <svg class="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h3 class="text-lg font-semibold text-gray-900">Ads Conversion Data</h3>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">Admin Only</span>
+                  </div>
+
+                  <div class="space-y-5">
+                    <% if has_google_ads %>
+                      <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-blue-100 text-blue-800">Google Ads</span>
+                          <% if @customer.google_conversion_status.present? %>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= @customer.google_conversion_status == 'sent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                              <%= @customer.google_conversion_status.capitalize %>
+                            </span>
+                          <% end %>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <% if @customer.gclid.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">GCLID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.gclid %>"><%= @customer.gclid %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.gbraid.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">GBRAID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.gbraid %>"><%= @customer.gbraid %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.wbraid.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">WBRAID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.wbraid %>"><%= @customer.wbraid %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.google_conversion_sent_at.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Conversion Sent</span>
+                              <span class="font-medium text-gray-900"><%= @customer.google_conversion_sent_at.strftime("%b %d, %Y %I:%M %p") %></span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <% if has_facebook_ads %>
+                      <% if has_google_ads %><hr class="border-gray-200"><% end %>
+                      <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-indigo-100 text-indigo-800">Facebook / Meta Ads</span>
+                          <% if @customer.meta_events_sent.present? && @customer.meta_events_sent > 0 %>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <%= @customer.meta_events_sent %> event<%= @customer.meta_events_sent == 1 ? '' : 's' %> sent
+                            </span>
+                          <% end %>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <% if @customer.fbclid.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">FBCLID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.fbclid %>"><%= @customer.fbclid %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.facebook_click_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Facebook Click ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.facebook_click_id %>"><%= @customer.facebook_click_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.meta_lead_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Meta Lead ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.meta_lead_id %>"><%= @customer.meta_lead_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.meta_campaign_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Campaign ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.meta_campaign_id %>"><%= @customer.meta_campaign_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.meta_adset_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Adset ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.meta_adset_id %>"><%= @customer.meta_adset_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.meta_ad_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Ad ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.meta_ad_id %>"><%= @customer.meta_ad_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.browser_id.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Browser ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.browser_id %>"><%= @customer.browser_id %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.last_meta_event_sent_at.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Last Event Sent</span>
+                              <span class="font-medium text-gray-900"><%= @customer.last_meta_event_sent_at.strftime("%b %d, %Y %I:%M %p") %></span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <% if has_utm %>
+                      <% if has_google_ads || has_facebook_ads %><hr class="border-gray-200"><% end %>
+                      <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-purple-100 text-purple-800">UTM Parameters</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <% if @customer.utm_source.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Source</span>
+                              <span class="font-medium text-gray-900"><%= @customer.utm_source %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.utm_medium.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Medium</span>
+                              <span class="font-medium text-gray-900"><%= @customer.utm_medium %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.utm_campaign.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Campaign</span>
+                              <span class="font-medium text-gray-900"><%= @customer.utm_campaign %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.utm_term.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Term</span>
+                              <span class="font-medium text-gray-900"><%= @customer.utm_term %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.utm_content.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Content</span>
+                              <span class="font-medium text-gray-900"><%= @customer.utm_content %></span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+
+                    <% if @customer.landing_page.present? || @customer.traffic_source.present? || @customer.msclkid.present? %>
+                      <hr class="border-gray-200">
+                      <div>
+                        <div class="flex items-center space-x-2 mb-3">
+                          <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800">Traffic Info</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <% if @customer.traffic_source.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Traffic Source</span>
+                              <span class="font-medium text-gray-900"><%= @customer.traffic_source %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.landing_page.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100 md:col-span-2">
+                              <span class="text-gray-500 flex-shrink-0 mr-3">Landing Page</span>
+                              <span class="font-medium text-blue-600 text-xs truncate" title="<%= @customer.landing_page %>"><%= @customer.landing_page %></span>
+                            </div>
+                          <% end %>
+                          <% if @customer.msclkid.present? %>
+                            <div class="flex justify-between bg-white rounded-md px-3 py-2 border border-gray-100">
+                              <span class="text-gray-500">Microsoft Click ID</span>
+                              <span class="font-mono text-gray-900 text-xs truncate max-w-[200px]" title="<%= @customer.msclkid %>"><%= @customer.msclkid %></span>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+
             <!-- Cost Estimates (CCR Customers Only) -->
             <% if @customer.lead_source == 'CCR' && @customer.cost_estimates.any? %>
               <div class="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-6 lg:col-span-2 border border-purple-200">
