@@ -4,12 +4,28 @@ module Api
 
       def create
         if params[:email].present?
+          existing = Customer.find_by(email: params[:email])
+          if existing
+            existing.update!(updated_at: Time.current, repeat_lead: true)
+            render json: { success: true, message: "Successfully updated" }, status: :ok
+            return
+          end
+
           @customer = Customer.new(
             name: params[:name],
             email: params[:email],
             phone: params[:phone_number],
-            lead_source: 'Website',
-            notes: params[:message],
+            country: params[:country],
+            lead_source: 'Inbound',
+            status: 'Pending',
+            idea_description: params[:description] || params[:message],
+            # Meta-specific fields
+            meta_lead_id: params[:meta_lead_id],
+            facebook_click_id: params[:facebook_click_id] || params[:fbclid],
+            browser_id: params[:browser_id],
+            meta_campaign_id: params[:meta_campaign_id],
+            meta_adset_id: params[:meta_adset_id],
+            meta_ad_id: params[:meta_ad_id],
             # Ad click tracking
             gclid: params[:gclid],
             gbraid: params[:gbraid],
