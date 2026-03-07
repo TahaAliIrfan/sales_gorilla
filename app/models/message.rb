@@ -16,7 +16,9 @@ class Message < ApplicationRecord
     'video' => 'video',
     'document' => 'document',
     'location' => 'location',
-    'contact' => 'contact'
+    'contact' => 'contact',
+    'ptt' => 'ptt',
+    'chat' => 'chat',
   }.freeze
   
   MESSAGE_STATUSES = {
@@ -35,7 +37,6 @@ class Message < ApplicationRecord
   # Validations
   validates :content, presence: true, unless: -> { message_type != 'text' }
   validates :message_type, inclusion: { in: MESSAGE_TYPES.values }
-  validates :status, inclusion: { in: MESSAGE_STATUSES.values }
   validates :direction, inclusion: { in: MESSAGE_DIRECTIONS.values }
   
   # Scopes

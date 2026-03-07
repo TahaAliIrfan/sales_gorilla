@@ -1,30 +1,29 @@
 class CustomerEmailFetchWorker
   include Sidekiq::Worker
-  sidekiq_options retry: 3, queue: 'emails'
+  sidekiq_options retry: 2, queue: 'emails'
+
+  SYNC_COOLDOWN = 5.minutes
 
   def perform(customer_id, user_id)
-    # Find the customer
     customer = Customer.find_by(id: customer_id)
     return unless customer
+    return unless customer.email.present?
 
-    # Find the user
+    if customer.last_email_fetched_at.present? && customer.last_email_fetched_at > SYNC_COOLDOWN.ago
+      return
+    end
+
     user = User.find_by(id: user_id)
-    return unless user
+    return unless user&.google_auth_configured?
 
-    # Get the initial email count
-    initial_email_count = customer.emails.count
-    
-    # Store the initial count in cache if not already stored
-    Rails.cache.write("customer_#{customer.id}_email_count_before", initial_email_count) unless Rails.cache.exist?("customer_#{customer.id}_email_count_before")
-
-    # Initialize the Gmail service with the user 
     gmail_service = GmailService.new(user)
+    gmail_service.fetch_emails_for_customer(customer)
 
-    # Fetch emails for the customer
-    emails = gmail_service.fetch_emails_for_customer(customer)
-
-
-    customer.update(last_email_fetched_at: Time.now)
-
+    customer.update(last_email_fetched_at: Time.current)
+  rescue Google::Apis::AuthorizationError, Signet::AuthorizationError => e
+    Rails.logger.warn("CustomerEmailFetchWorker: Auth error for user #{user_id} / customer #{customer_id}: #{e.message}")
+  rescue => e
+    Rails.logger.error("CustomerEmailFetchWorker: Failed for customer #{customer_id}: #{e.message}")
+    raise
   end
-end 
+end

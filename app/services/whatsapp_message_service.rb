@@ -31,15 +31,15 @@ class WhatsappMessageService
       response = @api_service.get_chat_room(whatsapp_chat_id)
       return { success: false, error: response[:error] } unless response[:success]
 
-      messages_data = response[:data] || []
+      messages_data = response[:data][:messages] || []
       stored_messages = []
 
       messages_data.each do |message|
 
-        message_id = message[:idMessage]
+        message_id = message[:id]
         next if Message.exists?(message_id: message_id)
 
-        direction = message[:type] == 'outgoing' ? 'outbound' : 'inbound'
+        direction = message[:fromMe] == true ? 'outbound' : 'inbound'
         processed_message = process_message(message, customer, direction)
         stored_messages << processed_message if processed_message
       end
@@ -218,15 +218,9 @@ class WhatsappMessageService
 
   def process_message(message, customer, direction)
 
-    message_type = determine_message_type(message[:typeMessage])
-    message_id = message[:idMessage]
-    whatsapp_chat_id = message[:chatId]
+    message_type = determine_message_type(message[:type])
+    message_id = message[:id]
     timestamp = Time.at(message[:timestamp])
-    if message[:statusMessage].present?
-      status = message[:statusMessage]
-    else
-      status = 'read'
-    end
 
     # Base message attributes
     message_attrs = {
@@ -234,20 +228,30 @@ class WhatsappMessageService
       customer: customer,
       direction: direction,
       message_type: message_type,
-      status: status,
-      whatsapp_chat_id: whatsapp_chat_id,
       created_at: timestamp,
       updated_at: timestamp,
     }
 
+    raw_data = nil
+    format_info = nil
+
     if message_type == 'text'
-      message_attrs[:content] = message[:textMessage]
+      message_attrs[:content] = message[:body]
     else
-      message_attrs[:content] = message[:downloadUrl]
+      raw_data = decode_base64_data(message[:body])
+
+      if raw_data
+        format_info = detect_format_from_bytes(raw_data)
+        message_attrs[:message_type] = format_info[:type]
+      end
     end
 
-
     created_message = create_message(message_attrs)
+
+    if created_message && raw_data.present? && format_info.present?
+      filename = message_id
+      attach_file_to_message(raw_data, filename, format_info[:content_type], created_message)
+    end
 
     created_message
   end
@@ -334,6 +338,31 @@ class WhatsappMessageService
     else
       nil
     end
+  end
+
+  def decode_base64_data(data)
+    return nil if data.blank?
+
+    Base64.decode64(data).force_encoding('BINARY')
+  rescue ArgumentError => e
+    Rails.logger.error("Failed to decode Base64 data: #{e.message}")
+    nil
+  end
+
+  CONTENT_TYPE_EXTENSIONS = {
+    'image/jpeg' => 'jpg',
+    'image/png' => 'png',
+    'image/gif' => 'gif',
+    'application/pdf' => 'pdf',
+    'application/zip' => 'zip',
+    'video/mp4' => 'mp4',
+    'audio/mpeg' => 'mp3',
+    'audio/ogg' => 'ogg',
+  }.freeze
+
+  def generate_attachment_filename(message_id, format_info)
+    ext = CONTENT_TYPE_EXTENSIONS[format_info[:content_type]] || 'bin'
+    "whatsapp_#{message_id}.#{ext}"
   end
 
   def detect_format_from_bytes(raw_data)

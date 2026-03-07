@@ -16,7 +16,6 @@ class MessagesController < ApplicationController
     @messages = @customer.messages
                         .includes(document_attachment: :blob)
                         .order(:created_at)
-                        .limit(100)
     
     respond_to do |format|
       format.json do

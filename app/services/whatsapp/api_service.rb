@@ -13,6 +13,7 @@ module Whatsapp
       @api_token = Rails.application.credentials.dig(:GREEN_AUTH_TOKEN)
       @base_url = "https://7105.api.greenapi.com/waInstance#{@instance_id}"
       @media_url = "https://7105.media.greenapi.com"
+      @URL = "https://whatsapp.tecaudex.com"
     end
 
     # Check if the API credentials are configured
@@ -22,12 +23,12 @@ module Whatsapp
 
     # Get all chats from WhatsApp instance
     def get_chats()
-      response = get_request("chats?deviceId=#{@device_id}")
+      response = get_request("#{@URL}/api/chats")
       handle_response(response)
     end
 
     def get_chat_room(chat_id)
-      response = post_request("getChatHistory/#{@api_token}", { chatId: chat_id})
+      response = get_request("#{@URL}/api/chat/number/#{chat_id}")
       handle_response(response)
     end
 
@@ -142,7 +143,7 @@ module Whatsapp
     end
     
     def get_request(endpoint)
-      uri = URI.parse("#{@base_url}/#{endpoint}")
+      uri = URI.parse("#{endpoint}")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       

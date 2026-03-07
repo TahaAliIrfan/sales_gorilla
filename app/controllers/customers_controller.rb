@@ -111,12 +111,8 @@ class CustomersController < ApplicationController
     # Eager load attachments to prevent N+1 queries
     @emails = @customer.emails.with_attached_attachments.recent.limit(5)
 
-    if @customer.email.present?
-      #CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
-
-      # Rails.cache.write("customer_#{@customer.id}_email_count_before", @customer.emails.count)
-
-      # @email_fetching_active = true
+    if @customer.email.present? && current_user.google_auth_configured?
+      CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
     end
   end
 
