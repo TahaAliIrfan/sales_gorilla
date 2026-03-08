@@ -32,14 +32,8 @@ module Whatsapp
       handle_response(response)
     end
 
-    def get_chat_media(chat_id, message_id)
-      response = get_request("messages/#{chat_id}/#{message_id}/download?deviceId=#{@device_id}")
-      handle_response(response)
-    end
-
-
     def send_text_message(chat_id, content)
-      response = post_request("sendMessage/#{@api_token}", { chatId: chat_id, message: content})
+      response = post_request("#{@URL}/api/send", { number: chat_id, message: content})
       handle_response(response)
     end
 
@@ -83,7 +77,7 @@ module Whatsapp
     private
     
     def post_request(endpoint, params = {})
-      uri = URI.parse("#{@base_url}/#{endpoint}")
+      uri = URI.parse("#{endpoint}")
 
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
