@@ -165,8 +165,10 @@ class WhatsappMessageService
       # Detect format from raw bytes
       format_info = detect_format_from_bytes(raw_data)
 
-      # Send media message via WhatsApp API (multipart upload)
-      response = @api_service.send_file(whatsapp_chat_id, raw_data, filename, caption, format_info[:content_type])
+      # Base64-encode for the API
+      base64_data = Base64.strict_encode64(raw_data)
+
+      response = @api_service.send_file(whatsapp_chat_id, base64_data, filename, caption, format_info[:content_type])
 
       if response[:success]
         message_id = response[:data][:idMessage]

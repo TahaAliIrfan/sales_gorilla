@@ -12,7 +12,6 @@ module Whatsapp
       @instance_id = Rails.application.credentials.dig(:GREEN_INSTANCE_ID)
       @api_token = Rails.application.credentials.dig(:GREEN_AUTH_TOKEN)
       @base_url = "https://7105.api.greenapi.com/waInstance#{@instance_id}"
-      @media_url = "https://7105.media.greenapi.com"
       @URL = "https://whatsapp.tecaudex.com"
     end
 
@@ -37,20 +36,15 @@ module Whatsapp
       handle_response(response)
     end
 
-    def send_file(chat_id, file_data, filename, caption = nil, mime_type = nil)
-      response = post_multipart_request(
-        "waInstance#{@instance_id}/sendFileByUpload/#{@api_token}",
-        chat_id: chat_id,
-        file_data: file_data,
+    def send_file(chat_id, base64_data, filename, caption = nil, mime_type = nil)
+      response = post_request("#{@URL}/api/send/media", {
+        number: chat_id,
+        media: base64_data,
         filename: filename,
-        caption: caption,
-        mime_type: mime_type
-      )
+        caption: caption
+      }.compact)
       handle_response(response)
     end
-
-    # Alias for backwards compatibility
-    alias_method :send_media_base64, :send_file
 
 
     def get_whatsapp_chat_id(phone_number)
@@ -89,52 +83,6 @@ module Whatsapp
       http.request(request)
     end
 
-    def post_multipart_request(endpoint, chat_id:, file_data:, filename:, caption: nil, mime_type: nil)
-      uri = URI.parse("#{@media_url}/#{endpoint}")
-
-      boundary = "----WebKitFormBoundary#{SecureRandom.hex(16)}"
-      content_type = mime_type || 'application/octet-stream'
-
-      # Build multipart body with consistent binary encoding
-      body = "".dup.force_encoding('BINARY')
-
-      # Add chatId field
-      body << "--#{boundary}\r\n".force_encoding('BINARY')
-      body << "Content-Disposition: form-data; name=\"chatId\"\r\n\r\n".force_encoding('BINARY')
-      body << "#{chat_id}\r\n".force_encoding('BINARY')
-
-      # Add caption field if present
-      if caption.present?
-        body << "--#{boundary}\r\n".force_encoding('BINARY')
-        body << "Content-Disposition: form-data; name=\"caption\"\r\n\r\n".force_encoding('BINARY')
-        body << caption.to_s.encode('UTF-8').force_encoding('BINARY')
-        body << "\r\n".force_encoding('BINARY')
-      end
-
-      # Add fileName field
-      body << "--#{boundary}\r\n".force_encoding('BINARY')
-      body << "Content-Disposition: form-data; name=\"fileName\"\r\n\r\n".force_encoding('BINARY')
-      body << "#{filename}\r\n".force_encoding('BINARY')
-
-      # Add file field
-      body << "--#{boundary}\r\n".force_encoding('BINARY')
-      body << "Content-Disposition: form-data; name=\"file\"; filename=\"#{filename}\"\r\n".force_encoding('BINARY')
-      body << "Content-Type: #{content_type}\r\n\r\n".force_encoding('BINARY')
-      body << file_data.force_encoding('BINARY')
-      body << "\r\n".force_encoding('BINARY')
-
-      # Close boundary
-      body << "--#{boundary}--\r\n".force_encoding('BINARY')
-
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-
-      request = Net::HTTP::Post.new(uri)
-      request["Content-Type"] = "multipart/form-data; boundary=#{boundary}"
-      request.body = body
-
-      http.request(request)
-    end
     
     def get_request(endpoint)
       uri = URI.parse("#{endpoint}")

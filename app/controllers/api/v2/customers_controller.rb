@@ -273,8 +273,17 @@ class Api::V2::CustomersController < Api::V2::BaseController
     end
     
     api_service = Whatsapp::ApiService.new
-    response = api_service.send_media_message(@customer.whatsapp_chat_id, params[:media_url], params[:caption], media_type)
-    
+
+    file_data = download_file_from_url(params[:media_url])
+    unless file_data
+      render_error("Failed to download media from URL")
+      return
+    end
+
+    filename = params[:filename] || File.basename(URI.parse(params[:media_url]).path)
+    base64_data = Base64.strict_encode64(file_data)
+    response = api_service.send_file(@customer.whatsapp_chat_id, base64_data, filename, params[:caption])
+
     if response[:success]
       render_success(response[:data], "Media message sent successfully")
     else
@@ -361,5 +370,16 @@ class Api::V2::CustomersController < Api::V2::BaseController
     end
 
     params.require(:customer).permit(permitted_params)
+  end
+
+  def download_file_from_url(url)
+    uri = URI.parse(url)
+    response = Net::HTTP.get_response(uri)
+    return nil unless response.is_a?(Net::HTTPSuccess)
+
+    response.body.force_encoding('BINARY')
+  rescue StandardError => e
+    Rails.logger.error("Failed to download file from #{url}: #{e.message}")
+    nil
   end
 end

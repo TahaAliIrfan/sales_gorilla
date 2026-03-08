@@ -462,8 +462,8 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     content_type ||= determine_content_type_from_filename(filename)
     media_type = determine_media_type_from_content_type(content_type)
 
-    # Send file via WhatsApp API (multipart upload)
-    result = whatsapp_service.send_file(chat_id, file_data, filename, caption, content_type)
+    base64_data = Base64.strict_encode64(file_data)
+    result = whatsapp_service.send_file(chat_id, base64_data, filename, caption, content_type)
 
     if result[:success]
       begin
@@ -541,25 +541,28 @@ class Api::V2::WhatsappController < Api::V2::BaseController
   end
 
   def send_media_via_whatsapp(customer, media_url, caption, filename, media_info)
-    # Initialize WhatsApp API service
     whatsapp_service = Whatsapp::ApiService.new
-    
+
     unless whatsapp_service.credentials_configured?
       return { success: false, error: "WhatsApp API credentials not configured" }
     end
-    
-    # Get or set WhatsApp chat ID for customer
+
     chat_id = get_or_set_chat_id(customer, whatsapp_service)
-    
+
     unless chat_id
       return { success: false, error: "Could not determine WhatsApp chat ID for customer" }
     end
 
-    # Send media message via WhatsApp API
-    result = whatsapp_service.send_media_message(chat_id, media_url, caption, filename)
-    
+    file_data = download_file_from_url(media_url)
+    unless file_data
+      return { success: false, error: "Failed to download media from URL" }
+    end
+
+    content_type = media_info[:content_type] || determine_content_type_from_filename(filename)
+    base64_data = Base64.strict_encode64(file_data)
+    result = whatsapp_service.send_file(chat_id, base64_data, filename, caption, content_type)
+
     if result[:success]
-      # Create WhatsApp message record with media info
       message = customer.whatsapp_messages.create!(
         message_id: SecureRandom.uuid,
         body: caption || "[#{media_info[:media_type].capitalize} sent]",
@@ -570,12 +573,12 @@ class Api::V2::WhatsappController < Api::V2::BaseController
           media_url: media_url,
           media_type: media_info[:media_type],
           filename: filename,
-          content_type: media_info[:content_type],
-          size: media_info[:size],
+          content_type: content_type,
+          size: file_data.bytesize,
           blob_id: media_info[:blob_id]
         }.compact
       )
-      
+
       {
         success: true,
         data: {
@@ -595,5 +598,16 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     else
       { success: false, error: "Failed to send WhatsApp media: #{result[:error]}" }
     end
+  end
+
+  def download_file_from_url(url)
+    uri = URI.parse(url)
+    response = Net::HTTP.get_response(uri)
+    return nil unless response.is_a?(Net::HTTPSuccess)
+
+    response.body.force_encoding('BINARY')
+  rescue StandardError => e
+    Rails.logger.error("Failed to download file from #{url}: #{e.message}")
+    nil
   end
 end
