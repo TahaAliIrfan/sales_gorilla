@@ -196,7 +196,7 @@ class MessagesController < ApplicationController
           if customer.user.present?
             UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:message][:body]).deliver_now
           else
-            UserMailer.whatsapp_message_notification('taha.irfan@tecaudex.com', customer, params[:message][:body]).deliver_now
+            UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:message][:body]).deliver_now
           end
         end
       else
