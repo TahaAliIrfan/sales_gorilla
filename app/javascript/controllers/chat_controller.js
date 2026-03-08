@@ -83,15 +83,38 @@ export default class extends Controller {
     const contentElement = messageElement.querySelector('.message-content')
     const attachmentElement = messageElement.querySelector('.message-attachment')
     
-    // Set message content
-    contentElement.textContent = message.content
-    
-    // Handle attachments for non-text messages
-    if (message.message_type !== 'text' && message.has_attachment && message.attachment_url) {
+    if (message.message_type === 'text') {
+      contentElement.textContent = message.content
+    } else {
+      const typeLabel = message.message_type.charAt(0).toUpperCase() + message.message_type.slice(1)
+      const caption = message.content && message.content !== 'Content' ? message.content : ''
+
+      if (caption) {
+        contentElement.textContent = caption
+      } else {
+        contentElement.classList.add('hidden')
+      }
+
       attachmentElement.classList.remove('hidden')
-      
-      const attachmentHtml = this.createAttachmentHtml(message)
-      attachmentElement.innerHTML = attachmentHtml
+      if (message.has_attachment && message.attachment_url) {
+        attachmentElement.innerHTML = `
+          <a href="${message.attachment_url}" target="_blank" class="inline-flex items-center space-x-2 px-3 py-1.5 bg-white/20 border border-current/10 rounded-md hover:bg-white/30 transition-colors text-xs font-medium">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            <span>Download ${typeLabel}</span>
+          </a>
+        `
+      } else {
+        attachmentElement.innerHTML = `
+          <span class="inline-flex items-center space-x-1 text-xs opacity-75">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+            </svg>
+            <span>${typeLabel} message</span>
+          </span>
+        `
+      }
     }
     
     // Set timestamp
