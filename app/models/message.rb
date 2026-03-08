@@ -19,6 +19,7 @@ class Message < ApplicationRecord
     'contact' => 'contact',
     'ptt' => 'ptt',
     'chat' => 'chat',
+    'audio/ogg' => 'audio/ogg',
   }.freeze
   
   MESSAGE_STATUSES = {

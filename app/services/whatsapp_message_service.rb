@@ -239,51 +239,16 @@ class WhatsappMessageService
       created_message = create_message(message_attrs)
     else
       raw_data = decode_base64_data(message[:media][:data])
-      if raw_data
-        format_info = detect_format_from_bytes(raw_data)
-        message_attrs[:message_type] = format_info[:type]
-      end
+      message_attrs[:message_type] = message[:type]
       message_attrs[:content] = "Content"
 
       created_message = create_message(message_attrs)
 
       filename = message_id
-      attach_file_to_message(raw_data, filename, message_attrs[:message_type], created_message)
+      attach_file_to_message(raw_data, filename, message[:media][:mimetype], created_message)
     end
 
     created_message
-  end
-
-  def extract_content_name(message, message_type)
-    message.dig(:_data, :filename) ||
-      message.dig(:_data, :caption) ||
-      message[:body] ||
-      "#{message_type.capitalize} message"
-  end
-
-  def determine_message_type(whatsapp_type)
-    case whatsapp_type
-    when 'extendedTextMessage' then 'text'
-    when 'documentMessage' then 'document'
-    when 'imageMessage' then 'image'
-    when 'audioMessage' then 'audio'
-    when 'video' then 'video'
-    when 'location' then 'location'
-    when 'contact' then 'contact'
-    else 'text'
-    end
-  end
-
-  def determine_message_status(ack_status, direction)
-    return 'delivered' if direction == 'inbound'
-
-    case ack_status
-    when 0 then 'pending'
-    when 1 then 'sent'
-    when 2 then 'delivered'
-    when 3 then 'read'
-    else 'sent'
-    end
   end
 
   def create_message(message_attrs)
@@ -345,22 +310,6 @@ class WhatsappMessageService
   rescue ArgumentError => e
     Rails.logger.error("Failed to decode Base64 data: #{e.message}")
     nil
-  end
-
-  CONTENT_TYPE_EXTENSIONS = {
-    'image/jpeg' => 'jpg',
-    'image/png' => 'png',
-    'image/gif' => 'gif',
-    'application/pdf' => 'pdf',
-    'application/zip' => 'zip',
-    'video/mp4' => 'mp4',
-    'audio/mpeg' => 'mp3',
-    'audio/ogg' => 'ogg',
-  }.freeze
-
-  def generate_attachment_filename(message_id, format_info)
-    ext = CONTENT_TYPE_EXTENSIONS[format_info[:content_type]] || 'bin'
-    "whatsapp_#{message_id}.#{ext}"
   end
 
   def detect_format_from_bytes(raw_data)

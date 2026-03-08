@@ -83,7 +83,7 @@ export default class extends Controller {
     const contentElement = messageElement.querySelector('.message-content')
     const attachmentElement = messageElement.querySelector('.message-attachment')
     
-    if (message.message_type === 'text') {
+    if (message.message_type === 'chat') {
       contentElement.textContent = message.content
     } else {
       const typeLabel = message.message_type.charAt(0).toUpperCase() + message.message_type.slice(1)

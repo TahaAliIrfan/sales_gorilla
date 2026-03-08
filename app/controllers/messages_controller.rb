@@ -174,33 +174,35 @@ class MessagesController < ApplicationController
     Rails.logger.info "Headers: #{request.headers.to_h.select { |k,v| k.start_with?('HTTP_') }}"
     Rails.logger.info "Params: #{params.inspect}"
 
-    if params[:typeWebhook] == "incomingMessageReceived"
-      customer = Customer.find_by(whatsapp_chat_id: params[:senderData][:chatId])
+
+    if params[:event] == "message_received"
+      customer = Customer.find_by(whatsapp_chat_id: params[:message][:from])
 
       if customer.blank?
-        phone = params[:senderData][:chatId].gsub("c.us", "")
-        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:senderData][:chatId], phone: "+#{phone}")
+        phone = params[:message][:from].gsub("c.us", "")
+        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:message][:from], phone: "+#{phone}")
       end
 
-      Rails.logger.info "Customer: #{customer.inspect}"
-      if params[:messageData][:textMessageData][:textMessage].present?
+
+      if params[:message][:body].present?
         message = Message.new(customer: customer,
-                              content:  params[:messageData][:textMessageData][:textMessage],
-                              message_id: params[:idMessage],
+                              content:  params[:message][:body],
+                              message_id: params[:message][:id],
                               direction: 'inbound',
-                              message_type: 'text',
+                              message_type: 'chat',
                               status: 'pending')
 
         if message.save
           if customer.user.present?
-            UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
+            UserMailer.whatsapp_message_notification(customer.user.email, customer, params[:message][:body]).deliver_now
           else
-            UserMailer.whatsapp_message_notification('sarmad.mansoor@tecaudex.com', customer, params[:messageData][:textMessageData][:textMessage]).deliver_now
+            UserMailer.whatsapp_message_notification('taha.irfan@tecaudex.com', customer, params[:message][:body]).deliver_now
           end
         end
       else
         return
       end
+
     elsif params[:typeWebhook] == "incomingCall"
 
       customer = Customer.find_by(whatsapp_chat_id: params[:from])
