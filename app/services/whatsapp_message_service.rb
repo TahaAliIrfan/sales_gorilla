@@ -220,7 +220,7 @@ class WhatsappMessageService
 
   def process_message(message, customer, direction)
 
-    message_type = determine_message_type(message[:type])
+    message_type = message[:type]
     message_id = message[:id]
     timestamp = Time.at(message[:timestamp])
 
@@ -234,7 +234,7 @@ class WhatsappMessageService
       updated_at: timestamp,
     }
 
-    if message_type == 'text'
+    if message_type == 'chat'
       message_attrs[:content] = message[:body]
       created_message = create_message(message_attrs)
     else
