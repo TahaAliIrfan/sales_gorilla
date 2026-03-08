@@ -232,25 +232,21 @@ class WhatsappMessageService
       updated_at: timestamp,
     }
 
-    raw_data = nil
-    format_info = nil
-
     if message_type == 'text'
       message_attrs[:content] = message[:body]
+      created_message = create_message(message_attrs)
     else
-      raw_data = decode_base64_data(message[:body])
-
+      raw_data = decode_base64_data(message[:media][:data])
       if raw_data
         format_info = detect_format_from_bytes(raw_data)
         message_attrs[:message_type] = format_info[:type]
       end
-    end
+      message_attrs[:content] = "Content"
 
-    created_message = create_message(message_attrs)
+      created_message = create_message(message_attrs)
 
-    if created_message && raw_data.present? && format_info.present?
       filename = message_id
-      attach_file_to_message(raw_data, filename, format_info[:content_type], created_message)
+      attach_file_to_message(raw_data, filename, message_attrs[:message_type], created_message)
     end
 
     created_message
@@ -392,10 +388,11 @@ class WhatsappMessageService
   end
 
   def attach_file_to_message(file_data, filename, content_type, message)
+
     return false if file_data.blank? || message.nil?
 
     begin
-      message.attachment.attach(
+      message.document.attach(
         io: StringIO.new(file_data),
         filename: filename,
         content_type: content_type
