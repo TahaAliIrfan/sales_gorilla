@@ -234,8 +234,12 @@ class WhatsappMessageService
       updated_at: timestamp,
     }
 
-    if message_type == 'chat'
-      message_attrs[:content] = message[:body]
+    if message_type == 'chat' or message_type == 'e2e_notification'
+      if message[:body] == ''
+        message_attrs[:content] = 'Unable To Read Message'
+      else
+        message_attrs[:content] = message[:body]
+      end
       created_message = create_message(message_attrs)
     else
       raw_data = decode_base64_data(message[:media][:data])
