@@ -93,7 +93,7 @@ Rails.application.configure do
   config.action_mailer.smtp_settings = {
     address:              'smtp.mailersend.net',
     port:                 587,
-    user_name:            'MS_zBm5Jr@tecaudex.com',
+    user_name:            Rails.application.credentials.dig(:MAIL_API_USER),
     password:             Rails.application.credentials.dig(:MAIL_API_KEY),
     authentication:       'plain',
     enable_starttls_auto: true

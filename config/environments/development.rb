@@ -33,11 +33,10 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
-
-  config.hosts << "6336b85cdedb.ngrok-free.app"
+  config.hosts << "df92-2400-adc5-192-b900-2503-238d-3b7b-1faa.ngrok-free.app"
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
-  config.active_storage.service = :local
+  config.active_storage.service = :amazon
 
   # Don't care if the mailer can't send.
   config.action_mailer.raise_delivery_errors = true
@@ -49,7 +48,7 @@ Rails.application.configure do
   config.action_mailer.smtp_settings = {
     address:              'smtp.mailersend.net',
     port:                 587,
-    user_name:            'MS_zBm5Jr@tecaudex.com',
+    user_name:            Rails.application.credentials.dig(:MAIL_API_USER),
     password:             Rails.application.credentials.dig(:MAIL_API_KEY),
     authentication:       'plain',
     enable_starttls_auto: true
