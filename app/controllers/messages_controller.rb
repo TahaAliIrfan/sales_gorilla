@@ -176,11 +176,13 @@ class MessagesController < ApplicationController
 
 
     if params[:event] == "message_received"
-      customer = Customer.find_by(whatsapp_chat_id: params[:message][:from])
+      customer = Customer.find_by(phone: "+#{params[:contact][:number]}")
+
 
       if customer.blank?
-        phone = params[:message][:from].gsub("c.us", "")
-        customer = Customer.create(name: 'Whatsapp Lead update name manually', whatsapp_chat_id: params[:message][:from], phone: "+#{phone}")
+        customer = Customer.create(name: 'Whatsapp Lead update name manually',
+                                   whatsapp_chat_id: "#{params[:contact][:number]}.c.us",
+                                   phone: "+#{params[:contact][:number]}")
       end
 
 
