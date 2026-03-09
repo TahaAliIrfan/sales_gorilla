@@ -238,6 +238,7 @@ module Api
           end
 
           if cost_estimate.persisted?
+
             # Queue background job to generate and send PDF via WhatsApp
             job_id = ::SendCostEstimatePdfJob.perform_async(cost_estimate.id)
 
