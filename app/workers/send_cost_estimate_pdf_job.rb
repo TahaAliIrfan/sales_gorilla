@@ -111,15 +111,30 @@ class SendCostEstimatePdfJob
 
       if response[:success]
         Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
-
-        # Create a customer activity
-        customer.customer_activities.create!(
-          user_id: cost_estimate.user_id,
-          action: "Cost Estimate PDF Sent",
-          details: "Sent cost estimate PDF via WhatsApp - Total: $#{cost_estimate.total_cost}"
-        )
       else
         Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
+      end
+
+      # Send via Email if customer has an email address
+      if customer.email.present?
+        Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via email to #{customer.email}")
+        CostEstimateMailer.send_estimate(cost_estimate, pdf_binary, filename).deliver_now
+        Rails.logger.info("Successfully sent PDF to customer #{customer.id} via Email")
+      else
+        Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer.id} has no email address, skipping email")
+      end
+
+      # Create a customer activity
+      channels = []
+      channels << "WhatsApp" if response[:success]
+      channels << "Email" if customer.email.present?
+      customer.customer_activities.create!(
+        user_id: cost_estimate.user_id,
+        action: "Cost Estimate PDF Sent",
+        details: "Sent cost estimate PDF via #{channels.join(' & ')} - Total: $#{cost_estimate.total_cost}"
+      )
+
+      unless response[:success]
         raise "WhatsApp API Error: #{response[:error]}"
       end
     rescue => e

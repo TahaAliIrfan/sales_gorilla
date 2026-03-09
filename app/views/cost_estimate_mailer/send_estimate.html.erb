@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+
+  <!-- Wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+
+        <!-- Main Container -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+
+          <!-- Header with Logo -->
+          <tr>
+            <td style="background-color: #1a1a2e; padding: 32px 40px; border-radius: 12px 12px 0 0; text-align: center;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <!-- Inline SVG-based logo rendered as HTML for email compatibility -->
+                    <table role="presentation" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="width: 44px; height: 44px; background-color: #ffffff; border-radius: 22px; text-align: center; vertical-align: middle;">
+                          <span style="color: #ED1A3B; font-size: 22px; font-weight: 900; line-height: 44px; font-family: Arial, sans-serif;">T</span>
+                        </td>
+                        <td style="padding-left: 12px;">
+                          <span style="color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: 1px; font-family: Arial, sans-serif;">TECAUDEX</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top: 20px;">
+                    <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">Project Proposal</h1>
+                    <p style="margin: 6px 0 0 0; color: #a0a3b1; font-size: 14px;">Your detailed cost estimate is ready</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background-color: #ffffff; padding: 40px;">
+
+              <!-- Greeting -->
+              <p style="margin: 0 0 20px 0; color: #1a1a2e; font-size: 16px; line-height: 1.6;">
+                Hi <strong><%= @customer.name %></strong>,
+              </p>
+              <p style="margin: 0 0 28px 0; color: #4a4a68; font-size: 15px; line-height: 1.7;">
+                Thank you for your interest in building with Tecaudex! We've prepared a detailed project proposal tailored to your requirements. Please find the summary below and the full PDF attached.
+              </p>
+
+              <!-- Estimate Summary Card -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8f9fc; border-radius: 10px; border: 1px solid #e8e9f0;">
+                <tr>
+                  <td style="padding: 28px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+
+                      <% if @cost_estimate.app_name.present? %>
+                      <tr>
+                        <td style="padding-bottom: 16px; border-bottom: 1px solid #e8e9f0;">
+                          <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Project Name</p>
+                          <p style="margin: 0; color: #1a1a2e; font-size: 18px; font-weight: 700;"><%= @cost_estimate.app_name %></p>
+                        </td>
+                      </tr>
+                      <% end %>
+
+                      <tr>
+                        <td style="padding-top: 16px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td width="50%" style="vertical-align: top; padding-right: 12px;">
+                                <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Project Type</p>
+                                <p style="margin: 0 0 16px 0; color: #1a1a2e; font-size: 15px; font-weight: 500;"><%= @app_types %></p>
+
+                                <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Scale</p>
+                                <p style="margin: 0; color: #1a1a2e; font-size: 15px; font-weight: 500;"><%= @cost_estimate.scale.titleize %></p>
+                              </td>
+                              <td width="50%" style="vertical-align: top; padding-left: 12px;">
+                                <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Estimated Hours</p>
+                                <p style="margin: 0 0 16px 0; color: #1a1a2e; font-size: 15px; font-weight: 500;"><%= @cost_estimate.total_hours %> hrs</p>
+
+                                <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Hourly Rate</p>
+                                <p style="margin: 0; color: #1a1a2e; font-size: 15px; font-weight: 500;">$<%= @cost_estimate.hourly_rate.to_i %>/hr</p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <!-- Total Cost Highlight -->
+                <tr>
+                  <td style="padding: 0 28px 28px 28px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #1a1a2e, #2d2d4e); background-color: #1a1a2e; border-radius: 8px;">
+                      <tr>
+                        <td style="padding: 20px 24px;">
+                          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <p style="margin: 0; color: #a0a3b1; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Total Investment</p>
+                              </td>
+                              <td align="right">
+                                <p style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800;">$<%= number_with_delimiter(@cost_estimate.total_cost.to_i) %></p>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- PDF Note -->
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+                <tr>
+                  <td style="background-color: #fff8f0; border-left: 4px solid #ED1A3B; border-radius: 0 6px 6px 0; padding: 16px 20px;">
+                    <p style="margin: 0; color: #4a4a68; font-size: 14px; line-height: 1.6;">
+                      <strong style="color: #1a1a2e;">📎 PDF Attached</strong> — The full proposal with detailed feature breakdowns, timelines, and technical specifications is attached to this email.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA -->
+              <p style="margin: 28px 0 0 0; color: #4a4a68; font-size: 15px; line-height: 1.7;">
+                Have questions or want to discuss the proposal? We'd love to hear from you. Simply reply to this email or reach out to us directly.
+              </p>
+
+              <!-- Sign-off -->
+              <p style="margin: 28px 0 0 0; color: #4a4a68; font-size: 15px; line-height: 1.7;">
+                Best regards,<br>
+                <strong style="color: #1a1a2e;">The Tecaudex Team</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8f9fc; padding: 28px 40px; border-radius: 0 0 12px 12px; border-top: 1px solid #e8e9f0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <p style="margin: 0 0 8px 0; color: #1a1a2e; font-size: 14px; font-weight: 700; letter-spacing: 0.5px;">TECAUDEX</p>
+                    <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 12px;">Building Digital Solutions That Matter</p>
+                    <p style="margin: 12px 0 0 0; color: #8b8da3; font-size: 12px;">
+                      <a href="https://tecaudex.com" style="color: #ED1A3B; text-decoration: none;">tecaudex.com</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
