@@ -1,4 +1,6 @@
 class CostEstimateMailer < ApplicationMailer
+  default from: "calculator@tecaudex.com"
+
   def send_estimate(cost_estimate, pdf_binary, filename)
     @cost_estimate = cost_estimate
     @customer = cost_estimate.customer
