@@ -98,7 +98,7 @@ module Api
 
           # Extract and convert parameters to proper types
           total_hours = params[:totalHours].to_i
-          hourly_rate = params[:hourlyRate].present? ? params[:hourlyRate].to_f : 30.0
+          hourly_rate = params[:hourlyRate].present? ? params[:hourlyRate].to_f : 20.0
           estimated_cost = params[:estimatedCost].to_f
 
           Rails.logger.info("Converted params - total_hours: #{total_hours}, hourly_rate: #{hourly_rate}, estimated_cost: #{estimated_cost}")

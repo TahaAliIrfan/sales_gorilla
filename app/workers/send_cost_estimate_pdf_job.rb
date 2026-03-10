@@ -77,7 +77,7 @@ class SendCostEstimatePdfJob
                   "📱 Project Type: #{app_types}\n" \
                   "📊 Scale: #{cost_estimate.scale.titleize}\n" \
                   "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
-                  "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
+                  "💰 Total Cost: £#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
                   "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
                   "Best regards,\nTecaudex Team"
 
