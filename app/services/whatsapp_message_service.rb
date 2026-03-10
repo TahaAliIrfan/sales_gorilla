@@ -234,7 +234,7 @@ class WhatsappMessageService
       updated_at: timestamp,
     }
 
-    if message_type == 'chat' or message_type == 'e2e_notification'
+    if message_type == 'chat' or message_type == 'e2e_notification' or message_type == 'notification_template'
       if message[:body] == ''
         message_attrs[:content] = 'Unable To Read Message'
       else
