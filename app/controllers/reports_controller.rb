@@ -6,7 +6,7 @@ class ReportsController < ApplicationController
   def index
     setup_date_filters
 
-    @users = User.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    @users = User.active_users.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
 
     prepare_user_performance
     prepare_daily_customer_details if show_daily_details?
