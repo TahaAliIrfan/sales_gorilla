@@ -108,26 +108,26 @@ class UserDashboardController < ApplicationController
   
   def deals_needing_attention
     return [] unless current_user
-    
-    today = Date.today
-    
+
     Deal.assigned_to(current_user)
         .active
-        .where("expected_close_date <= ?", today + 7.days)
-        .select do |deal|
-          last_activity = deal.deal_activities.order(created_at: :desc).first
-          last_activity.nil? || last_activity.created_at < 3.days.ago
-        end
+        .where("expected_close_date <= ?", Date.today + 7.days)
+        .where(
+          "NOT EXISTS (SELECT 1 FROM deal_activities WHERE deal_activities.deal_id = deals.id AND deal_activities.created_at >= ?)",
+          3.days.ago
+        )
+        .limit(10)
   end
-  
+
   def customers_needing_attention
     return [] unless current_user
-    
+
     Customer.where(user_id: current_user.id)
-            .where(status: ['Pending', 'Connection Established'])
-            .select do |customer|
-              last_activity = customer.customer_activities.order(created_at: :desc).first
-              last_activity.nil? || last_activity.created_at < 5.days.ago
-            end
+            .where(status: ['Pending', 'Contact Established'])
+            .where(
+              "NOT EXISTS (SELECT 1 FROM customer_activities WHERE customer_activities.customer_id = customers.id AND customer_activities.created_at >= ?)",
+              5.days.ago
+            )
+            .limit(10)
   end
 end
