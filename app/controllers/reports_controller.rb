@@ -104,6 +104,12 @@ class ReportsController < ApplicationController
       uid = cid_to_uid[cid]
       h[uid] = (h[uid] || 0) + count
     end
+    inbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: 'inbound')
+                                 .group(:customer_id).count
+    whatsapp_replies_by_user = inbound_by_customer.each_with_object({}) do |(cid, count), h|
+      uid = cid_to_uid[cid]
+      h[uid] = (h[uid] || 0) + count
+    end
 
     deals_by_user = Deal.where(user_id: user_ids, created_at: date_range)
                         .group(:user_id).count
@@ -116,6 +122,7 @@ class ReportsController < ApplicationController
         connected_calls: connected_by_user[user.id] || 0,
         emails_sent: emails_by_user[user.id] || 0,
         whatsapp_sent: whatsapp_by_user[user.id] || 0,
+        whatsapp_replies: whatsapp_replies_by_user[user.id] || 0,
         deals: deals_by_user[user.id] || 0
       }
     end

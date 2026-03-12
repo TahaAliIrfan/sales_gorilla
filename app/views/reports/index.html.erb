@@ -70,6 +70,7 @@
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Connected Calls</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Emails Sent</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp Sent</th>
+              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp Replies</th>
               <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Deals</th>
             </tr>
           </thead>
@@ -110,6 +111,11 @@
                   </span>
                 </td>
                 <td class="px-6 py-4 text-center">
+                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:whatsapp_replies] > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400' %>">
+                    <%= perf[:whatsapp_replies] %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-center">
                   <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:deals] > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-400' %>">
                     <%= perf[:deals] %>
                   </span>
@@ -126,6 +132,7 @@
               <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:connected_calls] } %></td>
               <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:emails_sent] } %></td>
               <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:whatsapp_sent] } %></td>
+              <td class="px-6 py-3 text-center text-sm text-green-700"><%= @user_performance.sum { |p| p[:whatsapp_replies] } %></td>
               <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:deals] } %></td>
             </tr>
           </tfoot>
