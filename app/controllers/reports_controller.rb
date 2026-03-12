@@ -96,8 +96,10 @@ class ReportsController < ApplicationController
                           .where(emails: { created_at: date_range, status: 'sent' })
                           .group("customers.user_id").count
 
-    whatsapp_by_user = Message.where(user_id: user_ids, created_at: date_range, direction: 'outbound')
-                              .group(:user_id).count
+    whatsapp_by_user = Message.joins(:customer)
+                              .where(customers: { user_id: user_ids })
+                              .where(messages: { created_at: date_range, direction: 'outbound' })
+                              .group("customers.user_id").count
 
     deals_by_user = Deal.where(user_id: user_ids, created_at: date_range)
                         .group(:user_id).count
@@ -120,8 +122,9 @@ class ReportsController < ApplicationController
 
     call_customer_ids = Recording.where(date: date_range, user_id: user_ids).distinct.pluck(:customer_id)
     email_customer_ids = Email.where(created_at: date_range, user_id: user_ids).distinct.pluck(:customer_id)
-    whatsapp_customer_ids = Message.where(user_id: user_ids, created_at: date_range)
-                                    .where.not(customer_id: nil)
+    whatsapp_customer_ids = Message.joins(:customer)
+                                    .where(customers: { user_id: user_ids })
+                                    .where(messages: { created_at: date_range })
                                     .distinct.pluck(:customer_id)
 
     all_customer_ids = (call_customer_ids + email_customer_ids + whatsapp_customer_ids).uniq
