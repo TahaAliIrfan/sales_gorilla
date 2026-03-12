@@ -96,10 +96,14 @@ class ReportsController < ApplicationController
                           .where(emails: { created_at: date_range, status: 'sent' })
                           .group("customers.user_id").count
 
-    whatsapp_by_user = Message.joins(:customer)
-                              .where(customers: { user_id: user_ids })
-                              .where(messages: { created_at: date_range, direction: 'outbound' })
-                              .group("customers.user_id").count
+    customer_ids_in_scope = customer_scope.pluck(:id, :user_id)
+    cid_to_uid = customer_ids_in_scope.each_with_object({}) { |(cid, uid), h| h[cid] = uid }
+    outbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: 'outbound')
+                                  .group(:customer_id).count
+    whatsapp_by_user = outbound_by_customer.each_with_object({}) do |(cid, count), h|
+      uid = cid_to_uid[cid]
+      h[uid] = (h[uid] || 0) + count
+    end
 
     deals_by_user = Deal.where(user_id: user_ids, created_at: date_range)
                         .group(:user_id).count
@@ -122,9 +126,7 @@ class ReportsController < ApplicationController
 
     call_customer_ids = Recording.where(date: date_range, user_id: user_ids).distinct.pluck(:customer_id)
     email_customer_ids = Email.where(created_at: date_range, user_id: user_ids).distinct.pluck(:customer_id)
-    whatsapp_customer_ids = Message.joins(:customer)
-                                    .where(customers: { user_id: user_ids })
-                                    .where(messages: { created_at: date_range })
+    whatsapp_customer_ids = Message.where(customer_id: Customer.where(user_id: user_ids).select(:id))
                                     .distinct.pluck(:customer_id)
 
     all_customer_ids = (call_customer_ids + email_customer_ids + whatsapp_customer_ids).uniq
@@ -144,9 +146,9 @@ class ReportsController < ApplicationController
     emails_received_data = Email.where(created_at: date_range, customer_id: all_customer_ids, status: 'received')
                                 .group(:customer_id).count
 
-    wa_sent_data = Message.where(created_at: date_range, customer_id: all_customer_ids, direction: 'outbound')
+    wa_sent_data = Message.where(customer_id: all_customer_ids, direction: 'outbound')
                           .group(:customer_id).count
-    wa_received_data = Message.where(created_at: date_range, customer_id: all_customer_ids, direction: 'inbound')
+    wa_received_data = Message.where(customer_id: all_customer_ids, direction: 'inbound')
                               .group(:customer_id).count
 
     @daily_customer_details = customers.map do |customer|
