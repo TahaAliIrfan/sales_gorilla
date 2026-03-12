@@ -474,7 +474,7 @@
                       </svg>
                       <div>
                         <div class="text-gray-900">
-                          <span class="font-semibold"><%= customer.messages.count %></span>
+                          <span class="font-semibold"><%= customer.messages.where(direction: 'outbound').count %></span>
                           <span class="text-gray-500 text-xs">sent</span>
                         </div>
                         <div class="text-xs text-green-600 font-medium">
