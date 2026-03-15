@@ -5,6 +5,7 @@ class ReportsController < ApplicationController
 
   def index
     setup_date_filters
+    setup_kpi_targets
 
     @users = User.active_users.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
 
@@ -15,6 +16,7 @@ class ReportsController < ApplicationController
 
   def my_reports
     setup_date_filters
+    setup_kpi_targets
 
     @users = [current_user]
 
@@ -76,6 +78,23 @@ class ReportsController < ApplicationController
     @filter_range.in?(%w[today yesterday])
   end
 
+  def setup_kpi_targets
+    days = case @filter_range
+           when 'today', 'yesterday' then 1
+           when 'last_week' then 7
+           when 'month' then ((@end_date.to_date - @start_date.to_date).to_i + 1)
+           when 'custom' then ((@end_date.to_date - @start_date.to_date).to_i + 1)
+           else 1
+           end
+
+    @kpi_targets = {
+      calls_attempted: 30 * days,
+      connected_calls: 3 * days,
+      whatsapp_messages_sent: 10 * days,
+      emails_sent: 5 * days
+    }
+  end
+
   def date_range
     @start_date..@end_date
   end
@@ -84,28 +103,13 @@ class ReportsController < ApplicationController
     user_ids = @users.map(&:id)
 
     customer_scope = Customer.where(user_id: user_ids, created_at: date_range)
-
     leads_by_user = customer_scope.group(:user_id).count
 
-    calls_by_user = customer_scope.group(:user_id).sum(:total_call_attempts)
-
-    connected_by_user = customer_scope.group(:user_id).sum(:successful_call_attempts)
+    kpi_totals = UserKpiRecord.totals_for_users(user_ids, @start_date, @end_date)
 
     customer_ids_in_scope = customer_scope.pluck(:id, :user_id)
     cid_to_uid = customer_ids_in_scope.each_with_object({}) { |(cid, uid), h| h[cid] = uid }
 
-    emails_sent_by_customer = Email.where(customer_id: cid_to_uid.keys, status: 'sent')
-                                   .group(:customer_id).count
-    emails_by_user = emails_sent_by_customer.each_with_object({}) do |(cid, count), h|
-      uid = cid_to_uid[cid]
-      h[uid] = (h[uid] || 0) + count
-    end
-    outbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: 'outbound')
-                                  .group(:customer_id).count
-    whatsapp_by_user = outbound_by_customer.each_with_object({}) do |(cid, count), h|
-      uid = cid_to_uid[cid]
-      h[uid] = (h[uid] || 0) + count
-    end
     inbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: 'inbound')
                                  .group(:customer_id).count
     whatsapp_replies_by_user = inbound_by_customer.each_with_object({}) do |(cid, count), h|
@@ -117,13 +121,14 @@ class ReportsController < ApplicationController
                         .group(:user_id).count
 
     @user_performance = @users.map do |user|
+      kpi = kpi_totals[user.id]
       {
         user: user,
         leads_assigned: leads_by_user[user.id] || 0,
-        calls_attempted: calls_by_user[user.id] || 0,
-        connected_calls: connected_by_user[user.id] || 0,
-        emails_sent: emails_by_user[user.id] || 0,
-        whatsapp_sent: whatsapp_by_user[user.id] || 0,
+        calls_attempted: kpi&.total_calls_attempted.to_i,
+        connected_calls: kpi&.total_connected_calls.to_i,
+        emails_sent: kpi&.total_emails_sent.to_i,
+        whatsapp_sent: kpi&.total_whatsapp_messages_sent.to_i,
         whatsapp_replies: whatsapp_replies_by_user[user.id] || 0,
         deals: deals_by_user[user.id] || 0
       }

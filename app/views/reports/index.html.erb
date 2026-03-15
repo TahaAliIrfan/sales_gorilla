@@ -141,6 +141,116 @@
     </div>
 
     <!-- ═══════════════════════════════════════ -->
+    <!-- 1b) KPI TRACKER                          -->
+    <!-- ═══════════════════════════════════════ -->
+    <% if @kpi_targets.present? %>
+      <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-8 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <svg class="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            KPI Tracker
+            <span class="text-sm font-normal text-gray-500">&mdash; Daily targets vs actuals</span>
+          </h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Calls<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:calls_attempted] %></span>
+                </th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Connected<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:connected_calls] %></span>
+                </th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  WhatsApp<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:whatsapp_messages_sent] %></span>
+                </th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Emails<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:emails_sent] %></span>
+                </th>
+                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-100">
+              <% @user_performance.each do |perf| %>
+                <%
+                  calls_met = perf[:calls_attempted] >= @kpi_targets[:calls_attempted]
+                  connected_met = perf[:connected_calls] >= @kpi_targets[:connected_calls]
+                  whatsapp_met = perf[:whatsapp_sent] >= @kpi_targets[:whatsapp_messages_sent]
+                  emails_met = perf[:emails_sent] >= @kpi_targets[:emails_sent]
+                  all_met = calls_met && connected_met && whatsapp_met && emails_met
+                  met_count = [calls_met, connected_met, whatsapp_met, emails_met].count(true)
+                %>
+                <tr class="hover:bg-gray-50/50 transition-colors">
+                  <td class="px-6 py-3 whitespace-nowrap">
+                    <div class="flex items-center gap-3">
+                      <div class="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold">
+                        <%= perf[:user].name&.first&.upcase || '?' %>
+                      </div>
+                      <span class="text-sm font-medium text-gray-900"><%= perf[:user].name || 'Unknown' %></span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-sm font-bold <%= calls_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:calls_attempted] %></span>
+                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full <%= calls_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:calls_attempted].to_f / [@kpi_targets[:calls_attempted], 1].max) * 100), 100].min %>%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-sm font-bold <%= connected_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:connected_calls] %></span>
+                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full <%= connected_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:connected_calls].to_f / [@kpi_targets[:connected_calls], 1].max) * 100), 100].min %>%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-sm font-bold <%= whatsapp_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:whatsapp_sent] %></span>
+                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full <%= whatsapp_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:whatsapp_sent].to_f / [@kpi_targets[:whatsapp_messages_sent], 1].max) * 100), 100].min %>%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-sm font-bold <%= emails_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:emails_sent] %></span>
+                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
+                        <div class="h-1.5 rounded-full <%= emails_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:emails_sent].to_f / [@kpi_targets[:emails_sent], 1].max) * 100), 100].min %>%"></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <% if all_met %>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                        All Met
+                      </span>
+                    <% elsif met_count >= 2 %>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
+                        <%= met_count %>/4 Met
+                      </span>
+                    <% else %>
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                        <%= met_count %>/4 Met
+                      </span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- ═══════════════════════════════════════ -->
     <!-- 2) DAILY CUSTOMER ACTIVITY DETAIL       -->
     <!--    (only for Today / Yesterday)         -->
     <!-- ═══════════════════════════════════════ -->

@@ -29,13 +29,12 @@ class Recording < ApplicationRecord
   
   private
 
-  # Track successful call when recording is created (only if duration >= 60 seconds)
   def track_successful_call
     return unless customer.present?
 
-    # Only track as successful if call duration exceeds 60 seconds
     if duration.present? && duration >= 60
       customer.track_successful_call!
+      UserKpiRecord.track!(user_id, :connected_calls)
     end
   end
 

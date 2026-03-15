@@ -78,6 +78,7 @@ class MessagesController < ApplicationController
     end
     
     if result[:success]
+      UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
       render json: { 
         success: true, 
         message: result[:message] || 'Message sent successfully',

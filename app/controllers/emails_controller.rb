@@ -141,6 +141,7 @@ class EmailsController < ApplicationController
     # No temp file cleanup needed - we store content in memory now
     
     if @email
+      UserKpiRecord.track!(current_user&.id, :emails_sent)
       respond_to do |format|
         format.html {
           flash[:success] = "Email successfully sent"

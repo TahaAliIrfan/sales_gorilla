@@ -86,6 +86,74 @@
     <% end %>
 
     <!-- ═══════════════════════════════════════ -->
+    <!-- 1b) MY KPI TRACKER                       -->
+    <!-- ═══════════════════════════════════════ -->
+    <% if @kpi_targets.present? && perf.present? %>
+      <%
+        calls_met = perf[:calls_attempted] >= @kpi_targets[:calls_attempted]
+        connected_met = perf[:connected_calls] >= @kpi_targets[:connected_calls]
+        whatsapp_met = perf[:whatsapp_sent] >= @kpi_targets[:whatsapp_messages_sent]
+        emails_met = perf[:emails_sent] >= @kpi_targets[:emails_sent]
+        all_met = calls_met && connected_met && whatsapp_met && emails_met
+        met_count = [calls_met, connected_met, whatsapp_met, emails_met].count(true)
+      %>
+      <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-8 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <svg class="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            KPI Tracker
+          </h2>
+          <% if all_met %>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold bg-green-100 text-green-700">
+              <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              All KPIs Met
+            </span>
+          <% else %>
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold <%= met_count >= 2 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700' %>">
+              <%= met_count %>/4 KPIs Met
+            </span>
+          <% end %>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+          <div class="rounded-xl border-2 p-4 text-center <%= calls_met ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50' %>">
+            <div class="text-xs font-semibold uppercase tracking-wider mb-2 <%= calls_met ? 'text-green-600' : 'text-red-600' %>">Calls Attempted</div>
+            <div class="text-3xl font-bold <%= calls_met ? 'text-green-700' : 'text-red-700' %>"><%= perf[:calls_attempted] %></div>
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all <%= calls_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:calls_attempted].to_f / [@kpi_targets[:calls_attempted], 1].max) * 100), 100].min %>%"></div>
+            </div>
+            <div class="text-xs mt-1 text-gray-500">Target: <%= @kpi_targets[:calls_attempted] %></div>
+          </div>
+          <div class="rounded-xl border-2 p-4 text-center <%= connected_met ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50' %>">
+            <div class="text-xs font-semibold uppercase tracking-wider mb-2 <%= connected_met ? 'text-green-600' : 'text-red-600' %>">Connected Calls</div>
+            <div class="text-3xl font-bold <%= connected_met ? 'text-green-700' : 'text-red-700' %>"><%= perf[:connected_calls] %></div>
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all <%= connected_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:connected_calls].to_f / [@kpi_targets[:connected_calls], 1].max) * 100), 100].min %>%"></div>
+            </div>
+            <div class="text-xs mt-1 text-gray-500">Target: <%= @kpi_targets[:connected_calls] %></div>
+          </div>
+          <div class="rounded-xl border-2 p-4 text-center <%= whatsapp_met ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50' %>">
+            <div class="text-xs font-semibold uppercase tracking-wider mb-2 <%= whatsapp_met ? 'text-green-600' : 'text-red-600' %>">WhatsApp Sent</div>
+            <div class="text-3xl font-bold <%= whatsapp_met ? 'text-green-700' : 'text-red-700' %>"><%= perf[:whatsapp_sent] %></div>
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all <%= whatsapp_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:whatsapp_sent].to_f / [@kpi_targets[:whatsapp_messages_sent], 1].max) * 100), 100].min %>%"></div>
+            </div>
+            <div class="text-xs mt-1 text-gray-500">Target: <%= @kpi_targets[:whatsapp_messages_sent] %></div>
+          </div>
+          <div class="rounded-xl border-2 p-4 text-center <%= emails_met ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50' %>">
+            <div class="text-xs font-semibold uppercase tracking-wider mb-2 <%= emails_met ? 'text-green-600' : 'text-red-600' %>">Emails Sent</div>
+            <div class="text-3xl font-bold <%= emails_met ? 'text-green-700' : 'text-red-700' %>"><%= perf[:emails_sent] %></div>
+            <div class="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div class="h-2 rounded-full transition-all <%= emails_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:emails_sent].to_f / [@kpi_targets[:emails_sent], 1].max) * 100), 100].min %>%"></div>
+            </div>
+            <div class="text-xs mt-1 text-gray-500">Target: <%= @kpi_targets[:emails_sent] %></div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- ═══════════════════════════════════════ -->
     <!-- 2) DAILY CUSTOMER ACTIVITY DETAIL       -->
     <!--    (only for Today / Yesterday)         -->
     <!-- ═══════════════════════════════════════ -->
