@@ -88,10 +88,10 @@ class ReportsController < ApplicationController
            end
 
     @kpi_targets = {
-      calls_attempted: 30 * days,
+      calls_attempted: 10 * days,
       connected_calls: 3 * days,
       whatsapp_messages_sent: 10 * days,
-      emails_sent: 5 * days
+      emails_sent: 10 * days
     }
   end
 

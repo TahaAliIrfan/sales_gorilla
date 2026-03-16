@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_02_26_130001) do
+ActiveRecord::Schema[7.1].define(version: 2026_03_16_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -690,6 +690,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_130001) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
+  create_table "user_kpi_records", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.date "record_date", null: false
+    t.integer "calls_attempted", default: 0, null: false
+    t.integer "connected_calls", default: 0, null: false
+    t.integer "whatsapp_messages_sent", default: 0, null: false
+    t.integer "emails_sent", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["record_date"], name: "index_user_kpi_records_on_record_date"
+    t.index ["user_id", "record_date"], name: "index_user_kpi_records_on_user_id_and_record_date", unique: true
+    t.index ["user_id"], name: "index_user_kpi_records_on_user_id"
+  end
+
   create_table "user_pipeline_assignments", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "pipeline_id", null: false
@@ -798,6 +812,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_02_26_130001) do
   add_foreign_key "sms", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
+  add_foreign_key "user_kpi_records", "users"
   add_foreign_key "user_pipeline_assignments", "pipelines"
   add_foreign_key "user_pipeline_assignments", "users"
   add_foreign_key "whatsapp_messages", "customers"
