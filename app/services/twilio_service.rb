@@ -196,24 +196,23 @@ class TwilioService
     raise e
   end
 
+  ALLOWED_US_NUMBER = '+16562700320'
+
   def fetch_available_numbers
     begin
       incoming_numbers = @client.incoming_phone_numbers.list
       
-      numbers = incoming_numbers.map do |number|
-        {
-          phone_number: number.phone_number,
-          friendly_name: number.phone_number
-        }
+      numbers = incoming_numbers.filter_map do |number|
+        phone = number.phone_number
+        next if phone.start_with?('+1') && phone != ALLOWED_US_NUMBER
+        { phone_number: phone, friendly_name: phone }
       end
       
       return numbers unless numbers.empty?
       
-      # Return default number if no numbers found
       [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
     rescue => e
       Rails.logger.error("Error fetching available phone numbers: #{e.message}")
-      # Return just the default number as a fallback
       [{ phone_number: @default_caller_id, friendly_name: 'UK Number' }]
     end
   end
