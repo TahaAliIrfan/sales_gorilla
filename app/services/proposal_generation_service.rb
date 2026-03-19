@@ -337,13 +337,6 @@ class ProposalGenerationService
         # Header with dark background
         pdf.fill_color "1F2937"
         pdf.fill_rounded_rectangle [horizontal_margin, y_position], table_width, row_height, 6
-      elsif row[:is_category]
-        # Category with light red/pink background
-        pdf.fill_color "FEF2F2"
-        pdf.fill_rectangle [horizontal_margin, y_position - row_height], table_width, row_height
-        # Add subtle left border accent
-        pdf.fill_color RED_COLOR
-        pdf.fill_rectangle [horizontal_margin, y_position - row_height], 4, row_height
       elsif row[:is_total]
         # Total row - highlighted with dark background
         pdf.fill_color "1F2937"
@@ -360,7 +353,7 @@ class ProposalGenerationService
       text_color = if row[:is_header]
                      WHITE_COLOR
                    elsif row[:is_category]
-                     RED_COLOR
+                     BLACK_COLOR
                    elsif row[:is_total]
                      WHITE_COLOR
                    else
