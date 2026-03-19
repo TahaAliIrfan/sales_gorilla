@@ -74,13 +74,13 @@ class ProposalGenerationService
         .gsub(/…/, '...')        # Replace ellipsis
         .gsub(/✓/, 'v')          # Replace checkmarks
         .gsub(/•/, '-')          # Replace bullet points
-        .gsub(/[^\x00-\x7F]/, '')   # Remove non-ASCII characters instead of replacing with ?
+        .gsub(/[^\x00-\x7F£€]/, '')   # Remove non-ASCII characters (preserve currency symbols supported by WinAnsi)
     
     # Try encoding conversion, but fallback to original if it fails
     begin
       cleaned_text.encode('Windows-1252', 'UTF-8', invalid: :replace, undef: :replace, replace: '')
     rescue Encoding::UndefinedConversionError
-      cleaned_text.gsub(/[^\x20-\x7E]/, '') # Keep only printable ASCII if encoding fails
+      cleaned_text.gsub(/[^\x20-\x7E£€]/, '') # Keep only printable ASCII + currency symbols if encoding fails
     end
   end
 
@@ -577,8 +577,7 @@ class ProposalGenerationService
     hourly_rate = @cost_estimate.hourly_rate
     total_hours = @cost_estimate.total_hours
     development_cost = total_hours * hourly_rate
-    agency_fee = 250  # Processing Fee
-    total_cost = development_cost + agency_fee
+    total_cost = development_cost
 
     # Calculate months (assuming 172 hours per month with 0.8 efficiency factor)
     monthly_hours = 172
@@ -600,7 +599,6 @@ class ProposalGenerationService
       { label: "Total Development Hours", value: "#{total_hours} hours" },
       { label: "Development Rate", value: "£#{hourly_rate}/hour" },
       { label: "Development Cost", value: "£#{number_with_commas(development_cost.to_i)}" },
-      { label: "Processing Fee", value: "£#{number_with_commas(agency_fee)}" },
       { label: "Quality Assurance", value: "Included" },
       { label: "Documentation", value: "Included" },
       { label: "Total Project Investment", value: "£#{number_with_commas(total_cost.to_i)}", is_total: true }
