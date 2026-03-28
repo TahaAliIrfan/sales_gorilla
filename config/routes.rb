@@ -206,6 +206,7 @@ Rails.application.routes.draw do
   get 'settings', to: 'settings#edit', as: :settings
   patch 'settings/update', to: 'settings#update', as: :update_settings
   delete 'settings/disconnect_google', to: 'settings#disconnect_google', as: :disconnect_google
+  get 'settings/export_customers_with_deals', to: 'settings#export_customers_with_deals', as: :export_customers_with_deals
 
 
   # Cost Calculator routes

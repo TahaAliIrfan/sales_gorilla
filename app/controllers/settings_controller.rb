@@ -1,3 +1,5 @@
+require 'csv'
+
 class SettingsController < ApplicationController
   layout 'dashboard'
   before_action :require_login
@@ -38,7 +40,52 @@ class SettingsController < ApplicationController
     
     redirect_to settings_path, notice: 'Google Calendar disconnected successfully.'
   end
-  
+
+  def export_customers_with_deals
+    unless current_user.admin?
+      redirect_to settings_path, alert: 'Only admins can export data.'
+      return
+    end
+
+    customers = Customer.joins(:deals).where(deals: { status: ['won', 'lost'] }).distinct
+
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << [
+        'Customer Name', 'Email', 'Phone', 'Company', 'Country',
+        'Lead Source', 'Platform', 'Status',
+        'Deal Title', 'Deal Amount', 'Deal Status', 'Deal Expected Close Date', 'Deal Closing Date',
+        'Assigned To', 'Customer Created At'
+      ]
+
+      customers.includes(:deals, :user).find_each do |customer|
+        customer.deals.where(status: ['won', 'lost']).each do |deal|
+          csv << [
+            customer.name,
+            customer.email,
+            customer.phone,
+            customer.company,
+            customer.country,
+            customer.lead_source,
+            customer.platform,
+            customer.status,
+            deal.title,
+            deal.amount,
+            deal.status,
+            deal.expected_close_date,
+            deal.closing_date,
+            customer.user&.name,
+            customer.created_at&.strftime('%Y-%m-%d')
+          ]
+        end
+      end
+    end
+
+    send_data csv_data,
+      filename: "customers_with_deals_#{Date.today.strftime('%Y%m%d')}.csv",
+      type: 'text/csv',
+      disposition: 'attachment'
+  end
+
   private
   
   def user_params
