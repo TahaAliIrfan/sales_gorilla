@@ -177,6 +177,11 @@
         <%= form.url_field :linkedin_url, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
       </div>
 
+      <div>
+        <%= form.label :meta_lead_id, "Meta Lead ID", class: "block text-sm font-medium text-gray-700" %>
+        <%= form.text_field :meta_lead_id, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "e.g. 1234567890123456" %>
+      </div>
+
       <div data-lead-source-target="ccrFields" class="<%= customer.lead_source == 'CCR' ? '' : 'hidden' %> space-y-4">
         <%= form.label :ccr_link, "CCR Link", class: "block text-sm font-medium text-gray-700" %>
         <%= form.url_field :ccr_link, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Google Drive Link" %>

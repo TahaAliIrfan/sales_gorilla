@@ -651,7 +651,7 @@ class CustomersController < ApplicationController
     # Only permit parameters that are actually in the form
     permitted_params = [
       :name, :email, :phone, :address, :company, :notes,
-      :lead_source, :linkedin_url, :ccr_link, :project_estimated_cost,
+      :lead_source, :linkedin_url, :meta_lead_id, :ccr_link, :project_estimated_cost,
       :project_type, :idea_description, :country, :status, :call_status,
       :email_status, :whatsapp_status, :linkedin_status, :upwork_profile, :exhaust_status,
       :preferred_calling_time, :platform, :project_scope, :repeat_lead, documents: []
