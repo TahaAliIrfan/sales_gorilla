@@ -565,79 +565,27 @@ class Customer < ApplicationRecord
     analyze_phone_number
   end
 
-  # Track Meta Conversions API events based on customer lifecycle changes
+  # Track Meta Conversions API events based on customer lifecycle changes.
+  # Only fires for inbound leads that have a Meta lead ID attached.
   def track_meta_conversions_events
-    return if skip_meta_tracking? # Skip during seeds, tests, etc.
+    return unless meta_eligible?
 
-    # Track lead creation
-    if saved_change_to_id? # New customer created
-      MetaConversionsApiWorker.perform_async(id, 'lead')
+    service = MetaConversionsApiService.new
+    return unless service.credentials_configured?
+
+    # Lead — fires once when the customer record is first created
+    if saved_change_to_id?
+      service.send_form_lead_event(self, 'Lead')
     end
 
-    # Track contact establishment
+    # Contact — fires when status moves to "Contact Established"
     if saved_change_to_status? && status == 'Contact Established'
-      MetaConversionsApiWorker.perform_async(id, 'complete_registration')
-    end
-
-    # Track conversion
-    if saved_change_to_status? && status == 'Converted'
-      MetaConversionsApiWorker.perform_async(id, 'purchase')
-    end
-
-    # Track proposal sent
-    if saved_change_to_status? && status == 'Proposal Sent'
-      MetaConversionsApiWorker.perform_async(id, 'initiate_checkout')
-    end
-
-    # Track communication status changes
-    track_communication_events if communication_status_changed?
-
-    # Track profile completion
-    if profile_completion_improved?
-      MetaConversionsApiWorker.perform_async(id, 'complete_registration')
+      service.send_form_lead_event(self, 'Contact')
     end
   end
 
-  def skip_meta_tracking?
-    # Skip tracking during tests, seeds, or if specifically disabled
-    Rails.env.test? || 
-    defined?(Rails::Console) || 
-    Thread.current[:skip_meta_tracking] == true
-  end
-
-  def communication_status_changed?
-    saved_change_to_call_status? || 
-    saved_change_to_email_status? || 
-    saved_change_to_whatsapp_status? || 
-    saved_change_to_linkedin_status?
-  end
-
-  def track_communication_events
-    if saved_change_to_call_status? && call_status == 'Connected'
-      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'phone' })
-    end
-
-    if saved_change_to_email_status? && email_status == 'Connected'
-      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'email' })
-    end
-
-    if saved_change_to_whatsapp_status? && whatsapp_status == 'Connected'
-      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'whatsapp' })
-    end
-
-    if saved_change_to_linkedin_status? && linkedin_status == 'Conversation Initiated'
-      MetaConversionsApiWorker.perform_async(id, 'contact', { 'communication_type' => 'linkedin' })
-    end
-  end
-
-  def profile_completion_improved?
-    # Check if important fields were added that improve profile completeness
-    return false unless persisted?
-    
-    important_fields = [:email, :phone, :company, :country, :project_type]
-    important_fields.any? do |field|
-      saved_change_to_attribute?(field) && send(field).present? && send("#{field}_was").blank?
-    end
+  def meta_eligible?
+    lead_source&.start_with?('Inbound') && meta_lead_id.present?
   end
   
 end
