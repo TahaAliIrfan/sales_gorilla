@@ -10,7 +10,7 @@ class MetaConversionsApiService
     @pixel_id = Rails.application.credentials.dig(:META_PIXEL_ID) || ENV['META_PIXEL_ID']
     @access_token = Rails.application.credentials.dig(:META_ACCESS_TOKEN) || ENV['META_ACCESS_TOKEN']
     @api_version = 'v22.0'
-    @base_url = "https://graph.facebook.com/#{@api_version}/#{@pixel_id}/events"
+    @base_url = "https://graph.facebook.com/123/123/events"
   end
 
   def credentials_configured?
