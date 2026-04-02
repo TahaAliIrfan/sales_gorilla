@@ -13,6 +13,12 @@ class CallingController < ApplicationController
         @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
         # Load all users for admin filter dropdown
         @users = User.all.order(:name)
+      elsif current_user&.manager?
+        subordinate_ids = current_user.managed_associates.pluck(:id)
+        visible_user_ids = subordinate_ids + [current_user.id]
+        @customers = Customer.where(user_id: visible_user_ids).where.not(phone: [nil, ""]).order(created_at: :desc)
+        # Manager can filter by themselves or any of their associates
+        @users = User.where(id: visible_user_ids).order(:name)
       else
         @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
         # Non-admin can only see themselves in filter
