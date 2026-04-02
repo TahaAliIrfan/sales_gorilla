@@ -128,7 +128,7 @@
             <% end %>
           </div>
           
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div class="flex items-center space-x-3">
               <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -156,6 +156,16 @@
               <div class="text-sm">
                 <div class="text-gray-500">Assigned To</div>
                 <div class="font-medium text-gray-900"><%= @customer.user ? @customer.user.name : 'Unassigned' %></div>
+              </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+              <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div class="text-sm">
+                <div class="text-gray-500">Created At</div>
+                <div class="font-medium text-gray-900"><%= @customer.created_at.strftime('%b %d, %Y') %></div>
               </div>
             </div>
           </div>
