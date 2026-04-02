@@ -7,11 +7,6 @@ module Whatsapp
     attr_reader :instance_id, :api_token
     
     def initialize(instance_id = nil, api_token = nil)
-      @device_id = 'TCDX'
-      @api_token = api_token || Rails.application.credentials.dig(:TCDX_KEY)
-      @instance_id = Rails.application.credentials.dig(:GREEN_INSTANCE_ID)
-      @api_token = Rails.application.credentials.dig(:GREEN_AUTH_TOKEN)
-      @base_url = "https://7105.api.greenapi.com/waInstance#{@instance_id}"
       @URL = "https://whatsapp.tecaudex.com"
     end
 
@@ -50,22 +45,6 @@ module Whatsapp
     def get_whatsapp_chat_id(phone_number)
       phone_without_plus = phone_number.gsub(/\A\+/, '')
       "#{phone_without_plus}@c.us"
-    end
-
-    def is_registered_on_whatsapp!(phone_number)
-      cleaned_number = get_whatsapp_chat_id(phone_number)
-
-      response = post_request("client/action/is-registered-user", {
-        contactId: cleaned_number
-      })
-
-      response = handle_response(response)
-
-      if response[:success]
-        response[:data][:data][:isRegisteredUser]
-      else
-        false
-      end
     end
 
     private

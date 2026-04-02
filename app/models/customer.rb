@@ -197,11 +197,8 @@ class Customer < ApplicationRecord
 
   def update_whatsapp_chat_id
     whatsapp_service = Whatsapp::ApiService.new
-
-    if whatsapp_service.is_registered_on_whatsapp!(phone)
-      chat_id = whatsapp_service.get_whatsapp_chat_id(phone)
-      self.update!(whatsapp_chat_id: chat_id)
-    end
+    chat_id = whatsapp_service.get_whatsapp_chat_id(phone)
+    update_columns(whatsapp_chat_id: chat_id)
   end
   
   # Analyze the customer's phone number using comprehensive phone location services
