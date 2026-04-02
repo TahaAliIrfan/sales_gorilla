@@ -85,6 +85,7 @@ class Customer < ApplicationRecord
 
   STATUSES = {
     'Pending' => 'Pending',
+    'Lead' => 'Lead',
     'Contact Established' => 'Contact Established',
     'Contact Not Established' => 'Contact Not Established',
     'Unresponsive' => 'Unresponsive',
