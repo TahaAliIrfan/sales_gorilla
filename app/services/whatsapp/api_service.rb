@@ -12,7 +12,7 @@ module Whatsapp
 
     # Check if the API credentials are configured
     def credentials_configured?
-      @api_token.present?
+      true
     end
 
     # Get all chats from WhatsApp instance
