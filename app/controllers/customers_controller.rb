@@ -106,6 +106,7 @@ class CustomersController < ApplicationController
     authorize @customer
     @deals = @customer.deals
     @activities = @customer.customer_activities.recent.limit(10)
+    @meta_conversion_logs = @customer.meta_conversion_logs.recent
     @recordings = @customer.recordings.recent.limit(20)
     @tasks = @customer.tasks.order(due_date: :asc)
     # Eager load attachments to prevent N+1 queries

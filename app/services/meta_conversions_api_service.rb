@@ -19,7 +19,9 @@ class MetaConversionsApiService
 
   def send_form_lead_event(customer, event_name, amount=nil)
     payload = build_payload([form_lead_event(customer, event_name, amount)])
-    post(payload)
+    result = post(payload)
+    log_result(customer, event_name, result)
+    result
   end
 
   private
@@ -126,5 +128,17 @@ class MetaConversionsApiService
       Rails.logger.error("[MetaConversionsAPI] Error #{response.code}: #{body}")
       { success: false, code: response.code, body: body }
     end
+  end
+
+  def log_result(customer, event_name, result)
+    customer.meta_conversion_logs.create!(
+      event_name: event_name,
+      success: result[:success],
+      response_code: result[:code],
+      response_body: result[:body],
+      error_message: result[:error]
+    )
+  rescue => e
+    Rails.logger.error("[MetaConversionsAPI] Failed to save log: #{e.message}")
   end
 end

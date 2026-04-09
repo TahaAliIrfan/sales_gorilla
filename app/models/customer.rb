@@ -12,6 +12,7 @@ class Customer < ApplicationRecord
   has_many :cost_estimates, dependent: :destroy
   has_many :milestones, dependent: :destroy
   has_many :invoices, dependent: :destroy
+  has_many :meta_conversion_logs, dependent: :destroy
   has_many_attached :documents
 
   # Campaign relationships
@@ -455,7 +456,7 @@ class Customer < ApplicationRecord
 
     return unless service.credentials_configured?
 
-    if status == 'Contact Established' && saved_change_to_status?
+    if status == 'Contact Established' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
       service.send_form_lead_event(self, 'Contact', nil)
     end
   end

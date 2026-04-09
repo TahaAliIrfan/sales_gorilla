@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_03_16_100001) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_09_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -513,6 +513,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_16_100001) do
     t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
   end
 
+  create_table "meta_conversion_logs", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.string "event_name", null: false
+    t.boolean "success", default: false, null: false
+    t.string "response_code"
+    t.jsonb "response_body"
+    t.string "error_message"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "created_at"], name: "index_meta_conversion_logs_on_customer_id_and_created_at"
+    t.index ["customer_id"], name: "index_meta_conversion_logs_on_customer_id"
+  end
+
   create_table "milestone_items", force: :cascade do |t|
     t.bigint "milestone_id", null: false
     t.decimal "amount", precision: 12, scale: 2, null: false
@@ -795,6 +808,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_03_16_100001) do
   add_foreign_key "meeting_participants", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
+  add_foreign_key "meta_conversion_logs", "customers"
   add_foreign_key "milestone_items", "milestones"
   add_foreign_key "milestones", "customers"
   add_foreign_key "milestones", "users"
