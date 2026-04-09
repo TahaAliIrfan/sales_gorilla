@@ -32,7 +32,7 @@ class MetaConversionsApiService
 
     if event_name == "Purchase" && amount.present?
       custom_data[:currency] = "USD"
-      custom_data[:amount]   = "#{amount}"
+      custom_data[:amount]   = amount
     end
 
     {
