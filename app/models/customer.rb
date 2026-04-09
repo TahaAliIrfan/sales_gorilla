@@ -178,6 +178,8 @@ class Customer < ApplicationRecord
   after_save :track_meta_conversions_events
   after_create :calculate_lead_score
 
+  after_create :track_meta_conversions_events_create
+
   def active_deals_count
     deals.active.count
   end
@@ -446,8 +448,33 @@ class Customer < ApplicationRecord
     lead_source&.start_with?('Inbound') && meta_lead_id.present?
   end
 
+  def track_meta_conversions_events
+    return unless meta_eligible?
+
+    service = MetaConversionsApiService.new
+
+    return unless service.credentials_configured?
+
+    if status == 'Contact Established'
+      service.send_form_lead_event(self, 'Contact')
+    end
+  end
+
+
+  def track_meta_conversions_events_create
+
+    return unless meta_eligible?
+
+    service = MetaConversionsApiService.new
+
+    return unless service.credentials_configured?
+
+    service.send_form_lead_event(self, 'Lead')
+  end
+
+
   private
-  
+
   def acceptable_documents
     return unless documents.attached?
 
@@ -566,24 +593,6 @@ class Customer < ApplicationRecord
   # Queue phone analysis when phone number is added or changed
   def queue_phone_analysis
     analyze_phone_number
-  end
-
-  # Track Meta Conversions API events based on customer lifecycle changes.
-  # Only fires for inbound leads that have a Meta lead ID attached.
-  def track_meta_conversions_events
-    return unless meta_eligible?
-
-    service = MetaConversionsApiService.new
-
-    return unless service.credentials_configured?
-
-    if status == 'Pending'
-      service.send_form_lead_event(self, 'Lead')
-    end
-
-    if status == 'Lead'
-      service.send_form_lead_event(self, 'Contact')
-    end
   end
   
 end

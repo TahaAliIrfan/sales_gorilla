@@ -59,7 +59,7 @@ class Deal < ApplicationRecord
     end
 
     # Purchase — fires when the deal is marked as won
-    if saved_change_to_status? && status == 'won'
+    if status == 'won'
       service.send_form_lead_event(customer, 'Purchase')
     end
   end
