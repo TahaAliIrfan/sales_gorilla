@@ -391,7 +391,7 @@
 <div id="wonDealModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
     <h3 class="text-lg font-bold mb-4">Mark Deal as Won</h3>
-    <%= form_with url: mark_as_won_deal_path(@deal), method: :patch do |form| %>
+    <%= form_with url: mark_as_won_deal_path(@deal), method: :patch, data: { turbo: false } do |form| %>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Closing Date</label>
         <%= form.date_field :closing_date, class: "w-full rounded-md border-gray-300 shadow-sm p-2", value: Date.today.strftime('%Y-%m-%d') %>
@@ -410,7 +410,7 @@
 <div id="lostDealModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
   <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
     <h3 class="text-lg font-bold mb-4">Mark Deal as Lost</h3>
-    <%= form_with url: mark_as_lost_deal_path(@deal), method: :patch do |form| %>
+    <%= form_with url: mark_as_lost_deal_path(@deal), method: :patch, data: { turbo: false } do |form| %>
       <div class="mb-4">
         <label class="block text-sm font-medium text-gray-700 mb-2">Closing Date</label>
         <%= form.date_field :closing_date, class: "w-full rounded-md border-gray-300 shadow-sm p-2", value: Date.today.strftime('%Y-%m-%d') %>

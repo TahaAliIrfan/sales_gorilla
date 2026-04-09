@@ -441,6 +441,11 @@ class Customer < ApplicationRecord
     ((successful_call_attempts.to_f / total_call_attempts) * 100).round(2)
   end
 
+
+  def meta_eligible?
+    lead_source&.start_with?('Inbound') && meta_lead_id.present?
+  end
+
   private
   
   def acceptable_documents
@@ -569,21 +574,16 @@ class Customer < ApplicationRecord
     return unless meta_eligible?
 
     service = MetaConversionsApiService.new
+
     return unless service.credentials_configured?
 
-    # Lead — fires once when the customer record is first created
-    if saved_change_to_id?
+    if status == 'Pending'
       service.send_form_lead_event(self, 'Lead')
     end
 
-    # Contact — fires when status moves to "Contact Established"
-    if saved_change_to_status? && status == 'Contact Established'
+    if status == 'Lead'
       service.send_form_lead_event(self, 'Contact')
     end
-  end
-
-  def meta_eligible?
-    lead_source&.start_with?('Inbound') && meta_lead_id.present?
   end
   
 end

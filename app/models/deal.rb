@@ -66,10 +66,13 @@ class Deal < ApplicationRecord
 
   def deal_stage_belongs_to_user_pipeline
     return if deal_stage.nil? || user.nil?
-    
+
     # Skip validation for admins
     return if user.admin?
-    
+
+    # Skip validation if only status/closing_date changed (not deal_stage)
+    return if persisted? && !deal_stage_id_changed?
+
     # Check if the deal stage belongs to one of the user's assigned pipelines
     unless user.accessible_deal_stages.include?(deal_stage)
       errors.add(:deal_stage_id, "must belong to one of your assigned pipelines")

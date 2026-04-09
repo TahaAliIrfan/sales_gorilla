@@ -54,12 +54,14 @@ class DealPolicy < ApplicationPolicy
   end
   
   def mark_as_won?
-    user.admin? || record.user_id == user.id || 
+    return false unless user.can_access_pipeline?(record.pipeline)
+    user.admin? || record.user_id == user.id ||
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
-  
+
   def mark_as_lost?
-    user.admin? || record.user_id == user.id || 
+    return false unless user.can_access_pipeline?(record.pipeline)
+    user.admin? || record.user_id == user.id ||
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 end 
