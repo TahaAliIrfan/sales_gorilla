@@ -55,11 +55,11 @@ class Deal < ApplicationRecord
 
     # Schedule — fires once when the deal is first created
     if saved_change_to_id?
-      service.send_form_lead_event(customer, 'Schedule')
+      service.send_form_lead_event(customer, 'Schedule', nil)
     end
 
     # Purchase — fires when the deal is marked as won
-    if status == 'won'
+    if saved_change_to_status? && status == 'won'
       service.send_form_lead_event(customer, 'Purchase', amount)
     end
   end

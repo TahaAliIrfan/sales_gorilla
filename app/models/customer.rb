@@ -455,8 +455,8 @@ class Customer < ApplicationRecord
 
     return unless service.credentials_configured?
 
-    if status == 'Contact Established'
-      service.send_form_lead_event(self, 'Contact')
+    if status == 'Contact Established' && saved_change_to_status?
+      service.send_form_lead_event(self, 'Contact', nil)
     end
   end
 
@@ -469,7 +469,7 @@ class Customer < ApplicationRecord
 
     return unless service.credentials_configured?
 
-    service.send_form_lead_event(self, 'Lead')
+    service.send_form_lead_event(self, 'Lead',nil)
   end
 
 
