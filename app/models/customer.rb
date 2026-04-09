@@ -422,7 +422,7 @@ class Customer < ApplicationRecord
     )
   end
 
-  # Track a successful call - called when a call exceeds 60 seconds
+  # Track a successful call - called when a call exceeds 10 seconds
   def track_successful_call!
     increment!(:successful_call_attempts)
     update_column(:last_successful_call_at, Time.current)

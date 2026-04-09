@@ -32,9 +32,9 @@ class Recording < ApplicationRecord
   def track_successful_call
     return unless customer.present?
 
-    if duration.present? && duration >= 60
+    if duration.present? && duration >= 10
       customer.track_successful_call!
-      UserKpiRecord.track!(user_id, :connected_calls)
+      UserKpiRecord.track!(current_user.id, :connected_calls)
     end
   end
 
