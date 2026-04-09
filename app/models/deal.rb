@@ -57,11 +57,6 @@ class Deal < ApplicationRecord
     if saved_change_to_id?
       service.send_form_lead_event(customer, 'Schedule')
     end
-
-    # Purchase — fires when the deal is marked as won
-    if status == 'won'
-      service.send_form_lead_event(customer, 'Purchase')
-    end
   end
 
   def deal_stage_belongs_to_user_pipeline
