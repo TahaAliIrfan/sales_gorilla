@@ -568,13 +568,6 @@ class DealsController < ApplicationController
     
     if @deal.update(status: 'won', closing_date: closing_date_value)
 
-      customer = @deal.customer
-
-      if customer.present? && customer.meta_lead_id.present?
-        service = MetaConversionsApiService.new
-        service.send_form_lead_event(customer, 'Purchase')
-      end
-
       DealActivity.create(
         deal_id: @deal.id,
         action: 'status_update',

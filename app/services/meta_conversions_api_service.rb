@@ -17,23 +17,30 @@ class MetaConversionsApiService
     @pixel_id.present? && @access_token.present?
   end
 
-  def send_form_lead_event(customer,event_name)
+  def send_form_lead_event(customer, event_name)
     payload = build_payload([form_lead_event(customer, event_name)])
     post(payload)
   end
 
   private
 
-  def form_lead_event(customer, event_name)
+  def form_lead_event(customer, event_name, amount=nil)
+    custom_data = {
+      lead_event_source: "CRM",
+      event_source: "crm"
+    }
+
+    if event_name == "Purchase" && amount.present?
+      custom_data[:currency] = "USD"
+      custom_data[:amount]   = "#{amount}"
+    end
+
     {
       event_name: event_name,
       event_time: Time.now.to_i,
       action_source: "system_generated",
       user_data: user_data_for(customer),
-      custom_data: {
-        lead_event_source: "CRM",
-        event_source: "crm"
-      },
+      custom_data: custom_data,
       original_event_data: {
         event_name: event_name,
         event_time: customer.created_at.to_i
@@ -44,7 +51,6 @@ class MetaConversionsApiService
   def build_payload(events)
     { data: events }
   end
-
 
   # Assembles user_data hash; only includes keys that have a value on the record.
   # All PII must be SHA256 hashed before sending (except lead_id, fbc, fbp).
