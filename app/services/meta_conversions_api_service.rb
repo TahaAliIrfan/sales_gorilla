@@ -17,14 +17,14 @@ class MetaConversionsApiService
     @pixel_id.present? && @access_token.present?
   end
 
-  def send_form_lead_event(customer, event_name)
-    payload = build_payload([form_lead_event(customer, event_name)])
+  def send_form_lead_event(customer, event_name, amount=nil)
+    payload = build_payload([form_lead_event(customer, event_name, amount)])
     post(payload)
   end
 
   private
 
-  def form_lead_event(customer, event_name, amount=nil)
+  def form_lead_event(customer, event_name, amount)
     custom_data = {
       lead_event_source: "CRM",
       event_source: "crm"
