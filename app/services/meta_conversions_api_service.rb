@@ -17,8 +17,8 @@ class MetaConversionsApiService
     @pixel_id.present? && @access_token.present?
   end
 
-  def send_form_lead_event(customer, event_name, amount=nil)
-    payload = build_payload([form_lead_event(customer, event_name, amount)])
+  def send_form_lead_event(customer, event_name, amount=nil, action_source='system_generated')
+    payload = build_payload([form_lead_event(customer, event_name, amount, action_source)])
     result = post(payload)
     log_result(customer, event_name, result)
     result
@@ -26,7 +26,7 @@ class MetaConversionsApiService
 
   private
 
-  def form_lead_event(customer, event_name, amount)
+  def form_lead_event(customer, event_name, amount, action_source)
     custom_data = {
       lead_event_source: "CRM",
       event_source: "crm"
@@ -40,7 +40,7 @@ class MetaConversionsApiService
     {
       event_name: event_name,
       event_time: Time.now.to_i,
-      action_source: "system_generated",
+      action_source: action_source,
       user_data: user_data_for(customer),
       custom_data: custom_data,
       original_event_data: {

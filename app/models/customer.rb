@@ -446,7 +446,19 @@ class Customer < ApplicationRecord
 
 
   def meta_eligible?
+    meta_inbound_eligible? || meta_website_eligible?
+  end
+
+  def meta_inbound_eligible?
     lead_source&.start_with?('Inbound') && meta_lead_id.present?
+  end
+
+  def meta_website_eligible?
+    lead_source == 'Website'
+  end
+
+  def meta_action_source
+    meta_website_eligible? ? 'website' : 'system_generated'
   end
 
   def track_meta_conversions_events
@@ -457,20 +469,19 @@ class Customer < ApplicationRecord
     return unless service.credentials_configured?
 
     if status == 'Contact Established' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
-      service.send_form_lead_event(self, 'Contact', nil)
+      service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
     end
   end
 
 
   def track_meta_conversions_events_create
-
     return unless meta_eligible?
 
     service = MetaConversionsApiService.new
 
     return unless service.credentials_configured?
 
-    service.send_form_lead_event(self, 'Lead',nil)
+    service.send_form_lead_event(self, 'Lead', nil, meta_action_source)
   end
 
 
