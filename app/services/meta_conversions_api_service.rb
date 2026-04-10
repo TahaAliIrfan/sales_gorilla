@@ -17,8 +17,8 @@ class MetaConversionsApiService
     @pixel_id.present? && @access_token.present?
   end
 
-  def send_form_lead_event(customer, event_name, amount=nil, action_source='system_generated')
-    payload = build_payload([form_lead_event(customer, event_name, amount, action_source)])
+  def send_form_lead_event(customer, event_name, amount=nil, action_source='system_generated', options={})
+    payload = build_payload([form_lead_event(customer, event_name, amount, action_source, options)])
     result = post(payload)
     log_result(customer, event_name, result)
     result
@@ -26,7 +26,7 @@ class MetaConversionsApiService
 
   private
 
-  def form_lead_event(customer, event_name, amount, action_source)
+  def form_lead_event(customer, event_name, amount, action_source, options)
     custom_data = {
       lead_event_source: "CRM",
       event_source: "crm"
@@ -37,7 +37,7 @@ class MetaConversionsApiService
       custom_data[:value]    = amount
     end
 
-    {
+    event = {
       event_name: event_name,
       event_time: Time.now.to_i,
       action_source: action_source,
@@ -48,11 +48,14 @@ class MetaConversionsApiService
         event_time: customer.created_at.to_i
       }
     }
+
+    event[:messaging_channel] = options[:messaging_channel] if options[:messaging_channel].present?
+
+    event
   end
 
   def build_payload(events)
     { data: events, test_event_code: "TEST58522" }
-    # { data: events }
   end
 
   # Assembles user_data hash; only includes keys that have a value on the record.

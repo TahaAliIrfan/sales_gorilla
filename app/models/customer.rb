@@ -446,7 +446,11 @@ class Customer < ApplicationRecord
 
 
   def meta_eligible?
-    meta_inbound_eligible? || meta_website_eligible?
+    meta_inbound_eligible? || meta_website_eligible? || meta_wa_eligible?
+  end
+
+  def meta_wa_eligible?
+    lead_source == 'WA'
   end
 
   def meta_inbound_eligible?
@@ -458,7 +462,13 @@ class Customer < ApplicationRecord
   end
 
   def meta_action_source
-    meta_website_eligible? ? 'website' : 'system_generated'
+    if meta_wa_eligible?
+      'business_messaging'
+    elsif meta_website_eligible?
+      'website'
+    else
+      'system_generated'
+    end
   end
 
   def track_meta_conversions_events
@@ -471,6 +481,10 @@ class Customer < ApplicationRecord
     if status == 'Contact Established' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
       service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
     end
+
+    if meta_wa_eligible? && whatsapp_status == 'Connected' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
+      service.send_form_lead_event(self, 'Contact', nil, meta_action_source, messaging_channel: 'whatsapp')
+    end
   end
 
 
@@ -481,7 +495,8 @@ class Customer < ApplicationRecord
 
     return unless service.credentials_configured?
 
-    service.send_form_lead_event(self, 'Lead', nil, meta_action_source)
+    options = meta_wa_eligible? ? { messaging_channel: 'whatsapp' } : {}
+    service.send_form_lead_event(self, 'Lead', nil, meta_action_source, options)
   end
 
 
