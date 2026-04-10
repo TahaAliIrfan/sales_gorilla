@@ -55,7 +55,7 @@ class MetaConversionsApiService
   end
 
   def build_payload(events)
-    { data: events, test_event_code: "TEST58522" }
+    { data: events }
   end
 
   # Assembles user_data hash; only includes keys that have a value on the record.

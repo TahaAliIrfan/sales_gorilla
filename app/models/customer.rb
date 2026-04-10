@@ -450,7 +450,8 @@ class Customer < ApplicationRecord
   end
 
   def meta_wa_eligible?
-    lead_source == 'WA'
+    # lead_source == 'WA' till we don't have whatsapp connected
+    false
   end
 
   def meta_inbound_eligible?
