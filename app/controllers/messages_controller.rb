@@ -183,6 +183,7 @@ class MessagesController < ApplicationController
       if customer.blank?
         customer = Customer.create(name: 'Whatsapp Lead update name manually',
                                    whatsapp_chat_id: "#{params[:contact][:number]}.c.us",
+                                   email: "#{params[:contact][:number]}@c.us",
                                    phone: "+#{params[:contact][:number]}", lead_source: 'WA')
       end
 
