@@ -16,7 +16,7 @@ module Api
             email: params[:email],
             phone: params[:phone_number],
             country: params[:country],
-            lead_source: 'Inbound',
+            lead_source: 'Website',
             status: 'Pending',
             idea_description: params[:description] || params[:message],
             # Meta-specific fields
