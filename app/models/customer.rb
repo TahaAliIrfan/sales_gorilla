@@ -487,6 +487,10 @@ class Customer < ApplicationRecord
       service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
     end
 
+    if status == 'Pending' && !MetaConversionLog.find_by(customer: self, event_name: 'Lead').present?
+      service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
+    end
+
     if meta_wa_eligible? && whatsapp_status == 'Connected' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
       service.send_form_lead_event(self, 'Contact', nil, meta_action_source, messaging_channel: 'whatsapp')
     end
