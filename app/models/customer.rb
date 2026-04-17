@@ -446,7 +446,7 @@ class Customer < ApplicationRecord
 
 
   def meta_eligible?
-    meta_inbound_eligible? || meta_website_eligible? || meta_wa_eligible?
+    meta_inbound_eligible? || meta_website_eligible? || meta_ccr_eligible? || meta_wa_eligible?
   end
 
   def meta_wa_eligible?
@@ -456,6 +456,10 @@ class Customer < ApplicationRecord
 
   def meta_inbound_eligible?
     lead_source&.start_with?('Inbound') && meta_lead_id.present?
+  end
+
+  def meta_ccr_eligible?
+    lead_source&.start_with?('CCR') && meta_lead_id.present?
   end
 
   def meta_website_eligible?
