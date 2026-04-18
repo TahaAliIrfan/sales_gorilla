@@ -459,7 +459,7 @@ class Customer < ApplicationRecord
   end
 
   def meta_ccr_eligible?
-    lead_source&.start_with?('CCR') && meta_lead_id.present?
+    lead_source == 'CCR'
   end
 
   def meta_website_eligible?
@@ -470,6 +470,8 @@ class Customer < ApplicationRecord
     if meta_wa_eligible?
       'business_messaging'
     elsif meta_website_eligible?
+      'website'
+    elsif  meta_ccr_eligible?
       'website'
     else
       'system_generated'

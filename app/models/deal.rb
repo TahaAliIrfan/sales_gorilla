@@ -53,14 +53,17 @@ class Deal < ApplicationRecord
     service = MetaConversionsApiService.new
     return unless service.credentials_configured?
 
+    action_source = customer.meta_action_source
+
+
     # Schedule — fires once when the deal is first created
     if saved_change_to_id?
-      service.send_form_lead_event(customer, 'Schedule', nil)
+      service.send_form_lead_event(customer, 'Schedule', nil, action_source)
     end
 
     # Purchase — fires when the deal is marked as won
     if saved_change_to_status? && status == 'won'
-      service.send_form_lead_event(customer, 'Purchase', amount)
+      service.send_form_lead_event(customer, 'Purchase', amount, action_source)
     end
   end
 
