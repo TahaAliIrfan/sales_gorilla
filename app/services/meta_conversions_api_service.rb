@@ -20,7 +20,7 @@ class MetaConversionsApiService
   def send_form_lead_event(customer, event_name, amount=nil, action_source='system_generated', options={})
     payload = build_payload([form_lead_event(customer, event_name, amount, action_source, options)])
     result = post(payload)
-    log_result(customer, event_name, result)
+    log_result(customer, event_name, payload, result)
     result
   end
 
@@ -134,9 +134,10 @@ class MetaConversionsApiService
     end
   end
 
-  def log_result(customer, event_name, result)
+  def log_result(customer, event_name, payload, result)
     customer.meta_conversion_logs.create!(
       event_name: event_name,
+      request_payload: payload,
       success: result[:success],
       response_code: result[:code],
       response_body: result[:body],

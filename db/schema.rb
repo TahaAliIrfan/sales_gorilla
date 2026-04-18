@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_04_09_100001) do
+ActiveRecord::Schema[7.1].define(version: 2026_04_17_100001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -522,6 +522,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_04_09_100001) do
     t.string "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "request_payload"
     t.index ["customer_id", "created_at"], name: "index_meta_conversion_logs_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_meta_conversion_logs_on_customer_id"
   end
