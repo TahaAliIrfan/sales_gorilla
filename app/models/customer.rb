@@ -55,7 +55,8 @@ class Customer < ApplicationRecord
     'Web_Summit' => 'Web_Summit',
     'Leap' => 'Leap',
     'Gitex' => 'Gitex',
-    'Followup' => 'Followup'
+    'Followup' => 'Followup',
+    'ODOO' => 'ODOO'
   }.freeze
 
   PROJECT_TYPES = {

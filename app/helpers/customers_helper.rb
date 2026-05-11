@@ -33,6 +33,13 @@ module CustomersHelper
     end
   end
 
+  def lead_source_color_class(lead_source)
+    case lead_source
+    when 'ODOO' then 'bg-purple-100 text-purple-800'
+    else 'bg-green-100 text-green-800'
+    end
+  end
+
   def display_preferred_calling_time(preferred_calling_time)
     return 'Not Specified' if preferred_calling_time.blank? || preferred_calling_time == 'Not Applicable'
     
