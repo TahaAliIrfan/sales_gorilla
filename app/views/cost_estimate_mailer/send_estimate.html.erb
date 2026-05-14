@@ -87,7 +87,7 @@
                                 <p style="margin: 0 0 16px 0; color: #1a1a2e; font-size: 15px; font-weight: 500;"><%= @cost_estimate.total_hours %> hrs</p>
 
                                 <p style="margin: 0 0 4px 0; color: #8b8da3; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Hourly Rate</p>
-                                <p style="margin: 0; color: #1a1a2e; font-size: 15px; font-weight: 500;">$<%= @cost_estimate.hourly_rate.to_i %>/hr</p>
+                                <p style="margin: 0; color: #1a1a2e; font-size: 15px; font-weight: 500;">£<%= @cost_estimate.hourly_rate.to_i %>/hr</p>
                               </td>
                             </tr>
                           </table>
@@ -109,7 +109,7 @@
                                 <p style="margin: 0; color: #4a4a68; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Total</p>
                               </td>
                               <td align="right">
-                                <p style="margin: 0; color: #1a1a2e; font-size: 28px; font-weight: 800;">$<%= number_with_delimiter(@cost_estimate.total_cost.to_i) %></p>
+                                <p style="margin: 0; color: #1a1a2e; font-size: 28px; font-weight: 800;">£<%= number_with_delimiter(@cost_estimate.total_cost.to_i) %></p>
                               </td>
                             </tr>
                           </table>

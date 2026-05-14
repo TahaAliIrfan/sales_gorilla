@@ -16,6 +16,7 @@ class CostEstimateMailer < ApplicationMailer
 
     mail(
       to: @customer.email,
+      cc: "sales@tecaudex.com",
       subject: "Your Project Proposal from Tecaudex — #{cost_estimate.app_name || 'Cost Estimate'}"
     )
   end
