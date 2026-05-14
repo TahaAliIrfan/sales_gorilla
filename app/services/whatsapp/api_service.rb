@@ -7,7 +7,7 @@ module Whatsapp
     attr_reader :instance_id, :api_token
     
     def initialize(instance_id = nil, api_token = nil)
-      @URL = "https://whatsapp.tecaudex.com"
+      @URL = "https://utils.tecaudex.com"
     end
 
     # Check if the API credentials are configured
