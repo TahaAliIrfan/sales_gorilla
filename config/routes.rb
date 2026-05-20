@@ -234,6 +234,10 @@ Rails.application.routes.draw do
 
   # API routes
   namespace :api do
+    namespace :pk do
+      post 'websiteleads', to: 'website_leads#create'
+    end
+
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'website_lead', to: 'website_lead#create'

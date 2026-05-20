@@ -56,7 +56,8 @@ class Customer < ApplicationRecord
     'Leap' => 'Leap',
     'Gitex' => 'Gitex',
     'Followup' => 'Followup',
-    'ODOO' => 'ODOO'
+    'ODOO' => 'ODOO',
+    'ODOO_PK' => 'ODOO_PK'
   }.freeze
 
   PROJECT_TYPES = {
