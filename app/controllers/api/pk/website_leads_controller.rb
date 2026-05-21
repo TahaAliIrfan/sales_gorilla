@@ -24,10 +24,16 @@ module Api
           end
         end
 
+        if params[:phone_number].present?
+          phone = params[:phone_number]
+        else
+          phone = params[:phone]
+        end
+
         customer = Customer.new(
           name: params[:name],
           email: params[:email],
-          phone: params[:phone],
+          phone: phone,
           idea_description: params[:message],
           lead_source: 'ODOO_PK',
           status: 'Pending',
