@@ -31,6 +31,14 @@ module Api
           idea_description: params[:message],
           lead_source: 'ODOO_PK',
           status: 'Pending',
+          # Meta-specific fields
+          meta_lead_id: params[:meta_lead_id],
+          facebook_click_id: params[:facebook_click_id] || params[:fbclid],
+          browser_id: params[:browser_id],
+          meta_campaign_id: params[:meta_campaign_id],
+          meta_adset_id: params[:meta_adset_id],
+          meta_ad_id: params[:meta_ad_id],
+          # Meta-specific fields
           preferred_calling_time: preferred_calling_time
         )
 
