@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
+  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality, :research_buyer_persona]
   after_action :verify_authorized, except: [:index, :export_csv]
   after_action :verify_policy_scoped, only: [:index, :export_csv]
 
@@ -552,6 +552,43 @@ class CustomersController < ApplicationController
       respond_to do |format|
         format.html { redirect_to @customer, alert: "Failed to calculate lead score: #{e.message}" }
         format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def research_buyer_persona
+    authorize @customer
+
+    persona = @customer.buyer_persona_research ||
+              @customer.create_buyer_persona_research(status: 'processing')
+    persona.update!(status: 'processing')
+
+    result = BuyerPersonaResearchService.new(@customer).research
+
+    if result[:success]
+      persona.update!(
+        status:                  'completed',
+        professional_background: result[:professional_background],
+        industry_analysis:       result[:industry_analysis],
+        pain_points:             result[:pain_points],
+        budget_indicators:       result[:budget_indicators],
+        communication_style:     result[:communication_style],
+        recommended_approach:    result[:recommended_approach],
+        key_insights:            result[:key_insights],
+        persona_summary:         result[:persona_summary],
+        confidence_score:        result[:confidence_score],
+        raw_response:            result[:raw_response],
+        researched_at:           Time.current
+      )
+      respond_to do |format|
+        format.html { redirect_to @customer, notice: 'Buyer persona research completed successfully.' }
+        format.json { render json: { success: true } }
+      end
+    else
+      persona.update!(status: 'failed')
+      respond_to do |format|
+        format.html { redirect_to @customer, alert: "Research failed: #{result[:error]}" }
+        format.json { render json: { success: false, error: result[:error] }, status: :unprocessable_entity }
       end
     end
   end

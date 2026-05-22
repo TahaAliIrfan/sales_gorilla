@@ -2,6 +2,7 @@ class Customer < ApplicationRecord
   #relationship
   belongs_to :user, optional: true
   has_one :customer_location, dependent: :destroy
+  has_one :buyer_persona_research, dependent: :destroy
   has_many :deals
   has_many :recordings, dependent: :destroy
   has_many :customer_activities, dependent: :destroy
