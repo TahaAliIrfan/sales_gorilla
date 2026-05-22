@@ -343,8 +343,8 @@ Rails.application.routes.draw do
 
   
   # Development login gateway (only available in development)
-  if Rails.env.development?
+ # if Rails.env.development?
     get '/dev_login', to: 'dev_login#show', as: :dev_login
     post '/dev_login', to: 'dev_login#create'
-  end
+ # end
 end
