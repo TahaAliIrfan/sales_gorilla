@@ -39,11 +39,6 @@ class CustomerPolicy < ApplicationPolicy
       (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 
-  def research_buyer_persona?
-    user.admin? || record.user_id == user.id ||
-      (user.manager? && user.associates.pluck(:id).include?(record.user_id))
-  end
-
   def destroy?
     user.admin?
   end

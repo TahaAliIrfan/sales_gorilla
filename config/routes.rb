@@ -95,7 +95,6 @@ Rails.application.routes.draw do
       post 'assign_to_self'
       post 'upload_documents'
       post 'mark_lead_quality'
-      post 'research_buyer_persona'
     end
 
     resources :invoices do
