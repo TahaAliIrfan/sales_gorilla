@@ -1,16 +1,19 @@
 class ReportsController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :require_admin, only: [:index]
+  before_action :require_admin_or_manager, only: [:index]
 
   def index
     setup_date_filters
     setup_kpi_targets
 
-    @users = User.active_users.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+    @users = if current_user.admin?
+               User.active_users.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
+             else
+               current_user.associates.active_users
+             end
 
     prepare_user_performance
-    prepare_daily_customer_details if show_daily_details?
     prepare_customer_status_overview
   end
 
@@ -21,7 +24,6 @@ class ReportsController < ApplicationController
     @users = [current_user]
 
     prepare_user_performance
-    prepare_daily_customer_details if show_daily_details?
     prepare_customer_status_overview
 
     render 'user_reports'
@@ -36,9 +38,9 @@ class ReportsController < ApplicationController
     end
   end
 
-  def require_admin
-    unless current_user&.admin?
-      flash[:error] = "You must be an admin to access reports"
+  def require_admin_or_manager
+    unless current_user&.admin? || current_user&.manager?
+      flash[:error] = "You must be an admin or manager to access reports"
       redirect_to root_path
     end
   end
@@ -72,10 +74,6 @@ class ReportsController < ApplicationController
       @start_date = Time.current.beginning_of_day
       @end_date = Time.current.end_of_day
     end
-  end
-
-  def show_daily_details?
-    @filter_range.in?(%w[today yesterday])
   end
 
   def setup_kpi_targets
@@ -133,57 +131,6 @@ class ReportsController < ApplicationController
         deals: deals_by_user[user.id] || 0
       }
     end
-  end
-
-  def prepare_daily_customer_details
-    user_ids = @users.map(&:id)
-
-    call_customer_ids = Recording.where(date: date_range, user_id: user_ids).distinct.pluck(:customer_id)
-    email_customer_ids = Email.where(customer_id: Customer.where(user_id: user_ids).select(:id))
-                                .distinct.pluck(:customer_id)
-    whatsapp_customer_ids = Message.where(customer_id: Customer.where(user_id: user_ids).select(:id))
-                                    .distinct.pluck(:customer_id)
-
-    all_customer_ids = (call_customer_ids + email_customer_ids + whatsapp_customer_ids).uniq
-
-    @daily_customer_details = []
-    return if all_customer_ids.empty?
-
-    customers = Customer.where(id: all_customer_ids).includes(:user)
-
-    recordings_data = Recording.where(date: date_range, customer_id: all_customer_ids)
-                               .group(:customer_id)
-                               .pluck(Arel.sql("customer_id, COUNT(*), SUM(CASE WHEN duration >= 60 THEN 1 ELSE 0 END)"))
-                               .each_with_object({}) { |(cid, count, successful), h| h[cid] = { count: count, successful: successful.to_i > 0 } }
-
-    emails_sent_data = Email.where(customer_id: all_customer_ids, status: 'sent')
-                            .group(:customer_id).count
-    emails_received_data = Email.where(customer_id: all_customer_ids, status: 'received')
-                                .group(:customer_id).count
-
-    wa_sent_data = Message.where(customer_id: all_customer_ids, direction: 'outbound')
-                          .group(:customer_id).count
-    wa_received_data = Message.where(customer_id: all_customer_ids, direction: 'inbound')
-                              .group(:customer_id).count
-
-    @daily_customer_details = customers.map do |customer|
-      rec = recordings_data[customer.id] || { count: 0, successful: false }
-      successful_call = rec[:successful]
-      message_received = (wa_received_data[customer.id] || 0) > 0
-      email_received = (emails_received_data[customer.id] || 0) > 0
-
-      green = successful_call || message_received || email_received
-
-      {
-        customer: customer,
-        user_name: customer.user&.name || 'Unassigned',
-        status: customer.status || 'Pending',
-        signal: green ? 'green' : 'red',
-        calls_attempted: rec[:count],
-        messages_sent: wa_sent_data[customer.id] || 0,
-        emails_sent: emails_sent_data[customer.id] || 0
-      }
-    end.sort_by { |d| [d[:user_name], d[:signal] == 'green' ? 1 : 0] }
   end
 
   def prepare_customer_status_overview
