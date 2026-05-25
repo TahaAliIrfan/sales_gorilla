@@ -209,6 +209,16 @@ Rails.application.routes.draw do
   get 'settings/export_customers_with_deals', to: 'settings#export_customers_with_deals', as: :export_customers_with_deals
 
 
+  # Odoo Calculator routes
+  resources :odoo_proposals, only: [:index, :new, :create, :show, :destroy] do
+    member do
+      get 'download_pdf'
+    end
+    collection do
+      get 'calculate'
+    end
+  end
+
   # Cost Calculator routes
   resources :cost_estimates, only: [:index, :show, :create, :destroy] do
     collection do

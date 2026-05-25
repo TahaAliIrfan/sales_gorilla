@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_22_134335) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_22_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -598,6 +598,24 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_22_134335) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "odoo_proposals", force: :cascade do |t|
+    t.bigint "customer_id"
+    t.bigint "user_id", null: false
+    t.string "customer_name"
+    t.string "deployment_type", default: "online", null: false
+    t.string "hosting_tier"
+    t.integer "num_users", default: 5, null: false
+    t.jsonb "selected_modules", default: [], null: false
+    t.decimal "implementation_fee", precision: 12, scale: 2, default: "0.0"
+    t.decimal "annual_hosting_cost", precision: 12, scale: 2, default: "0.0"
+    t.text "notes"
+    t.string "status", default: "draft"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_odoo_proposals_on_customer_id"
+    t.index ["user_id"], name: "index_odoo_proposals_on_user_id"
+  end
+
   create_table "pipelines", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -818,6 +836,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_22_134335) do
   add_foreign_key "notification_logs", "customers"
   add_foreign_key "notification_logs", "users"
   add_foreign_key "notifications", "users"
+  add_foreign_key "odoo_proposals", "customers"
+  add_foreign_key "odoo_proposals", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
   add_foreign_key "role_assignments", "roles"

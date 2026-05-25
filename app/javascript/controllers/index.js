@@ -24,6 +24,9 @@ application.register("communication-status", CommunicationStatusController)
 import CostCalculatorController from "./cost_calculator_controller"
 application.register("cost-calculator", CostCalculatorController)
 
+import OdooCalculatorController from "./odoo_calculator_controller"
+application.register("odoo-calculator", OdooCalculatorController)
+
 import CountryController from "./country_controller"
 application.register("country", CountryController)
 

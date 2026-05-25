@@ -1,0 +1,242 @@
+
+<div data-controller="odoo-calculator" data-odoo-calculator-calculate-url-value="<%= calculate_odoo_proposals_path %>">
+
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 px-6 py-5">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+          <%= link_to odoo_proposals_path, class: "hover:text-gray-800" do %>
+            ← Odoo Proposals
+          <% end %>
+        </div>
+        <h1 class="text-2xl font-bold text-gray-900">Odoo ERP Calculator</h1>
+        <p class="text-gray-500 text-sm mt-1">Select modules, deployment type and generate a professional proposal for your client.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+          <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          Tecaudex × Odoo
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <%= form_with model: @proposal, url: odoo_proposals_path, method: :post, html: { class: "flex gap-0 min-h-screen" } do |f| %>
+
+    <!-- LEFT COLUMN: Modules -->
+    <div class="flex-1 overflow-y-auto bg-gray-50 p-6 space-y-6">
+
+      <!-- Client Selection -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">Client</h2>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Select Existing Customer</label>
+            <%= f.select :customer_id,
+              options_for_select([['— No customer —', '']] + @customers.map { |c| [c.name, c.id] }),
+              {},
+              class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent",
+              "data-action": "change->odoo-calculator#customerChanged",
+              "data-odoo-calculator-target": "customerSelect" %>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Or Type Client Name</label>
+            <%= f.text_field :customer_name,
+              placeholder: "e.g. Al-Faisal Enterprises",
+              class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent",
+              "data-odoo-calculator-target": "customerName" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Module Selection -->
+      <% OdooProposal::MODULES.each do |category, mods| %>
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <% icon = case category
+               when 'Sales & CRM' then '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/>'
+               when 'Operations' then '<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>'
+               when 'HR & Payroll' then '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/>'
+               when 'Manufacturing' then '<path d="M2 20h.01M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/>'
+               else '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>'
+               end %>
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><%= icon.html_safe %></svg>
+            <%= category %>
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <% mods.each do |mod| %>
+              <label class="module-card relative flex items-start gap-3 p-3 rounded-lg border-2 border-gray-100 hover:border-red-300 cursor-pointer transition-all"
+                     data-module-key="<%= mod[:key] %>"
+                     data-module-cost="<%= mod[:impl_cost] %>"
+                     data-action="click->odoo-calculator#toggleModule">
+                <input type="checkbox"
+                       name="odoo_proposal[selected_modules][]"
+                       value="<%= mod[:key] %>"
+                       class="mt-0.5 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                       data-odoo-calculator-target="moduleCheckbox"
+                       data-module-key="<%= mod[:key] %>"
+                       data-module-cost="<%= mod[:impl_cost] %>">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-800 leading-tight"><%= mod[:label] %></p>
+                  <p class="text-xs text-gray-500 mt-0.5 leading-snug"><%= mod[:description] %></p>
+                  <p class="text-xs font-semibold text-red-600 mt-1">PKR <%= number_with_delimiter(mod[:impl_cost]) %></p>
+                </div>
+              </label>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Notes -->
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Additional Notes</h2>
+        <%= f.text_area :notes, rows: 3, placeholder: "Any special requirements, custom integrations, or scope notes...",
+            class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none" %>
+      </div>
+
+    </div><!-- end left column -->
+
+    <!-- RIGHT COLUMN: Config & Summary (sticky) -->
+    <div class="w-80 flex-shrink-0 bg-white border-l border-gray-200 flex flex-col sticky top-0 h-screen overflow-y-auto">
+
+      <!-- Deployment Type -->
+      <div class="p-5 border-b border-gray-100">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Deployment</h2>
+        <div class="space-y-2">
+          <% OdooProposal::DEPLOYMENT_OPTIONS.each_with_index do |opt, i| %>
+            <label class="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all
+                          <%= i == 0 ? 'border-red-500 bg-red-50' : 'border-gray-100 hover:border-red-200' %>"
+                   data-odoo-calculator-target="deployLabel"
+                   data-deploy-key="<%= opt[:key] %>">
+              <%= f.radio_button :deployment_type, opt[:key],
+                  class: "mt-0.5 text-red-600 focus:ring-red-500",
+                  checked: (i == 0),
+                  data: { "odoo-calculator-target": "deployRadio", action: "change->odoo-calculator#deploymentChanged", "deploy-key": opt[:key] } %>
+              <div>
+                <p class="text-sm font-semibold text-gray-800"><%= opt[:label] %></p>
+                <p class="text-xs text-gray-500 leading-snug mt-0.5"><%= opt[:desc] %></p>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Hosting Tier (shown for sh/on_premise) -->
+      <div class="p-5 border-b border-gray-100" data-odoo-calculator-target="hostingSection">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Hosting Tier</h2>
+        <div class="space-y-2">
+          <% OdooProposal::HOSTING_TIERS.each do |key, tier| %>
+            <label class="flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all border-gray-100 hover:border-red-200"
+                   data-odoo-calculator-target="tierLabel"
+                   data-tier-key="<%= key %>">
+              <%= f.radio_button :hosting_tier, key,
+                  class: "mt-0.5 text-red-600 focus:ring-red-500",
+                  data: { "odoo-calculator-target": "tierRadio", action: "change->odoo-calculator#tierChanged", "tier-key": key, "tier-cost": tier[:annual_pkr] } %>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-semibold text-gray-800"><%= tier[:label] %></p>
+                  <p class="text-xs font-bold text-red-600">PKR <%= number_with_delimiter(tier[:annual_pkr]) %>/yr</p>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5"><%= tier[:specs] %></p>
+                <p class="text-xs text-gray-400"><%= tier[:users] %></p>
+              </div>
+            </label>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Number of Users -->
+      <div class="p-5 border-b border-gray-100">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Number of Users</h2>
+        <div class="flex items-center gap-3">
+          <button type="button" class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-700"
+                  data-action="click->odoo-calculator#decrementUsers">−</button>
+          <%= f.number_field :num_users, value: 5, min: 1, max: 500,
+              class: "w-16 text-center rounded-lg border border-gray-200 text-sm font-bold py-1.5 focus:ring-2 focus:ring-red-500",
+              data: { "odoo-calculator-target": "numUsers", action: "input->odoo-calculator#usersChanged" } %>
+          <button type="button" class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center font-bold text-gray-700"
+                  data-action="click->odoo-calculator#incrementUsers">+</button>
+          <span class="text-xs text-gray-500">users</span>
+        </div>
+      </div>
+
+      <!-- Cost Summary -->
+      <div class="p-5 border-b border-gray-100 bg-gray-50">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Cost Summary</h2>
+
+        <!-- Modules count badge -->
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs text-gray-500">Modules Selected</span>
+          <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs font-bold"
+                data-odoo-calculator-target="moduleCount">0</span>
+        </div>
+
+        <div class="space-y-2 text-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Implementation Fee</span>
+            <span class="font-semibold text-gray-900" data-odoo-calculator-target="implFee">PKR 0</span>
+          </div>
+          <div class="flex items-center justify-between" data-odoo-calculator-target="hostingRow">
+            <span class="text-gray-600">Annual Hosting</span>
+            <span class="font-semibold text-gray-900" data-odoo-calculator-target="hostingCost">PKR 0</span>
+          </div>
+          <div class="flex items-center justify-between text-xs text-gray-400 mt-1 pt-2 border-t border-gray-200">
+            <span>Odoo Subscription</span>
+            <span>Billed by Odoo</span>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-700">Total (PKR)</span>
+            <span class="text-xl font-bold text-red-700" data-odoo-calculator-target="totalCost">0</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-1">One-time implementation + first year hosting</p>
+        </div>
+      </div>
+
+      <!-- What's Included -->
+      <div class="p-5 border-b border-gray-100">
+        <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">What's Included</h2>
+        <ul class="space-y-1.5 text-xs text-gray-600">
+          <% [
+            'Full module configuration',
+            'Workflow customisation',
+            'Data migration assistance',
+            'User training sessions',
+            '2 weeks post-go-live support'
+          ].each do |item| %>
+            <li class="flex items-center gap-2">
+              <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              <%= item %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <!-- Submit -->
+      <div class="p-5 mt-auto">
+        <%= f.submit "Save & Generate Proposal",
+            class: "w-full py-3 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm",
+            data: { "odoo-calculator-target": "submitBtn" } %>
+        <p class="text-xs text-center text-gray-400 mt-2">You can download the PDF proposal on the next page</p>
+      </div>
+
+    </div><!-- end right column -->
+
+  <% end %>
+
+</div>
+
+<style>
+  .module-card.selected {
+    border-color: #dc2626;
+    background-color: #fff5f5;
+  }
+  .module-card.selected input[type="checkbox"] {
+    accent-color: #dc2626;
+  }
+</style>

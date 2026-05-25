@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :messages, dependent: :nullify
   has_many :notifications, dependent: :destroy
   has_many :cost_estimates, dependent: :destroy
+  has_many :odoo_proposals, dependent: :destroy
   has_many :user_kpi_records, dependent: :destroy
 
   # Pipeline assignments
