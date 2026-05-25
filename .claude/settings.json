@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:www.tecaudex.pk)"
+      "WebFetch(domain:www.tecaudex.pk)",
+      "WebFetch(domain:www.odoo.com)",
+      "WebFetch(domain:www.odoo.sh)",
+      "WebFetch(domain:oec.sh)"
     ]
   }
 }

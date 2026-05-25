@@ -62,15 +62,17 @@
           <p class="text-base font-bold text-gray-900"><%= @proposal.num_users %> users</p>
         </div>
       </div>
-      <% if @proposal.hosting_tier_info %>
+      <% if (tier_info = @proposal.current_tier_info) %>
         <div class="mt-5 pt-5 border-t border-gray-100">
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Hosting Tier</p>
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">
+            <%= @proposal.deployment_type == 'sh' ? 'Odoo.sh Platform Plan' : 'Hosting Tier' %>
+          </p>
           <div class="flex items-center gap-4">
             <div class="bg-red-50 rounded-lg px-4 py-2">
-              <p class="text-sm font-bold text-red-700"><%= @proposal.hosting_tier_info[:label] %></p>
-              <p class="text-xs text-red-500"><%= @proposal.hosting_tier_info[:specs] %></p>
+              <p class="text-sm font-bold text-red-700"><%= tier_info[:label] %></p>
+              <p class="text-xs text-red-500"><%= tier_info[:specs] %></p>
             </div>
-            <p class="text-xs text-gray-500"><%= @proposal.hosting_tier_info[:users] %></p>
+            <p class="text-xs text-gray-500"><%= tier_info[:users] %></p>
           </div>
         </div>
       <% end %>
