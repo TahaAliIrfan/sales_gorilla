@@ -53,12 +53,15 @@
   .page {
     width: 210mm;
     min-height: 297mm;
-    padding: 18mm 20mm 22mm 20mm;
+    padding: 16mm 20mm 14mm 20mm;
     position: relative;
     page-break-after: always;
     break-after: page;
+    display: flex;
+    flex-direction: column;
   }
   .page:last-child { page-break-after: auto; break-after: auto; }
+  .page > .content { flex: 1 1 auto; min-height: 0; }
 
   /* ── Top brand bar ── */
   .page-bar {
@@ -107,102 +110,100 @@
      COVER
      ═══════════════════════════════════════════════════════════════════ */
   .cover {
-    padding: 18mm 22mm 16mm 22mm;
-    position: relative;
+    padding: 16mm 22mm 14mm 22mm;
     background: var(--white);
   }
   .cover .top {
     display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 8mm;
+    padding-bottom: 6mm;
     border-bottom: 1px solid var(--line);
   }
   .cover .top .logo-row { display: flex; align-items: center; gap: 10pt; }
-  .cover .top .logo-row .mark { width: 13mm; height: 13mm; }
+  .cover .top .logo-row .mark { width: 12mm; height: 12mm; }
   .cover .top .logo-row .text { line-height: 1.25; }
   .cover .top .logo-row .text .name {
     font-size: 14pt; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
   }
   .cover .top .logo-row .text .tag {
-    font-size: 8pt; font-weight: 600; color: var(--red);
+    font-size: 7.5pt; font-weight: 700; color: var(--red);
     letter-spacing: 0.14em; text-transform: uppercase;
   }
-  .cover .top .meta { font-size: 8.5pt; color: var(--mid); text-align: right; }
+  .cover .top .meta { font-size: 8.5pt; color: var(--mid); text-align: right; line-height: 1.55; }
 
   .cover .hero {
-    margin-top: 26mm;
+    margin-top: 14mm;
   }
   .cover .hero .eyebrow {
-    font-size: 9pt; font-weight: 700; letter-spacing: 0.18em;
+    font-size: 8.5pt; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--red);
-    margin-bottom: 14pt;
+    margin-bottom: 10pt;
   }
   .cover .hero h1 {
-    font-size: 64pt; line-height: 0.95; font-weight: 800;
+    font-size: 52pt; line-height: 0.98; font-weight: 800;
     letter-spacing: -0.035em;
   }
   .cover .hero h1 .light { color: var(--mid); font-weight: 700; }
   .cover .hero .deck {
-    margin-top: 16pt; font-size: 13pt; color: var(--slate); max-width: 130mm;
+    margin-top: 12pt; font-size: 12pt; color: var(--slate); max-width: 130mm;
     line-height: 1.5;
   }
 
   .cover .prepared {
-    margin-top: 24mm;
+    margin-top: 12mm;
     border-top: 1px solid var(--line);
-    padding-top: 8mm;
+    padding-top: 6mm;
   }
   .cover .prepared .label {
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--mid);
-    margin-bottom: 6pt;
+    margin-bottom: 5pt;
   }
   .cover .prepared .client {
-    font-size: 28pt; font-weight: 800; color: var(--ink);
-    letter-spacing: -0.02em; line-height: 1.1;
+    font-size: 22pt; font-weight: 800; color: var(--ink);
+    letter-spacing: -0.018em; line-height: 1.1;
   }
   .cover .prepared .client-meta {
-    margin-top: 6pt; font-size: 10pt; color: var(--mid);
+    margin-top: 5pt; font-size: 9.5pt; color: var(--mid);
   }
 
   .cover .stat-grid {
-    margin-top: 14mm;
-    display: flex; gap: 4mm;
+    margin-top: 8mm;
+    display: flex; gap: 3mm;
   }
   .cover .stat-grid .stat {
-    flex: 1; padding: 6mm 7mm;
-    border: 1px solid var(--line); border-radius: 2pt;
+    flex: 1; padding: 4.5mm 5mm;
+    border: 1px solid var(--line);
   }
   .cover .stat-grid .stat .label {
     font-size: 7pt; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--mid);
   }
   .cover .stat-grid .stat .value {
-    margin-top: 6pt; font-size: 18pt; font-weight: 800; color: var(--ink);
+    margin-top: 4pt; font-size: 15pt; font-weight: 800; color: var(--ink);
     letter-spacing: -0.015em;
   }
 
   .cover .investment {
-    margin-top: 12mm;
-    padding: 10mm 12mm;
+    margin-top: 8mm;
+    padding: 7mm 9mm;
     background: var(--ink);
     color: var(--white);
     border-left: 4pt solid var(--red);
-    position: relative;
   }
   .cover .investment .label {
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--red);
   }
   .cover .investment .amount {
-    margin-top: 10pt; font-size: 42pt; font-weight: 800;
+    margin-top: 7pt; font-size: 34pt; font-weight: 800;
     letter-spacing: -0.03em; line-height: 1;
   }
   .cover .investment .footnote {
-    margin-top: 12pt; font-size: 9.5pt; color: #BCBCC1; line-height: 1.55;
+    margin-top: 8pt; font-size: 9pt; color: #BCBCC1; line-height: 1.55;
   }
 
   .cover .foot {
-    position: absolute; left: 22mm; right: 22mm; bottom: 16mm;
+    margin-top: auto;
     padding-top: 6mm; border-top: 1px solid var(--line);
     display: flex; justify-content: space-between; align-items: center;
     font-size: 8.5pt; color: var(--mid);
@@ -366,7 +367,7 @@
      INVESTMENT BREAKDOWN SECTIONS
      ═══════════════════════════════════════════════════════════════════ */
   .sub-heading {
-    margin-top: 6mm; margin-bottom: 4mm;
+    margin-top: 0; margin-bottom: 4mm;
     font-size: 8.5pt; font-weight: 800; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--red);
     display: flex; align-items: center; gap: 6pt;
@@ -375,66 +376,71 @@
     content: ''; display: inline-block;
     width: 14pt; height: 1.5pt; background: var(--red);
   }
+  /* Keep each (heading + table) chunk together so a heading never orphans. */
+  .block {
+    margin-bottom: 10mm;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .block:last-child { margin-bottom: 0; }
 
   /* ═══════════════════════════════════════════════════════════════════
      NEXT STEPS
      ═══════════════════════════════════════════════════════════════════ */
   .step {
-    display: flex; gap: 6mm; padding: 5mm 0;
+    display: flex; gap: 5mm; padding: 4mm 0;
     border-bottom: 1px solid var(--line);
     page-break-inside: avoid; break-inside: avoid;
   }
   .step:last-of-type { border-bottom: none; }
   .step .num {
-    flex-shrink: 0; width: 12mm; height: 12mm;
+    flex-shrink: 0; width: 11mm; height: 11mm;
     background: var(--ink); color: var(--white);
     border-left: 3pt solid var(--red);
-    font-size: 13pt; font-weight: 800;
+    font-size: 12pt; font-weight: 800;
     display: flex; align-items: center; justify-content: center;
-    letter-spacing: 0;
   }
   .step .body { flex: 1; }
   .step .body .row {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 6mm;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 5mm;
   }
   .step .body .title {
-    font-size: 13pt; font-weight: 700; color: var(--ink); letter-spacing: -0.005em;
+    font-size: 12pt; font-weight: 700; color: var(--ink); letter-spacing: -0.005em;
   }
   .step .body .time {
     flex-shrink: 0;
-    padding: 3pt 9pt;
+    padding: 2pt 8pt;
     border: 1px solid var(--line);
     color: var(--red);
     font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
   }
-  .step .body .desc { margin-top: 4pt; font-size: 10pt; color: var(--slate); line-height: 1.6; }
+  .step .body .desc { margin-top: 3pt; font-size: 9.5pt; color: var(--slate); line-height: 1.55; }
 
   .cta {
-    margin-top: 14mm;
-    padding: 10mm 12mm;
+    margin-top: 8mm;
+    padding: 7mm 9mm;
     background: var(--ink); color: var(--white);
     border-left: 4pt solid var(--red);
-    position: relative;
+    page-break-inside: avoid; break-inside: avoid;
   }
   .cta h3 {
-    font-size: 18pt; font-weight: 800; color: var(--white);
+    font-size: 16pt; font-weight: 800; color: var(--white);
     letter-spacing: -0.015em;
   }
   .cta p {
-    margin-top: 8pt;
-    font-size: 10pt; color: #BCBCC1; line-height: 1.65;
+    margin-top: 6pt;
+    font-size: 9.5pt; color: #BCBCC1; line-height: 1.6;
     max-width: 120mm;
   }
   .cta .contact {
-    margin-top: 10pt; font-size: 9.5pt; color: var(--white); font-weight: 600;
+    margin-top: 8pt; font-size: 9pt; color: var(--white); font-weight: 600;
   }
-  .cta .contact span { color: var(--red); margin: 0 6pt; }
+  .cta .contact span { color: var(--red); margin: 0 5pt; }
 
-  /* ─ Page footer ─ */
+  /* ─ Page footer (flows at the end of each page, never overlaps content) ─ */
   .page-foot {
-    position: absolute; bottom: 10mm; left: 20mm; right: 20mm;
-    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 10mm;
     padding-top: 4mm; border-top: 1px solid var(--line-soft);
+    display: flex; justify-content: space-between; align-items: center;
     font-size: 7.5pt; color: var(--mid);
     letter-spacing: 0.04em;
   }
@@ -761,103 +767,109 @@
     <p class="lead">One-time implementation, recurring annual subscription &amp; hosting, and a year-on-year comparison so you can plan ahead.</p>
   </div>
 
-  <div class="sub-heading">A · One-Time Implementation Costs</div>
-  <table class="table" style="margin-bottom:10mm;">
-    <thead>
-      <tr>
-        <th style="width:55%">Module / Component</th>
-        <th style="width:25%">Description</th>
-        <th class="r" style="width:20%">Amount (PKR)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% mods.each do |m| %>
+  <div class="block">
+    <div class="sub-heading">A · One-Time Implementation Costs</div>
+    <table class="table">
+      <thead>
         <tr>
-          <td class="label-cell"><%= m[:label] %></td>
-          <td><%= m[:custom] ? 'Custom Dev / Integration' : 'Setup & Configuration' %></td>
-          <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
+          <th style="width:55%">Module / Component</th>
+          <th style="width:25%">Description</th>
+          <th class="r" style="width:20%">Amount (PKR)</th>
         </tr>
-      <% end %>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">Implementation Subtotal</td>
-        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
-      </tr>
-    </tfoot>
-  </table>
+      </thead>
+      <tbody>
+        <% mods.each do |m| %>
+          <tr>
+            <td class="label-cell"><%= m[:label] %></td>
+            <td><%= m[:custom] ? 'Custom Dev / Integration' : 'Setup & Configuration' %></td>
+            <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">Implementation Subtotal</td>
+          <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 
-  <div class="sub-heading">B · Recurring Costs (Monthly &amp; Yearly)</div>
-  <table class="table" style="margin-bottom:10mm;">
-    <thead>
-      <tr>
-        <th style="width:30%">Item</th>
-        <th style="width:30%">Basis</th>
-        <th class="r" style="width:20%">Monthly (PKR)</th>
-        <th class="r" style="width:20%">Yearly (PKR)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="label-cell">Odoo Subscription</td>
-        <td><%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo</td>
-        <td class="r"><%= fmt.call(proposal.subscription_monthly_total) %></td>
-        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
-      </tr>
-      <% if proposal.hosting_monthly > 0 %>
+  <div class="block">
+    <div class="sub-heading">B · Recurring Costs (Monthly &amp; Yearly)</div>
+    <table class="table">
+      <thead>
         <tr>
-          <td class="label-cell"><%= proposal.deployment_type == 'sh' ? "Odoo.sh Platform (#{tier_info && tier_info[:label]})" : "Server Hosting (#{tier_info && tier_info[:label]})" %></td>
-          <td><%= tier_info && tier_info[:specs] %></td>
-          <td class="r"><%= fmt.call(proposal.hosting_monthly) %></td>
-          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+          <th style="width:30%">Item</th>
+          <th style="width:30%">Basis</th>
+          <th class="r" style="width:20%">Monthly (PKR)</th>
+          <th class="r" style="width:20%">Yearly (PKR)</th>
         </tr>
-      <% end %>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">Recurring Subtotal</td>
-        <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_monthly) %></td>
-        <td class="r accent">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
-      </tr>
-    </tfoot>
-  </table>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="label-cell">Odoo Subscription</td>
+          <td><%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo</td>
+          <td class="r"><%= fmt.call(proposal.subscription_monthly_total) %></td>
+          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+        </tr>
+        <% if proposal.hosting_monthly > 0 %>
+          <tr>
+            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? "Odoo.sh Platform (#{tier_info && tier_info[:label]})" : "Server Hosting (#{tier_info && tier_info[:label]})" %></td>
+            <td><%= tier_info && tier_info[:specs] %></td>
+            <td class="r"><%= fmt.call(proposal.hosting_monthly) %></td>
+            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">Recurring Subtotal</td>
+          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_monthly) %></td>
+          <td class="r accent">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 
-  <div class="sub-heading">C · Year-on-Year Summary</div>
-  <table class="table">
-    <thead>
-      <tr>
-        <th style="width:40%">Cost Item</th>
-        <th class="r" style="width:30%">Year 1</th>
-        <th class="r" style="width:30%">Year 2 onwards</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="label-cell">Implementation Fee (one-time)</td>
-        <td class="r"><%= fmt.call(proposal.implementation_fee.to_i) %></td>
-        <td class="r">—</td>
-      </tr>
-      <tr>
-        <td class="label-cell">Odoo Subscription</td>
-        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
-        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
-      </tr>
-      <% if proposal.hosting_yearly > 0 %>
+  <div class="block">
+    <div class="sub-heading">C · Year-on-Year Summary</div>
+    <table class="table">
+      <thead>
         <tr>
-          <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %></td>
-          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
-          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+          <th style="width:40%">Cost Item</th>
+          <th class="r" style="width:30%">Year 1</th>
+          <th class="r" style="width:30%">Year 2 onwards</th>
         </tr>
-      <% end %>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td>Grand Total</td>
-        <td class="r accent">PKR <%= fmt.call(proposal.year_1_total) %></td>
-        <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %> /yr</td>
-      </tr>
-    </tfoot>
-  </table>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="label-cell">Implementation Fee (one-time)</td>
+          <td class="r"><%= fmt.call(proposal.implementation_fee.to_i) %></td>
+          <td class="r">—</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Odoo Subscription</td>
+          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+        </tr>
+        <% if proposal.hosting_yearly > 0 %>
+          <tr>
+            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %></td>
+            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Grand Total</td>
+          <td class="r accent">PKR <%= fmt.call(proposal.year_1_total) %></td>
+          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %> /yr</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
 
   <%= page_foot.call %>
 </section>
