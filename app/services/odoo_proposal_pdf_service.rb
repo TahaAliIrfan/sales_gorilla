@@ -36,6 +36,9 @@ class OdooProposalPdfService
       @pdf.font 'Helvetica'
 
       cover
+      if @p.narrative_generated?
+        @pdf.start_new_page; executive_summary_page
+      end
       @pdf.start_new_page; cost_overview
       @pdf.start_new_page; modules_detail
       @pdf.start_new_page; deployment_page
@@ -88,7 +91,7 @@ class OdooProposalPdfService
 
     # ── Key numbers on cover ───────────────────────────────────────────────
     stats = [
-      { label: "MODULES",     value: @p.selected_modules.size.to_s },
+      { label: "MODULES",     value: @p.all_module_details.size.to_s },
       { label: "USERS",       value: @p.num_users.to_s },
       { label: "DEPLOYMENT",  value: @p.deployment_label }
     ]
@@ -135,6 +138,82 @@ class OdooProposalPdfService
 
     # red corner accent bottom-right
     rect PW - 8, 60, 8, 60, RED
+  end
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PAGE 2 (CONDITIONAL) — EXECUTIVE SUMMARY (AI narrative)
+  # ═══════════════════════════════════════════════════════════════════════════
+  def executive_summary_page
+    header "Executive Summary"
+
+    y = PH - 128
+
+    # Lead-in line
+    color MID
+    normal 9, "Prepared specifically for #{@name}#{@p.industry.present? ? " — #{clean(@p.industry)}" : ''}.",
+      x: ML, y: y, w: CW
+    y -= 24
+
+    # ── Summary block ─────────────────────────────────────────────────────
+    if @p.claude_summary.present?
+      section_label "Summary", y: y
+      y -= 18
+
+      summary_text = clean(@p.claude_summary)
+      h = estimate_text_height(summary_text, CW - 28, font_size: 11, leading: 5)
+      rect ML, y, CW, h + 28, CREAM
+      rect ML, y, 4, h + 28, RED
+
+      color INK
+      @pdf.font 'Helvetica', style: :normal
+      @pdf.font_size 11
+      @pdf.fill_color INK
+      @pdf.text_box summary_text,
+        at: [ML + 14, y - 14], width: CW - 28, leading: 5
+
+      y -= (h + 28 + 14)
+    end
+
+    # ── Rationale block ───────────────────────────────────────────────────
+    if @p.claude_rationale.present?
+      section_label "Why This Approach", y: y
+      y -= 18
+
+      rationale_text = clean(@p.claude_rationale)
+      h = estimate_text_height(rationale_text, CW - 28, font_size: 10, leading: 4)
+      rect ML, y, CW, h + 28, LIGHT
+      rect ML, y, 4, h + 28, SLATE
+
+      color CHARCOAL
+      @pdf.font 'Helvetica', style: :normal
+      @pdf.font_size 10
+      @pdf.fill_color CHARCOAL
+      @pdf.text_box rationale_text,
+        at: [ML + 14, y - 14], width: CW - 28, leading: 4
+
+      y -= (h + 28 + 14)
+    end
+
+    # ── Pain points addressed (optional) ──────────────────────────────────
+    pp = @p.pain_points_array
+    if pp.any? && y > 140
+      section_label "Pain Points We're Addressing", y: y
+      y -= 16
+
+      pp.each_slice(2).each do |row|
+        break if y < 70
+        row.each_with_index do |pain, i|
+          pw = (CW - 8) / 2.0
+          px = ML + i * (pw + 8)
+          rect px, y, pw, 26, RED_LIGHT
+          color RED_DARK
+          bold 9, "✓ #{clean(pain)}", x: px + 10, y: y - 8, w: pw - 16
+        end
+        y -= 30
+      end
+    end
+
+    footer
   end
 
   # ═══════════════════════════════════════════════════════════════════════════
@@ -234,24 +313,37 @@ class OdooProposalPdfService
   def modules_detail
     header "Selected Modules"
 
-    mods = @p.selected_module_details
-    body "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected — each is fully " \
-         "configured and integrated as part of the one-time implementation fee.",
-         y: PH - 128
+    mods = @p.all_module_details
+    has_justifications = @p.narrative_generated? && @p.claude_module_justifications.present?
 
+    intro = if has_justifications
+      "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected — each tailored to #{@name}'s situation, " \
+        "configured and integrated as part of the one-time implementation fee."
+    else
+      "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected — each is fully " \
+        "configured and integrated as part of the one-time implementation fee."
+    end
+    body intro, y: PH - 128
+
+    if has_justifications
+      render_modules_with_justifications(mods)
+    else
+      render_modules_compact(mods)
+    end
+  end
+
+  def render_modules_compact(mods)
     card_h = 54
     gap    = 6
     col_w  = (CW - gap) / 2.0
     y_start = PH - 168
 
-    # Track position independently to handle overflow
     page_y   = y_start
     col      = 0
 
     mods.each_with_index do |mod, i|
       x = ML + col * (col_w + gap)
 
-      # Page overflow
       if page_y - card_h < 60
         footer
         @pdf.start_new_page
@@ -261,21 +353,24 @@ class OdooProposalPdfService
         x      = ML
       end
 
-      # Card
       rect x, page_y, col_w, card_h, CREAM
-      rect x, page_y, 3, card_h, RED
+      rect x, page_y, 3, card_h, mod[:custom] ? "8B5CF6" : RED
 
-      # Module name + cost
       color INK
       bold 11, clean(mod[:label]), x: x + 12, y: page_y - 12, w: col_w - 130
+
+      if mod[:custom]
+        rect x + 12, page_y - 28, 38, 11, "EDE9FE"
+        color "6D28D9"
+        bold 7, "CUSTOM", x: x + 14, y: page_y - 30, w: 34, align: :center
+      end
 
       rect x + col_w - 96, page_y - 8, 88, 20, RED_DARK
       color WHITE
       bold 8, "PKR #{fmt(mod[:impl_cost])}", x: x + col_w - 94, y: page_y - 12, w: 84, align: :center
 
-      # Description
       color MID
-      normal 9, clean(mod[:description]), x: x + 12, y: page_y - 30, w: col_w - 20, h: 22
+      normal 9, clean(mod[:description]), x: x + 12, y: page_y - (mod[:custom] ? 44 : 30), w: col_w - 20, h: 22
 
       col += 1
       if col == 2
@@ -284,10 +379,63 @@ class OdooProposalPdfService
       end
     end
 
-    # Odd module — advance row
     page_y -= (card_h + gap) if col == 1
+    render_modules_total_bar(page_y)
+  end
 
-    # Total bar
+  def render_modules_with_justifications(mods)
+    page_y = PH - 168
+
+    mods.each do |mod|
+      justification = @p.module_justification_for(mod[:key]).to_s.strip
+      desc_text = clean(mod[:description])
+      just_text = justification.present? ? clean(justification) : nil
+
+      desc_h = estimate_text_height(desc_text, CW - 28, font_size: 9, leading: 2)
+      just_h = just_text ? estimate_text_height(just_text, CW - 38, font_size: 9, leading: 3) : 0
+      card_h = 30 + desc_h + (just_h.positive? ? just_h + 18 : 0) + 14
+
+      if page_y - card_h < 70
+        footer
+        @pdf.start_new_page
+        header "Selected Modules (cont.)"
+        page_y = PH - 128
+      end
+
+      rect ML, page_y, CW, card_h, CREAM
+      rect ML, page_y, 4, card_h, mod[:custom] ? "8B5CF6" : RED
+
+      color INK
+      bold 12, clean(mod[:label]), x: ML + 14, y: page_y - 12, w: CW - 220
+
+      if mod[:custom]
+        rect ML + CW - 220, page_y - 8, 50, 16, "EDE9FE"
+        color "6D28D9"
+        bold 7, "CUSTOM DEV", x: ML + CW - 218, y: page_y - 12, w: 46, align: :center
+      end
+
+      rect ML + CW - 108, page_y - 8, 96, 22, RED_DARK
+      color WHITE
+      bold 9, "PKR #{fmt(mod[:impl_cost])}", x: ML + CW - 106, y: page_y - 12, w: 92, align: :center
+
+      color MID
+      normal 9, desc_text, x: ML + 14, y: page_y - 30, w: CW - 28, leading: 2
+
+      if just_text
+        jy = page_y - 30 - desc_h - 6
+        color RED_DARK
+        bold 8, "WHY THIS FITS #{@name.upcase}", x: ML + 14, y: jy, w: CW - 28
+        color CHARCOAL
+        normal 9, just_text, x: ML + 14, y: jy - 12, w: CW - 28, leading: 3
+      end
+
+      page_y -= (card_h + 8)
+    end
+
+    render_modules_total_bar(page_y)
+  end
+
+  def render_modules_total_bar(page_y)
     total_y = [page_y - 10, 72].max
     rect ML, total_y, CW, 34, RED_DARK
     color WHITE
@@ -418,15 +566,16 @@ class OdooProposalPdfService
     draw_table_row(["Module / Component", "Description", "Amount (PKR)"],
       cw, y, row_h: 22, header: true, hi_col: nil)
 
-    @p.selected_module_details.each_with_index do |mod, i|
+    @p.all_module_details.each_with_index do |mod, i|
+      kind = mod[:custom] ? "Custom Dev / Integration" : "Setup & Configuration"
       draw_table_row(
-        [clean(mod[:label]), "Setup & Configuration", fmt(mod[:impl_cost])],
+        [clean(mod[:label]), kind, fmt(mod[:impl_cost])],
         cw, y - 22 - i * 19, row_h: 19, hi_col: nil, alt: i.odd?,
         align_last: :right
       )
     end
 
-    sub_y = y - 22 - @p.selected_module_details.size * 19
+    sub_y = y - 22 - @p.all_module_details.size * 19
     subtotal_row "Implementation Subtotal", @p.implementation_fee.to_i, sub_y
     y = sub_y - 28
 
@@ -519,21 +668,36 @@ class OdooProposalPdfService
   def next_steps
     header "Next Steps"
 
-    body "We are excited to partner with #{@name} on this Odoo ERP implementation. " \
-         "Here is the recommended path forward:",
-         y: PH - 128
+    intro = if @p.narrative_generated? && @p.claude_next_steps.present?
+      "We are excited to partner with #{@name} on this Odoo ERP implementation. " \
+        "Here is the path forward we have tailored to your situation:"
+    else
+      "We are excited to partner with #{@name} on this Odoo ERP implementation. " \
+        "Here is the recommended path forward:"
+    end
+    body intro, y: PH - 128
 
-    steps = [
-      ["01", "Proposal Review",      "This week",  "Share this with your team. We are available to present in person or virtually."],
-      ["02", "Discovery Workshop",   "Week 1–2",   "A structured session to finalise scope, map workflows and agree on timeline."],
-      ["03", "Agreement & Kickoff",  "Week 2–3",   "Sign the service agreement and launch with your dedicated project manager."],
-      ["04", "Implementation",        "Weeks 4–10", "Configuration, customisation, data migration and integrations with weekly updates."],
-      ["05", "Training & Go-Live",   "Week 10–11", "Hands-on training, UAT sign-off and go-live on the agreed date."],
-      ["06", "Post-Go-Live Support", "2 weeks",    "Dedicated hypercare — rapid resolution of any issues after launch."]
-    ]
+    steps = if @p.narrative_generated? && @p.claude_next_steps.present?
+      parse_ai_next_steps(@p.claude_next_steps)
+    else
+      [
+        ["01", "Proposal Review",      "This week",  "Share this with your team. We are available to present in person or virtually."],
+        ["02", "Discovery Workshop",   "Week 1-2",   "A structured session to finalise scope, map workflows and agree on timeline."],
+        ["03", "Agreement & Kickoff",  "Week 2-3",   "Sign the service agreement and launch with your dedicated project manager."],
+        ["04", "Implementation",       "Weeks 4-10", "Configuration, customisation, data migration and integrations with weekly updates."],
+        ["05", "Training & Go-Live",   "Week 10-11", "Hands-on training, UAT sign-off and go-live on the agreed date."],
+        ["06", "Post-Go-Live Support", "2 weeks",    "Dedicated hypercare — rapid resolution of any issues after launch."]
+      ]
+    end
 
     y = PH - 196
     steps.each do |num, title, time, desc|
+      if y - 54 < 100
+        footer
+        @pdf.start_new_page
+        header "Next Steps (cont.)"
+        y = PH - 128
+      end
       rect ML,      y, 42, 50, RED_DARK
       rect ML,      y, 42, 4,  RED
       rect ML + 42, y, CW - 42, 50, CREAM
@@ -724,6 +888,50 @@ class OdooProposalPdfService
 
   def fmt(n)
     n.to_i.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\1,').reverse
+  end
+
+  # Parse Claude's \n-separated next-steps string into [number, title, time, desc] rows.
+  # Accepts lines like "Step 1: Discovery Workshop (Week 1-2) - Detail..." or "1. Title - Detail"
+  # or just plain bullets — falls back gracefully.
+  def parse_ai_next_steps(raw)
+    lines = raw.to_s.split(/\r?\n/).map(&:strip).reject(&:empty?)
+    lines.each_with_index.map do |line, idx|
+      num = format("%02d", idx + 1)
+      stripped = line.sub(/^(?:step\s*)?\d+[\.\):]\s*/i, '').sub(/^[-•*]\s*/, '')
+
+      time = ''
+      if (m = stripped.match(/\(([^)]+)\)/))
+        time = m[1].strip
+        stripped = stripped.sub(/\s*\([^)]+\)/, '')
+      end
+
+      if stripped.include?(' - ') || stripped.include?(' — ') || stripped.include?(': ')
+        parts = stripped.split(/\s+[-—:]\s+/, 2)
+        title = parts[0].to_s.strip
+        desc  = parts[1].to_s.strip
+      else
+        title = stripped.split(/[.!?]/, 2).first.to_s.strip
+        desc  = stripped[title.length..-1].to_s.strip.sub(/^[.!?]\s*/, '')
+      end
+
+      title = title[0, 60]
+      desc  = desc.presence || ''
+      time  = time.presence || "Step #{idx + 1}"
+
+      [num, title, time, desc]
+    end
+  end
+
+  # Rough text-block height estimator (pt). Used to size dynamic cards in the executive
+  # summary and modules-with-justifications pages.
+  def estimate_text_height(text, width, font_size:, leading: 0)
+    return 0 if text.blank?
+    chars_per_line = (width / (font_size * 0.5)).floor
+    chars_per_line = 1 if chars_per_line < 1
+    lines = text.length / chars_per_line.to_f
+    lines += text.count("\n")
+    line_h = font_size + leading + 2
+    (lines.ceil * line_h).to_i + 4
   end
 
   def clean(text)

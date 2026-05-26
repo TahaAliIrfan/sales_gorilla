@@ -4,7 +4,17 @@
       "WebFetch(domain:www.tecaudex.pk)",
       "WebFetch(domain:www.odoo.com)",
       "WebFetch(domain:www.odoo.sh)",
-      "WebFetch(domain:oec.sh)"
+      "WebFetch(domain:oec.sh)",
+      "Bash(psql -d tecaudex_crm_test -c \"\\\\dt meta_conversion_logs\")",
+      "Bash(psql -d tecaudex_crm_test -c \"SELECT version FROM schema_migrations WHERE version LIKE '202604%';\")",
+      "Bash(ruby -c app/controllers/odoo_proposals_controller.rb)",
+      "Bash(ruby -c app/services/odoo_proposal_detection_service.rb)",
+      "Bash(ruby -c app/services/odoo_proposal_narrative_service.rb)",
+      "Bash(ruby -c app/services/odoo_proposal_pdf_service.rb)",
+      "Bash(ruby -c app/models/odoo_proposal.rb)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -L -c /tmp/cookies.txt -b /tmp/cookies.txt -o /tmp/odoo_new.html -w \"final_status=%{http_code} url=%{url_effective}\\\\n\" http://localhost:3000/odoo_proposals/new 2>&1 *)",
+      "Read(//private/tmp/**)"
     ]
   }
 }

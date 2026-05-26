@@ -210,12 +210,16 @@ Rails.application.routes.draw do
 
 
   # Odoo Calculator routes
-  resources :odoo_proposals, only: [:index, :new, :create, :show, :destroy] do
+  resources :odoo_proposals, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
     member do
-      get 'download_pdf'
+      get  'download_pdf'
+      post 'generate_narrative'
+      post 'regenerate_section'
+      patch 'update_narrative'
     end
     collection do
       get 'calculate'
+      post 'analyze'
     end
   end
 

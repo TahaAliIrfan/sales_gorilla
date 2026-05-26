@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_22_200000) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_26_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -612,6 +612,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_22_200000) do
     t.string "status", default: "draft"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "industry"
+    t.string "company_size"
+    t.jsonb "pain_points", default: []
+    t.text "claude_summary"
+    t.text "claude_rationale"
+    t.jsonb "claude_module_justifications", default: {}
+    t.text "claude_next_steps"
+    t.datetime "narrative_generated_at"
+    t.jsonb "custom_modules", default: []
     t.index ["customer_id"], name: "index_odoo_proposals_on_customer_id"
     t.index ["user_id"], name: "index_odoo_proposals_on_user_id"
   end
