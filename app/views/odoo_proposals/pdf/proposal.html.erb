@@ -53,15 +53,14 @@
   .page {
     width: 210mm;
     min-height: 297mm;
-    padding: 16mm 20mm 14mm 20mm;
+    padding: 16mm 20mm 16mm 20mm;
     position: relative;
     page-break-after: always;
     break-after: page;
-    display: flex;
-    flex-direction: column;
   }
   .page:last-child { page-break-after: auto; break-after: auto; }
-  .page > .content { flex: 1 1 auto; min-height: 0; }
+  /* Cover is the only section that uses flex (no overflow risk — fixed content) */
+  .page.cover { display: flex; flex-direction: column; }
 
   /* ── Top brand bar ── */
   .page-bar {
@@ -301,12 +300,14 @@
   .prose {
     margin-bottom: 9mm; padding-bottom: 9mm;
     border-bottom: 1px solid var(--line);
-    page-break-inside: avoid; break-inside: avoid;
+    /* Allow long prose blocks to break across pages naturally — only avoid splitting the heading. */
   }
   .prose:last-child { border-bottom: none; }
   .prose .head {
     display: flex; justify-content: space-between; align-items: baseline;
     gap: 10mm; margin-bottom: 6pt;
+    page-break-after: avoid; break-after: avoid;
+    page-break-inside: avoid; break-inside: avoid;
   }
   .prose .title {
     font-size: 14pt; font-weight: 700; color: var(--ink);
@@ -436,16 +437,7 @@
   }
   .cta .contact span { color: var(--red); margin: 0 5pt; }
 
-  /* ─ Page footer (flows at the end of each page, never overlaps content) ─ */
-  .page-foot {
-    margin-top: 10mm;
-    padding-top: 4mm; border-top: 1px solid var(--line-soft);
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 7.5pt; color: var(--mid);
-    letter-spacing: 0.04em;
-  }
-  .page-foot .left strong { color: var(--ink); font-weight: 700; }
-  .page-foot .right { text-align: right; }
+  /* (Per-section page footer removed — branding lives in the page-bar header on every page) */
 </style>
 </head>
 <body>
@@ -492,16 +484,6 @@
     end
   }
 
-  page_foot = ->{
-    capture do
-%>
-  <footer class="page-foot">
-    <div class="left"><strong>Tecaudex</strong> · Official Odoo Partner · www.tecaudex.pk</div>
-    <div class="right">Odoo ERP Proposal — <%= name %></div>
-  </footer>
-<%
-    end
-  }
 %>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -518,7 +500,7 @@
     </div>
     <div class="meta">
       <%= date %><br>
-      info@tecaudex.pk
+      sales@tecaudex.com
     </div>
   </div>
 
@@ -560,7 +542,7 @@
   <div class="foot">
     <div class="left"><strong>Tecaudex</strong> · Pakistan</div>
     <div class="right">
-      info@tecaudex.pk &nbsp;·&nbsp; www.tecaudex.pk<br>
+      sales@tecaudex.com &nbsp;·&nbsp; www.tecaudex.com<br>
       © <%= year %> Tecaudex. Confidential.
     </div>
   </div>
@@ -601,7 +583,6 @@
     </div>
   <% end %>
 
-  <%= page_foot.call %>
 </section>
 <% end %>
 
@@ -638,7 +619,6 @@
     </tbody>
   </table>
 
-  <%= page_foot.call %>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -667,7 +647,6 @@
     </div>
   <% end %>
 
-  <%= page_foot.call %>
 </section>
 <% end %>
 
@@ -726,7 +705,6 @@
     Hosting cost is an estimate based on the recommended tier; actuals may vary slightly.
   </p>
 
-  <%= page_foot.call %>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════════
@@ -799,7 +777,6 @@
     <div class="contact">info@tecaudex.pk<span>·</span>www.tecaudex.pk<span>·</span>Tecaudex, Pakistan</div>
   </div>
 
-  <%= page_foot.call %>
 </section>
 
 </body>

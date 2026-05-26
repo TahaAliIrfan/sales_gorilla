@@ -134,7 +134,7 @@ class OdooProposalPdfService
     normal 9, "Official Odoo Partner", x: 60, y: 14, w: 180
 
     color MID
-    normal 9, "info@tecaudex.pk   |   www.tecaudex.pk   |   #{@date}",
+    normal 9, "info@tecaudex.com   |   www.tecaudex.com   |   #{@date}",
       x: PW - 290, y: 30, w: 245, align: :right
 
     # red corner accent bottom-right
@@ -723,7 +723,7 @@ class OdooProposalPdfService
     color WHITE
     bold 15, "Ready to get started?", x: ML + 18, y: y - 14, w: CW - 36
     color "94A3B8"
-    normal 10, "info@tecaudex.pk   |   www.tecaudex.pk   |   Tecaudex, Pakistan",
+    normal 10, "info@tecaudex.com   |   www.tecaudex.com   |   Tecaudex, Pakistan",
       x: ML + 18, y: y - 34, w: CW - 36
     color "6B7280"
     normal 9, "#{@year} Tecaudex. All rights reserved. This proposal is confidential.",
