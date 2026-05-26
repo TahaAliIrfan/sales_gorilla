@@ -22,9 +22,15 @@ set :ssh_options,     { forward_agent: true, user: fetch(:user), keys: %w(~/.ssh
 set :puma_preload_app, true
 set :puma_worker_timeout, nil
 set :puma_init_active_record, true  # Change to true if using ActiveRecord
-set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache', 'tmp/sockets')
+set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'node_modules')
 append :linked_files, "config/master.key"
 append :linked_files, "config/database.yml"
+
+# PDF generation (Grover/Puppeteer) needs a real Chrome binary on the server.
+# Installed via `apt install google-chrome-stable`; OdooProposalHtmlPdfService reads this env var.
+set :default_env, fetch(:default_env, {}).merge(
+  'GROVER_CHROME_PATH' => '/usr/bin/google-chrome'
+)
 # Default branch is :master
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
 
