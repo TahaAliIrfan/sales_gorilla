@@ -201,6 +201,7 @@ class OdooProposal < ApplicationRecord
         label:       label,
         description: m['description'].to_s.strip,
         impl_cost:   m['impl_cost'].to_i,
+        hours:       m['hours'].to_i,
         custom:      true
       }
     end

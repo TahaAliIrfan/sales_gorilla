@@ -12,9 +12,9 @@
 %>
 
 <div data-controller="odoo-calculator"
-     data-odoo-calculator-sub-data-value="<%= sub_data.html_safe %>"
-     data-odoo-calculator-tier-data-value="<%= tier_data.html_safe %>"
-     data-odoo-calculator-sh-tier-data-value="<%= sh_tier_data.html_safe %>"
+     data-odoo-calculator-sub-data-value="<%= sub_data %>"
+     data-odoo-calculator-tier-data-value="<%= tier_data %>"
+     data-odoo-calculator-sh-tier-data-value="<%= sh_tier_data %>"
      data-odoo-calculator-analyze-url-value="<%= analyze_odoo_proposals_path %>">
 
   <%# ── Page header ───────────────────────────────────────────────────────── %>
@@ -192,38 +192,47 @@
 
         <div class="p-4 space-y-2.5" data-odoo-calculator-target="customModulesList">
           <% Array(proposal.custom_module_details).each do |cm| %>
-            <div class="custom-module-row grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+            <div class="custom-module-row p-3 rounded-lg border border-gray-100 bg-gray-50/50"
                  data-odoo-calculator-target="customModuleRow">
-              <input type="text"
-                     name="odoo_proposal[custom_modules][][label]"
-                     value="<%= cm[:label] %>"
-                     placeholder="Custom module name"
-                     class="col-span-3 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-                     data-action="input->odoo-calculator#recalculate">
-              <input type="text"
-                     name="odoo_proposal[custom_modules][][description]"
-                     value="<%= cm[:description] %>"
-                     placeholder="One-line description of what it does for this client"
-                     class="col-span-6 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white">
-              <div class="col-span-2 relative">
-                <span class="absolute left-2 top-1.5 text-xs text-gray-400">PKR</span>
-                <input type="number"
-                       min="0"
-                       step="1000"
-                       name="odoo_proposal[custom_modules][][impl_cost]"
-                       value="<%= cm[:impl_cost] %>"
-                       placeholder="0"
-                       class="custom-module-cost w-full rounded-md border border-gray-200 text-xs pl-10 pr-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-right"
-                       data-odoo-calculator-target="customModuleCost"
+              <div class="grid grid-cols-12 gap-2 items-start">
+                <input type="text"
+                       name="odoo_proposal[custom_modules][][label]"
+                       value="<%= cm[:label] %>"
+                       placeholder="Custom module name"
+                       class="col-span-3 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
                        data-action="input->odoo-calculator#recalculate">
+                <input type="text"
+                       name="odoo_proposal[custom_modules][][description]"
+                       value="<%= cm[:description] %>"
+                       placeholder="One-line description of what it does for this client"
+                       class="col-span-6 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white">
+                <div class="col-span-2 relative">
+                  <span class="absolute left-2 top-1.5 text-xs text-gray-400">PKR</span>
+                  <input type="number"
+                         min="0"
+                         step="1000"
+                         name="odoo_proposal[custom_modules][][impl_cost]"
+                         value="<%= cm[:impl_cost] %>"
+                         placeholder="0"
+                         class="custom-module-cost w-full rounded-md border border-gray-200 text-xs pl-10 pr-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-right"
+                         data-odoo-calculator-target="customModuleCost"
+                         data-action="input->odoo-calculator#recalculate">
+                </div>
+                <button type="button"
+                        class="col-span-1 inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors mx-auto"
+                        data-action="click->odoo-calculator#removeCustomModule">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
               </div>
-              <button type="button"
-                      class="col-span-1 inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors mx-auto"
-                      data-action="click->odoo-calculator#removeCustomModule">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                </svg>
-              </button>
+              <input type="hidden"
+                     name="odoo_proposal[custom_modules][][hours]"
+                     value="<%= cm[:hours].to_i.positive? ? cm[:hours] : '' %>"
+                     data-odoo-calculator-target="customModuleHours">
+              <p class="custom-module-hours-hint text-[10px] text-purple-600 mt-1 pl-1 <%= 'hidden' unless cm[:hours].to_i.positive? %>">
+                ~<%= cm[:hours] %> hrs effort
+              </p>
             </div>
           <% end %>
         </div>
@@ -516,6 +525,46 @@
 
   <% end %>
 
+  <template data-odoo-calculator-target="customModuleTemplate">
+  <div class="custom-module-row p-3 rounded-lg border border-gray-100 bg-gray-50/50"
+       data-odoo-calculator-target="customModuleRow">
+    <div class="grid grid-cols-12 gap-2 items-start">
+      <input type="text"
+             name="odoo_proposal[custom_modules][][label]"
+             placeholder="Custom module name"
+             class="col-span-3 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
+             data-action="input->odoo-calculator#recalculate">
+      <input type="text"
+             name="odoo_proposal[custom_modules][][description]"
+             placeholder="One-line description of what it does for this client"
+             class="col-span-6 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white">
+      <div class="col-span-2 relative">
+        <span class="absolute left-2 top-1.5 text-xs text-gray-400">PKR</span>
+        <input type="number"
+               min="0"
+               step="1000"
+               name="odoo_proposal[custom_modules][][impl_cost]"
+               placeholder="0"
+               class="custom-module-cost w-full rounded-md border border-gray-200 text-xs pl-10 pr-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-right"
+               data-odoo-calculator-target="customModuleCost"
+               data-action="input->odoo-calculator#recalculate">
+      </div>
+      <button type="button"
+              class="col-span-1 inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors mx-auto"
+              data-action="click->odoo-calculator#removeCustomModule">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </button>
+    </div>
+    <input type="hidden"
+           name="odoo_proposal[custom_modules][][hours]"
+           value=""
+           data-odoo-calculator-target="customModuleHours">
+    <p class="custom-module-hours-hint text-[10px] text-purple-600 mt-1 pl-1 hidden"></p>
+  </div>
+  </template>
+
 </div>
 
 <style>
@@ -527,36 +576,3 @@
     accent-color: #dc2626;
   }
 </style>
-
-<template data-odoo-calculator-target="customModuleTemplate">
-  <div class="custom-module-row grid grid-cols-12 gap-2 items-start p-3 rounded-lg border border-gray-100 bg-gray-50/50"
-       data-odoo-calculator-target="customModuleRow">
-    <input type="text"
-           name="odoo_proposal[custom_modules][][label]"
-           placeholder="Custom module name"
-           class="col-span-3 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white"
-           data-action="input->odoo-calculator#recalculate">
-    <input type="text"
-           name="odoo_proposal[custom_modules][][description]"
-           placeholder="One-line description of what it does for this client"
-           class="col-span-6 rounded-md border border-gray-200 text-xs px-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white">
-    <div class="col-span-2 relative">
-      <span class="absolute left-2 top-1.5 text-xs text-gray-400">PKR</span>
-      <input type="number"
-             min="0"
-             step="1000"
-             name="odoo_proposal[custom_modules][][impl_cost]"
-             placeholder="0"
-             class="custom-module-cost w-full rounded-md border border-gray-200 text-xs pl-10 pr-2 py-1.5 focus:ring-2 focus:ring-red-400 focus:border-transparent bg-white text-right"
-             data-odoo-calculator-target="customModuleCost"
-             data-action="input->odoo-calculator#recalculate">
-    </div>
-    <button type="button"
-            class="col-span-1 inline-flex items-center justify-center w-8 h-8 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-colors mx-auto"
-            data-action="click->odoo-calculator#removeCustomModule">
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-      </svg>
-    </button>
-  </div>
-</template>

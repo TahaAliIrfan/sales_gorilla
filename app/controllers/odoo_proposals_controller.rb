@@ -238,11 +238,14 @@ class OdooProposalsController < ApplicationController
       next nil unless h.is_a?(Hash)
       label = h['label'].to_s.strip
       next nil if label.empty?
-      {
+      record = {
         'label'       => label,
         'description' => h['description'].to_s.strip,
         'impl_cost'   => h['impl_cost'].to_i
       }
+      hours = h['hours'].to_i
+      record['hours'] = hours if hours.positive?
+      record
     end
   end
 end

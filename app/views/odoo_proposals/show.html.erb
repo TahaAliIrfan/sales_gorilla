@@ -166,7 +166,12 @@
                 <div class="flex-1">
                   <div class="flex items-center justify-between">
                     <p class="text-sm font-semibold text-gray-800"><%= cm[:label] %></p>
-                    <p class="text-xs font-bold text-purple-700">PKR <%= number_with_delimiter(cm[:impl_cost]) %></p>
+                    <div class="text-right">
+                      <p class="text-xs font-bold text-purple-700">PKR <%= number_with_delimiter(cm[:impl_cost]) %></p>
+                      <% if cm[:hours].to_i.positive? %>
+                        <p class="text-[10px] text-purple-400">~<%= cm[:hours] %> hrs</p>
+                      <% end %>
+                    </div>
                   </div>
                   <% if cm[:description].present? %>
                     <p class="text-xs text-gray-500 mt-0.5"><%= cm[:description] %></p>
@@ -339,15 +344,16 @@
   <div class="space-y-5">
 
     <!-- Cost Summary Card -->
+    <% sub_info = @proposal.odoo_subscription_info %>
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="bg-gradient-to-br from-red-600 to-red-800 p-5">
-        <p class="text-red-200 text-xs font-medium uppercase tracking-wide">Total Investment</p>
-        <p class="text-3xl font-bold text-white mt-1">PKR <%= number_with_delimiter(@proposal.total_cost) %></p>
-        <p class="text-red-300 text-xs mt-1">Implementation + First Year Hosting</p>
+        <p class="text-red-200 text-xs font-medium uppercase tracking-wide">Year 1 Total Investment</p>
+        <p class="text-3xl font-bold text-white mt-1">PKR <%= number_with_delimiter(@proposal.year_1_total) %></p>
+        <p class="text-red-300 text-xs mt-1">Setup + Year 1 hosting + Year 1 Odoo subscription</p>
       </div>
       <div class="p-5 space-y-3">
         <div class="flex justify-between items-center text-sm">
-          <span class="text-gray-500">Implementation Fee</span>
+          <span class="text-gray-500">Implementation Fee <span class="text-gray-400 text-xs">(one-time)</span></span>
           <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.implementation_fee) %></span>
         </div>
         <% if @proposal.annual_hosting_cost > 0 %>
@@ -356,9 +362,19 @@
             <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.annual_hosting_cost) %></span>
           </div>
         <% end %>
+        <div class="pt-2 border-t border-gray-100">
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-gray-500">Odoo Subscription <span class="text-gray-400 text-xs">(yearly)</span></span>
+            <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.subscription_yearly_total) %></span>
+          </div>
+          <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
+            <span><%= sub_info[:plan] %> · $<%= sub_info[:usd_monthly] %>/user/mo × <%= @proposal.num_users %> users</span>
+            <span>Paid to Odoo</span>
+          </div>
+        </div>
         <div class="flex justify-between items-center text-xs pt-2 border-t border-gray-100">
-          <span class="text-gray-400">Odoo Subscription</span>
-          <span class="text-gray-400">Billed separately by Odoo</span>
+          <span class="font-semibold text-gray-600">Year 2+ recurring / year</span>
+          <span class="font-bold text-red-600">PKR <%= number_with_delimiter(@proposal.year_2_recurring_yearly) %></span>
         </div>
       </div>
     </div>

@@ -15,7 +15,7 @@ export default class extends Controller {
     "customerSelect", "customerName",
     "submitBtn",
     // Custom modules
-    "customModulesList", "customModulesEmpty", "customModuleRow", "customModuleCost", "customModuleTemplate",
+    "customModulesList", "customModulesEmpty", "customModuleRow", "customModuleCost", "customModuleHours", "customModuleTemplate",
     // Smart Detect
     "analyzeBtn", "analyzeLabel", "analyzeText", "analyzeFile", "analyzeFileName", "analyzeStatus",
     // Business context (set by Smart Detect)
@@ -92,7 +92,7 @@ export default class extends Controller {
     this.recalculate()
   }
 
-  appendCustomModuleRow({ label, description, impl_cost }) {
+  appendCustomModuleRow({ label, description, impl_cost, hours }) {
     if (!this.hasCustomModuleTemplateTarget || !this.hasCustomModulesListTarget) return
 
     const fragment = this.customModuleTemplateTarget.content.cloneNode(true)
@@ -101,7 +101,17 @@ export default class extends Controller {
       if (input.name.endsWith("[label]"))       input.value = label || ""
       if (input.name.endsWith("[description]")) input.value = description || ""
       if (input.name.endsWith("[impl_cost]"))   input.value = impl_cost ?? ""
+      if (input.name.endsWith("[hours]"))       input.value = hours && hours > 0 ? hours : ""
     })
+
+    if (hours && hours > 0) {
+      const hint = fragment.querySelector(".custom-module-hours-hint")
+      if (hint) {
+        hint.textContent = `~${hours} hrs effort`
+        hint.classList.remove("hidden")
+      }
+    }
+
     this.customModulesListTarget.appendChild(fragment)
   }
 

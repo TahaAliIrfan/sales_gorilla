@@ -19,6 +19,13 @@ class OdooProposalDetectionService
   MAX_TEXT_CHARS = 60_000
   MAX_FILE_BYTES = 12 * 1024 * 1024  # 12 MB
 
+  # Custom-dev pricing — kept internal. Claude estimates effort in hours,
+  # the service converts to PKR using a fixed rate. The client-facing PDF
+  # and the UI only ever show the PKR amount.
+  USD_HOURLY_RATE  = 10.0
+  USD_TO_PKR       = 280.0
+  PKR_PER_HOUR     = (USD_HOURLY_RATE * USD_TO_PKR).to_i  # 4_200
+
   IMAGE_TYPES = {
     'image/png'  => 'image/png',
     'image/jpeg' => 'image/jpeg',
@@ -73,24 +80,54 @@ class OdooProposalDetectionService
   def system_prompt
     <<~SYS
       You are an Odoo ERP solution architect at Tecaudex (an Official Odoo Partner in Pakistan).
-      Your job is to read a client requirements brief and recommend which Odoo modules they need.
+      Your job is to read a client requirements brief and recommend the right Odoo configuration.
 
       You have two outputs:
       1) Standard modules — choose from the official catalog below using the exact `key` (snake_case).
-      2) Custom modules — anything the client needs that ISN'T covered by the standard catalog.
-         These represent extra Tecaudex development effort (custom Odoo modules, integrations,
-         third-party API work, bespoke screens). Each must have a label, a 1-sentence description
-         scoped to this client, and a realistic PKR implementation cost.
+      2) Custom modules — anything that genuinely needs Tecaudex development effort beyond
+         installing a standard module. Each must have a label, a 1-sentence description scoped
+         to THIS client, and an estimated `hours` (integer) of senior Odoo developer time.
 
       ## Official Odoo module catalog (use these exact keys for "modules")
       #{module_catalog_summary}
 
-      ## Custom module cost guidance (PKR, one-time implementation)
-      - Minor screen / report / workflow tweak: 20,000 – 40,000
-      - Custom Odoo module of medium complexity: 60,000 – 120,000
-      - Third-party API integration (CRM/payments/local courier/SMS gateway etc.): 80,000 – 180,000
-      - Large bespoke subsystem (e.g. custom production planning UI): 200,000 – 500,000
-      Pick a single integer per custom module based on the described scope. Be realistic for Pakistan rates.
+      ## When to add a CUSTOM module (be thorough — do not skip these)
+      Add a custom module entry for EACH of the following if the brief mentions them or strongly
+      implies them. These are NOT covered by simply installing a standard module:
+
+      - Pakistan-specific compliance & localisation
+        * FBR-compliant tax invoice template (custom PDF report) — typically 16–32 hours
+        * Pakistani Chart of Accounts setup & tax configuration — typically 8–20 hours
+        * FBR e-invoicing / PRAL / IRIS digital invoicing integration — typically 60–120 hours
+        * SECP / withholding tax handling, sales tax return reports — typically 16–40 hours
+      - Data migration from legacy systems (QuickBooks, Tally, Excel, custom DB)
+        * Master data import (customers/vendors/products via CSV): 8–20 hours
+        * Opening balances + current-year transactions: 24–48 hours
+        * Full multi-year historical transaction migration: 16–40 hours PER YEAR of history
+          (so 5 years ≈ 80–200 hours depending on volume and source-data cleanliness)
+      - Third-party integrations
+        * Payment gateway (HBL, JazzCash, EasyPaisa, Stripe, etc.): 40–80 hours each
+        * Local courier (TCS, Leopards, M&P, Daraz, etc.): 32–60 hours each
+        * SMS / WhatsApp gateway: 24–48 hours
+        * Bank statement / banking API integration: 40–80 hours
+        * Existing CRM / HRMS / e-commerce platform: 60–120 hours
+      - Custom screens, workflows, reports
+        * Custom Odoo module of medium complexity: 40–80 hours
+        * Custom report (PDF/Excel beyond standard): 4–12 hours
+        * Custom workflow / approval chain: 8–24 hours
+        * Bespoke industry-specific subsystem: 100+ hours
+      - User training beyond standard onboarding (e.g. multi-day on-site): 8–24 hours
+      - Custom invoice / quotation / PO templates branded to the client: 6–16 hours each
+
+      IMPORTANT — be aggressive at spotting custom dev needs. If the brief mentions FBR, tax
+      compliance, data migration from another system, an existing system to integrate with,
+      country-specific reporting, or bespoke workflows — there is almost certainly a custom
+      module to add. Do NOT lump multiple distinct needs into one entry; split them so the
+      client can see the breakdown.
+
+      Pick a single `hours` integer per custom module based on the described scope. Be realistic
+      and lean toward the upper half of the range when the brief is light on detail (uncertainty
+      = more discovery hours).
 
       ## Inference rules
       - Detect industry from the catalog: Manufacturing, Retail / eCommerce, Distribution / Wholesale,
@@ -119,15 +156,16 @@ class OdooProposalDetectionService
       {
         "modules": ["key1", "key2"],
         "custom_modules": [
-          { "label": "...", "description": "...", "impl_cost": 75000 }
+          { "label": "FBR e-Invoicing Integration", "description": "Integrate Odoo with PRAL/IRIS for digital tax invoice submission, including IRN handling and retry logic.", "hours": 80 }
         ],
-        "industry": "Manufacturing",
-        "company_size": "51-200",
+        "industry": "Distribution / Wholesale",
+        "company_size": "1-10",
         "pain_points": ["...", "..."]
       }
 
-      If something cannot be inferred, omit the field (do not invent). Only include modules that
-      genuinely fit the brief. Prefer the standard catalog wherever it covers the need.
+      Do NOT include a price field — the system computes it from `hours`. If something cannot be
+      inferred, omit the field (do not invent). Only include standard modules that genuinely fit
+      the brief. Prefer the standard catalog wherever it covers the need.
     SYS
   end
 
@@ -250,10 +288,19 @@ class OdooProposalDetectionService
       next nil unless m.is_a?(Hash)
       label = m['label'].to_s.strip
       next nil if label.empty?
+
+      hours = m['hours'].to_i
+      hours = 8 if hours <= 0  # floor for malformed responses
+
+      # Round to nearest 1,000 PKR for a clean fixed-amount feel.
+      raw_cost  = hours * PKR_PER_HOUR
+      impl_cost = ((raw_cost + 500) / 1000) * 1000
+
       {
         'label'       => label,
         'description' => m['description'].to_s.strip,
-        'impl_cost'   => m['impl_cost'].to_i
+        'hours'       => hours,
+        'impl_cost'   => impl_cost
       }
     end
 
