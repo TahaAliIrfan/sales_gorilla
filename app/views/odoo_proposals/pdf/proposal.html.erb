@@ -566,32 +566,29 @@
   </div>
 </section>
 
+<%
+  # ── Dynamic section numbering ──
+  sec_idx = 0
+  next_section = ->{ sec_idx += 1; format('%02d', sec_idx) }
+%>
+
 <!-- ═══════════════════════════════════════════════════════════════════
      EXECUTIVE SUMMARY (only if narrative present)
      ═══════════════════════════════════════════════════════════════════ -->
-<% if has_narr && (proposal.claude_summary.present? || proposal.claude_rationale.present?) %>
+<% if has_narr && proposal.claude_summary.present? %>
 <section class="page">
   <%= page_bar.call %>
 
   <div class="section-title">
-    <div class="eyebrow">01 · Executive Summary</div>
+    <div class="eyebrow"><%= next_section.call %> · Executive Summary</div>
     <h2>For <%= name %><% if proposal.industry.present? %>,<br>in <%= proposal.industry %>.<% end %></h2>
-    <p class="lead">A summary of what we're proposing and the reasoning behind it.</p>
+    <p class="lead">A summary of what we're proposing and why.</p>
   </div>
 
-  <% if proposal.claude_summary.present? %>
-    <div class="summary-block">
-      <div class="label">Summary</div>
-      <p><%= proposal.claude_summary %></p>
-    </div>
-  <% end %>
-
-  <% if proposal.claude_rationale.present? %>
-    <div class="summary-block alt">
-      <div class="label">Why This Approach</div>
-      <p><%= proposal.claude_rationale %></p>
-    </div>
-  <% end %>
+  <div class="summary-block">
+    <div class="label">Summary</div>
+    <p><%= proposal.claude_summary %></p>
+  </div>
 
   <% if pain_points.any? %>
     <div class="pain-grid">
@@ -609,23 +606,22 @@
 <% end %>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-     SELECTED MODULES
+     SELECTED MODULES (list only — pricing lives on the final breakdown)
      ═══════════════════════════════════════════════════════════════════ -->
 <section class="page">
   <%= page_bar.call %>
 
   <div class="section-title">
-    <div class="eyebrow"><%= has_narr ? '02' : '01' %> · Selected Modules</div>
+    <div class="eyebrow"><%= next_section.call %> · Selected Modules</div>
     <h2><%= mods.size %> module<%= mods.size == 1 ? '' : 's' %> in scope.</h2>
-    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee. Pricing is in PKR.</p>
+    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee. The detailed cost breakdown is on the Investment page.</p>
   </div>
 
   <table class="table">
     <thead>
       <tr>
-        <th style="width:60%">Module / Component</th>
-        <th style="width:20%">Type</th>
-        <th class="r" style="width:20%">Amount (PKR)</th>
+        <th style="width:75%">Module / Component</th>
+        <th style="width:25%">Type</th>
       </tr>
     </thead>
     <tbody>
@@ -637,16 +633,9 @@
               <%= m[:custom] ? 'Custom Dev' : 'Standard' %>
             </span>
           </td>
-          <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
         </tr>
       <% end %>
     </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">Total Implementation Fee (one-time)</td>
-        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
-      </tr>
-    </tfoot>
   </table>
 
   <%= page_foot.call %>
@@ -663,7 +652,7 @@
   <%= page_bar.call %>
 
   <div class="section-title">
-    <div class="eyebrow">03 · Why These Modules</div>
+    <div class="eyebrow"><%= next_section.call %> · Why These Modules</div>
     <h2>Tailored to your situation.</h2>
     <p class="lead">Each module was selected for a specific reason in <strong><%= name %></strong>'s context. Here is the rationale, module by module.</p>
   </div>
@@ -672,10 +661,7 @@
     <div class="prose <%= 'custom' if m[:custom] %>">
       <div class="head">
         <div class="title"><%= m[:label] %></div>
-        <div>
-          <span class="meta"><%= m[:custom] ? 'Custom Dev' : 'Standard Module' %></span>
-          <span class="price">PKR <%= fmt.call(m[:impl_cost]) %></span>
-        </div>
+        <div class="meta"><%= m[:custom] ? 'Custom Dev' : 'Standard Module' %></div>
       </div>
       <p><%= proposal.module_justification_for(m[:key]) %></p>
     </div>
@@ -686,154 +672,18 @@
 <% end %>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-     DEPLOYMENT & HOSTING
+     INVESTMENT BREAKDOWN  (single page — Year 1 vs Year 2 detail)
      ═══════════════════════════════════════════════════════════════════ -->
 <section class="page">
   <%= page_bar.call %>
 
   <div class="section-title">
-    <div class="eyebrow"><%= has_narr ? '04' : '02' %> · Deployment</div>
-    <h2><%= proposal.deployment_label %><br>for <%= proposal.num_users %> user<%= proposal.num_users == 1 ? '' : 's' %>.</h2>
-    <%
-      desc = {
-        'online'     => 'Fully managed SaaS by Odoo. Odoo handles all upgrades, backups, and security — no infrastructure for you to manage.',
-        'sh'         => 'Odoo.sh: managed cloud with Git-based deployment, staging branches, and full developer access.',
-        'on_premise' => 'Self-hosted on Tecaudex-managed AWS infrastructure. Full data sovereignty and custom integration freedom.'
-      }[proposal.deployment_type]
-    %>
-    <p class="lead"><%= desc %></p>
-  </div>
-
-  <% if tier_info %>
-    <div class="deploy-card">
-      <div class="left">
-        <div class="deploy-label">Recommended Tier</div>
-        <div class="deploy-name"><%= tier_info[:label] %></div>
-        <div class="deploy-desc"><%= tier_info[:specs] %> · <%= tier_info[:users] %></div>
-      </div>
-      <div class="price">
-        <div class="annual">PKR <%= fmt.call(tier_info[:annual_pkr]) %><span class="unit"> /yr</span></div>
-        <div class="monthly">PKR <%= fmt.call(tier_info[:monthly_pkr]) %> /mo</div>
-      </div>
-    </div>
-  <% end %>
-
-  <div class="sub-heading">Deployment Comparison</div>
-  <%
-    hi_col = { 'online' => 1, 'sh' => 2, 'on_premise' => 3 }[proposal.deployment_type]
-    compare = [
-      ['Odoo Plan',         'Standard',         'Custom',           'Custom'],
-      ['License/User/Mo',   '$7.25 (annual)',   '$10.90 (annual)',  '$10.90 (annual)'],
-      ['Odoo Studio',       'No',               'Yes',              'Yes'],
-      ['Multi-Company',     'No',               'Yes',              'Yes'],
-      ['External API',      'No',               'Yes',              'Yes'],
-      ['Data Location',     'Odoo servers',     'Odoo / GitHub',    'Your servers'],
-      ['Platform Cost',     'Included',         'Extra (workers)',  'Hosting required'],
-      ['Best For',          'SMBs / start',     'Dev teams',        'Enterprise']
-    ]
-  %>
-  <table class="table compare">
-    <thead>
-      <tr>
-        <th style="width:25%">Feature</th>
-        <th style="width:25%">Odoo Online</th>
-        <th style="width:25%">Odoo.sh</th>
-        <th style="width:25%">On-Premise</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% compare.each do |row| %>
-        <tr>
-          <% row.each_with_index do |cell, idx| %>
-            <td class="<%= 'high' if hi_col && idx == hi_col %><%= ' label-cell' if idx == 0 %>"><%= cell %></td>
-          <% end %>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-
-  <%= page_foot.call %>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     INVESTMENT BREAKDOWN
-     ═══════════════════════════════════════════════════════════════════ -->
-<section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= has_narr ? '05' : '03' %> · Investment Breakdown</div>
-    <h2>Full costs, itemised.</h2>
-    <p class="lead">One-time implementation, recurring annual subscription &amp; hosting, and a year-on-year comparison so you can plan ahead.</p>
+    <div class="eyebrow"><%= next_section.call %> · Investment</div>
+    <h2>Year 1 &amp; Year 2 onwards.</h2>
+    <p class="lead">A single, transparent view of what you pay this year and what continues from Year 2.</p>
   </div>
 
   <div class="block">
-    <div class="sub-heading">A · One-Time Implementation Costs</div>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:55%">Module / Component</th>
-          <th style="width:25%">Description</th>
-          <th class="r" style="width:20%">Amount (PKR)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% mods.each do |m| %>
-          <tr>
-            <td class="label-cell"><%= m[:label] %></td>
-            <td><%= m[:custom] ? 'Custom Dev / Integration' : 'Setup & Configuration' %></td>
-            <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2">Implementation Subtotal</td>
-          <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <div class="block">
-    <div class="sub-heading">B · Recurring Costs (Monthly &amp; Yearly)</div>
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:30%">Item</th>
-          <th style="width:30%">Basis</th>
-          <th class="r" style="width:20%">Monthly (PKR)</th>
-          <th class="r" style="width:20%">Yearly (PKR)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="label-cell">Odoo Subscription</td>
-          <td><%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo</td>
-          <td class="r"><%= fmt.call(proposal.subscription_monthly_total) %></td>
-          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
-        </tr>
-        <% if proposal.hosting_monthly > 0 %>
-          <tr>
-            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? "Odoo.sh Platform (#{tier_info && tier_info[:label]})" : "Server Hosting (#{tier_info && tier_info[:label]})" %></td>
-            <td><%= tier_info && tier_info[:specs] %></td>
-            <td class="r"><%= fmt.call(proposal.hosting_monthly) %></td>
-            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="2">Recurring Subtotal</td>
-          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_monthly) %></td>
-          <td class="r accent">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-
-  <div class="block">
-    <div class="sub-heading">C · Year-on-Year Summary</div>
     <table class="table">
       <thead>
         <tr>
@@ -844,20 +694,20 @@
       </thead>
       <tbody>
         <tr>
-          <td class="label-cell">Implementation Fee (one-time)</td>
-          <td class="r"><%= fmt.call(proposal.implementation_fee.to_i) %></td>
+          <td class="label-cell">Implementation Fee <span class="muted" style="font-weight:500">(one-time setup, config &amp; training)</span></td>
+          <td class="r">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
           <td class="r">—</td>
         </tr>
         <tr>
-          <td class="label-cell">Odoo Subscription</td>
-          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
-          <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+          <td class="label-cell">Odoo Subscription <span class="muted" style="font-weight:500">(<%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo)</span></td>
+          <td class="r">PKR <%= fmt.call(proposal.subscription_yearly_total) %></td>
+          <td class="r">PKR <%= fmt.call(proposal.subscription_yearly_total) %></td>
         </tr>
         <% if proposal.hosting_yearly > 0 %>
           <tr>
-            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %></td>
-            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
-            <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %> <span class="muted" style="font-weight:500">(<%= tier_info && tier_info[:label] %>)</span></td>
+            <td class="r">PKR <%= fmt.call(proposal.hosting_yearly) %></td>
+            <td class="r">PKR <%= fmt.call(proposal.hosting_yearly) %></td>
           </tr>
         <% end %>
       </tbody>
@@ -865,11 +715,16 @@
         <tr>
           <td>Grand Total</td>
           <td class="r accent">PKR <%= fmt.call(proposal.year_1_total) %></td>
-          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %> /yr</td>
+          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
         </tr>
       </tfoot>
     </table>
   </div>
+
+  <p class="muted" style="margin-top:6mm; font-size:9pt;">
+    Odoo Subscription is billed directly by Odoo at $<%= sub_info[:usd_monthly] %>/user/month on the <%= sub_info[:plan] %> plan (annual billing).
+    Hosting cost is an estimate based on the recommended tier; actuals may vary slightly.
+  </p>
 
   <%= page_foot.call %>
 </section>
@@ -881,7 +736,7 @@
   <%= page_bar.call %>
 
   <div class="section-title">
-    <div class="eyebrow"><%= has_narr ? '06' : '04' %> · Next Steps</div>
+    <div class="eyebrow"><%= next_section.call %> · Next Steps</div>
     <h2>How we get to go-live.</h2>
     <p class="lead">We're excited to partner with <strong><%= name %></strong> on this Odoo ERP implementation. Here is the recommended path forward.</p>
   </div>

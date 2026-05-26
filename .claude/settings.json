@@ -25,7 +25,8 @@
       "Bash(ping -c 2 registry.npmjs.org)",
       "Bash(grep -E \"2600:1900|address|GET|http\" /Users/taha/.npm/_logs/2026-05-26T02_30_16_151Z-debug-0.log 2>&1 | head -15)",
       "Read(//Users/taha/.npm/_logs/**)",
-      "Bash(PUPPETEER_SKIP_DOWNLOAD=true npm install puppeteer@21)"
+      "Bash(PUPPETEER_SKIP_DOWNLOAD=true npm install puppeteer@21)",
+      "Bash(open /tmp/proposal_html.pdf)"
     ]
   }
 }
