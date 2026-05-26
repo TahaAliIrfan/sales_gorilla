@@ -189,6 +189,8 @@ GEM
       signet (>= 0.16, < 2.a)
     groupdate (6.5.1)
       activesupport (>= 7)
+    grover (1.2.10)
+      nokogiri (~> 1)
     hashie (5.0.0)
     httparty (0.21.0)
       mini_mime (>= 1.0.0)
@@ -495,6 +497,7 @@ DEPENDENCIES
   docx (~> 0.8)
   google-api-client (~> 0.53.0)
   groupdate (~> 6.4)
+  grover (~> 1.2)
   httparty (~> 0.21.0)
   image_processing (~> 1.2)
   importmap-rails

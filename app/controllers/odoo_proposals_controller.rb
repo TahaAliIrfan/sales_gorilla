@@ -90,13 +90,12 @@ class OdooProposalsController < ApplicationController
   end
 
   def download_pdf
-    service = OdooProposalPdfService.new(@proposal)
-    pdf = service.generate
+    pdf_bytes = OdooProposalHtmlPdfService.new(@proposal).generate
 
     client_name = @proposal.display_name.gsub(/[^a-zA-Z0-9\s]/, '').strip.gsub(/\s+/, '_')
     filename = "Odoo_Proposal_#{client_name}_#{Date.current.strftime('%Y%m%d')}.pdf"
 
-    send_data pdf.render,
+    send_data pdf_bytes,
       filename: filename,
       type: 'application/pdf',
       disposition: 'attachment'

@@ -99,6 +99,9 @@ gem 'prawn'
 gem 'prawn-table'
 gem 'prawn-svg'
 
+# HTML → PDF via headless Chromium (used by OdooProposalHtmlPdfService)
+gem 'grover', '~> 1.2'
+
 # .docx text extraction (used by OdooProposalDetectionService)
 gem 'docx', '~> 0.8'
 

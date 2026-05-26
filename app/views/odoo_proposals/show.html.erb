@@ -354,12 +354,12 @@
       <div class="p-5 space-y-3">
         <div class="flex justify-between items-center text-sm">
           <span class="text-gray-500">Implementation Fee <span class="text-gray-400 text-xs">(one-time)</span></span>
-          <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.implementation_fee) %></span>
+          <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.implementation_fee.to_i) %></span>
         </div>
         <% if @proposal.annual_hosting_cost > 0 %>
           <div class="flex justify-between items-center text-sm">
             <span class="text-gray-500">Annual Hosting</span>
-            <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.annual_hosting_cost) %></span>
+            <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.annual_hosting_cost.to_i) %></span>
           </div>
         <% end %>
         <div class="pt-2 border-t border-gray-100">

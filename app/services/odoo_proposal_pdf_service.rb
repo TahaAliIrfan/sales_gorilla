@@ -41,6 +41,7 @@ class OdooProposalPdfService
       end
       @pdf.start_new_page; cost_overview
       @pdf.start_new_page; modules_detail
+      module_justifications_detail
       @pdf.start_new_page; deployment_page
       @pdf.start_new_page; investment_breakdown
       @pdf.start_new_page; next_steps
@@ -308,139 +309,112 @@ class OdooProposalPdfService
   end
 
   # ═══════════════════════════════════════════════════════════════════════════
-  # PAGE 3 — MODULES
+  # PAGE — SELECTED MODULES  (clean compact pricing table)
   # ═══════════════════════════════════════════════════════════════════════════
   def modules_detail
     header "Selected Modules"
 
     mods = @p.all_module_details
-    has_justifications = @p.narrative_generated? && @p.claude_module_justifications.present?
+    body "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected for #{@name}. Each item below is " \
+         "fully configured, integrated, and tested as part of the one-time implementation fee.",
+         y: PH - 128
 
-    intro = if has_justifications
-      "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected — each tailored to #{@name}'s situation, " \
-        "configured and integrated as part of the one-time implementation fee."
-    else
-      "#{mods.size} module#{mods.size == 1 ? '' : 's'} selected — each is fully " \
-        "configured and integrated as part of the one-time implementation fee."
-    end
-    body intro, y: PH - 128
+    # Header
+    cw = [CW * 0.62, CW * 0.18, CW * 0.20]
+    header_h = 24
+    table_top = PH - 168
+    draw_table_row ["Module / Component", "Type", "Amount (PKR)"],
+      cw, table_top, row_h: header_h, header: true, hi_col: nil
 
-    if has_justifications
-      render_modules_with_justifications(mods)
-    else
-      render_modules_compact(mods)
-    end
-  end
-
-  def render_modules_compact(mods)
-    card_h = 54
-    gap    = 6
-    col_w  = (CW - gap) / 2.0
-    y_start = PH - 168
-
-    page_y   = y_start
-    col      = 0
+    y_cursor = table_top - header_h
 
     mods.each_with_index do |mod, i|
-      x = ML + col * (col_w + gap)
+      kind = mod[:custom] ? "Custom Dev" : "Standard"
+      cells = [clean(mod[:label]), kind, fmt(mod[:impl_cost])]
+      rh = measure_row_height(cells, cw, min: 22)
 
-      if page_y - card_h < 60
+      if y_cursor - rh < 90
         footer
         @pdf.start_new_page
         header "Selected Modules (cont.)"
-        page_y = PH - 128
-        col    = 0
-        x      = ML
+        draw_table_row ["Module / Component", "Type", "Amount (PKR)"],
+          cw, PH - 128, row_h: header_h, header: true, hi_col: nil
+        y_cursor = PH - 128 - header_h
       end
 
-      rect x, page_y, col_w, card_h, CREAM
-      rect x, page_y, 3, card_h, mod[:custom] ? "8B5CF6" : RED
-
-      color INK
-      bold 11, clean(mod[:label]), x: x + 12, y: page_y - 12, w: col_w - 130
-
-      if mod[:custom]
-        rect x + 12, page_y - 28, 38, 11, "EDE9FE"
-        color "6D28D9"
-        bold 7, "CUSTOM", x: x + 14, y: page_y - 30, w: 34, align: :center
-      end
-
-      rect x + col_w - 96, page_y - 8, 88, 20, RED_DARK
-      color WHITE
-      bold 8, "PKR #{fmt(mod[:impl_cost])}", x: x + col_w - 94, y: page_y - 12, w: 84, align: :center
-
-      color MID
-      normal 9, clean(mod[:description]), x: x + 12, y: page_y - (mod[:custom] ? 44 : 30), w: col_w - 20, h: 22
-
-      col += 1
-      if col == 2
-        col    = 0
-        page_y -= (card_h + gap)
-      end
+      draw_table_row cells, cw, y_cursor, row_h: rh,
+        hi_col: nil, alt: i.odd?, align_last: :right
+      y_cursor -= rh
     end
 
-    page_y -= (card_h + gap) if col == 1
-    render_modules_total_bar(page_y)
-  end
-
-  def render_modules_with_justifications(mods)
-    page_y = PH - 168
-
-    mods.each do |mod|
-      justification = @p.module_justification_for(mod[:key]).to_s.strip
-      desc_text = clean(mod[:description])
-      just_text = justification.present? ? clean(justification) : nil
-
-      desc_h = estimate_text_height(desc_text, CW - 28, font_size: 9, leading: 2)
-      just_h = just_text ? estimate_text_height(just_text, CW - 38, font_size: 9, leading: 3) : 0
-      card_h = 30 + desc_h + (just_h.positive? ? just_h + 18 : 0) + 14
-
-      if page_y - card_h < 70
-        footer
-        @pdf.start_new_page
-        header "Selected Modules (cont.)"
-        page_y = PH - 128
-      end
-
-      rect ML, page_y, CW, card_h, CREAM
-      rect ML, page_y, 4, card_h, mod[:custom] ? "8B5CF6" : RED
-
-      color INK
-      bold 12, clean(mod[:label]), x: ML + 14, y: page_y - 12, w: CW - 220
-
-      if mod[:custom]
-        rect ML + CW - 220, page_y - 8, 50, 16, "EDE9FE"
-        color "6D28D9"
-        bold 7, "CUSTOM DEV", x: ML + CW - 218, y: page_y - 12, w: 46, align: :center
-      end
-
-      rect ML + CW - 108, page_y - 8, 96, 22, RED_DARK
-      color WHITE
-      bold 9, "PKR #{fmt(mod[:impl_cost])}", x: ML + CW - 106, y: page_y - 12, w: 92, align: :center
-
-      color MID
-      normal 9, desc_text, x: ML + 14, y: page_y - 30, w: CW - 28, leading: 2
-
-      if just_text
-        jy = page_y - 30 - desc_h - 6
-        color RED_DARK
-        bold 8, "WHY THIS FITS #{@name.upcase}", x: ML + 14, y: jy, w: CW - 28
-        color CHARCOAL
-        normal 9, just_text, x: ML + 14, y: jy - 12, w: CW - 28, leading: 3
-      end
-
-      page_y -= (card_h + 8)
-    end
-
-    render_modules_total_bar(page_y)
-  end
-
-  def render_modules_total_bar(page_y)
-    total_y = [page_y - 10, 72].max
+    # Total bar
+    total_y = y_cursor - 4
     rect ML, total_y, CW, 34, RED_DARK
     color WHITE
-    bold 11, "Total Implementation Fee (One-time)", x: ML + 14, y: total_y - 10, w: CW - 200
-    bold 14, "PKR #{fmt(@p.implementation_fee.to_i)}", x: ML + 14, y: total_y - 10, w: CW - 20, align: :right
+    bold 11, "Total Implementation Fee (One-time)", x: ML + 14, y: total_y - 11, w: CW - 200
+    bold 14, "PKR #{fmt(@p.implementation_fee.to_i)}", x: ML + 14, y: total_y - 11, w: CW - 28, align: :right
+
+    footer
+  end
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # PAGE — WHY THESE MODULES  (prose paragraphs, only when AI narrative is present)
+  # ═══════════════════════════════════════════════════════════════════════════
+  def module_justifications_detail
+    return unless @p.narrative_generated? && @p.claude_module_justifications.present?
+
+    mods_with_just = @p.all_module_details.select do |mod|
+      @p.module_justification_for(mod[:key]).to_s.strip.present?
+    end
+    return if mods_with_just.empty?
+
+    @pdf.start_new_page
+    header "Why These Modules"
+
+    body "We chose this configuration specifically for #{@name}#{@p.industry.present? ? " — #{clean(@p.industry)}" : ''}. " \
+         "Below is the rationale for each piece of the recommended stack.",
+         y: PH - 128
+
+    y = PH - 172
+
+    mods_with_just.each do |mod|
+      label    = clean(mod[:label])
+      kind     = mod[:custom] ? "Custom Dev" : "Standard Module"
+      sub      = "#{kind}  ·  PKR #{fmt(mod[:impl_cost])}"
+      text     = clean(@p.module_justification_for(mod[:key]).to_s.strip)
+
+      title_h = estimate_text_height(label, CW, font_size: 12, leading: 1) + 4
+      body_h  = estimate_text_height(text, CW, font_size: 10, leading: 3) + 4
+      block_h = title_h + 14 + body_h + 22
+
+      if y - block_h < 80
+        footer
+        @pdf.start_new_page
+        header "Why These Modules (cont.)"
+        y = PH - 128
+      end
+
+      # Title
+      color INK
+      bold 12, label, x: ML, y: y, w: CW, h: title_h
+      y -= title_h
+
+      # Kicker (kind · price), with coloured accent for custom dev
+      color mod[:custom] ? "6D28D9" : MID
+      bold 8, sub.upcase, x: ML, y: y, w: CW
+      y -= 6
+
+      # Thin accent rule
+      @pdf.stroke_color mod[:custom] ? "8B5CF6" : RED
+      @pdf.line_width 1.2
+      @pdf.stroke_line [ML, y], [ML + 36, y]
+      y -= 10
+
+      # Body paragraph
+      color CHARCOAL
+      normal 10, text, x: ML, y: y, w: CW, leading: 3, h: body_h
+      y -= (body_h + 18)
+    end
 
     footer
   end
@@ -507,13 +481,18 @@ class OdooProposalPdfService
     hi_col = dtype == 'online' ? 1 : (dtype == 'sh' ? 2 : 3)
 
     # Header row
-    draw_table_row heads, col_ws, y, row_h: 22, header: true, hi_col: hi_col
+    header_h = 24
+    draw_table_row heads, col_ws, y, row_h: header_h, header: true, hi_col: hi_col
+
+    comp_y = y - header_h
     rows.each_with_index do |row, ri|
-      draw_table_row row, col_ws, y - 22 - ri * 20, row_h: 20,
+      rh = measure_row_height(row, col_ws, min: 22)
+      draw_table_row row, col_ws, comp_y, row_h: rh,
         header: false, hi_col: hi_col, alt: ri.odd?
+      comp_y -= rh
     end
 
-    ty = y - 22 - rows.size * 20 - 24
+    ty = comp_y - 24
 
     # ── Hosting / SH tier card ─────────────────────────────────────────────
     if (tier = @p.current_tier_info)
@@ -561,31 +540,33 @@ class OdooProposalPdfService
     section_label "A  One-Time Implementation Costs", y: y, underline: false
     y -= 16
 
-    # Table header
-    cw = [CW * 0.38, CW * 0.34, CW * 0.28]
+    # Wider Module column so long labels like "Pakistani Chart of Accounts..." fit cleanly
+    cw = [CW * 0.50, CW * 0.28, CW * 0.22]
+    header_h = 24
     draw_table_row(["Module / Component", "Description", "Amount (PKR)"],
-      cw, y, row_h: 22, header: true, hi_col: nil)
+      cw, y, row_h: header_h, header: true, hi_col: nil)
 
+    y_cursor = y - header_h
     @p.all_module_details.each_with_index do |mod, i|
-      kind = mod[:custom] ? "Custom Dev / Integration" : "Setup & Configuration"
-      draw_table_row(
-        [clean(mod[:label]), kind, fmt(mod[:impl_cost])],
-        cw, y - 22 - i * 19, row_h: 19, hi_col: nil, alt: i.odd?,
-        align_last: :right
-      )
+      kind  = mod[:custom] ? "Custom Dev / Integration" : "Setup & Configuration"
+      cells = [clean(mod[:label]), kind, fmt(mod[:impl_cost])]
+      rh    = measure_row_height(cells, cw, min: 22)
+      draw_table_row(cells, cw, y_cursor, row_h: rh,
+        hi_col: nil, alt: i.odd?, align_last: :right)
+      y_cursor -= rh
     end
 
-    sub_y = y - 22 - @p.all_module_details.size * 19
+    sub_y = y_cursor
     subtotal_row "Implementation Subtotal", @p.implementation_fee.to_i, sub_y
-    y = sub_y - 28
+    y = sub_y - 30
 
     # ── Section B: Recurring Costs ─────────────────────────────────────────
     section_label "B  Recurring Costs  (Monthly & Yearly)", y: y, underline: false
     y -= 16
 
-    rcw = [CW * 0.36, CW * 0.22, CW * 0.21, CW * 0.21]
+    rcw = [CW * 0.32, CW * 0.26, CW * 0.21, CW * 0.21]
     draw_table_row(["Item", "Basis", "Monthly (PKR)", "Yearly (PKR)"],
-      rcw, y, row_h: 22, header: true, hi_col: nil)
+      rcw, y, row_h: header_h, header: true, hi_col: nil)
 
     sub_info = @p.odoo_subscription_info
     recur_rows = [
@@ -610,27 +591,30 @@ class OdooProposalPdfService
       ]
     end
 
+    recur_y = y - header_h
     recur_rows.each_with_index do |row, i|
-      draw_table_row(row, rcw, y - 22 - i * 19, row_h: 19,
+      rh = measure_row_height(row, rcw, min: 22)
+      draw_table_row(row, rcw, recur_y, row_h: rh,
         hi_col: nil, alt: i.odd?, align_last: :right)
+      recur_y -= rh
     end
 
-    recur_sub_y = y - 22 - recur_rows.size * 19
+    recur_sub_y = recur_y
     subtotal_row(
       "Recurring Subtotal",
       @p.year_2_recurring_yearly,
       recur_sub_y,
       extra_label: "PKR #{fmt(@p.year_2_recurring_monthly)}/mo"
     )
-    y = recur_sub_y - 36
+    y = recur_sub_y - 38
 
     # ── Year Comparison ────────────────────────────────────────────────────
     section_label "C  Year-on-Year Cost Summary", y: y, underline: false
     y -= 16
 
-    ycw = [CW * 0.40, CW * 0.30, CW * 0.30]
+    ycw = [CW * 0.42, CW * 0.29, CW * 0.29]
     draw_table_row ["Cost Item", "Year 1", "Year 2 onwards"],
-      ycw, y, row_h: 22, header: true, hi_col: nil
+      ycw, y, row_h: header_h, header: true, hi_col: nil
 
     hosting_yr_label = @p.deployment_type == 'sh' ? "Odoo.sh Platform" : "Server Hosting"
     year_rows = [
@@ -638,13 +622,17 @@ class OdooProposalPdfService
       ["Odoo Subscription",             fmt(@p.subscription_yearly_total), fmt(@p.subscription_yearly_total)],
       [hosting_yr_label,                fmt(@p.hosting_yearly), fmt(@p.hosting_yearly)]
     ]
+
+    year_y = y - header_h
     year_rows.each_with_index do |row, i|
-      draw_table_row row, ycw, y - 22 - i * 20, row_h: 20,
+      rh = measure_row_height(row, ycw, min: 22)
+      draw_table_row row, ycw, year_y, row_h: rh,
         hi_col: nil, alt: i.odd?, align_last: :right
+      year_y -= rh
     end
 
     # Grand total row — Year 1 vs Year 2
-    grand_y = y - 22 - year_rows.size * 20
+    grand_y = year_y
     rect ML, grand_y, CW, 32, RED_DARK
     color WHITE
     bold 11, "GRAND TOTAL", x: ML + 12, y: grand_y - 10, w: ycw[0] - 10
@@ -797,6 +785,9 @@ class OdooProposalPdfService
   # Generic table row (Prawn manual positioning — no prawn/table dependency)
   def draw_table_row(cells, col_ws, y, row_h:, header: false, hi_col: nil, alt: false, align_last: :left)
     x = ML
+    txt_top    = 7
+    txt_height = [row_h - 10, 10].max
+
     cells.each_with_index do |cell, ci|
       cw = col_ws[ci]
 
@@ -817,22 +808,20 @@ class OdooProposalPdfService
       @pdf.line_width 0.3
       @pdf.stroke_rectangle [x, y], cw, row_h
 
-      # Text
+      align = (ci == cells.size - 1 ? (align_last || :left) : :left)
+      align = :right if header && ci == cells.size - 1
+
+      # Text — bounded by row height so long content wraps cleanly within the cell
       if header
         color WHITE
-        bold 9, cell, x: x + 6, y: y - (row_h == 22 ? 7 : 5), w: cw - 10,
-          align: (ci == cells.size - 1 ? :right : :left)
+        bold 9, cell, x: x + 8, y: y - txt_top, w: cw - 14, align: align, h: txt_height
+      elsif hi_col && ci == hi_col
+        color RED_DARK
+        bold 9, cell, x: x + 8, y: y - txt_top, w: cw - 14, align: align, h: txt_height
       else
-        if hi_col && ci == hi_col
-          color RED_DARK
-          bold 9, cell, x: x + 6, y: y - 5, w: cw - 10,
-            align: (ci == cells.size - 1 ? (align_last || :left) : :left)
-        else
-          color ci == 0 ? CHARCOAL : MID
-          sty = ci == 0 ? :bold : :normal
-          send(sty, 9, cell, x: x + 6, y: y - 5, w: cw - 10,
-            align: (ci == cells.size - 1 ? (align_last || :left) : :left))
-        end
+        color ci == 0 ? CHARCOAL : MID
+        sty = ci == 0 ? :bold : :normal
+        send(sty, 9, cell, x: x + 8, y: y - txt_top, w: cw - 14, align: align, h: txt_height)
       end
 
       x += cw
@@ -932,6 +921,18 @@ class OdooProposalPdfService
     lines += text.count("\n")
     line_h = font_size + leading + 2
     (lines.ceil * line_h).to_i + 4
+  end
+
+  # Compute the minimum row height needed for `cells` so the longest cell text
+  # wraps inside its column without clipping. `padding` is total vertical
+  # padding (top+bottom) added on top of the estimated text height.
+  def measure_row_height(cells, col_ws, font_size: 9, padding: 10, min: 20)
+    needed = cells.each_with_index.map do |cell, i|
+      text = cell.to_s
+      next 0 if text.length < 18
+      estimate_text_height(text, col_ws[i] - 14, font_size: font_size, leading: 1) + padding
+    end.max
+    [needed.to_i, min].max
   end
 
   def clean(text)

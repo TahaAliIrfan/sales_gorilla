@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Odoo ERP Proposal — <%= @proposal.display_name %></title>
+<style>
+  /* ═══════════════════════════════════════════════════════════════════
+     BRAND TOKENS  (Tecaudex: red / black / white only)
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --red:        #ED1A3B;
+    --red-dark:   #B0142C;
+    --red-tint:   #FEECEF;
+    --ink:        #0A0A0A;
+    --charcoal:   #1F2937;
+    --slate:      #4B5563;
+    --mid:        #6B7280;
+    --line:       #E5E7EB;
+    --line-soft:  #F1F1F1;
+    --off:        #FAFAFA;
+    --white:      #FFFFFF;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     PAGE SETUP
+     ═══════════════════════════════════════════════════════════════════ */
+  @page { size: A4; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 10pt;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-feature-settings: "ss01", "cv11";
+  }
+  p { margin: 0 0 0.6em 0; }
+  h1, h2, h3, h4 { margin: 0; color: var(--ink); font-weight: 700; letter-spacing: -0.015em; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  .muted { color: var(--mid); }
+  .ink   { color: var(--ink); }
+  .accent { color: var(--red); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     PAGE FRAME
+     ═══════════════════════════════════════════════════════════════════ */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 18mm 20mm 22mm 20mm;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+
+  /* ── Top brand bar ── */
+  .page-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6mm;
+    margin-bottom: 10mm;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-bar .logo-row { display: flex; align-items: center; gap: 8pt; }
+  .page-bar .logo-row .mark { width: 9mm; height: 9mm; flex-shrink: 0; }
+  .page-bar .logo-row .name {
+    font-size: 11pt; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
+  }
+  .page-bar .logo-row .partner {
+    font-size: 7.5pt; color: var(--mid);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600;
+  }
+  .page-bar .meta { font-size: 8pt; color: var(--mid); text-align: right; line-height: 1.55; }
+  .page-bar .meta strong { color: var(--ink); }
+
+  /* ── Section header ── */
+  .section-title { margin-bottom: 10mm; }
+  .section-title .eyebrow {
+    display: inline-flex; align-items: center; gap: 6pt;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    margin-bottom: 8pt;
+  }
+  .section-title .eyebrow::before {
+    content: ''; display: inline-block;
+    width: 14pt; height: 1.5pt; background: var(--red);
+  }
+  .section-title h2 {
+    font-size: 28pt; line-height: 1.05; font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .section-title .lead {
+    margin-top: 10pt; font-size: 11pt; color: var(--slate);
+    max-width: 150mm; line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════ */
+  .cover {
+    padding: 18mm 22mm 16mm 22mm;
+    position: relative;
+    background: var(--white);
+  }
+  .cover .top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 8mm;
+    border-bottom: 1px solid var(--line);
+  }
+  .cover .top .logo-row { display: flex; align-items: center; gap: 10pt; }
+  .cover .top .logo-row .mark { width: 13mm; height: 13mm; }
+  .cover .top .logo-row .text { line-height: 1.25; }
+  .cover .top .logo-row .text .name {
+    font-size: 14pt; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
+  }
+  .cover .top .logo-row .text .tag {
+    font-size: 8pt; font-weight: 600; color: var(--red);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .cover .top .meta { font-size: 8.5pt; color: var(--mid); text-align: right; }
+
+  .cover .hero {
+    margin-top: 26mm;
+  }
+  .cover .hero .eyebrow {
+    font-size: 9pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    margin-bottom: 14pt;
+  }
+  .cover .hero h1 {
+    font-size: 64pt; line-height: 0.95; font-weight: 800;
+    letter-spacing: -0.035em;
+  }
+  .cover .hero h1 .light { color: var(--mid); font-weight: 700; }
+  .cover .hero .deck {
+    margin-top: 16pt; font-size: 13pt; color: var(--slate); max-width: 130mm;
+    line-height: 1.5;
+  }
+
+  .cover .prepared {
+    margin-top: 24mm;
+    border-top: 1px solid var(--line);
+    padding-top: 8mm;
+  }
+  .cover .prepared .label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--mid);
+    margin-bottom: 6pt;
+  }
+  .cover .prepared .client {
+    font-size: 28pt; font-weight: 800; color: var(--ink);
+    letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .cover .prepared .client-meta {
+    margin-top: 6pt; font-size: 10pt; color: var(--mid);
+  }
+
+  .cover .stat-grid {
+    margin-top: 14mm;
+    display: flex; gap: 4mm;
+  }
+  .cover .stat-grid .stat {
+    flex: 1; padding: 6mm 7mm;
+    border: 1px solid var(--line); border-radius: 2pt;
+  }
+  .cover .stat-grid .stat .label {
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--mid);
+  }
+  .cover .stat-grid .stat .value {
+    margin-top: 6pt; font-size: 18pt; font-weight: 800; color: var(--ink);
+    letter-spacing: -0.015em;
+  }
+
+  .cover .investment {
+    margin-top: 12mm;
+    padding: 10mm 12mm;
+    background: var(--ink);
+    color: var(--white);
+    border-left: 4pt solid var(--red);
+    position: relative;
+  }
+  .cover .investment .label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+  }
+  .cover .investment .amount {
+    margin-top: 10pt; font-size: 42pt; font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .cover .investment .footnote {
+    margin-top: 12pt; font-size: 9.5pt; color: #BCBCC1; line-height: 1.55;
+  }
+
+  .cover .foot {
+    position: absolute; left: 22mm; right: 22mm; bottom: 16mm;
+    padding-top: 6mm; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8.5pt; color: var(--mid);
+  }
+  .cover .foot .left strong { color: var(--ink); }
+  .cover .foot .right { text-align: right; line-height: 1.55; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ═══════════════════════════════════════════════════════════════════ */
+  .summary-block { margin-bottom: 8mm; }
+  .summary-block .label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    margin-bottom: 6pt;
+    display: flex; align-items: center; gap: 6pt;
+  }
+  .summary-block .label::before {
+    content: ''; width: 12pt; height: 1.5pt; background: var(--red); display: inline-block;
+  }
+  .summary-block p {
+    font-size: 11pt; line-height: 1.7; color: var(--charcoal);
+    margin: 0;
+  }
+  .summary-block.alt .label { color: var(--ink); }
+  .summary-block.alt .label::before { background: var(--ink); }
+
+  .pain-grid {
+    margin-top: 12mm;
+    padding-top: 8mm;
+    border-top: 1px solid var(--line);
+  }
+  .pain-grid .heading {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--mid);
+    margin-bottom: 8pt;
+  }
+  .pain-grid .chips { display: flex; flex-wrap: wrap; gap: 6pt; }
+  .pain-grid .chip {
+    padding: 5pt 11pt;
+    background: var(--red-tint);
+    color: var(--red-dark);
+    border-radius: 999pt;
+    font-size: 9pt; font-weight: 600;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TABLE
+     ═══════════════════════════════════════════════════════════════════ */
+  .table {
+    border-top: 2pt solid var(--ink);
+    border-bottom: 2pt solid var(--ink);
+  }
+  .table thead th {
+    background: var(--white);
+    border-bottom: 1px solid var(--ink);
+    text-align: left; padding: 11pt 0;
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .table thead th:first-child { padding-left: 2pt; }
+  .table thead th.r { text-align: right; padding-right: 2pt; }
+  .table tbody td {
+    padding: 11pt 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 10pt; color: var(--charcoal);
+    vertical-align: middle;
+  }
+  .table tbody td:first-child { padding-left: 2pt; }
+  .table tbody td.r { text-align: right; padding-right: 2pt; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .table tbody td.label-cell { font-weight: 600; color: var(--ink); }
+  .table tbody tr:last-child td { border-bottom: none; }
+  .table tfoot td {
+    padding: 13pt 2pt;
+    border-top: 2pt solid var(--ink);
+    font-size: 11pt; font-weight: 800; color: var(--ink);
+  }
+  .table tfoot td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .table tfoot td.accent { color: var(--red); }
+
+  /* Pills (Standard / Custom) — minimal */
+  .pill {
+    display: inline-block;
+    padding: 2pt 8pt;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 2pt;
+  }
+  .pill.standard { background: #F1F1F1; color: var(--charcoal); }
+  .pill.custom   { background: var(--red-tint); color: var(--red-dark); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     PROSE BLOCK (Why These Modules)
+     ═══════════════════════════════════════════════════════════════════ */
+  .prose {
+    margin-bottom: 9mm; padding-bottom: 9mm;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .prose:last-child { border-bottom: none; }
+  .prose .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 10mm; margin-bottom: 6pt;
+  }
+  .prose .title {
+    font-size: 14pt; font-weight: 700; color: var(--ink);
+    letter-spacing: -0.005em; line-height: 1.25;
+  }
+  .prose .meta {
+    flex-shrink: 0; font-size: 8.5pt; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--mid);
+  }
+  .prose.custom .meta { color: var(--red); }
+  .prose .price {
+    font-size: 11pt; font-weight: 800; color: var(--ink);
+    font-variant-numeric: tabular-nums; margin-left: 8pt;
+  }
+  .prose p {
+    margin-top: 6pt;
+    font-size: 10.5pt; line-height: 1.7; color: var(--slate);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     DEPLOYMENT
+     ═══════════════════════════════════════════════════════════════════ */
+  .deploy-card {
+    margin-bottom: 10mm;
+    padding: 8mm 10mm;
+    background: var(--off);
+    border-left: 4pt solid var(--red);
+    display: flex; align-items: center; gap: 10mm;
+  }
+  .deploy-card .left { flex: 1; }
+  .deploy-card .deploy-label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red); margin-bottom: 4pt;
+  }
+  .deploy-card .deploy-name {
+    font-size: 18pt; font-weight: 800; color: var(--ink); letter-spacing: -0.015em;
+  }
+  .deploy-card .deploy-desc { margin-top: 6pt; font-size: 10pt; color: var(--slate); line-height: 1.55; max-width: 110mm; }
+  .deploy-card .price { text-align: right; flex-shrink: 0; }
+  .deploy-card .price .annual {
+    font-size: 16pt; font-weight: 800; color: var(--red); letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+  }
+  .deploy-card .price .annual .unit { font-size: 9pt; color: var(--mid); font-weight: 600; }
+  .deploy-card .price .monthly {
+    margin-top: 3pt; font-size: 9pt; color: var(--mid);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .compare .high {
+    background: var(--red-tint) !important;
+    color: var(--red-dark) !important;
+    font-weight: 700;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     INVESTMENT BREAKDOWN SECTIONS
+     ═══════════════════════════════════════════════════════════════════ */
+  .sub-heading {
+    margin-top: 6mm; margin-bottom: 4mm;
+    font-size: 8.5pt; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    display: flex; align-items: center; gap: 6pt;
+  }
+  .sub-heading::before {
+    content: ''; display: inline-block;
+    width: 14pt; height: 1.5pt; background: var(--red);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     NEXT STEPS
+     ═══════════════════════════════════════════════════════════════════ */
+  .step {
+    display: flex; gap: 6mm; padding: 5mm 0;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .step:last-of-type { border-bottom: none; }
+  .step .num {
+    flex-shrink: 0; width: 12mm; height: 12mm;
+    background: var(--ink); color: var(--white);
+    border-left: 3pt solid var(--red);
+    font-size: 13pt; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0;
+  }
+  .step .body { flex: 1; }
+  .step .body .row {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 6mm;
+  }
+  .step .body .title {
+    font-size: 13pt; font-weight: 700; color: var(--ink); letter-spacing: -0.005em;
+  }
+  .step .body .time {
+    flex-shrink: 0;
+    padding: 3pt 9pt;
+    border: 1px solid var(--line);
+    color: var(--red);
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
+  }
+  .step .body .desc { margin-top: 4pt; font-size: 10pt; color: var(--slate); line-height: 1.6; }
+
+  .cta {
+    margin-top: 14mm;
+    padding: 10mm 12mm;
+    background: var(--ink); color: var(--white);
+    border-left: 4pt solid var(--red);
+    position: relative;
+  }
+  .cta h3 {
+    font-size: 18pt; font-weight: 800; color: var(--white);
+    letter-spacing: -0.015em;
+  }
+  .cta p {
+    margin-top: 8pt;
+    font-size: 10pt; color: #BCBCC1; line-height: 1.65;
+    max-width: 120mm;
+  }
+  .cta .contact {
+    margin-top: 10pt; font-size: 9.5pt; color: var(--white); font-weight: 600;
+  }
+  .cta .contact span { color: var(--red); margin: 0 6pt; }
+
+  /* ─ Page footer ─ */
+  .page-foot {
+    position: absolute; bottom: 10mm; left: 20mm; right: 20mm;
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 4mm; border-top: 1px solid var(--line-soft);
+    font-size: 7.5pt; color: var(--mid);
+    letter-spacing: 0.04em;
+  }
+  .page-foot .left strong { color: var(--ink); font-weight: 700; }
+  .page-foot .right { text-align: right; }
+</style>
+</head>
+<body>
+
+<%
+  proposal    = @proposal
+  name        = proposal.display_name
+  date        = Date.current.strftime('%d %B %Y')
+  year        = Date.current.year
+  sub_info    = proposal.odoo_subscription_info
+  tier_info   = proposal.current_tier_info
+  mods        = proposal.all_module_details
+  has_narr    = proposal.narrative_generated?
+  pain_points = proposal.pain_points_array
+  fmt         = ->(n) { ActiveSupport::NumberHelper.number_to_delimited(n.to_i) }
+
+  # Inline SVG logo (red/black/white only) — works in PDF render without external file IO
+  logo_svg = <<~SVG.html_safe
+    <svg viewBox="0 0 301 300" xmlns="http://www.w3.org/2000/svg" class="mark">
+      <rect x="0.236816" width="300" height="300" rx="150" fill="white"/>
+      <path d="M202.544 133.219L189.464 155.491L204.901 182.892H173.099L160.104 206.382H244.237L202.544 133.219Z" fill="black"/>
+      <path d="M97.9295 133.219L111.009 155.491L95.5727 182.892H127.374L140.37 206.382H56.2368L97.9295 133.219Z" fill="black"/>
+      <path d="M84.7654 93.6182H215.509L199.82 120.784H163.696V182.802L150.369 206.382L136.524 182.892L136.53 120.784H100.654L84.7654 93.6182Z" fill="#ED1A3B"/>
+    </svg>
+  SVG
+
+  page_bar = ->{
+    capture do
+%>
+  <header class="page-bar">
+    <div class="logo-row">
+      <%= logo_svg %>
+      <div>
+        <div class="name">Tecaudex</div>
+        <div class="partner">Official Odoo Partner</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div>Prepared for <strong><%= name %></strong></div>
+      <div><%= date %></div>
+    </div>
+  </header>
+<%
+    end
+  }
+
+  page_foot = ->{
+    capture do
+%>
+  <footer class="page-foot">
+    <div class="left"><strong>Tecaudex</strong> · Official Odoo Partner · www.tecaudex.pk</div>
+    <div class="right">Odoo ERP Proposal — <%= name %></div>
+  </footer>
+<%
+    end
+  }
+%>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page cover">
+  <div class="top">
+    <div class="logo-row">
+      <%= logo_svg %>
+      <div class="text">
+        <div class="name">Tecaudex</div>
+        <div class="tag">Official Odoo Partner</div>
+      </div>
+    </div>
+    <div class="meta">
+      <%= date %><br>
+      info@tecaudex.pk
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Implementation Proposal</div>
+    <h1>Odoo&nbsp;ERP<br><span class="light">for your business.</span></h1>
+    <p class="deck">A tailored Odoo implementation, fully costed in PKR and ready to deploy — with FBR-compliant tax handling, data migration, and a fixed timeline.</p>
+  </div>
+
+  <div class="prepared">
+    <div class="label">Prepared For</div>
+    <div class="client"><%= name %></div>
+    <div class="client-meta">
+      <%= [proposal.industry.presence, proposal.company_size.presence, "#{proposal.num_users} user#{proposal.num_users == 1 ? '' : 's'}"].compact.join('  ·  ') %>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="label">Modules</div>
+      <div class="value"><%= mods.size %></div>
+    </div>
+    <div class="stat">
+      <div class="label">Users</div>
+      <div class="value"><%= proposal.num_users %></div>
+    </div>
+    <div class="stat">
+      <div class="label">Deployment</div>
+      <div class="value" style="font-size:14pt;"><%= proposal.deployment_label %></div>
+    </div>
+  </div>
+
+  <div class="investment">
+    <div class="label">Estimated Year 1 Investment</div>
+    <div class="amount">PKR <%= fmt.call(proposal.year_1_total) %></div>
+    <div class="footnote">One-time implementation &nbsp;+&nbsp; Year 1 Odoo subscription &nbsp;+&nbsp; Year 1 hosting</div>
+  </div>
+
+  <div class="foot">
+    <div class="left"><strong>Tecaudex</strong> · Pakistan</div>
+    <div class="right">
+      info@tecaudex.pk &nbsp;·&nbsp; www.tecaudex.pk<br>
+      © <%= year %> Tecaudex. Confidential.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY (only if narrative present)
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if has_narr && (proposal.claude_summary.present? || proposal.claude_rationale.present?) %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow">01 · Executive Summary</div>
+    <h2>For <%= name %><% if proposal.industry.present? %>,<br>in <%= proposal.industry %>.<% end %></h2>
+    <p class="lead">A summary of what we're proposing and the reasoning behind it.</p>
+  </div>
+
+  <% if proposal.claude_summary.present? %>
+    <div class="summary-block">
+      <div class="label">Summary</div>
+      <p><%= proposal.claude_summary %></p>
+    </div>
+  <% end %>
+
+  <% if proposal.claude_rationale.present? %>
+    <div class="summary-block alt">
+      <div class="label">Why This Approach</div>
+      <p><%= proposal.claude_rationale %></p>
+    </div>
+  <% end %>
+
+  <% if pain_points.any? %>
+    <div class="pain-grid">
+      <div class="heading">Pain Points We're Addressing</div>
+      <div class="chips">
+        <% pain_points.each do |p| %>
+          <span class="chip"><%= p %></span>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= page_foot.call %>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SELECTED MODULES
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow"><%= has_narr ? '02' : '01' %> · Selected Modules</div>
+    <h2><%= mods.size %> module<%= mods.size == 1 ? '' : 's' %> in scope.</h2>
+    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee. Pricing is in PKR.</p>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:60%">Module / Component</th>
+        <th style="width:20%">Type</th>
+        <th class="r" style="width:20%">Amount (PKR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% mods.each do |m| %>
+        <tr>
+          <td class="label-cell"><%= m[:label] %></td>
+          <td>
+            <span class="pill <%= m[:custom] ? 'custom' : 'standard' %>">
+              <%= m[:custom] ? 'Custom Dev' : 'Standard' %>
+            </span>
+          </td>
+          <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total Implementation Fee (one-time)</td>
+        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <%= page_foot.call %>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     WHY THESE MODULES (only if narrative + justifications)
+     ═══════════════════════════════════════════════════════════════════ -->
+<%
+  mods_with_just = mods.select { |m| proposal.module_justification_for(m[:key]).to_s.strip.present? }
+%>
+<% if has_narr && mods_with_just.any? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow">03 · Why These Modules</div>
+    <h2>Tailored to your situation.</h2>
+    <p class="lead">Each module was selected for a specific reason in <strong><%= name %></strong>'s context. Here is the rationale, module by module.</p>
+  </div>
+
+  <% mods_with_just.each do |m| %>
+    <div class="prose <%= 'custom' if m[:custom] %>">
+      <div class="head">
+        <div class="title"><%= m[:label] %></div>
+        <div>
+          <span class="meta"><%= m[:custom] ? 'Custom Dev' : 'Standard Module' %></span>
+          <span class="price">PKR <%= fmt.call(m[:impl_cost]) %></span>
+        </div>
+      </div>
+      <p><%= proposal.module_justification_for(m[:key]) %></p>
+    </div>
+  <% end %>
+
+  <%= page_foot.call %>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     DEPLOYMENT & HOSTING
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow"><%= has_narr ? '04' : '02' %> · Deployment</div>
+    <h2><%= proposal.deployment_label %><br>for <%= proposal.num_users %> user<%= proposal.num_users == 1 ? '' : 's' %>.</h2>
+    <%
+      desc = {
+        'online'     => 'Fully managed SaaS by Odoo. Odoo handles all upgrades, backups, and security — no infrastructure for you to manage.',
+        'sh'         => 'Odoo.sh: managed cloud with Git-based deployment, staging branches, and full developer access.',
+        'on_premise' => 'Self-hosted on Tecaudex-managed AWS infrastructure. Full data sovereignty and custom integration freedom.'
+      }[proposal.deployment_type]
+    %>
+    <p class="lead"><%= desc %></p>
+  </div>
+
+  <% if tier_info %>
+    <div class="deploy-card">
+      <div class="left">
+        <div class="deploy-label">Recommended Tier</div>
+        <div class="deploy-name"><%= tier_info[:label] %></div>
+        <div class="deploy-desc"><%= tier_info[:specs] %> · <%= tier_info[:users] %></div>
+      </div>
+      <div class="price">
+        <div class="annual">PKR <%= fmt.call(tier_info[:annual_pkr]) %><span class="unit"> /yr</span></div>
+        <div class="monthly">PKR <%= fmt.call(tier_info[:monthly_pkr]) %> /mo</div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="sub-heading">Deployment Comparison</div>
+  <%
+    hi_col = { 'online' => 1, 'sh' => 2, 'on_premise' => 3 }[proposal.deployment_type]
+    compare = [
+      ['Odoo Plan',         'Standard',         'Custom',           'Custom'],
+      ['License/User/Mo',   '$7.25 (annual)',   '$10.90 (annual)',  '$10.90 (annual)'],
+      ['Odoo Studio',       'No',               'Yes',              'Yes'],
+      ['Multi-Company',     'No',               'Yes',              'Yes'],
+      ['External API',      'No',               'Yes',              'Yes'],
+      ['Data Location',     'Odoo servers',     'Odoo / GitHub',    'Your servers'],
+      ['Platform Cost',     'Included',         'Extra (workers)',  'Hosting required'],
+      ['Best For',          'SMBs / start',     'Dev teams',        'Enterprise']
+    ]
+  %>
+  <table class="table compare">
+    <thead>
+      <tr>
+        <th style="width:25%">Feature</th>
+        <th style="width:25%">Odoo Online</th>
+        <th style="width:25%">Odoo.sh</th>
+        <th style="width:25%">On-Premise</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% compare.each do |row| %>
+        <tr>
+          <% row.each_with_index do |cell, idx| %>
+            <td class="<%= 'high' if hi_col && idx == hi_col %><%= ' label-cell' if idx == 0 %>"><%= cell %></td>
+          <% end %>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <%= page_foot.call %>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     INVESTMENT BREAKDOWN
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow"><%= has_narr ? '05' : '03' %> · Investment Breakdown</div>
+    <h2>Full costs, itemised.</h2>
+    <p class="lead">One-time implementation, recurring annual subscription &amp; hosting, and a year-on-year comparison so you can plan ahead.</p>
+  </div>
+
+  <div class="sub-heading">A · One-Time Implementation Costs</div>
+  <table class="table" style="margin-bottom:10mm;">
+    <thead>
+      <tr>
+        <th style="width:55%">Module / Component</th>
+        <th style="width:25%">Description</th>
+        <th class="r" style="width:20%">Amount (PKR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% mods.each do |m| %>
+        <tr>
+          <td class="label-cell"><%= m[:label] %></td>
+          <td><%= m[:custom] ? 'Custom Dev / Integration' : 'Setup & Configuration' %></td>
+          <td class="r"><%= fmt.call(m[:impl_cost]) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Implementation Subtotal</td>
+        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="sub-heading">B · Recurring Costs (Monthly &amp; Yearly)</div>
+  <table class="table" style="margin-bottom:10mm;">
+    <thead>
+      <tr>
+        <th style="width:30%">Item</th>
+        <th style="width:30%">Basis</th>
+        <th class="r" style="width:20%">Monthly (PKR)</th>
+        <th class="r" style="width:20%">Yearly (PKR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label-cell">Odoo Subscription</td>
+        <td><%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo</td>
+        <td class="r"><%= fmt.call(proposal.subscription_monthly_total) %></td>
+        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+      </tr>
+      <% if proposal.hosting_monthly > 0 %>
+        <tr>
+          <td class="label-cell"><%= proposal.deployment_type == 'sh' ? "Odoo.sh Platform (#{tier_info && tier_info[:label]})" : "Server Hosting (#{tier_info && tier_info[:label]})" %></td>
+          <td><%= tier_info && tier_info[:specs] %></td>
+          <td class="r"><%= fmt.call(proposal.hosting_monthly) %></td>
+          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Recurring Subtotal</td>
+        <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_monthly) %></td>
+        <td class="r accent">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="sub-heading">C · Year-on-Year Summary</div>
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:40%">Cost Item</th>
+        <th class="r" style="width:30%">Year 1</th>
+        <th class="r" style="width:30%">Year 2 onwards</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="label-cell">Implementation Fee (one-time)</td>
+        <td class="r"><%= fmt.call(proposal.implementation_fee.to_i) %></td>
+        <td class="r">—</td>
+      </tr>
+      <tr>
+        <td class="label-cell">Odoo Subscription</td>
+        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+        <td class="r"><%= fmt.call(proposal.subscription_yearly_total) %></td>
+      </tr>
+      <% if proposal.hosting_yearly > 0 %>
+        <tr>
+          <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %></td>
+          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+          <td class="r"><%= fmt.call(proposal.hosting_yearly) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Grand Total</td>
+        <td class="r accent">PKR <%= fmt.call(proposal.year_1_total) %></td>
+        <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %> /yr</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <%= page_foot.call %>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     NEXT STEPS
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <div class="section-title">
+    <div class="eyebrow"><%= has_narr ? '06' : '04' %> · Next Steps</div>
+    <h2>How we get to go-live.</h2>
+    <p class="lead">We're excited to partner with <strong><%= name %></strong> on this Odoo ERP implementation. Here is the recommended path forward.</p>
+  </div>
+
+  <%
+    default_steps = [
+      ['01', 'Proposal Review',      'This week',   'Share this with your team. We are available to present in person or virtually at your convenience.'],
+      ['02', 'Discovery Workshop',   'Week 1–2',    'A structured session to finalise scope, map workflows, and agree on the implementation timeline.'],
+      ['03', 'Agreement & Kickoff',  'Week 2–3',    'Sign the service agreement and launch with a dedicated project manager assigned to your account.'],
+      ['04', 'Implementation',       'Weeks 4–10',  'Configuration, customisation, data migration, and integration work with weekly progress updates.'],
+      ['05', 'Training & Go-Live',   'Week 10–11',  'Hands-on training, UAT sign-off, and go-live on the mutually agreed date.'],
+      ['06', 'Post Go-Live Support', '2 weeks',     'Dedicated hypercare team to resolve any issues quickly after launch.']
+    ]
+
+    steps = if has_narr && proposal.claude_next_steps.present?
+      parsed = proposal.claude_next_steps.split(/\r?\n/).map(&:strip).reject(&:empty?)
+      parsed.each_with_index.map do |line, idx|
+        num = format('%02d', idx + 1)
+        stripped = line.sub(/^(?:step\s*)?\d+[\.\):]\s*/i, '').sub(/^[-•*]\s*/, '')
+        time = ''
+        if (m = stripped.match(/\(([^)]+)\)/))
+          time = m[1].strip
+          stripped = stripped.sub(/\s*\([^)]+\)/, '')
+        end
+        if stripped.include?(' - ') || stripped.include?(' — ') || stripped.include?(': ')
+          parts = stripped.split(/\s+[-—:]\s+/, 2)
+          title = parts[0].to_s.strip
+          desc  = parts[1].to_s.strip
+        else
+          title = stripped.split(/[.!?]/, 2).first.to_s.strip
+          desc  = stripped[title.length..-1].to_s.strip.sub(/^[.!?]\s*/, '')
+        end
+        title = title[0, 60]
+        time  = time.presence || "Step #{idx + 1}"
+        [num, title, time, desc]
+      end
+    else
+      default_steps
+    end
+  %>
+
+  <% steps.each do |num, title, time, desc| %>
+    <div class="step">
+      <div class="num"><%= num %></div>
+      <div class="body">
+        <div class="row">
+          <div class="title"><%= title %></div>
+          <div class="time"><%= time %></div>
+        </div>
+        <% if desc.present? %>
+          <div class="desc"><%= desc %></div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="cta">
+    <h3>Ready to get started?</h3>
+    <p>Reach out and we'll set up a 30-minute call to walk through scope, timeline, and any open questions.</p>
+    <div class="contact">info@tecaudex.pk<span>·</span>www.tecaudex.pk<span>·</span>Tecaudex, Pakistan</div>
+  </div>
+
+  <%= page_foot.call %>
+</section>
+
+</body>
+</html>
