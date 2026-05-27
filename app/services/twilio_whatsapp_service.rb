@@ -45,6 +45,32 @@ class TwilioWhatsappService
     { success: false, error: e.message }
   end
 
+  # Send a media message (document/image/etc). `media_url` must be a publicly
+  # fetchable URL — Twilio downloads the file from it. `body` is an optional
+  # caption. Same 24h-window rules apply as send_text.
+  def send_media(to_phone:, media_url:, body: nil)
+    return { success: false, error: 'Phone number is missing' } if to_phone.blank?
+    return { success: false, error: 'Media URL is missing' }    if media_url.blank?
+
+    params = {
+      from: FROM,
+      to:   to_whatsapp(to_phone),
+      media_url: [media_url],
+      status_callback: @status_callback
+    }
+    params[:body] = body if body.present?
+
+    message = @client.messages.create(**params)
+
+    { success: true, sid: message.sid, status: message.status }
+  rescue Twilio::REST::RestError => e
+    Rails.logger.error("[TwilioWhatsapp] send_media failed (#{e.code}): #{e.message}")
+    { success: false, error: twilio_error_message(e), code: e.code }
+  rescue StandardError => e
+    Rails.logger.error("[TwilioWhatsapp] send_media error: #{e.message}")
+    { success: false, error: e.message }
+  end
+
   private
 
   def to_whatsapp(phone)

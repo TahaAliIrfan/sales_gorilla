@@ -44,8 +44,32 @@
 
     <div data-whatsapp-us-target="error" class="hidden mb-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"></div>
 
+    <!-- Selected file preview -->
+    <div data-whatsapp-us-target="filePreview" class="hidden mb-2 flex items-center justify-between rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+        </svg>
+        <span data-whatsapp-us-target="fileName" class="text-sm text-gray-700 truncate"></span>
+      </div>
+      <button type="button" data-action="click->whatsapp-us#clearFile" class="text-gray-400 hover:text-gray-600 flex-shrink-0">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
     <form data-action="submit->whatsapp-us#sendMessage" data-whatsapp-us-target="form">
+      <input type="file" class="hidden" data-whatsapp-us-target="fileInput" data-action="change->whatsapp-us#fileSelected"
+             accept="image/*,video/mp4,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt,.csv,.json,.xml,.zip" />
       <div class="flex space-x-2">
+        <button type="button" data-action="click->whatsapp-us#openFileDialog" data-whatsapp-us-target="attachButton"
+                title="Attach a document"
+                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/>
+          </svg>
+        </button>
         <input type="text" data-whatsapp-us-target="input" placeholder="Type a message..."
                class="flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
         <button type="submit" data-whatsapp-us-target="sendButton"
