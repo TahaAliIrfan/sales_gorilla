@@ -33,7 +33,10 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
-  config.hosts << "df92-2400-adc5-192-b900-2503-238d-3b7b-1faa.ngrok-free.app"
+  # Allow any ngrok tunnel host (subdomain rotates each session) so Twilio
+  # webhooks reach the dev server without editing this line every time.
+  config.hosts << /.*\.ngrok-free\.app/
+  config.hosts << /.*\.ngrok\.io/
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :amazon

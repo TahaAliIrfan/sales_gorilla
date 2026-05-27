@@ -199,6 +199,15 @@
               <span class="ml-2 bg-green-100 text-green-800 py-0.5 px-2 rounded-full text-xs font-medium">Active</span>
             <% end %>
           </button>
+          <button data-action="click->tabs#switch" data-tabs-target="tab" data-tab-id="whatsapp-us" class="tab-button group inline-flex items-center py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
+            <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            WhatsApp US
+            <% if @customer.whatsapp_us_window_open? %>
+              <span class="ml-2 bg-emerald-100 text-emerald-800 py-0.5 px-2 rounded-full text-xs font-medium">Open</span>
+            <% end %>
+          </button>
           <button data-action="click->tabs#switch" data-tabs-target="tab" data-tab-id="recordings" class="tab-button group inline-flex items-center py-4 px-6 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap">
             <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -932,6 +941,11 @@
               <p class="mt-1 text-sm text-gray-500">This customer doesn't have a WhatsApp chat ID associated</p>
             </div>
           <% end %>
+        </div>
+
+        <!-- WhatsApp US Tab (Twilio) -->
+        <div data-tabs-target="content" data-tab-id="whatsapp-us" class="tab-content hidden">
+          <%= render 'customers/whatsapp_us', customer: @customer %>
         </div>
 
         <!-- Call Recordings Tab -->

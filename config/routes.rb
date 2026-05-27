@@ -139,6 +139,10 @@ Rails.application.routes.draw do
       end
     end
 
+    # Twilio-backed WhatsApp US channel (list + send)
+    get  'whatsapp_us', to: 'whatsapp_us#index'
+    post 'whatsapp_us', to: 'whatsapp_us#create'
+
     collection do
       post 'bulk_assign'
       post 'bulk_status_change'
@@ -245,6 +249,10 @@ Rails.application.routes.draw do
   get 'calling/recording/:sid', to: 'calling#recording', as: :get_recording
   get 'calling/play_recording/:sid', to: 'calling#play_recording', as: :calling_play_recording
   post 'calling/recording_status', to: 'calling#recording_status'
+
+  # Twilio WhatsApp webhooks (incoming messages + delivery status callbacks)
+  post 'twilio/whatsapp/inbound', to: 'twilio_whatsapp#inbound'
+  post 'twilio/whatsapp/status', to: 'twilio_whatsapp#status'
 
   # API routes
   namespace :api do

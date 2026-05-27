@@ -369,8 +369,21 @@ class Customer < ApplicationRecord
   # New method using the enhanced Message model and service
   def sync_whatsapp_messages
     return { success: false, error: "WhatsApp chat ID not set" } if whatsapp_chat_id.blank?
-    
+
     WhatsappMessageService.new.fetch_and_store_messages(whatsapp_chat_id, self)
+  end
+
+  # --- Twilio WhatsApp (WhatsApp US) -------------------------------------
+  # Timestamp of the customer's most recent inbound Twilio WhatsApp message.
+  def whatsapp_us_last_inbound_at
+    whatsapp_messages.where(direction: 'inbound').maximum(:timestamp)
+  end
+
+  # Freeform messages only deliver within 24h of the customer's last inbound
+  # message (Twilio error 63016 otherwise). Drives whether the composer is open.
+  def whatsapp_us_window_open?
+    last = whatsapp_us_last_inbound_at
+    last.present? && last > 24.hours.ago
   end
   
   def document_types

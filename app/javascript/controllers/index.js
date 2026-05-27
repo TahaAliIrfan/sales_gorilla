@@ -18,6 +18,9 @@ application.register("campaign-customer-selector", CampaignCustomerSelectorContr
 import ChatController from "./chat_controller"
 application.register("chat", ChatController)
 
+import WhatsappUsController from "./whatsapp_us_controller"
+application.register("whatsapp-us", WhatsappUsController)
+
 import CommunicationStatusController from "./communication_status_controller"
 application.register("communication-status", CommunicationStatusController)
 
