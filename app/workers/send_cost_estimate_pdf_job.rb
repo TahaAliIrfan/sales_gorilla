@@ -63,46 +63,47 @@ class SendCostEstimatePdfJob
       filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
 
       # Only send WhatsApp if not already sent (prevents duplicate messages on retry)
-      whatsapp_success = false
-      unless already_sent_whatsapp
-        whatsapp_service = Whatsapp::ApiService.new
-        chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
+      
+      # whatsapp_success = false
+      # unless already_sent_whatsapp
+      #   whatsapp_service = Whatsapp::ApiService.new
+      #   chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
 
-        app_types = cost_estimate.application_types_array.any? ?
-                    cost_estimate.application_types_array.join(', ').upcase :
-                    cost_estimate.app_type_display
+      #   app_types = cost_estimate.application_types_array.any? ?
+      #               cost_estimate.application_types_array.join(', ').upcase :
+      #               cost_estimate.app_type_display
 
-        caption = "Hi #{customer.name}! 👋\n\n" \
-                  "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
-                  "📱 Project Type: #{app_types}\n" \
-                  "📊 Scale: #{cost_estimate.scale.titleize}\n" \
-                  "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
-                  "💰 Total Cost: £#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
-                  "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
-                  "Best regards,\nTecaudex Team"
+      #   caption = "Hi #{customer.name}! 👋\n\n" \
+      #             "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
+      #             "📱 Project Type: #{app_types}\n" \
+      #             "📊 Scale: #{cost_estimate.scale.titleize}\n" \
+      #             "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
+      #             "💰 Total Cost: £#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
+      #             "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
+      #             "Best regards,\nTecaudex Team"
 
-        Rails.logger.info("SendCostEstimatePdfJob: Sending PDF to chat_id: #{chat_id}, filename: #{filename}, pdf_size: #{pdf_binary.bytesize} bytes")
+      #   Rails.logger.info("SendCostEstimatePdfJob: Sending PDF to chat_id: #{chat_id}, filename: #{filename}, pdf_size: #{pdf_binary.bytesize} bytes")
 
-        response = whatsapp_service.send_file(
-          chat_id,
-          pdf_content,
-          filename,
-          caption,
-          'application/pdf'
-        )
+      #   response = whatsapp_service.send_file(
+      #     chat_id,
+      #     pdf_content,
+      #     filename,
+      #     caption,
+      #     'application/pdf'
+      #   )
 
-        Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")
-        whatsapp_success = response[:success]
+      #   Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")
+      #   whatsapp_success = response[:success]
 
-        unless whatsapp_success
-          Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
-          raise "WhatsApp API Error: #{response[:error]}"
-        end
+      #   unless whatsapp_success
+      #     Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
+      #     raise "WhatsApp API Error: #{response[:error]}"
+      #   end
 
-        Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
-      else
-        whatsapp_success = true
-      end
+      #   Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
+      # else
+      #   whatsapp_success = true
+      # end
 
       # Attach PDF to Active Storage (acts as idempotency marker for WhatsApp)
       unless cost_estimate.pdf_file.attached?
