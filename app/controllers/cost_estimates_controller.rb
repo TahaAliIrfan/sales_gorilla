@@ -92,6 +92,20 @@ class CostEstimatesController < ApplicationController
     @cost_estimate.destroy
     redirect_to cost_estimates_path, notice: 'Cost estimate was successfully deleted.'
   end
+
+  def resend
+    cost_estimate = CostEstimate.find(params[:id])
+
+    if cost_estimate.customer&.email.blank?
+      redirect_back fallback_location: cost_estimates_path,
+        alert: 'Cannot resend: this estimate has no customer email on file.'
+      return
+    end
+
+    SendCostEstimatePdfJob.perform_async(cost_estimate.id)
+    redirect_back fallback_location: cost_estimates_path,
+      notice: "Estimate is being resent to #{cost_estimate.customer.email}."
+  end
   
   def generate_proposal
     proposal_service = ProposalGenerationService.new(@cost_estimate)

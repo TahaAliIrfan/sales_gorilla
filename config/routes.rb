@@ -234,6 +234,7 @@ Rails.application.routes.draw do
     end
     member do
       get 'generate_proposal'
+      post 'resend'
     end
   end
 

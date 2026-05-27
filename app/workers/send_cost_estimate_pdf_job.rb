@@ -13,8 +13,9 @@ class SendCostEstimatePdfJob
 
     customer = cost_estimate.customer
 
-    unless customer&.phone.present?
-      Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer&.id} has no phone number")
+    # WhatsApp delivery is disabled, so only email is required to proceed.
+    unless customer&.email.present?
+      Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer&.id} has no email address, nothing to send")
       return
     end
 
