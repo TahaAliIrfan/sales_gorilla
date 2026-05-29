@@ -27,7 +27,11 @@
       "Read(//Users/taha/.npm/_logs/**)",
       "Bash(PUPPETEER_SKIP_DOWNLOAD=true npm install puppeteer@21)",
       "Bash(open /tmp/proposal_html.pdf)",
-      "Bash(cat > *)"
+      "Bash(cat > *)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/controllers/whatsapp_us_controller.rb)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/twilio_whatsapp_service.rb)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/twilio_whatsapp_templates_service.rb)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/models/whatsapp_template.rb)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -45,6 +45,31 @@ class TwilioWhatsappService
     { success: false, error: e.message }
   end
 
+  # Send an approved Content template. Works outside the 24h window — that's
+  # the whole reason templates exist. `content_variables` is a hash keyed by
+  # variable position ("1", "2", ...) that Twilio substitutes into the template.
+  def send_template(to_phone:, content_sid:, content_variables: {})
+    return { success: false, error: 'Phone number is missing' } if to_phone.blank?
+    return { success: false, error: 'Template is missing' }    if content_sid.blank?
+
+    params = {
+      from: FROM,
+      to:   to_whatsapp(to_phone),
+      content_sid: content_sid,
+      status_callback: @status_callback
+    }
+    params[:content_variables] = content_variables.to_json if content_variables.present?
+
+    message = @client.messages.create(**params)
+    { success: true, sid: message.sid, status: message.status }
+  rescue Twilio::REST::RestError => e
+    Rails.logger.error("[TwilioWhatsapp] send_template failed (#{e.code}): #{e.message}")
+    { success: false, error: twilio_error_message(e), code: e.code }
+  rescue StandardError => e
+    Rails.logger.error("[TwilioWhatsapp] send_template error: #{e.message}")
+    { success: false, error: e.message }
+  end
+
   # Send a media message (document/image/etc). `media_url` must be a publicly
   # fetchable URL — Twilio downloads the file from it. `body` is an optional
   # caption. Same 24h-window rules apply as send_text.

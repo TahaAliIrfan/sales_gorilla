@@ -17,8 +17,6 @@ class TwilioWhatsappController < ApplicationController
     from_phone = phone_from_whatsapp(params[:From])
     customer   = find_customer_by_phone(from_phone)
 
-    debugger
-
     if customer.nil?
       # whatsapp_messages.customer_id is NOT NULL, so we can't persist an
       # inbound message from a number that isn't a known customer. Log it so

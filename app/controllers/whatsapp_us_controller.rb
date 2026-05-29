@@ -35,7 +35,115 @@ class WhatsappUsController < ApplicationController
     file.present? ? send_media_message(file, body) : send_text_message(body)
   end
 
+  # GET /customers/:customer_id/whatsapp_us/templates.json
+  def templates
+    authorize @customer, :show?
+
+    render json: {
+      templates: WhatsappTemplate.approved.ordered.map { |t| serialize_template(t) }
+    }
+  end
+
+  # POST /customers/:customer_id/whatsapp_us/templates/sync
+  # Admin-only: pulls latest approved templates from Twilio.
+  def sync_templates
+    authorize @customer, :show?
+    return render_error('Admins only', :forbidden) unless current_user&.admin?
+
+    result = TwilioWhatsappTemplatesService.new.sync!
+    return render_error(result[:error] || 'Sync failed', :unprocessable_entity) unless result[:success]
+
+    render json: {
+      success: true,
+      synced: result[:synced],
+      skipped: result[:skipped],
+      templates: WhatsappTemplate.approved.ordered.map { |t| serialize_template(t) }
+    }
+  end
+
+  # POST /customers/:customer_id/whatsapp_us/send_template
+  def send_template
+    authorize @customer, :show?
+    return render_error('Customer has no phone number') if @customer.phone.blank?
+
+    template = WhatsappTemplate.approved.find_by(content_sid: params[:content_sid])
+    return render_error('Template not found or not approved', :not_found) unless template
+
+    variables = sanitize_variables(template, params[:variables])
+
+    # Media templates need a file. Upload it to ActiveStorage, get a signed URL,
+    # and slot that URL into every variable position that lives inside the
+    # template's media field.
+    file = params[:file]
+    media_blob = nil
+    if template.has_media?
+      return render_error('This template requires a file attachment') if file.blank?
+
+      validation = validate_media(file)
+      return render_error(validation[:error]) unless validation[:valid]
+
+      media_blob = ActiveStorage::Blob.create_and_upload!(
+        io: file.tempfile,
+        filename: file.original_filename,
+        content_type: file.content_type
+      )
+      signed_url = media_blob.url(expires_in: 1.hour)
+      template.media_variable_keys.each { |k| variables[k] = signed_url }
+    end
+
+    result = TwilioWhatsappService.new.send_template(
+      to_phone:          @customer.phone,
+      content_sid:       template.content_sid,
+      content_variables: variables
+    )
+    unless result[:success]
+      media_blob&.purge_later
+      return render_error(result[:error] || 'Failed to send template', :unprocessable_entity)
+    end
+
+    message = persist_outbound(
+      sid:    result[:sid],
+      status: result[:status],
+      body:   template.render_body(variables.except(*template.media_variable_keys))
+    )
+    message.media.attach(media_blob) if media_blob
+    # Stash a marker so the chat UI can render a "template" badge later if we want.
+    message.update(metadata: (message.metadata || {}).merge(
+      template_sid:  template.content_sid,
+      template_name: template.friendly_name
+    ))
+
+    UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    render json: { success: true, message: serialize(message) }
+  end
+
   private
+
+  # Keep only the variable keys the template actually declares, and coerce
+  # whatever the client sent into strings.
+  def sanitize_variables(template, raw)
+    return {} if raw.blank?
+    raw = raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h)
+    template.variable_keys.each_with_object({}) do |k, h|
+      val = raw[k] || raw[k.to_sym] || raw[k.to_i]
+      h[k] = val.to_s if val.present?
+    end
+  end
+
+  def serialize_template(t)
+    {
+      content_sid:        t.content_sid,
+      friendly_name:      t.friendly_name,
+      language:           t.language,
+      category:           t.category,
+      body:               t.body,
+      variable_keys:      t.variable_keys,
+      text_variable_keys: t.text_variable_keys,
+      has_media:          t.has_media?,
+      last_synced_at:     t.last_synced_at&.iso8601
+    }
+  end
+
 
   # Text-only outbound message.
   def send_text_message(body)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_26_150000) do
+ActiveRecord::Schema[7.1].define(version: 2026_05_30_033331) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -790,6 +790,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_26_150000) do
     t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
     t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
     t.index ["timestamp"], name: "index_whatsapp_messages_on_timestamp"
+  end
+
+  create_table "whatsapp_templates", force: :cascade do |t|
+    t.string "content_sid", null: false
+    t.string "friendly_name"
+    t.string "language"
+    t.string "category"
+    t.string "approval_status"
+    t.text "body"
+    t.jsonb "types", default: {}
+    t.jsonb "variables", default: {}
+    t.datetime "last_synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["approval_status"], name: "index_whatsapp_templates_on_approval_status"
+    t.index ["content_sid"], name: "index_whatsapp_templates_on_content_sid", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
