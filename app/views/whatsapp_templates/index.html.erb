@@ -1,0 +1,100 @@
+<div class="bg-white border-b border-gray-200 px-6 py-5">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">WhatsApp Templates</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Approved Twilio Content templates. Use these to message customers outside the 24-hour reply window.
+        <% if @last_synced_at %>
+          &middot; Last synced <%= time_ago_in_words(@last_synced_at) %> ago.
+        <% end %>
+      </p>
+    </div>
+    <%= button_to sync_whatsapp_templates_path, method: :post,
+                  data: { turbo_confirm: "Pull the latest approved templates from Twilio?" },
+                  class: "inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      Sync from Twilio
+    <% end %>
+  </div>
+
+  <div class="mt-4 flex gap-6 text-sm">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold"><%= @approved_count %></span>
+      <span class="text-gray-600">Approved</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-gray-100 text-gray-700 text-xs font-bold"><%= @templates.size %></span>
+      <span class="text-gray-600">Total stored</span>
+    </div>
+  </div>
+</div>
+
+<div class="p-6">
+  <% if @templates.empty? %>
+    <div class="text-center py-20">
+      <div class="mx-auto w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center mb-4">
+        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-semibold text-gray-900 mb-2">No templates yet</h3>
+      <p class="text-gray-500 text-sm mb-6">Click "Sync from Twilio" to pull approved Content templates.</p>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <% @templates.each do |t| %>
+        <% approved = t.approval_status.to_s.downcase == 'approved' %>
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-200 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm font-semibold text-gray-900 truncate"><%= t.friendly_name.presence || t.content_sid %></h3>
+                <% if t.has_media? %>
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                    <%= t.requires_media_upload? ? 'MEDIA (upload required)' : 'MEDIA (fixed)' %>
+                  </span>
+                <% end %>
+              </div>
+              <div class="mt-0.5 text-[11px] text-gray-500 font-mono truncate"><%= t.content_sid %></div>
+            </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium flex-shrink-0
+                         <%= approved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+              <%= t.approval_status.presence&.titleize || 'Unknown' %>
+            </span>
+          </div>
+
+          <div class="px-4 py-3 space-y-3">
+            <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-gray-500">
+              <% if t.language.present? %><span>Language: <span class="text-gray-700"><%= t.language %></span></span><% end %>
+              <% if t.category.present? %><span>Category: <span class="text-gray-700"><%= t.category %></span></span><% end %>
+              <% if t.last_synced_at %><span>Synced: <span class="text-gray-700"><%= t.last_synced_at.strftime('%b %d, %Y %H:%M') %></span></span><% end %>
+            </div>
+
+            <% if t.body.present? %>
+              <div class="rounded-md bg-gray-50 border border-gray-200 px-3 py-2 text-sm text-gray-800 whitespace-pre-wrap break-words">
+                <%= t.body %>
+              </div>
+            <% end %>
+
+            <% if t.variable_keys.any? %>
+              <div>
+                <div class="text-[11px] font-medium text-gray-500 mb-1">Variables</div>
+                <div class="flex flex-wrap gap-1.5">
+                  <% t.variable_keys.each do |k| %>
+                    <% is_media = t.media_variable_keys.include?(k) %>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium
+                                 <%= is_media ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-700 border border-gray-200' %>">
+                      {{<%= k %>}}<%= is_media ? ' (media)' : '' %>
+                    </span>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

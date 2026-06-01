@@ -250,14 +250,18 @@ export default class extends Controller {
     const textKeys = t.text_variable_keys || t.variable_keys || []
     const vars = textKeys.map((k) => this.variableRow(k)).join("")
 
-    const mediaInput = t.has_media ? `
+    const mediaInput = t.requires_media_upload ? `
       <div class="mt-2">
         <label class="block text-xs font-medium text-gray-600 mb-1">Attach file <span class="text-red-500">*</span></label>
-        <input type="file" data-template-file="true"
+        <input type="file" data-template-file="true" data-required="true"
                accept="image/*,video/mp4,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt,.csv,.json,.xml,.zip"
                class="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-gray-300 file:bg-white file:text-gray-700 file:hover:bg-gray-50 file:text-xs file:font-medium" />
-        <p class="mt-1 text-[11px] text-gray-500">This template requires a media attachment. Max 16MB.</p>
-      </div>` : ""
+        <p class="mt-1 text-[11px] text-gray-500">This template needs a media attachment. Max 16MB.</p>
+      </div>` : (t.has_media ? `
+      <div class="mt-2 rounded-md bg-amber-50 border border-amber-200 px-3 py-2 text-[11px] text-amber-800">
+        Twilio locked the media URL on this template at approval time, so per-send file uploads aren't possible.
+        Re-approve the template with {{1}} as the media URL to send dynamic files.
+      </div>` : "")
 
     return `
       <div class="border border-gray-200 rounded-md p-3 mb-3" data-template-sid="${this.escape(t.content_sid)}">
@@ -282,6 +286,64 @@ export default class extends Controller {
       </div>`
   }
 
+  // Renders one variable row: a "From" dropdown that maps to a customer field,
+  // alongside an editable text input. If the variable name looks like a known
+  // customer attribute (e.g. {{name}}), we default the dropdown and pre-fill.
+  variableRow(key) {
+    const fields = this.customerFieldsValue || {}
+    const autoField = this.customerFieldFor(key)
+    const autoValue = autoField && fields[autoField] ? fields[autoField] : ""
+
+    const option = (val, label, selected) =>
+      `<option value="${this.escape(val)}"${selected ? " selected" : ""}>${this.escape(label)}</option>`
+
+    const options = [
+      option("", "Manual", !autoField),
+      fields.name    !== undefined ? option("name", `Customer name (${fields.name || "—"})`, autoField === "name") : "",
+      fields.phone   !== undefined ? option("phone", `Customer phone (${fields.phone || "—"})`, autoField === "phone") : "",
+      fields.email   !== undefined ? option("email", `Customer email (${fields.email || "—"})`, autoField === "email") : "",
+      fields.company !== undefined ? option("company", `Customer company (${fields.company || "—"})`, autoField === "company") : ""
+    ].join("")
+
+    return `
+      <div class="mt-2">
+        <label class="block text-xs font-medium text-gray-600 mb-1">Variable {{${this.escape(key)}}}</label>
+        <div class="flex gap-2">
+          <select data-action="change->whatsapp-us#variableSourceChanged"
+                  data-var-source-for="${this.escape(key)}"
+                  class="text-xs border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 w-40">
+            ${options}
+          </select>
+          <input type="text" data-var-key="${this.escape(key)}"
+                 value="${this.escape(autoValue)}"
+                 class="flex-1 block w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                 placeholder="Value for {{${this.escape(key)}}}" />
+        </div>
+      </div>`
+  }
+
+  // Maps a template variable name to a customer field if it's a known alias.
+  customerFieldFor(key) {
+    const k = String(key).toLowerCase()
+    if (["name", "first_name", "firstname", "customer_name", "fullname", "full_name"].includes(k)) return "name"
+    if (["phone", "mobile", "phone_number", "phonenumber"].includes(k)) return "phone"
+    if (["email", "email_address"].includes(k)) return "email"
+    if (["company", "organization", "org", "company_name"].includes(k)) return "company"
+    return null
+  }
+
+  variableSourceChanged(event) {
+    const sel = event.currentTarget
+    const key = sel.dataset.varSourceFor
+    const input = sel.closest(".mt-2")?.querySelector(`input[data-var-key="${CSS.escape(key)}"]`)
+    if (!input) return
+    const field = sel.value
+    const fields = this.customerFieldsValue || {}
+    if (field && fields[field] != null) {
+      input.value = fields[field]
+    }
+  }
+
   async sendTemplate(event) {
     const card = event.currentTarget.closest("[data-template-sid]")
     if (!card) return
@@ -294,8 +356,8 @@ export default class extends Controller {
 
     const fileInput = card.querySelector('input[data-template-file="true"]')
     const file = fileInput?.files?.[0] || null
-    if (fileInput && !file) {
-      this.showTemplateError("This template requires a file attachment.")
+    if (fileInput?.dataset.required === "true" && !file) {
+      this.showTemplateError("Please choose a file before sending this template.")
       return
     }
 

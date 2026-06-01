@@ -6,11 +6,13 @@ class WhatsappTemplate < ApplicationRecord
   scope :approved, -> { where(approval_status: 'approved') }
   scope :ordered,  -> { order(Arel.sql('LOWER(friendly_name) ASC')) }
 
-  # Variable placeholder names declared in the template (e.g. ["1", "2"]).
-  # Twilio stores them as a Hash like { "1" => "default", "2" => "default" }.
+  # Variable placeholder names declared in the template. Twilio stores them as
+  # a Hash like { "1" => "default", "name" => "Customer" }. Numeric keys are
+  # sorted numerically; named keys follow alphabetically.
   def variable_keys
     return [] if variables.blank?
-    variables.keys.sort_by { |k| k.to_i }
+    numeric, named = variables.keys.partition { |k| k.to_s =~ /\A\d+\z/ }
+    numeric.sort_by { |k| k.to_i } + named.sort
   end
 
   def variable_count
@@ -34,6 +36,14 @@ class WhatsappTemplate < ApplicationRecord
     media_definition.present?
   end
 
+  # True if the user must supply a file at send time — i.e. the media URL
+  # contains at least one variable placeholder (e.g. `"media": ["{{1}}"]`).
+  # When the URL is hardcoded, Twilio already knows the file and no upload
+  # is needed.
+  def requires_media_upload?
+    has_media? && media_variable_keys.any?
+  end
+
   # Variable keys referenced inside the media URL field, e.g. if the template
   # defines `"media": ["{{1}}"]` this returns ["1"]. Those variable slots must
   # be filled with a publicly-fetchable file URL when sending.
@@ -41,7 +51,7 @@ class WhatsappTemplate < ApplicationRecord
     urls = Array(media_definition&.dig('media'))
     return [] if urls.empty?
 
-    urls.flat_map { |u| u.to_s.scan(/\{\{(\d+)\}\}/).flatten }.uniq
+    urls.flat_map { |u| u.to_s.scan(/\{\{(\w+)\}\}/).flatten }.uniq
   end
 
   # Variable keys that are NOT media variables — i.e. plain-text placeholders

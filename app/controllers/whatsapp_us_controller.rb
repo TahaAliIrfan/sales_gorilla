@@ -71,12 +71,15 @@ class WhatsappUsController < ApplicationController
 
     variables = sanitize_variables(template, params[:variables])
 
-    # Media templates need a file. Upload it to ActiveStorage, get a signed URL,
-    # and slot that URL into every variable position that lives inside the
-    # template's media field.
+    # Templates with a hardcoded media URL (no variable in the media field)
+    # can't have their media swapped at send time — Twilio's Content API
+    # ignores `media_url` when `content_sid` is set. So we either substitute a
+    # user upload into a media variable, or there's nothing useful to do with
+    # an upload.
     file = params[:file]
     media_blob = nil
-    if template.has_media?
+
+    if template.requires_media_upload?
       return render_error('This template requires a file attachment') if file.blank?
 
       validation = validate_media(file)
@@ -87,25 +90,27 @@ class WhatsappUsController < ApplicationController
         filename: file.original_filename,
         content_type: file.content_type
       )
-      signed_url = media_blob.url(expires_in: 1.hour)
-      template.media_variable_keys.each { |k| variables[k] = signed_url }
+      # Pass the Active Storage signed_id, not a presigned S3 URL. The Twilio
+      # template's Media URL is `https://crm.tecaudex.com/wa/media/{{1}}`, so
+      # Twilio assembles the final URL and Meta hits our public redirect
+      # endpoint (WhatsappMediaController) which 302s to S3.
+      media_token = media_blob.signed_id(expires_in: 7.days)
+      template.media_variable_keys.each { |k| variables[k] = media_token }
     end
 
+    rendered_body = template.render_body(variables.except(*template.media_variable_keys))
     result = TwilioWhatsappService.new.send_template(
       to_phone:          @customer.phone,
       content_sid:       template.content_sid,
       content_variables: variables
     )
+
     unless result[:success]
       media_blob&.purge_later
       return render_error(result[:error] || 'Failed to send template', :unprocessable_entity)
     end
 
-    message = persist_outbound(
-      sid:    result[:sid],
-      status: result[:status],
-      body:   template.render_body(variables.except(*template.media_variable_keys))
-    )
+    message = persist_outbound(sid: result[:sid], status: result[:status], body: rendered_body)
     message.media.attach(media_blob) if media_blob
     # Stash a marker so the chat UI can render a "template" badge later if we want.
     message.update(metadata: (message.metadata || {}).merge(
@@ -132,15 +137,16 @@ class WhatsappUsController < ApplicationController
 
   def serialize_template(t)
     {
-      content_sid:        t.content_sid,
-      friendly_name:      t.friendly_name,
-      language:           t.language,
-      category:           t.category,
-      body:               t.body,
-      variable_keys:      t.variable_keys,
-      text_variable_keys: t.text_variable_keys,
-      has_media:          t.has_media?,
-      last_synced_at:     t.last_synced_at&.iso8601
+      content_sid:           t.content_sid,
+      friendly_name:         t.friendly_name,
+      language:              t.language,
+      category:              t.category,
+      body:                  t.body,
+      variable_keys:         t.variable_keys,
+      text_variable_keys:    t.text_variable_keys,
+      has_media:             t.has_media?,
+      requires_media_upload: t.requires_media_upload?,
+      last_synced_at:        t.last_synced_at&.iso8601
     }
   end
 

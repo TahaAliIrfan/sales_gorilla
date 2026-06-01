@@ -258,6 +258,17 @@ Rails.application.routes.draw do
   post 'twilio/whatsapp/inbound', to: 'twilio_whatsapp#inbound'
   post 'twilio/whatsapp/status', to: 'twilio_whatsapp#status'
 
+  # Public redirect endpoint used as the Media URL in Twilio Content templates
+  # (`https://crm.tecaudex.com/wa/media/{{1}}`). Meta hits this; we 302 to S3.
+  get  'wa/media/:signed_id', to: 'whatsapp_media#show', as: :wa_media
+
+  # WhatsApp templates (admin)
+  resources :whatsapp_templates, only: [:index] do
+    collection do
+      post :sync
+    end
+  end
+
   # API routes
   namespace :api do
     namespace :pk do
