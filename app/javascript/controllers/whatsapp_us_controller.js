@@ -7,7 +7,8 @@ export default class extends Controller {
   static values = { customerId: Number, windowOpen: Boolean, isAdmin: Boolean, customerFields: Object }
   static targets = ["messagesContainer", "messagesArea", "form", "input", "sendButton", "closedNotice", "error",
                     "fileInput", "filePreview", "fileName", "attachButton",
-                    "templateModal", "templateList", "templateError", "templateNotice", "syncButton"]
+                    "templateModal", "templateList", "templateError", "templateNotice", "syncButton",
+                    "syncChatButton", "syncChatLabel"]
 
   connect() {
     this.applyWindowState(this.windowOpenValue)
@@ -21,6 +22,49 @@ export default class extends Controller {
 
   get csrfToken() {
     return document.querySelector('[name="csrf-token"]')?.content || ""
+  }
+
+  async syncChat() {
+    if (!this.hasSyncChatButtonTarget) return
+
+    const confirmed = window.confirm(
+      "Sync from Twilio?\n\n" +
+      "Heads up: Twilio retains WhatsApp message history for a limited time " +
+      "(varies by account tier — typically 30–90 days), so the sync gives you " +
+      "Twilio's window of memory, not all-time history. Existing local messages " +
+      "are kept; new ones from Twilio are added and statuses are refreshed."
+    )
+    if (!confirmed) return
+
+    this.syncChatButtonTarget.disabled = true
+    const originalLabel = this.hasSyncChatLabelTarget ? this.syncChatLabelTarget.textContent : null
+    if (this.hasSyncChatLabelTarget) this.syncChatLabelTarget.textContent = "Syncing…"
+    this.hideError()
+
+    try {
+      const res = await fetch(`/customers/${this.customerIdValue}/whatsapp_us/sync_chat`, {
+        method: "POST",
+        headers: { Accept: "application/json", "X-CSRF-Token": this.csrfToken }
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || "Sync failed")
+
+      this.renderMessages(data.messages || [])
+      this.applyWindowState(data.window_open)
+
+      if (this.hasSyncChatLabelTarget) {
+        const summary = `Synced ${data.synced} (+${data.created} new)`
+        this.syncChatLabelTarget.textContent = summary
+        setTimeout(() => {
+          if (this.hasSyncChatLabelTarget) this.syncChatLabelTarget.textContent = originalLabel || "Sync"
+        }, 2500)
+      }
+    } catch (e) {
+      this.showError(e.message || "Sync failed")
+      if (this.hasSyncChatLabelTarget) this.syncChatLabelTarget.textContent = originalLabel || "Sync"
+    } finally {
+      this.syncChatButtonTarget.disabled = false
+    }
   }
 
   async loadMessages() {
@@ -87,16 +131,57 @@ export default class extends Controller {
   bubble(m) {
     const outbound = m.direction === "outbound"
     const align = outbound ? "justify-end" : "justify-start"
-    const color = outbound ? "bg-emerald-600 text-white" : "bg-white text-gray-900 border border-gray-200"
-    const meta = outbound ? `${this.escape(m.formatted_time)} · ${this.escape(m.status || "")}` : this.escape(m.formatted_time)
+    const failed = outbound && m.display_status === "failed"
+    const color = failed
+      ? "bg-red-50 text-red-900 border border-red-300"
+      : outbound
+        ? "bg-emerald-600 text-white"
+        : "bg-white text-gray-900 border border-gray-200"
+
+    const badge = outbound ? this.statusBadge(m, failed) : ""
+    const errorRow = failed && m.error_message
+      ? `<div class="mt-1 text-[11px] text-red-700 italic">Error: ${this.escape(m.error_message)}${m.error_code ? ` (${this.escape(m.error_code)})` : ""}</div>`
+      : ""
+
+    const timeClass = failed ? "text-red-400" : outbound ? "text-emerald-100" : "text-gray-400"
+
     return `
       <div class="flex ${align}">
         <div class="max-w-[75%] rounded-lg px-3 py-2 shadow-sm ${color}">
           ${this.mediaMarkup(m, outbound)}
           ${m.body ? `<div class="text-sm whitespace-pre-wrap break-words">${this.escape(m.body)}</div>` : ""}
-          <div class="mt-1 text-[10px] ${outbound ? "text-emerald-100" : "text-gray-400"} text-right">${meta}</div>
+          ${errorRow}
+          <div class="mt-1 flex items-center justify-end gap-1.5 text-[10px] ${timeClass}">
+            <span>${this.escape(m.formatted_time)}</span>
+            ${badge}
+          </div>
         </div>
       </div>`
+  }
+
+  statusBadge(m, failed) {
+    const ds = m.display_status || "pending"
+    if (failed) {
+      return `<span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700">
+        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Failed
+      </span>`
+    }
+    if (ds === "delivered") {
+      return `<span class="inline-flex items-center gap-0.5 text-emerald-100" title="Delivered">
+        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+        <svg class="h-3 w-3 -ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      </span>`
+    }
+    if (ds === "sent") {
+      return `<span class="inline-flex items-center gap-0.5 text-emerald-100" title="Sent">
+        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+      </span>`
+    }
+    // pending / queued / sending
+    return `<span class="inline-flex items-center gap-0.5 text-emerald-100/80" title="${this.escape(m.status || "queued")}">
+      <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </span>`
   }
 
   mediaMarkup(m, outbound) {

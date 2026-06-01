@@ -145,6 +145,7 @@ Rails.application.routes.draw do
     get  'whatsapp_us/templates',      to: 'whatsapp_us#templates'
     post 'whatsapp_us/templates/sync', to: 'whatsapp_us#sync_templates'
     post 'whatsapp_us/send_template',  to: 'whatsapp_us#send_template'
+    post 'whatsapp_us/sync_chat',      to: 'whatsapp_us#sync_chat'
 
     collection do
       post 'bulk_assign'

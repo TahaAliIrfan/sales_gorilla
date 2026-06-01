@@ -12,8 +12,10 @@ class WhatsappUsController < ApplicationController
   def index
     authorize @customer, :show?
 
+    refresh_stale_outbound_statuses
+
     render json: {
-      messages: @customer.whatsapp_messages.order(:timestamp, :created_at).map { |m| serialize(m) },
+      messages: @customer.whatsapp_messages.reload.order(:timestamp, :created_at).map { |m| serialize(m) },
       window_open: @customer.whatsapp_us_window_open?,
       last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601
     }
@@ -33,6 +35,33 @@ class WhatsappUsController < ApplicationController
     end
 
     file.present? ? send_media_message(file, body) : send_text_message(body)
+  end
+
+  # POST /customers/:customer_id/whatsapp_us/sync_chat
+  # Pulls every Twilio WhatsApp message exchanged with this customer (both
+  # directions) and upserts them into whatsapp_messages by message_id. Existing
+  # rows keep their attached media and locally-tracked metadata.
+  def sync_chat
+    authorize @customer, :show?
+    return render_error('Customer has no phone number') if @customer.phone.blank?
+
+    twilio_msgs = TwilioWhatsappService.new.list_messages_for(phone: @customer.phone)
+    created, updated = 0, 0
+    twilio_msgs.each do |t|
+      change = upsert_from_twilio(t)
+      created += 1 if change == :created
+      updated += 1 if change == :updated
+    end
+
+    render json: {
+      success: true,
+      synced: twilio_msgs.size,
+      created: created,
+      updated: updated,
+      messages: @customer.whatsapp_messages.reload.order(:timestamp, :created_at).map { |m| serialize(m) },
+      window_open: @customer.whatsapp_us_window_open?,
+      last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601
+    }
   end
 
   # GET /customers/:customer_id/whatsapp_us/templates.json
@@ -247,6 +276,9 @@ class WhatsappUsController < ApplicationController
       body: message.body,
       direction: message.direction,
       status: message.status,
+      display_status: display_status_for(message),
+      error_code: message.metadata&.dig('error_code'),
+      error_message: message.metadata&.dig('error_message'),
       timestamp: (message.timestamp || message.created_at).iso8601,
       formatted_time: (message.timestamp || message.created_at).strftime('%b %d, %H:%M'),
       media_url: attached ? rails_blob_path(attached, only_path: true) : nil,
@@ -255,6 +287,103 @@ class WhatsappUsController < ApplicationController
       media: message.metadata&.dig('media') || []
     }
   end
+
+  # User-friendly bucket for the status badge: pending | sent | delivered | failed.
+  def display_status_for(message)
+    return nil if message.direction != 'outbound'
+
+    case message.status.to_s.downcase
+    when 'delivered', 'read'                  then 'delivered'
+    when 'sent'                               then 'sent'
+    when 'failed', 'undelivered'              then 'failed'
+    else 'pending'
+    end
+  end
+
+  NON_FINAL_OUTBOUND_STATUSES = %w[queued sending accepted scheduled].freeze
+
+  # Re-poll Twilio for any recent outbound message whose webhook never landed
+  # (e.g. dev callbacks can't reach localhost). Rate-limited per-message so
+  # we don't hammer Twilio on every 15s UI poll.
+  def refresh_stale_outbound_statuses
+    stale = @customer.whatsapp_messages
+              .where(direction: 'outbound', status: NON_FINAL_OUTBOUND_STATUSES)
+              .where('created_at > ?', 1.hour.ago)
+              .to_a
+              .reject { |m| recently_refreshed?(m) || m.message_id.blank? }
+
+    return if stale.empty?
+
+    svc = TwilioWhatsappService.new
+    stale.each do |m|
+      result = svc.refresh_status(m.message_id)
+      next unless result[:success]
+
+      m.update(
+        status:   result[:status] || m.status,
+        metadata: (m.metadata || {}).merge(
+          error_code:           result[:error_code],
+          error_message:        result[:error_message],
+          status_refreshed_at:  Time.current.iso8601
+        ).compact
+      )
+    end
+  rescue StandardError => e
+    Rails.logger.warn("[WhatsappUs] status refresh batch failed: #{e.class} #{e.message}")
+  end
+
+  # Takes a Twilio MessageInstance and writes it into whatsapp_messages,
+  # creating or updating by Twilio SID. Returns :created, :updated, or :unchanged.
+  def upsert_from_twilio(t)
+    return :unchanged if t.sid.blank?
+
+    is_inbound = t.direction.to_s == 'inbound'
+    customer_addr = "whatsapp:#{@customer.phone}"
+
+    message = @customer.whatsapp_messages.find_or_initialize_by(message_id: t.sid)
+    new_record = message.new_record?
+
+    message.assign_attributes(
+      remote_id: (is_inbound ? t.from : t.to).to_s.sub(/\Awhatsapp:/, ''),
+      body:      t.body.presence || (t.num_media.to_i.positive? ? "[#{t.num_media} media attachment(s)]" : nil),
+      direction: is_inbound ? 'inbound' : 'outbound',
+      status:    t.status,
+      timestamp: t.date_sent || t.date_created || Time.current,
+      metadata:  (message.metadata || {}).merge(
+        provider:      'twilio',
+        from:          t.from,
+        to:            t.to,
+        error_code:    t.error_code,
+        error_message: t.error_message,
+        num_media:     t.num_media.to_i,
+        synced_at:     Time.current.iso8601
+      ).compact
+    )
+
+    changed = message.changed?
+    message.save! if changed || new_record
+
+    # Inbound media we haven't downloaded yet → enqueue the existing worker.
+    if is_inbound && t.num_media.to_i.positive? && !message.media.attached?
+      TwilioWhatsappMediaWorker.perform_async(message.id)
+    end
+
+    return :created if new_record
+    return :updated if changed
+    :unchanged
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
+    Rails.logger.warn("[WhatsappUs#sync_chat] skip #{t.sid}: #{e.message}")
+    :unchanged
+  end
+
+  def recently_refreshed?(message)
+    last = message.metadata&.dig('status_refreshed_at')
+    return false if last.blank?
+    Time.iso8601(last) > 30.seconds.ago
+  rescue ArgumentError
+    false
+  end
+
 
   def render_error(message, status = :unprocessable_entity)
     render json: { success: false, error: message }, status: status

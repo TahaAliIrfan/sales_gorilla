@@ -18,12 +18,22 @@
           <p class="text-emerald-100 text-xs">via Twilio &middot; <%= customer.phone.presence || 'no phone number' %></p>
         </div>
       </div>
-      <button type="button" data-action="click->whatsapp-us#loadMessages"
-              class="text-white/90 hover:text-white p-1 rounded-md hover:bg-white/10" title="Refresh">
-        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-        </svg>
-      </button>
+      <div class="flex items-center gap-1">
+        <button type="button" data-action="click->whatsapp-us#syncChat" data-whatsapp-us-target="syncChatButton"
+                class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-white/90 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-wait"
+                title="Pull every message from Twilio and reconcile with local history">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 17l-4 4m0 0l-4-4m4 4V3m0 0L8 7m4-4l4 4"/>
+          </svg>
+          <span data-whatsapp-us-target="syncChatLabel">Sync</span>
+        </button>
+        <button type="button" data-action="click->whatsapp-us#loadMessages"
+                class="text-white/90 hover:text-white p-1 rounded-md hover:bg-white/10" title="Refresh">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 
