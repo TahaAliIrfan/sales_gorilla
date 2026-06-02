@@ -357,7 +357,17 @@ Rails.application.routes.draw do
           patch 'customer/:customer_id/sync', to: 'whatsapp#sync', as: :sync_messages
         end
       end
-      
+
+      # Twilio-backed WhatsApp ("WhatsApp US") — mobile API
+      scope :whatsapp_us, controller: 'whatsapp_us' do
+        get  'conversations',                       action: :conversations,  as: :whatsapp_us_conversations
+        get  'customers/:customer_id/messages',     action: :messages,       as: :whatsapp_us_customer_messages
+        post 'customers/:customer_id/send',         action: :send_message,   as: :whatsapp_us_send_message
+        post 'customers/:customer_id/send_template', action: :send_template, as: :whatsapp_us_send_template
+        get  'templates',                           action: :templates,      as: :whatsapp_us_templates
+        post 'templates/sync',                      action: :sync_templates, as: :whatsapp_us_sync_templates
+      end
+
       # Twilio routes
       get 'twilio/token', to: 'twilio#token'
     end

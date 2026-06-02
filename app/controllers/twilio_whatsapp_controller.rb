@@ -40,6 +40,9 @@ class TwilioWhatsappController < ApplicationController
     # Download any attached media out-of-band (Twilio media URLs need auth).
     TwilioWhatsappMediaWorker.perform_async(message.id) if params[:NumMedia].to_i.positive?
 
+    # Push a Firebase notification to the customer's assigned user.
+    WhatsappInboundPushWorker.perform_async(message.id)
+
     Rails.logger.info("[TwilioWhatsapp] stored inbound message #{params[:MessageSid]} for customer #{customer.id}")
     head :ok
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
