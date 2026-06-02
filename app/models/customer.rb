@@ -385,6 +385,25 @@ class Customer < ApplicationRecord
     last = whatsapp_us_last_inbound_at
     last.present? && last > 24.hours.ago
   end
+
+  # --- Phone-lookup driven WhatsApp reachability --------------------------
+  # Populated by PhoneLookupService via Twilio Lookup v2. We can't ask Twilio
+  # directly "is this number on WhatsApp?", but disposable VoIP carriers
+  # (Pinger, TextNow, etc.) and nonFixedVoip line types are reliable negatives.
+
+  def whatsapp_phone_unreachable?
+    return false if phone_lookup_checked_at.blank?
+    return true if PhoneLookupService::UNREACHABLE_LINE_TYPES.include?(phone_line_type.to_s)
+    PhoneLookupService::DISPOSABLE_CARRIERS.any? { |c| phone_carrier.to_s.include?(c) }
+  end
+
+  def whatsapp_reachability_reason
+    return nil unless whatsapp_phone_unreachable?
+    parts = []
+    parts << "line type: #{phone_line_type}" if phone_line_type.present?
+    parts << "carrier: #{phone_carrier}"     if phone_carrier.present?
+    "Number appears to be a disposable/VoIP line not registered on WhatsApp (#{parts.join(', ')})."
+  end
   
   def document_types
     documents.map do |doc|

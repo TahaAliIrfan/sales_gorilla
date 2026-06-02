@@ -8,7 +8,8 @@ export default class extends Controller {
   static targets = ["messagesContainer", "messagesArea", "form", "input", "sendButton", "closedNotice", "error",
                     "fileInput", "filePreview", "fileName", "attachButton",
                     "templateModal", "templateList", "templateError", "templateNotice", "syncButton",
-                    "syncChatButton", "syncChatLabel"]
+                    "syncChatButton", "syncChatLabel",
+                    "unreachableBanner", "unreachableReason", "lookupButton"]
 
   connect() {
     this.applyWindowState(this.windowOpenValue)
@@ -76,8 +77,53 @@ export default class extends Controller {
       const data = await response.json()
       this.renderMessages(data.messages || [])
       this.applyWindowState(data.window_open)
+      this.applyReachability(data)
     } catch (e) {
       // network hiccup — keep last rendered state
+    }
+  }
+
+  applyReachability(data) {
+    if (!this.hasUnreachableBannerTarget) return
+    if (data.phone_unreachable) {
+      this.unreachableBannerTarget.classList.remove("hidden")
+      if (this.hasUnreachableReasonTarget) {
+        this.unreachableReasonTarget.textContent =
+          data.phone_unreachable_reason ||
+          "This number appears to be a disposable/VoIP line not registered on WhatsApp."
+      }
+      // Also disable composer — sending will only burn money.
+      if (this.hasSendButtonTarget)   this.sendButtonTarget.disabled = true
+      if (this.hasAttachButtonTarget) this.attachButtonTarget.disabled = true
+      if (this.hasInputTarget) {
+        this.inputTarget.disabled = true
+        this.inputTarget.placeholder = "Number is not on WhatsApp"
+      }
+    } else {
+      this.unreachableBannerTarget.classList.add("hidden")
+    }
+  }
+
+  async lookupPhone() {
+    if (!this.hasLookupButtonTarget) return
+    this.lookupButtonTarget.disabled = true
+    const orig = this.lookupButtonTarget.textContent
+    this.lookupButtonTarget.textContent = "Checking…"
+    try {
+      const res = await fetch(`/customers/${this.customerIdValue}/whatsapp_us/lookup_phone`, {
+        method: "POST",
+        headers: { Accept: "application/json", "X-CSRF-Token": this.csrfToken }
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) throw new Error(data.error || "Lookup failed")
+      this.applyReachability(data)
+      // Re-apply window state on the chance the lookup cleared the gate.
+      if (!data.phone_unreachable) this.loadMessages()
+    } catch (e) {
+      this.showError(e.message || "Lookup failed")
+    } finally {
+      this.lookupButtonTarget.disabled = false
+      this.lookupButtonTarget.textContent = orig
     }
   }
 

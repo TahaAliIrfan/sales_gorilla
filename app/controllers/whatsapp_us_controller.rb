@@ -13,11 +13,37 @@ class WhatsappUsController < ApplicationController
     authorize @customer, :show?
 
     refresh_stale_outbound_statuses
+    ensure_phone_lookup
 
     render json: {
       messages: @customer.whatsapp_messages.reload.order(:timestamp, :created_at).map { |m| serialize(m) },
       window_open: @customer.whatsapp_us_window_open?,
-      last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601
+      last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601,
+      phone_unreachable: @customer.whatsapp_phone_unreachable?,
+      phone_unreachable_reason: @customer.whatsapp_reachability_reason,
+      phone_line_type: @customer.phone_line_type,
+      phone_carrier:   @customer.phone_carrier,
+      phone_lookup_checked_at: @customer.phone_lookup_checked_at&.iso8601
+    }
+  end
+
+  # POST /customers/:customer_id/whatsapp_us/lookup_phone
+  # Manually re-runs Twilio Lookup on the customer's phone (e.g. after a number
+  # change). Returns the refreshed reachability info.
+  def lookup_phone
+    authorize @customer, :show?
+    return render_error('Customer has no phone number') if @customer.phone.blank?
+
+    result = PhoneLookupService.new.check!(@customer, force: true)
+    return render_error(result[:error] || 'Lookup failed', :unprocessable_entity) unless result[:success]
+
+    render json: {
+      success: true,
+      phone_unreachable: @customer.reload.whatsapp_phone_unreachable?,
+      phone_unreachable_reason: @customer.whatsapp_reachability_reason,
+      phone_line_type: @customer.phone_line_type,
+      phone_carrier:   @customer.phone_carrier,
+      phone_lookup_checked_at: @customer.phone_lookup_checked_at&.iso8601
     }
   end
 
@@ -29,6 +55,10 @@ class WhatsappUsController < ApplicationController
     body = params[:body].to_s.strip
     return render_error('Customer has no phone number') if @customer.phone.blank?
     return render_error('Message cannot be blank') if body.blank? && file.blank?
+
+    if @customer.whatsapp_phone_unreachable?
+      return render_error("Can't send — #{@customer.whatsapp_reachability_reason}", :forbidden)
+    end
 
     unless @customer.whatsapp_us_window_open?
       return render_error('The 24-hour reply window has closed. The customer must message first before you can send a freeform message.', :forbidden)
@@ -94,6 +124,9 @@ class WhatsappUsController < ApplicationController
   def send_template
     authorize @customer, :show?
     return render_error('Customer has no phone number') if @customer.phone.blank?
+    if @customer.whatsapp_phone_unreachable?
+      return render_error("Can't send — #{@customer.whatsapp_reachability_reason}", :forbidden)
+    end
 
     template = WhatsappTemplate.approved.find_by(content_sid: params[:content_sid])
     return render_error('Template not found or not approved', :not_found) unless template
@@ -374,6 +407,17 @@ class WhatsappUsController < ApplicationController
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
     Rails.logger.warn("[WhatsappUs#sync_chat] skip #{t.sid}: #{e.message}")
     :unchanged
+  end
+
+  # Kicks off a Twilio Lookup the first time a customer's chat is viewed (and
+  # again every CACHE_TTL). One Twilio API call per customer per month is cheap
+  # insurance against sending into a black hole.
+  def ensure_phone_lookup
+    return if @customer.phone.blank?
+    return if @customer.phone_lookup_checked_at.present? &&
+              @customer.phone_lookup_checked_at > PhoneLookupService::CACHE_TTL.ago
+
+    PhoneLookupService.new.check!(@customer)
   end
 
   def recently_refreshed?(message)

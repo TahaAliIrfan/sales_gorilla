@@ -32,7 +32,10 @@
       "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/twilio_whatsapp_service.rb)",
       "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/twilio_whatsapp_templates_service.rb)",
       "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/models/whatsapp_template.rb)",
-      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/controllers/whatsapp_templates_controller.rb)"
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/controllers/whatsapp_templates_controller.rb)",
+      "Bash(xxd)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/phone_lookup_service.rb)",
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/models/customer.rb)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_05_30_033331) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -312,6 +312,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_05_30_033331) do
     t.bigint "lead_quality_marked_by_id"
     t.datetime "google_conversion_sent_at"
     t.string "google_conversion_status"
+    t.string "phone_line_type"
+    t.string "phone_carrier"
+    t.datetime "phone_lookup_checked_at"
+    t.string "phone_country_code"
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"

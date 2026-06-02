@@ -37,6 +37,24 @@
     </div>
   </div>
 
+  <!-- Phone unreachable banner (populated by Twilio Lookup) -->
+  <div data-whatsapp-us-target="unreachableBanner"
+       class="hidden border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900">
+    <div class="flex items-start gap-2">
+      <svg class="h-5 w-5 flex-shrink-0 text-amber-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+      <div class="flex-1 min-w-0">
+        <div class="font-medium">WhatsApp may not be available on this number</div>
+        <div data-whatsapp-us-target="unreachableReason" class="text-xs text-amber-800 mt-0.5"></div>
+      </div>
+      <button type="button" data-action="click->whatsapp-us#lookupPhone" data-whatsapp-us-target="lookupButton"
+              class="text-xs px-2 py-1 rounded border border-amber-300 bg-white hover:bg-amber-100 disabled:opacity-50">
+        Re-check
+      </button>
+    </div>
+  </div>
+
   <!-- Messages -->
   <div class="h-96 overflow-y-auto p-4 space-y-3 bg-gray-50" data-whatsapp-us-target="messagesContainer">
     <div data-whatsapp-us-target="messagesArea">
