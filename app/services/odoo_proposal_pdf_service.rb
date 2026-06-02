@@ -305,6 +305,33 @@ class OdooProposalPdfService
       bold 9, v, x: rx + 124, y: ry + 2, w: col_w - 134
     end
 
+    # ── Module Pricing Breakdown ──────────────────────────────────────────
+    y4 = y3 - 170 - 22
+    section_label "Module Implementation Costs", y: y4
+    y4 -= 16
+
+    mcw = [CW * 0.42, CW * 0.32, CW * 0.26]
+    draw_table_row(["Module", "Category", "Implementation Fee (PKR)"],
+      mcw, y4, row_h: 20, header: true, hi_col: nil)
+
+    all_mods   = @p.respond_to?(:all_module_details) ? @p.all_module_details : @p.selected_module_details
+    cat_lookup = OdooProposal::MODULES.each_with_object({}) do |(cat, mods), h|
+      mods.each { |m| h[m[:key]] = cat }
+    end
+
+    all_mods.each_with_index do |mod, i|
+      cat = cat_lookup[mod[:key]] || mod[:category] || '—'
+      break if y4 - 20 - (i + 1) * 18 < 65
+      draw_table_row(
+        [clean(mod[:label]), clean(cat), fmt(mod[:impl_cost])],
+        mcw, y4 - 20 - i * 18, row_h: 18, hi_col: nil, alt: i.odd?,
+        align_last: :right
+      )
+    end
+
+    impl_total_y = y4 - 20 - all_mods.size * 18
+    subtotal_row "Total Implementation Fee", @p.implementation_fee.to_i, impl_total_y
+
     footer
   end
 
