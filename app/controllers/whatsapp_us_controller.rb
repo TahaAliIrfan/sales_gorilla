@@ -181,6 +181,7 @@ class WhatsappUsController < ApplicationController
     ))
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render json: { success: true, message: serialize(message) }
   end
 
@@ -220,6 +221,7 @@ class WhatsappUsController < ApplicationController
 
     message = persist_outbound(sid: result[:sid], status: result[:status], body: body)
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render json: { success: true, message: serialize(message) }
   end
 
@@ -257,6 +259,7 @@ class WhatsappUsController < ApplicationController
     message.media.attach(blob)
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render json: { success: true, message: serialize(message) }
   end
 

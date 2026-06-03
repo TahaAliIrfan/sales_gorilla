@@ -361,6 +361,7 @@ Rails.application.routes.draw do
       # Twilio-backed WhatsApp ("WhatsApp US") — mobile API
       scope :whatsapp_us, controller: 'whatsapp_us' do
         get  'conversations',                       action: :conversations,  as: :whatsapp_us_conversations
+        get  'latest',                              action: :latest,         as: :whatsapp_us_latest
         get  'customers/:customer_id/messages',     action: :messages,       as: :whatsapp_us_customer_messages
         post 'customers/:customer_id/send',         action: :send_message,   as: :whatsapp_us_send_message
         post 'customers/:customer_id/send_template', action: :send_template, as: :whatsapp_us_send_template

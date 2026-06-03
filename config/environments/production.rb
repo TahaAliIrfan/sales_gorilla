@@ -44,6 +44,12 @@ Rails.application.configure do
   # config.action_cable.url = "wss://example.com/cable"
   # config.action_cable.allowed_request_origins = [ "http://example.com", /http:\/\/example.*/ ]
 
+  # Mobile WebSocket clients don't send a browser-style Origin header, which
+  # Rails would otherwise reject in production. We authenticate every cable
+  # connection with a JWT (see ApplicationCable::Connection), so the Origin
+  # check is redundant.
+  config.action_cable.disable_request_forgery_protection = true
+
   # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   # Can be used together with config.force_ssl for Strict-Transport-Security and secure cookies.
   # config.assume_ssl = true

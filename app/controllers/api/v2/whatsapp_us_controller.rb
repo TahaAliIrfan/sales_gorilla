@@ -35,7 +35,8 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   # GET /api/v2/whatsapp_us/customers/:id/messages
   def messages
     base = @customer.whatsapp_messages.order(:timestamp, :created_at)
-    total = @customer.whatsapp_messages.count
+    base = base.where('id > ?', params[:after_id].to_i) if params[:after_id].present?
+    total = base.count
     scoped, pagination = paginate(base, total)
 
     render_success({
@@ -89,6 +90,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     )
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render_success({ message: serialize_message(message) }, 'Template sent')
   end
 
@@ -115,6 +117,26 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
                           .count
 
     render_success({ marked: marked, remaining_unread: remaining }, 'Marked as read')
+  end
+
+  # GET /api/v2/whatsapp_us/latest?after_id=N
+  # Cross-conversation delta: every message (any direction, any customer the
+  # caller can see) with id > after_id. Used to catch up after a reconnect or
+  # when the app comes back to the foreground without firing the ActionCable
+  # broadcast. If after_id is missing/0 we cap at the last 50 to avoid
+  # accidentally returning everything.
+  def latest
+    after_id = params[:after_id].to_i
+    visible_customer_ids = accessible_customers.select(:id)
+
+    base = WhatsappMessage.where(customer_id: visible_customer_ids).order(:id)
+    base = base.where('whatsapp_messages.id > ?', after_id) if after_id.positive?
+    base = base.limit(50) unless after_id.positive?
+
+    render_success({
+      messages:  base.map { |m| serialize_message(m) },
+      latest_id: base.last&.id || after_id
+    }, 'Latest messages retrieved')
   end
 
   # GET /api/v2/whatsapp_us/templates
@@ -191,6 +213,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     message = persist_outbound(sid: result[:sid], status: result[:status], body: body)
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render_success({ message: serialize_message(message) }, 'Message sent')
   end
 
@@ -224,6 +247,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     message.media.attach(blob)
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
+    WhatsappUsBroadcaster.broadcast(message)
     render_success({ message: serialize_message(message) }, 'Message sent')
   end
 

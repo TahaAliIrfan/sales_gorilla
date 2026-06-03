@@ -43,6 +43,9 @@ class TwilioWhatsappController < ApplicationController
     # Push a Firebase notification to the customer's assigned user.
     WhatsappInboundPushWorker.perform_async(message.id)
 
+    # Live-push the message to subscribed ActionCable clients.
+    WhatsappUsBroadcaster.broadcast(message)
+
     Rails.logger.info("[TwilioWhatsapp] stored inbound message #{params[:MessageSid]} for customer #{customer.id}")
     head :ok
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
