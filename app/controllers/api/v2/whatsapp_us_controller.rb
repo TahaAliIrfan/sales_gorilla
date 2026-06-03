@@ -17,28 +17,33 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   # ordered by most recent activity. Returns the latest message and the
   # 24h-window state so the mobile composer can mirror the web UI.
   def conversations
-    customers = accessible_customers
-                  .joins(:whatsapp_messages)
-                  .select('customers.*, MAX(whatsapp_messages.timestamp) AS last_message_at')
-                  .group('customers.id')
-                  .order('MAX(whatsapp_messages.timestamp) DESC')
-                  .limit(params[:limit]&.to_i || 100)
+    base = accessible_customers
+             .joins(:whatsapp_messages)
+             .select('customers.*, MAX(whatsapp_messages.timestamp) AS last_message_at')
+             .group('customers.id')
+             .order('MAX(whatsapp_messages.timestamp) DESC')
 
-    payload = customers.map { |c| conversation_summary(c) }
-    render_success(payload, 'Conversations retrieved')
+    total = accessible_customers.joins(:whatsapp_messages).distinct.count
+    scoped, pagination = paginate(base, total)
+
+    render_success(
+      { conversations: scoped.map { |c| conversation_summary(c) }, pagination: pagination },
+      'Conversations retrieved'
+    )
   end
 
   # GET /api/v2/whatsapp_us/customers/:id/messages
   def messages
-    msgs = @customer.whatsapp_messages
-                    .order(:timestamp, :created_at)
-                    .limit(params[:limit]&.to_i || 200)
+    base = @customer.whatsapp_messages.order(:timestamp, :created_at)
+    total = @customer.whatsapp_messages.count
+    scoped, pagination = paginate(base, total)
 
     render_success({
       customer: customer_brief(@customer),
       window_open: @customer.whatsapp_us_window_open?,
       last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601,
-      messages: msgs.map { |m| serialize_message(m) }
+      messages: scoped.map { |m| serialize_message(m) },
+      pagination: pagination
     }, 'Messages retrieved')
   end
 
@@ -141,6 +146,22 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
   def set_customer
     @customer = accessible_customers.find(params[:customer_id] || params[:id])
+  end
+
+  # Opt-in pagination: client sends `per_page` (and optionally `page`, 1-indexed).
+  # If `per_page` is absent or non-positive, no limit is applied and pagination
+  # is returned as nil so the caller knows the response wasn't sliced.
+  #
+  # Returns [scoped_relation, pagination_meta_or_nil].
+  def paginate(relation, total)
+    per_page = params[:per_page].to_i
+    return [relation, nil] unless per_page.positive?
+
+    page  = [params[:page].to_i, 1].max
+    pages = (total.to_f / per_page).ceil
+    scoped = relation.limit(per_page).offset((page - 1) * per_page)
+
+    [scoped, { page: page, per_page: per_page, total: total, total_pages: pages }]
   end
 
   # Role-based scope mirroring Api::V2::WhatsappController#accessible_customers
