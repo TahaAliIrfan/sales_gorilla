@@ -35,7 +35,9 @@
       "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/controllers/whatsapp_templates_controller.rb)",
       "Bash(xxd)",
       "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/services/phone_lookup_service.rb)",
-      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/models/customer.rb)"
+      "Bash(ruby -c /Users/taha/rails_2025/tecaudex_crm/app/models/customer.rb)",
+      "Bash(node --check --input-type=module)",
+      "Bash(ruby -rerb -e 'ERB.new\\(File.read\\(\"app/views/customers/_whatsapp_us.html.erb\"\\), trim_mode: \"-\"\\).src; puts \"ERB OK\"')"
     ],
     "additionalDirectories": [
       "/tmp"

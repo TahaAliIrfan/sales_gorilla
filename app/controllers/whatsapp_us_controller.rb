@@ -223,17 +223,19 @@ class WhatsappUsController < ApplicationController
     render json: { success: true, message: serialize(message) }
   end
 
-  # Outbound message with an uploaded document/image. The file is stored first
-  # so Twilio can fetch it from a signed URL, then the message is persisted with
-  # the same blob attached.
+  # Outbound message with an uploaded document/image/voice note. The file is
+  # stored first so Twilio can fetch it from a signed URL, then the message is
+  # persisted with the same blob attached. Audio formats Twilio doesn't accept
+  # (e.g. Chrome's audio/webm) are transcoded to ogg/opus before upload.
   def send_media_message(file, caption)
     validation = validate_media(file)
     return render_error(validation[:error]) unless validation[:valid]
 
+    normalized = WhatsappAudioTranscoder.normalize(file)
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: file.tempfile,
-      filename: file.original_filename,
-      content_type: file.content_type
+      io: normalized[:io],
+      filename: normalized[:filename],
+      content_type: normalized[:content_type]
     )
 
     result = TwilioWhatsappService.new.send_media(
@@ -273,7 +275,7 @@ class WhatsappUsController < ApplicationController
   ALLOWED_MEDIA_TYPES = %w[
     image/jpeg image/jpg image/png image/gif image/webp
     video/mp4 video/3gp video/webm
-    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac
+    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac audio/webm audio/aac audio/mp4
     application/pdf application/msword
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
     application/vnd.ms-excel

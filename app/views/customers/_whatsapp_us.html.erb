@@ -74,6 +74,37 @@
 
     <div data-whatsapp-us-target="error" class="hidden mb-2 rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700"></div>
 
+    <!-- Recording in progress -->
+    <div data-whatsapp-us-target="recordingBar"
+         class="hidden mb-2 flex items-center justify-between rounded-md bg-red-50 border border-red-200 px-3 py-2">
+      <div class="flex items-center gap-2 text-sm text-red-700">
+        <span class="inline-block h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
+        <span>Recording</span>
+        <span data-whatsapp-us-target="recordingTimer" class="font-mono">0:00</span>
+      </div>
+      <button type="button" data-action="click->whatsapp-us#stopRecording"
+              class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-white border border-red-300 text-red-700 hover:bg-red-50">
+        <svg class="h-3.5 w-3.5 mr-1" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+        Stop
+      </button>
+    </div>
+
+    <!-- Voice note preview (after stop, before send) -->
+    <div data-whatsapp-us-target="voicePreview"
+         class="hidden mb-2 flex items-center gap-2 rounded-md bg-emerald-50 border border-emerald-200 px-3 py-2">
+      <audio data-whatsapp-us-target="voicePlayer" controls class="flex-1 min-w-0 h-8"></audio>
+      <button type="button" data-action="click->whatsapp-us#sendVoiceNote" data-whatsapp-us-target="voiceSendButton"
+              class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">
+        Send
+      </button>
+      <button type="button" data-action="click->whatsapp-us#cancelVoice"
+              class="text-gray-400 hover:text-gray-600">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- Selected file preview -->
     <div data-whatsapp-us-target="filePreview" class="hidden mb-2 flex items-center justify-between rounded-md bg-gray-50 border border-gray-200 px-3 py-2">
       <div class="flex items-center gap-2 min-w-0">
@@ -105,6 +136,13 @@
                 class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+        </button>
+        <button type="button" data-action="click->whatsapp-us#startRecording" data-whatsapp-us-target="micButton"
+                title="Record a voice note"
+                class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 11-14 0M12 18v3m0-3a3 3 0 003-3V6a3 3 0 10-6 0v9a3 3 0 003 3z"/>
           </svg>
         </button>
         <input type="text" data-whatsapp-us-target="input" placeholder="Type a message..."

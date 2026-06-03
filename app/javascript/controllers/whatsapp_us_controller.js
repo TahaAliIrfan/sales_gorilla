@@ -9,7 +9,8 @@ export default class extends Controller {
                     "fileInput", "filePreview", "fileName", "attachButton",
                     "templateModal", "templateList", "templateError", "templateNotice", "syncButton",
                     "syncChatButton", "syncChatLabel",
-                    "unreachableBanner", "unreachableReason", "lookupButton"]
+                    "unreachableBanner", "unreachableReason", "lookupButton",
+                    "micButton", "recordingBar", "recordingTimer", "voicePreview", "voicePlayer", "voiceSendButton"]
 
   connect() {
     this.applyWindowState(this.windowOpenValue)
@@ -132,6 +133,7 @@ export default class extends Controller {
     if (this.hasInputTarget) this.inputTarget.disabled = !open
     if (this.hasSendButtonTarget) this.sendButtonTarget.disabled = !open
     if (this.hasAttachButtonTarget) this.attachButtonTarget.disabled = !open
+    if (this.hasMicButtonTarget) this.micButtonTarget.disabled = !open
     if (this.hasClosedNoticeTarget) this.closedNoticeTarget.classList.toggle("hidden", open)
     if (this.hasInputTarget) {
       this.inputTarget.placeholder = open ? "Type a message..." : "Reply window closed"
@@ -232,11 +234,16 @@ export default class extends Controller {
 
   mediaMarkup(m, outbound) {
     if (!m.media_url) return ""
+    const ct = m.media_content_type || ""
     const linkColor = outbound ? "text-white underline" : "text-emerald-700 underline"
-    if ((m.media_content_type || "").startsWith("image/")) {
+
+    if (ct.startsWith("image/")) {
       return `<a href="${m.media_url}" target="_blank" rel="noopener">
                 <img src="${m.media_url}" class="mb-1 max-h-48 rounded-md" alt="attachment" />
               </a>`
+    }
+    if (ct.startsWith("audio/")) {
+      return `<audio controls preload="metadata" src="${m.media_url}" class="mb-1 w-full h-8"></audio>`
     }
     return `<a href="${m.media_url}" target="_blank" rel="noopener" class="mb-1 flex items-center gap-1 text-sm ${linkColor}">
               <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,5 +548,147 @@ export default class extends Controller {
   }
   hideTemplateNotice() {
     if (this.hasTemplateNoticeTarget) this.templateNoticeTarget.classList.add("hidden")
+  }
+
+  // ---- Voice notes --------------------------------------------------------
+
+  // Browsers vary on what MediaRecorder accepts. We prefer formats Twilio
+  // will accept directly; if none match we record whatever and rely on the
+  // server-side transcoder (WhatsappAudioTranscoder) to convert to ogg/opus.
+  preferredMimeType() {
+    const candidates = [
+      "audio/ogg;codecs=opus",
+      "audio/mp4;codecs=mp4a.40.2",
+      "audio/mp4",
+      "audio/webm;codecs=opus",
+      "audio/webm"
+    ]
+    if (typeof MediaRecorder === "undefined") return null
+    return candidates.find((t) => MediaRecorder.isTypeSupported(t)) || ""
+  }
+
+  async startRecording() {
+    if (!this.windowOpenValue) return
+    if (this._recording) return
+    this.hideError()
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      this.showError("Voice notes aren't supported in this browser.")
+      return
+    }
+
+    try {
+      this._audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch (e) {
+      this.showError("Microphone permission denied.")
+      return
+    }
+
+    const mimeType = this.preferredMimeType()
+    try {
+      this._recorder = mimeType ? new MediaRecorder(this._audioStream, { mimeType })
+                                : new MediaRecorder(this._audioStream)
+    } catch (e) {
+      this.showError("Voice recording isn't supported in this browser.")
+      this._stopStream()
+      return
+    }
+
+    this._chunks = []
+    this._recordingMime = this._recorder.mimeType || "audio/webm"
+    this._recorder.addEventListener("dataavailable", (e) => { if (e.data.size > 0) this._chunks.push(e.data) })
+    this._recorder.addEventListener("stop", () => this._handleRecorded())
+    this._recorder.start()
+    this._recording = true
+    this._recordingStartedAt = Date.now()
+    this.recordingBarTarget.classList.remove("hidden")
+    this._tickTimer = setInterval(() => this._updateTimer(), 500)
+    this._updateTimer()
+    if (this.hasMicButtonTarget) this.micButtonTarget.disabled = true
+  }
+
+  stopRecording() {
+    if (!this._recording || !this._recorder) return
+    this._recorder.stop()
+    this._recording = false
+    clearInterval(this._tickTimer)
+    this._tickTimer = null
+    this.recordingBarTarget.classList.add("hidden")
+    this._stopStream()
+  }
+
+  _stopStream() {
+    if (this._audioStream) {
+      this._audioStream.getTracks().forEach((t) => t.stop())
+      this._audioStream = null
+    }
+  }
+
+  _updateTimer() {
+    const seconds = Math.floor((Date.now() - this._recordingStartedAt) / 1000)
+    const m = Math.floor(seconds / 60)
+    const s = String(seconds % 60).padStart(2, "0")
+    if (this.hasRecordingTimerTarget) this.recordingTimerTarget.textContent = `${m}:${s}`
+  }
+
+  _handleRecorded() {
+    const mime = this._recordingMime || "audio/webm"
+    const blob = new Blob(this._chunks, { type: mime })
+    this._voiceBlob = blob
+    this._voiceMime = mime
+
+    const url = URL.createObjectURL(blob)
+    if (this._lastVoiceUrl) URL.revokeObjectURL(this._lastVoiceUrl)
+    this._lastVoiceUrl = url
+    this.voicePlayerTarget.src = url
+    this.voicePreviewTarget.classList.remove("hidden")
+    if (this.hasMicButtonTarget) this.micButtonTarget.disabled = !this.windowOpenValue
+  }
+
+  cancelVoice() {
+    this._voiceBlob = null
+    this._voiceMime = null
+    this.voicePreviewTarget.classList.add("hidden")
+    if (this._lastVoiceUrl) { URL.revokeObjectURL(this._lastVoiceUrl); this._lastVoiceUrl = null }
+    this.voicePlayerTarget.removeAttribute("src")
+  }
+
+  async sendVoiceNote() {
+    if (!this._voiceBlob || !this.windowOpenValue) return
+
+    const ext = this._extensionFor(this._voiceMime)
+    const file = new File([this._voiceBlob], `voice-note-${Date.now()}.${ext}`, { type: this._voiceMime })
+
+    this.voiceSendButtonTarget.disabled = true
+    this.hideError()
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      const response = await fetch(`/customers/${this.customerIdValue}/whatsapp_us`, {
+        method: "POST",
+        headers: { Accept: "application/json", "X-CSRF-Token": this.csrfToken },
+        body: formData
+      })
+      const data = await response.json()
+      if (response.ok && data.success) {
+        this.cancelVoice()
+        this.loadMessages()
+      } else {
+        this.showError(data.error || "Failed to send voice note")
+        if (response.status === 403) this.applyWindowState(false)
+      }
+    } catch (e) {
+      this.showError("Network error — please try again")
+    } finally {
+      this.voiceSendButtonTarget.disabled = false
+    }
+  }
+
+  _extensionFor(mime) {
+    if (!mime) return "webm"
+    if (mime.startsWith("audio/ogg")) return "ogg"
+    if (mime.startsWith("audio/mp4")) return "m4a"
+    if (mime.startsWith("audio/mpeg")) return "mp3"
+    return "webm"
   }
 }

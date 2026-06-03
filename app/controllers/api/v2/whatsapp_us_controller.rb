@@ -152,10 +152,11 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     validation = validate_media(file)
     return render_error(validation[:error], nil, :unprocessable_entity) unless validation[:valid]
 
+    normalized = WhatsappAudioTranscoder.normalize(file)
     blob = ActiveStorage::Blob.create_and_upload!(
-      io: file.tempfile,
-      filename: file.original_filename,
-      content_type: file.content_type
+      io: normalized[:io],
+      filename: normalized[:filename],
+      content_type: normalized[:content_type]
     )
 
     result = TwilioWhatsappService.new.send_media(
@@ -211,7 +212,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   ALLOWED_MEDIA_TYPES = %w[
     image/jpeg image/jpg image/png image/gif image/webp
     video/mp4 video/3gp video/webm
-    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac
+    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac audio/webm audio/aac audio/mp4
     application/pdf application/msword
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
     application/vnd.ms-excel
