@@ -67,27 +67,55 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   end
 
   # POST /api/v2/whatsapp_us/customers/:id/send_template
-  # Body: { content_sid: "HX...", variables: { "customer_name" => "Taha", ... } }
+  # JSON:      { content_sid: "HX...", variables: { "customer_name" => "Taha", ... } }
+  # Multipart: same fields as form-data, plus `file` for templates whose media URL
+  #            references a variable (e.g. Cost Calculator Report). The file is
+  #            uploaded to Active Storage and its signed_id substituted into the
+  #            template's media variable(s); Twilio fetches it via
+  #            WhatsappMediaController (`https://crm.tecaudex.com/wa/media/{{1}}`).
   def send_template
     template = WhatsappTemplate.approved.find_by(content_sid: params[:content_sid])
     return render_error('Template not found or not approved', nil, :not_found) unless template
     return render_error('Customer has no phone number', nil, :unprocessable_entity) if @customer.phone.blank?
 
-    variables = sanitize_variables(template, params[:variables])
+    variables  = sanitize_variables(template, params[:variables])
+    file       = params[:file]
+    media_blob = nil
 
+    if template.requires_media_upload?
+      return render_error('This template requires a file attachment', nil, :unprocessable_entity) if file.blank?
+
+      validation = validate_media(file)
+      return render_error(validation[:error], nil, :unprocessable_entity) unless validation[:valid]
+
+      media_blob = ActiveStorage::Blob.create_and_upload!(
+        io:           file.tempfile,
+        filename:     file.original_filename,
+        content_type: file.content_type
+      )
+      media_token = media_blob.signed_id(expires_in: 7.days)
+      template.media_variable_keys.each { |k| variables[k] = media_token }
+    end
+
+    rendered_body = template.render_body(variables.except(*template.media_variable_keys))
     result = TwilioWhatsappService.new.send_template(
       to_phone:          @customer.phone,
       content_sid:       template.content_sid,
       content_variables: variables
     )
-    return render_error(result[:error] || 'Failed to send template', nil, :unprocessable_entity) unless result[:success]
+
+    unless result[:success]
+      media_blob&.purge_later
+      return render_error(result[:error] || 'Failed to send template', nil, :unprocessable_entity)
+    end
 
     message = persist_outbound(
       sid:    result[:sid],
       status: result[:status],
-      body:   template.render_body(variables),
+      body:   rendered_body,
       extra:  { template_sid: template.content_sid, template_name: template.friendly_name }
     )
+    message.media.attach(media_blob) if media_blob
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)

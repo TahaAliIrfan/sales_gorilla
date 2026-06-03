@@ -60,6 +60,9 @@ class TwilioWhatsappController < ApplicationController
     message = WhatsappMessage.find_by(message_id: params[:MessageSid])
     if message
       message.update(status: params[:MessageStatus], metadata: (message.metadata || {}).merge(status_metadata))
+      # Push the new tick (delivered/read/failed) to subscribed clients so the
+      # message bubble updates without a poll. Clients upsert by id.
+      WhatsappUsBroadcaster.broadcast(message)
       Rails.logger.info("[TwilioWhatsapp] status #{params[:MessageStatus]} for #{params[:MessageSid]}")
     end
     head :ok
