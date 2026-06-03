@@ -16,7 +16,15 @@ require 'tempfile'
 # Returns { io:, filename:, content_type: } — the shape
 # ActiveStorage::Blob.create_and_upload! expects.
 class WhatsappAudioTranscoder
-  TWILIO_AUDIO_OK = %w[audio/aac audio/mp4 audio/mpeg audio/amr audio/ogg].freeze
+  TWILIO_AUDIO_OK = %w[audio/aac audio/mp4 audio/mpeg audio/amr audio/ogg audio/3gpp].freeze
+
+  # Common content-type aliases browsers/mobile send → the canonical Twilio
+  # form. Mapping lets the file pass through unchanged but uploaded with the
+  # canonical content-type so Twilio is happy.
+  ALIAS_MAP = {
+    'audio/x-m4a' => 'audio/mp4',
+    'audio/mp3'   => 'audio/mpeg'
+  }.freeze
 
   def self.normalize(uploaded_file)
     new(uploaded_file).normalize
@@ -24,13 +32,13 @@ class WhatsappAudioTranscoder
 
   def initialize(uploaded_file)
     @file         = uploaded_file
-    @content_type = uploaded_file.content_type.to_s
+    @content_type = bare(uploaded_file.content_type)
     @filename     = uploaded_file.original_filename.to_s
   end
 
   def normalize
     return passthrough unless audio?
-    return passthrough if twilio_compatible?
+    return passthrough(ALIAS_MAP[@content_type] || @content_type) if twilio_compatible?
 
     transcoded = transcode_to_ogg
     return transcoded if transcoded
@@ -41,16 +49,22 @@ class WhatsappAudioTranscoder
 
   private
 
+  # Strip "audio/mp4; codecs=mp4a.40.2" → "audio/mp4".
+  def bare(ct)
+    ct.to_s.split(';').first.to_s.strip.downcase
+  end
+
   def audio?
     @content_type.start_with?('audio/')
   end
 
   def twilio_compatible?
-    TWILIO_AUDIO_OK.include?(@content_type)
+    canonical = ALIAS_MAP[@content_type] || @content_type
+    TWILIO_AUDIO_OK.include?(canonical)
   end
 
-  def passthrough
-    { io: @file.tempfile, filename: @filename, content_type: @content_type }
+  def passthrough(content_type_override = nil)
+    { io: @file.tempfile, filename: @filename, content_type: content_type_override || @content_type }
   end
 
   def transcode_to_ogg

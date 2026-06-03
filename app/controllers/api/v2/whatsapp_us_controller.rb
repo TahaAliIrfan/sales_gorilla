@@ -10,7 +10,7 @@
 #   GET    /api/v2/whatsapp_us/templates                  — list approved templates
 #   POST   /api/v2/whatsapp_us/templates/sync             — admin-only: pull from Twilio
 class Api::V2::WhatsappUsController < Api::V2::BaseController
-  before_action :set_customer, only: [:messages, :send_message, :send_template]
+  before_action :set_customer, only: [:messages, :send_message, :send_template, :mark_read]
 
   # GET /api/v2/whatsapp_us/conversations
   # Customers the caller can see who have at least one WhatsApp message,
@@ -85,6 +85,31 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     render_success({ message: serialize_message(message) }, 'Template sent')
+  end
+
+  # POST /api/v2/whatsapp_us/customers/:customer_id/mark_read
+  # Body (optional):
+  #   up_to_message_id: integer   — mark inbound unreads with id <= this
+  #   up_to_timestamp:  ISO8601   — mark inbound unreads with timestamp <= this
+  # If neither is given, marks every inbound unread for this customer.
+  # Returns { marked, remaining_unread }.
+  def mark_read
+    scope = @customer.whatsapp_messages.where(direction: 'inbound', status: 'received')
+
+    if params[:up_to_message_id].present?
+      scope = scope.where('id <= ?', params[:up_to_message_id].to_i)
+    elsif params[:up_to_timestamp].present?
+      cutoff = Time.iso8601(params[:up_to_timestamp]) rescue nil
+      return render_error('Invalid up_to_timestamp', nil, :unprocessable_entity) unless cutoff
+      scope = scope.where('timestamp <= ?', cutoff)
+    end
+
+    marked = scope.update_all(status: 'read', updated_at: Time.current)
+    remaining = @customer.whatsapp_messages
+                          .where(direction: 'inbound', status: 'received')
+                          .count
+
+    render_success({ marked: marked, remaining_unread: remaining }, 'Marked as read')
   end
 
   # GET /api/v2/whatsapp_us/templates
@@ -212,7 +237,8 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   ALLOWED_MEDIA_TYPES = %w[
     image/jpeg image/jpg image/png image/gif image/webp
     video/mp4 video/3gp video/webm
-    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac audio/webm audio/aac audio/mp4
+    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/x-m4a
+    audio/flac audio/webm audio/aac audio/mp4 audio/amr audio/3gpp
     application/pdf application/msword
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
     application/vnd.ms-excel
@@ -224,14 +250,22 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
   def validate_media(file)
     return { valid: false, error: 'No file provided' } unless file.respond_to?(:content_type)
-    unless ALLOWED_MEDIA_TYPES.include?(file.content_type)
-      return { valid: false, error: "File type '#{file.content_type}' is not supported" }
+
+    bare = bare_content_type(file.content_type)
+    unless ALLOWED_MEDIA_TYPES.include?(bare)
+      return { valid: false, error: "File type '#{bare}' is not supported" }
     end
     if file.size > MAX_MEDIA_BYTES
       return { valid: false, error: "File is too large (max #{MAX_MEDIA_BYTES / 1.megabyte}MB)" }
     end
 
     { valid: true }
+  end
+
+  # Strip parameters like "audio/mp4; codecs=mp4a.40.2" → "audio/mp4" so the
+  # allow-list comparison isn't defeated by a benign codec hint.
+  def bare_content_type(ct)
+    ct.to_s.split(';').first.to_s.strip.downcase
   end
 
   # ---- serializers --------------------------------------------------------

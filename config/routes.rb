@@ -364,6 +364,7 @@ Rails.application.routes.draw do
         get  'customers/:customer_id/messages',     action: :messages,       as: :whatsapp_us_customer_messages
         post 'customers/:customer_id/send',         action: :send_message,   as: :whatsapp_us_send_message
         post 'customers/:customer_id/send_template', action: :send_template, as: :whatsapp_us_send_template
+        post 'customers/:customer_id/mark_read',    action: :mark_read,      as: :whatsapp_us_mark_read
         get  'templates',                           action: :templates,      as: :whatsapp_us_templates
         post 'templates/sync',                      action: :sync_templates, as: :whatsapp_us_sync_templates
       end

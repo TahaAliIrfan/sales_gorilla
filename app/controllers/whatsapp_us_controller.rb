@@ -275,7 +275,8 @@ class WhatsappUsController < ApplicationController
   ALLOWED_MEDIA_TYPES = %w[
     image/jpeg image/jpg image/png image/gif image/webp
     video/mp4 video/3gp video/webm
-    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/flac audio/webm audio/aac audio/mp4
+    audio/mpeg audio/mp3 audio/ogg audio/wav audio/m4a audio/x-m4a
+    audio/flac audio/webm audio/aac audio/mp4 audio/amr audio/3gpp
     application/pdf application/msword
     application/vnd.openxmlformats-officedocument.wordprocessingml.document
     application/vnd.ms-excel
@@ -289,14 +290,22 @@ class WhatsappUsController < ApplicationController
 
   def validate_media(file)
     return { valid: false, error: 'No file provided' } unless file.respond_to?(:content_type)
-    unless ALLOWED_MEDIA_TYPES.include?(file.content_type)
-      return { valid: false, error: "File type '#{file.content_type}' is not supported" }
+
+    bare = bare_content_type(file.content_type)
+    unless ALLOWED_MEDIA_TYPES.include?(bare)
+      return { valid: false, error: "File type '#{bare}' is not supported" }
     end
     if file.size > MAX_MEDIA_BYTES
       return { valid: false, error: "File is too large (max #{MAX_MEDIA_BYTES / 1.megabyte}MB)" }
     end
 
     { valid: true }
+  end
+
+  # Strip parameters like "audio/mp4; codecs=mp4a.40.2" → "audio/mp4" so the
+  # allow-list comparison isn't defeated by a benign codec hint.
+  def bare_content_type(ct)
+    ct.to_s.split(';').first.to_s.strip.downcase
   end
 
   def set_customer
