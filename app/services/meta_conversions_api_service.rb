@@ -109,6 +109,7 @@ class MetaConversionsApiService
 
   # Synthetic test event used by the Settings > Features > Meta "Send test"
   # button. Doesn't write a MetaConversionLog (no real customer involved).
+  # Returns { success:, body:, payload:, fbtrace_id:, messages:, events_received: }.
   def send_test_event
     return { success: false, error: "Meta credentials are not configured" } unless credentials_configured?
 
@@ -129,10 +130,86 @@ class MetaConversionsApiService
       }
     }
 
-    post(build_payload([ event ]))
+    payload = build_payload([ event ])
+    result = post(payload)
+    enrich_test_result(result, payload)
+  end
+
+  # Verifies the configured credentials by fetching pixel metadata from Meta's
+  # Graph API. Note: this endpoint requires `ads_management` permission on the
+  # access token, which CAPI-only system-user tokens often DON'T have. A
+  # "permission missing" error here does NOT mean events will fail — those go
+  # through a different endpoint with looser scope requirements. We tag the
+  # result with `permission_only_error: true` so the UI can explain that.
+  #
+  # Returns { ok:, name:, id:, creation_time:, error:, permission_only_error:, ... }.
+  def verify_pixel
+    return { ok: false, error: "Meta credentials are not configured" } unless credentials_configured?
+
+    uri = URI.parse("https://graph.facebook.com/v25.0/#{@pixel_id}?fields=name,id,creation_time&access_token=#{@access_token}")
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+
+    response = http.request(Net::HTTP::Get.new(uri.request_uri))
+    body = JSON.parse(response.body) rescue {}
+
+    if response.is_a?(Net::HTTPSuccess) && body["id"].present?
+      return {
+        ok: true,
+        name: body["name"],
+        id: body["id"],
+        creation_time: body["creation_time"]
+      }
+    end
+
+    error = body["error"] || {}
+    error_code = error["code"]
+    error_message = error["message"]
+
+    # Meta returns code 100 + "Missing Permission" / "permission" when the
+    # token lacks `ads_management`. CAPI sending works without it, so this is
+    # informational, not a config failure.
+    permission_only = error_code == 100 &&
+                      error_message.to_s.downcase.include?("permission")
+
+    {
+      ok: false,
+      error: error_message || "HTTP #{response.code}",
+      type: error["type"],
+      code: error_code,
+      fbtrace_id: error["fbtrace_id"],
+      permission_only_error: permission_only
+    }
+  rescue StandardError => e
+    Rails.logger.error("[MetaConversionsAPI] verify_pixel failed: #{e.message}")
+    { ok: false, error: e.message }
+  end
+
+  # URL of the pixel's page in Meta Events Manager. Deep-links to Test Events
+  # when a test_event_code is configured, otherwise to the pixel overview.
+  def events_manager_url
+    return nil if @pixel_id.blank?
+
+    base = "https://business.facebook.com/events_manager2/list/pixel/#{@pixel_id}"
+    @test_event_code.present? ? "#{base}/test_events" : base
   end
 
   private
+
+  # Pulls Meta's diagnostic fields (fbtrace_id, messages, events_received) up
+  # to the top level of the result hash, and adds the request payload so the
+  # UI can render a richer "what was sent / what Meta returned" view.
+  def enrich_test_result(result, payload)
+    body = result[:body] || {}
+    error = body.is_a?(Hash) ? body["error"] : nil
+
+    result.merge(
+      payload: payload,
+      events_received: body.is_a?(Hash) ? body["events_received"] : nil,
+      fbtrace_id: (body.is_a?(Hash) ? body["fbtrace_id"] : nil) || (error.is_a?(Hash) ? error["fbtrace_id"] : nil),
+      messages: body.is_a?(Hash) ? Array(body["messages"]) : []
+    )
+  end
 
   # Boolean presence map for Meta user_data identifiers. Used by the match
   # quality preview. If a customer is supplied, checks the real record;

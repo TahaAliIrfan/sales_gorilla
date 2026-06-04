@@ -36,7 +36,7 @@
                 <div data-status-updater-target="dropdown"
                      class="hidden absolute top-full left-0 z-20 mt-2 max-h-96 w-64 overflow-y-auto rounded-lg bg-panel py-1 shadow-lift ring-1 ring-[var(--color-line-2)]">
                   <p class="micro sticky top-0 border-b border-[var(--color-line)] bg-panel px-3 py-2">Update status</p>
-                  <% Customer::STATUSES.values.each do |status| %>
+                  <% current_organization.taxonomy_values("customer_status").each do |status| %>
                     <button type="button"
                             data-action="click->status-updater#updateStatus"
                             data-status="<%= status %>"

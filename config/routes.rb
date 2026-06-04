@@ -332,7 +332,17 @@ Rails.application.routes.draw do
     namespace :settings do
       resources :features, only: %i[index update], param: :key,
                 constraints: { key: /[a-z_]+/ } do
-        member { post :test }
+        member do
+          post :test    # provider-specific diagnostic (e.g. send a test event)
+          post :verify  # provider-specific credential verification
+        end
+      end
+
+      # Editable lookup lists (lead sources, statuses, project types …).
+      # Admin-only via TaxonomyPolicy.
+      resources :taxonomies, only: %i[index create update destroy] do
+        collection { post :reorder }
+        member     { get  :usage }
       end
     end
 

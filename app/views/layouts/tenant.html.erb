@@ -97,6 +97,9 @@
           <% if policy(OrganizationFeature).index? %>
             <%= nav_link "Features", settings_features_path, icon: "grid" %>
           <% end %>
+          <% if policy(Taxonomy).index? %>
+            <%= nav_link "Lists & statuses", settings_taxonomies_path, icon: "doc" %>
+          <% end %>
           <%= nav_link "Settings", settings_path, icon: "cog" %>
         </nav>
 

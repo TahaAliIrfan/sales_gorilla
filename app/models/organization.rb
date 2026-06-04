@@ -2,6 +2,7 @@ class Organization < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
   has_many :features, class_name: "OrganizationFeature", dependent: :destroy
+  has_many :taxonomies, dependent: :destroy
 
   has_one_attached :logo
 
@@ -39,6 +40,16 @@ class Organization < ApplicationRecord
 
   def calling
     @calling ||= Calling::Facade.new(self) if defined?(Calling::Facade)
+  end
+
+  # Convenience: active taxonomy values for one kind, in display order.
+  # Replaces direct reads of Customer::LEAD_SOURCES etc. in views.
+  def taxonomy_values(kind)
+    taxonomies.where(kind: kind.to_s, archived: false).order(:position, :id).pluck(:name)
+  end
+
+  def taxonomy_options(kind)
+    taxonomy_values(kind).map { |n| [ n, n ] }
   end
 
   private

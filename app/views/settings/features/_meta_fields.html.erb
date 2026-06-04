@@ -32,6 +32,8 @@
 
 <div data-controller="meta-test"
      data-meta-test-url-value="<%= test_settings_feature_path(key: feature.key) %>"
+     data-meta-test-verify-url-value="<%= verify_settings_feature_path(key: feature.key) %>"
+     data-meta-test-events-manager-url-value="<%= service.events_manager_url.to_s %>"
      class="space-y-5 rounded-lg bg-paper/40 p-4 ring-1 ring-[var(--color-line-2)]">
 
   <%# ── Credentials ─────────────────────────────────────────────────────── %>
@@ -101,7 +103,7 @@
     <%= hidden_field_tag "organization_feature[settings][eligible_sources][]", "" %>
     <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
       <% enabled_sources = Array(s["eligible_sources"]).presence || OrganizationFeature::META_DEFAULT_ELIGIBLE_SOURCES %>
-      <% Customer::LEAD_SOURCES.values.each do |src| %>
+      <% current_organization.taxonomy_values("lead_source").each do |src| %>
         <label class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
           <%= check_box_tag "organization_feature[settings][eligible_sources][]", src,
                 enabled_sources.include?(src),
@@ -211,7 +213,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-[var(--color-line-2)]">
-          <% Customer::STATUSES.values.each do |status| %>
+          <% current_organization.taxonomy_values("customer_status").each do |status| %>
             <% current = status_mappings[status] %>
             <tr class="bg-panel">
               <td class="px-3 py-2 align-middle font-medium text-ink"><%= status %></td>
@@ -279,10 +281,21 @@
     <% end %>
   </div>
 
-  <%# ── Diagnostics: Send test event ────────────────────────────────────── %>
-  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
+  <%# ── Diagnostics ─────────────────────────────────────────────────────── %>
+  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
     <p class="micro" style="color: var(--color-ink-soft)">Diagnostics</p>
-    <div class="flex flex-wrap items-center gap-3">
+
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button"
+              data-action="meta-test#verify"
+              data-meta-test-target="verifyButton"
+              class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] disabled:opacity-60 disabled:cursor-not-allowed">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        Verify pixel
+      </button>
+
       <button type="button"
               data-action="meta-test#send"
               data-meta-test-target="button"
@@ -292,11 +305,28 @@
         </svg>
         Send test event
       </button>
-      <span data-meta-test-target="result" class="text-sm"></span>
+
+      <% if service.credentials_configured? && service.events_manager_url.present? %>
+        <a href="<%= service.events_manager_url %>" target="_blank" rel="noopener"
+           class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink-soft transition hover:text-ink">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+          </svg>
+          Open in Events Manager
+        </a>
+      <% end %>
     </div>
+
+    <%# Result panel — populated by the meta-test Stimulus controller. %>
+    <div data-meta-test-target="result"
+         class="hidden rounded-md bg-paper/40 p-3 text-sm ring-1 ring-[var(--color-line-2)]">
+    </div>
+
     <p class="mono text-[11px] text-ink-soft/70">
-      Sends a synthetic <b>Lead</b> event with dummy user data. Useful to verify your credentials and test event code before going live.
-      Test events are saved by Meta but not by us (no MetaConversionLog row created).
+      <b>Verify pixel</b> confirms the access token actually owns this pixel ID.
+      <b>Send test event</b> posts a synthetic <code>Lead</code> with dummy user data —
+      if a <em>Test event code</em> is set, watch the event arrive in Events Manager's
+      <b>Test events</b> tab.
     </p>
   </div>
 </div>

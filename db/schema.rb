@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_05_023247) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_05_031519) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -834,6 +834,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_023247) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
+  create_table "taxonomies", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "archived", default: false, null: false
+    t.boolean "system_default", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "kind", "name"], name: "index_taxonomies_on_organization_id_and_kind_and_name", unique: true
+    t.index ["organization_id", "kind", "position"], name: "index_taxonomies_on_organization_id_and_kind_and_position"
+    t.index ["organization_id"], name: "index_taxonomies_on_organization_id"
+  end
+
   create_table "user_kpi_records", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "record_date", null: false
@@ -1019,6 +1033,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_023247) do
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "organizations"
   add_foreign_key "tasks", "users"
+  add_foreign_key "taxonomies", "organizations"
   add_foreign_key "user_kpi_records", "organizations"
   add_foreign_key "user_kpi_records", "users"
   add_foreign_key "user_pipeline_assignments", "organizations"

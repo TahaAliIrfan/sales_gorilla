@@ -4,7 +4,7 @@
 class Settings::FeaturesController < TenantController
   before_action :require_login
   before_action :load_features, only: %i[index]
-  before_action :load_feature,  only: %i[update test]
+  before_action :load_feature,  only: %i[update test verify]
 
   def index
     authorize OrganizationFeature
@@ -32,6 +32,23 @@ class Settings::FeaturesController < TenantController
                MetaConversionsApiService.new(organization: current_organization).send_test_event
              else
                { success: false, error: "No test handler for #{@feature.key}" }
+             end
+
+    render json: result
+  end
+
+  # Verifies the configured credentials map to a real provider resource. For
+  # meta_conversions this fetches pixel metadata from Meta's Graph API,
+  # catching the "wrong pixel id" or "wrong token" failure mode before any
+  # real event is sent.
+  def verify
+    authorize @feature, :update?
+
+    result = case @feature.key
+             when "meta_conversions"
+               MetaConversionsApiService.new(organization: current_organization).verify_pixel
+             else
+               { ok: false, error: "No verify handler for #{@feature.key}" }
              end
 
     render json: result

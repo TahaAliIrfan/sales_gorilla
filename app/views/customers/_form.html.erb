@@ -114,7 +114,7 @@
       <div class="grid gap-5 md:grid-cols-2">
         <div>
           <%= form.label :lead_source, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-          <%= form.select :lead_source, Customer::LEAD_SOURCES.keys,
+          <%= form.select :lead_source, current_organization.taxonomy_values("lead_source"),
                 { include_blank: "Select source" },
                 class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
                 data: { action: "change->lead-source#toggleCcrFields", "lead-source-target": "select" } %>
@@ -139,7 +139,7 @@
         </div>
 
         <%= render "shared/form_field", f: form, field: :project_type, type: "select",
-              options: Customer::PROJECT_TYPES.keys.zip(Customer::PROJECT_TYPES.values) %>
+              options: current_organization.taxonomy_options("project_type") %>
         <%= render "shared/form_field", f: form, field: :platform, type: "select",
               options: Customer::PLATFORMS.keys.zip(Customer::PLATFORMS.values) %>
         <%= render "shared/form_field", f: form, field: :project_scope, type: "select",
@@ -156,7 +156,7 @@
   <%= render "shared/panel", eyebrow: "Status & communication" do %>
     <div class="grid gap-5 md:grid-cols-2">
       <%= render "shared/form_field", f: form, field: :status, type: "select",
-            options: Customer::STATUSES.keys.zip(Customer::STATUSES.values) %>
+            options: current_organization.taxonomy_options("customer_status") %>
 
       <% if current_user&.admin? %>
         <div>
@@ -169,19 +169,19 @@
       <% end %>
 
       <%= render "shared/form_field", f: form, field: :call_status, type: "select",
-            options: Customer::CALL_STATUSES.keys.zip(Customer::CALL_STATUSES.values) %>
+            options: current_organization.taxonomy_options("call_status") %>
       <%= render "shared/form_field", f: form, field: :preferred_calling_time,
             label: "Preferred calling time" %>
       <%= render "shared/form_field", f: form, field: :email_status, type: "select",
-            options: Customer::EMAIL_STATUSES.keys.zip(Customer::EMAIL_STATUSES.values) %>
+            options: current_organization.taxonomy_options("email_status") %>
       <%= render "shared/form_field", f: form, field: :whatsapp_status, type: "select",
-            options: Customer::WHATSAPP_STATUSES.keys.zip(Customer::WHATSAPP_STATUSES.values) %>
+            options: current_organization.taxonomy_options("whatsapp_status") %>
       <%= render "shared/form_field", f: form, field: :linkedin_status, type: "select",
-            options: Customer::LINKEDIN_STATUSES.keys.zip(Customer::LINKEDIN_STATUSES.values) %>
+            options: current_organization.taxonomy_options("linkedin_status") %>
       <%= render "shared/form_field", f: form, field: :upwork_profile, type: "select",
             options: Customer::UPWORK_PROFILES.keys.zip(Customer::UPWORK_PROFILES.values) %>
       <%= render "shared/form_field", f: form, field: :exhaust_status, type: "select",
-            options: Customer::EXHAUST_STATUSES.keys.zip(Customer::EXHAUST_STATUSES.values) %>
+            options: current_organization.taxonomy_options("exhaust_status") %>
 
       <div class="md:col-span-2">
         <%= render "shared/form_field", f: form, field: :repeat_lead, type: "checkbox",

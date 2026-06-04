@@ -42,7 +42,6 @@ class Customer < ApplicationRecord
   }.freeze
 
   LEAD_SOURCES = {
-    "Upwork" => "Upwork",
     "LinkedIn" => "LinkedIn",
     "Email Marketing" => "Email Marketing",
     "Social Media Platforms" => "Social Media Platforms",
@@ -158,17 +157,42 @@ class Customer < ApplicationRecord
   validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
   validate :acceptable_documents
   validates :customer_type, inclusion: { in: CUSTOMER_TYPES.values }
-  validates :lead_source, inclusion: { in: LEAD_SOURCES.values }, allow_blank: true
-  validates :project_type, inclusion: { in: PROJECT_TYPES.values }, allow_blank: true
-  validates :status, inclusion: { in: STATUSES.values }, allow_blank: true
-  validates :call_status, inclusion: { in: CALL_STATUSES.values }, allow_blank: true
-  validates :email_status, inclusion: { in: EMAIL_STATUSES.values }, allow_blank: true
-  validates :whatsapp_status, inclusion: { in: WHATSAPP_STATUSES.values }, allow_blank: true
-  validates :linkedin_status, inclusion: { in: LINKEDIN_STATUSES.values }, allow_blank: true
+  # Taxonomy-backed fields (per-org editable lists at Settings > Taxonomies).
+  # Allow blank, and skip the validation when no taxonomy rows exist for the
+  # kind yet (e.g. fresh org before backfill). Skip when no tenant is set so
+  # background jobs and migrations can mass-update without bootstrapping.
+  validate :validate_taxonomy_fields
+
+  # Platform / project_scope / upwork_profile remain frozen-constant for now —
+  # they're rarely changed and not requested by admins. Leaving the existing
+  # inclusion validators in place.
   validates :upwork_profile, inclusion: { in: UPWORK_PROFILES.values }, allow_blank: true
-  validates :exhaust_status, inclusion: { in: EXHAUST_STATUSES.values }, allow_blank: true
   validates :platform, inclusion: { in: PLATFORMS.values }, allow_blank: true
   validates :project_scope, inclusion: { in: PROJECT_SCOPES.values }, allow_blank: true
+
+  # Validates each Taxonomy-backed column against the org's active values.
+  # Permissive about EXISTING orphaned values (e.g. customers with the old
+  # "Upwork" lead_source) — they save through unchanged. Only rejects NEW
+  # writes that don't match a taxonomy row.
+  def validate_taxonomy_fields
+    return unless organization
+
+    Taxonomy::CUSTOMER_COLUMN.each do |kind, attr|
+      value = self[attr]
+      next if value.blank?
+
+      # Allow records to keep an orphaned value if they had it before this
+      # write (e.g. data predates the taxonomy). Use *_was via dirty tracking.
+      previous = public_send("#{attr}_was")
+      next if value == previous
+
+      allowed = organization.taxonomy_values(kind)
+      next if allowed.empty?
+      next if allowed.include?(value)
+
+      errors.add(attr, "'#{value}' is not a valid #{kind.tr('_', ' ')}")
+    end
+  end
 
   # callbacks
   before_validation :normalize_email
