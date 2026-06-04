@@ -1,0 +1,30 @@
+<%# app/views/layouts/relay.html.erb — Relay console shell %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || current_organization&.name || "Relay" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "relay/fonts", "relay/colors_and_type", "relay/tokens",
+                            "relay/components", "relay/components-data", "relay/components-nav",
+                            "relay/app", "relay/shell", "data-turbo-track": "reload" %>
+    <%= relay_brand_style_tag(current_organization) %>
+    <%= javascript_importmap_tags %>
+    <%= yield :head %>
+  </head>
+
+  <body data-controller="relay--command-palette"
+        data-action="keydown@window->relay--command-palette#keydown">
+    <div class="app" data-controller="relay--sidebar">
+      <%= render "relay/shared/sidebar" %>
+      <div class="app__main">
+        <%= render "relay/shared/topbar" %>
+        <main class="app__body" id="relay_body"><%= yield %></main>
+      </div>
+    </div>
+
+    <%= render "relay/shared/command_palette" %>
+    <%= render "relay/shared/toasts" %>
+  </body>
+</html>

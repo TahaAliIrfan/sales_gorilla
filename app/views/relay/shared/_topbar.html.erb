@@ -1,0 +1,68 @@
+<%# app/views/relay/shared/_topbar.html.erb %>
+<header class="app__top">
+  <div class="app__search" role="button" data-action="click->relay--command-palette#open">
+    <%= relay_icon("search", size: 16) %>
+    <input readonly placeholder="Search leads, deals, actions…">
+    <span class="rl-kbd">⌘K</span>
+  </div>
+  <div class="grow"></div>
+
+  <%# Quick add %>
+  <span data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+    <button class="rl-btn rl-btn--primary rl-btn--sm" data-action="click->relay--dropdown#toggle">
+      <%= relay_icon("plus", size: 15) %>New<%= relay_icon("chevron-down", size: 14) %>
+    </button>
+    <div class="menu-float pop" hidden data-relay--dropdown-target="menu" style="top:calc(100% + 8px);right:0">
+      <div class="rl-menu" style="width:210px">
+        <%= link_to new_customer_path, class: "rl-menuitem" do %><%= relay_icon("user-plus") %>Add lead<% end %>
+        <%= link_to new_deal_path, class: "rl-menuitem" do %><%= relay_icon("circle-dollar-sign") %>Create deal<% end %>
+        <%= link_to new_task_path, class: "rl-menuitem" do %><%= relay_icon("check-square") %>Add task<% end %>
+        <div class="rl-menu__sep"></div>
+        <%= link_to new_campaign_path, class: "rl-menuitem" do %><%= relay_icon("megaphone") %>New campaign<% end %>
+        <%= link_to new_csv_import_path, class: "rl-menuitem" do %><%= relay_icon("upload") %>Import CSV<% end %>
+      </div>
+    </div>
+  </span>
+
+  <%= link_to "/calling", class: "rl-iconbtn rl-iconbtn--bordered", title: "Dialer" do %>
+    <%= relay_icon("phone", size: 17) %>
+  <% end %>
+
+  <%# Notifications %>
+  <span data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+    <button class="rl-iconbtn rl-iconbtn--bordered" style="position:relative" title="Notifications"
+            data-action="click->relay--dropdown#toggle">
+      <%= relay_icon("bell", size: 17) %>
+      <% unread = current_user ? current_user.notifications.unread.count : 0 %>
+      <% if unread > 0 %><span class="dotcount"><%= unread > 99 ? "99+" : unread %></span><% end %>
+    </button>
+    <div class="menu-float pop" hidden data-relay--dropdown-target="menu"
+         style="top:calc(100% + 8px);right:0" data-action="click->relay--dropdown#noop">
+      <%= render "relay/shared/notifications" %>
+    </div>
+  </span>
+
+  <%# Profile %>
+  <span data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+    <button style="border:none;background:none;padding:0;display:inline-flex;cursor:pointer"
+            data-action="click->relay--dropdown#toggle">
+      <span class="rl-avatar rl-avatar--sm rl-avatar--c1"><%= current_user&.name.to_s.split.map(&:first).join[0, 2].to_s.upcase %></span>
+    </button>
+    <div class="menu-float pop" hidden data-relay--dropdown-target="menu" style="top:calc(100% + 8px);right:0">
+      <div class="rl-menu" style="width:230px">
+        <div style="padding:8px 10px 10px;display:flex;gap:10px;align-items:center">
+          <span class="rl-avatar rl-avatar--c1"><%= current_user&.name.to_s.split.map(&:first).join[0, 2].to_s.upcase %></span>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:var(--text-sm)"><%= current_user&.name %></div>
+            <div class="muted" style="font-size:12px"><%= current_user&.email %></div>
+          </div>
+        </div>
+        <div class="rl-menu__sep"></div>
+        <%= link_to settings_path, class: "rl-menuitem" do %><%= relay_icon("user-cog") %>Profile &amp; preferences<% end %>
+        <%= link_to settings_path, class: "rl-menuitem" do %><%= relay_icon("plug") %>Connections<% end %>
+        <div class="rl-menu__sep"></div>
+        <%= link_to signout_path, class: "rl-menuitem is-danger", data: { turbo: false } do %><%= relay_icon("log-out") %>Sign out<% end %>
+      </div>
+    </div>
+  </span>
+</header>

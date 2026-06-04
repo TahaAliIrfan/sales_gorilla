@@ -1,0 +1,12 @@
+/* ============================================================
+   Relay app — Rails-side shell overrides.
+   The DS files (tokens/components/app.css) are verbatim ports and
+   must not be edited; app-owned additions live here.
+   ============================================================ */
+
+/* The Hotwire port toggles overlays with the `hidden` attribute, but DS
+   classes set `display: grid/flex`, which beats the UA's [hidden] rule.
+   Restore the expected semantics for everything we hide. */
+[hidden] {
+  display: none !important;
+}

@@ -1,0 +1,35 @@
+<%# app/views/relay/shared/_notifications.html.erb %>
+<turbo-frame id="relay_notifications">
+  <div class="rl-popover" style="width:360px">
+    <div class="rl-popover__head">
+      <b style="font-size:var(--text-sm);font-weight:700">Notifications</b>
+      <%= button_to "Mark all read", mark_all_as_read_notifications_path,
+            class: "rl-btn rl-btn--ghost rl-btn--sm", form: { data: { turbo_frame: "relay_notifications" } } %>
+    </div>
+    <div style="max-height:380px;overflow-y:auto">
+      <% notifications = current_user ? current_user.notifications.recent.limit(15) : [] %>
+      <% if notifications.none? %>
+        <div class="empty" style="padding:var(--space-8)">
+          <span class="empty__ic"><%= relay_icon("bell", size: 26) %></span>
+          <div style="font-weight:700">You're all caught up</div>
+        </div>
+      <% end %>
+      <% notifications.each do |n| %>
+        <%= link_to notification_path(n), class: "rl-listitem clickable", data: { turbo_frame: "_top" },
+              style: ("background:var(--color-primary-subtle)" unless n.read) do %>
+          <span class="iccircle" style="background:var(--color-surface-3);color:var(--color-fg-2)">
+            <%= relay_icon({ "message" => "message-square", "task" => "check-square", "deal" => "circle-dollar-sign" }.fetch(n.notification_type, "info"), size: 17) %>
+          </span>
+          <span class="rl-listitem__main">
+            <span class="rl-listitem__title"><%= n.notification_type&.titleize || "System" %></span>
+            <span class="rl-listitem__sub"><%= n.content %></span>
+          </span>
+          <span style="text-align:right;flex:none">
+            <span class="muted" style="font-size:11px"><%= time_ago_in_words(n.created_at) %> ago</span>
+            <% unless n.read %><span style="display:inline-block;width:8px;height:8px;border-radius:999px;background:var(--color-primary);margin-top:6px"></span><% end %>
+          </span>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>

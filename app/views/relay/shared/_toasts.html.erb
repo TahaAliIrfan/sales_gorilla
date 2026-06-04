@@ -1,0 +1,10 @@
+<%# app/views/relay/shared/_toasts.html.erb %>
+<div class="toasts" id="relay_toasts" data-controller="relay--toast">
+  <% flash.each do |type, message| %>
+    <% kind = { "notice" => "success", "success" => "success", "alert" => "danger", "error" => "danger" }.fetch(type.to_s, "info") %>
+    <div class="toast toast--<%= kind %>" data-relay--toast-target="item">
+      <%= relay_icon(kind == "success" ? "check-circle-2" : kind == "danger" ? "alert-circle" : "info", size: 17) %>
+      <%= message %>
+    </div>
+  <% end %>
+</div>

@@ -157,6 +157,9 @@ Rails.application.routes.draw do
   constraints(TenantSubdomain) do
     root "user_dashboard#index", as: :tenant_root
 
+    # Relay redesign styleguide (development only).
+    get "_relay", to: "relay_styleguide#index" if Rails.env.development?
+
     # Organization branding & switcher.
     resource :branding, only: %i[edit update], controller: "branding"
 

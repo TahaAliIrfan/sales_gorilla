@@ -1,0 +1,84 @@
+<%# app/views/relay_styleguide/index.html.erb %>
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Relay foundation</div>
+      <div class="pagehead__sub">Design-system port, shell, and primitives — development only.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to "Trigger toast", "?toast=1", class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title"><%= relay_icon("palette", size: 17) %>Buttons &amp; badges</div></div>
+      <div class="sect__body">
+        <div class="row row--wrap" style="margin-bottom:var(--space-4)">
+          <button class="rl-btn rl-btn--primary">Add lead</button>
+          <button class="rl-btn rl-btn--secondary">Log call</button>
+          <button class="rl-btn rl-btn--ghost">Cancel</button>
+          <button class="rl-btn rl-btn--destructive">Delete</button>
+        </div>
+        <div class="row row--wrap">
+          <span class="rl-badge rl-badge--success">Won</span>
+          <span class="rl-badge rl-badge--warning">Follow up</span>
+          <span class="rl-badge rl-badge--danger">Overdue</span>
+          <span class="rl-badge rl-badge--info">New</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sect" data-controller="relay--tabs">
+      <div class="sect__head">
+        <div class="sect__title"><%= relay_icon("layers", size: 17) %>Tabs</div>
+        <div class="rl-tabs">
+          <button class="rl-tab" data-relay--tabs-target="tab" data-action="click->relay--tabs#switch">First</button>
+          <button class="rl-tab" data-relay--tabs-target="tab" data-action="click->relay--tabs#switch">Second</button>
+        </div>
+      </div>
+      <div class="sect__body" data-relay--tabs-target="panel">Panel one — tokens drive everything you see.</div>
+      <div class="sect__body" data-relay--tabs-target="panel" hidden>Panel two — switched client-side.</div>
+    </div>
+
+    <div class="sect" data-controller="relay--overlay">
+      <div class="sect__head"><div class="sect__title"><%= relay_icon("info", size: 17) %>Modal</div></div>
+      <div class="sect__body">
+        <button class="rl-btn rl-btn--secondary" data-action="click->relay--overlay#open">Open modal</button>
+        <div class="scrim" hidden data-relay--overlay-target="panel" data-action="mousedown->relay--overlay#backdrop">
+          <div class="rl-modal pop" style="width:440px">
+            <div class="rl-modal__head"><b>Sample modal</b></div>
+            <div class="rl-modal__body">Composed from DS classes; closes on Escape and backdrop.</div>
+            <div class="rl-modal__foot">
+              <button class="rl-btn rl-btn--ghost" data-action="click->relay--overlay#close">Close</button>
+              <button class="rl-btn rl-btn--primary" data-action="click->relay--overlay#close">Confirm</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sect" data-controller="relay--overlay">
+      <div class="sect__head"><div class="sect__title"><%= relay_icon("chevrons-left", size: 17) %>Drawer</div></div>
+      <div class="sect__body">
+        <button class="rl-btn rl-btn--secondary" data-action="click->relay--overlay#open">Open drawer</button>
+        <div class="drawer" hidden data-relay--overlay-target="panel">
+          <div class="drawer__head"><b class="grow">Sample drawer</b>
+            <button class="rl-iconbtn" data-action="click->relay--overlay#close"><%= relay_icon("x", size: 16) %></button>
+          </div>
+          <div class="drawer__body">Right-hand drawer used by deal details and money actions in later phases.</div>
+          <div class="drawer__foot"><button class="rl-btn rl-btn--primary" data-action="click->relay--overlay#close">Done</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect" style="margin-top:var(--space-4)">
+    <div class="sect__head"><div class="sect__title"><%= relay_icon("users", size: 17) %>Empty state</div></div>
+    <div class="empty">
+      <span class="empty__ic"><%= relay_icon("inbox", size: 26) %></span>
+      <div style="font-weight:700;font-family:var(--font-display)">Inbox zero</div>
+      <div class="muted" style="font-size:var(--text-sm)">You've replied to every lead.</div>
+    </div>
+  </div>
+</div>

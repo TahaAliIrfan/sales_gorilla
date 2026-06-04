@@ -1,0 +1,44 @@
+<%# app/views/relay/shared/_command_palette.html.erb %>
+<div class="scrim" hidden data-relay--command-palette-target="scrim"
+     style="align-items:flex-start;padding-top:12vh;z-index:var(--z-command)"
+     data-action="mousedown->relay--command-palette#backdrop">
+  <div class="rl-cmd pop">
+    <div class="rl-cmd__input">
+      <%= relay_icon("search", size: 20) %>
+      <input data-relay--command-palette-target="input" placeholder="Type a command or search…"
+             data-action="input->relay--command-palette#filter keydown->relay--command-palette#navigate">
+      <span class="rl-kbd">esc</span>
+    </div>
+    <div class="rl-cmd__list" data-relay--command-palette-target="list">
+      <% {
+        "Go to" => [
+          ["sunrise", "Today", dashboard_path], ["users", "Leads", customers_path],
+          ["layers", "Pipeline", deals_path], ["megaphone", "Outreach", campaigns_path],
+          ["bar-chart-3", "Insights", reports_path], ["receipt", "Quotes & invoices", invoices_path],
+          ["settings", "Settings", settings_path],
+        ],
+        "Actions" => [
+          ["user-plus", "Add lead", new_customer_path], ["circle-dollar-sign", "Create deal", new_deal_path],
+          ["check-square", "Add task", new_task_path], ["upload", "Import leads from CSV", new_csv_import_path],
+          ["megaphone", "New campaign", new_campaign_path],
+        ],
+      }.each do |group, items| %>
+        <div data-relay--command-palette-target="group">
+          <div class="rl-cmd__group"><%= group %></div>
+          <% items.each do |icon, label, path| %>
+            <%= link_to path, class: "rl-cmd__item", data: { "relay--command-palette-target": "item", label: label.downcase } do %>
+              <%= relay_icon(icon, size: 17) %><span><%= label %></span>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+      <div hidden class="muted" data-relay--command-palette-target="blank"
+           style="padding:20px;text-align:center;font-size:var(--text-sm)">No results.</div>
+    </div>
+    <div class="rl-cmd__foot">
+      <span class="rl-cmd-hint"><span class="rl-kbd">↑</span><span class="rl-kbd">↓</span> navigate</span>
+      <span class="rl-cmd-hint"><span class="rl-kbd">↵</span> select</span>
+      <span class="rl-cmd-hint"><span class="rl-kbd">esc</span> close</span>
+    </div>
+  </div>
+</div>

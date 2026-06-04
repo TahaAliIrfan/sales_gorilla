@@ -40,6 +40,10 @@ class NotificationsController < ApplicationController
     respond_to do |format|
       format.html { redirect_back(fallback_location: notifications_path, notice: "All notifications marked as read.") }
       format.json { render json: { success: true } }
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("relay_notifications",
+          partial: "relay/shared/notifications")
+      end
     end
   end
 

@@ -1,0 +1,48 @@
+<%# app/views/relay/shared/_sidebar.html.erb %>
+<aside class="rl-sidebar" data-relay--sidebar-target="aside">
+  <div class="rl-sidebar__brand">
+    <span class="rl-logo">
+      <% if current_organization&.logo&.attached? %>
+        <%= image_tag current_organization.logo, alt: current_organization.name,
+              style: "width:26px;height:26px;border-radius:7px;object-fit:cover" %>
+      <% else %>
+        <svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
+      <% end %>
+    </span>
+    <b><%= current_organization&.name || "Relay" %></b>
+  </div>
+
+  <nav class="rl-sidebar__nav">
+    <% relay_nav_groups.each do |group_label, items| %>
+      <div class="rl-navgroup-label"><%= group_label %></div>
+      <% items.each do |item| %>
+        <%= link_to item[:path], class: class_names("rl-navlink", "is-active" => relay_nav_active?(item)), title: item[:label] do %>
+          <%= relay_icon(item[:icon], size: 18) %>
+          <span><%= item[:label] %></span>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <div style="flex:1"></div>
+    <div class="rl-navgroup-label">System</div>
+    <%= link_to settings_path, class: class_names("rl-navlink", "is-active" => %w[settings users branding roles role_assignments].include?(controller_name)), title: "Settings" do %>
+      <%= relay_icon("settings", size: 18) %><span>Settings</span>
+    <% end %>
+    <button type="button" class="rl-navlink" data-action="click->relay--sidebar#toggle" title="Collapse" style="background:none;border:none;width:100%;font:inherit;text-align:left;">
+      <span data-relay--sidebar-target="collapseIcon"><%= relay_icon("chevrons-left", size: 18) %></span>
+      <span data-relay--sidebar-target="expandIcon" hidden><%= relay_icon("chevrons-right", size: 18) %></span>
+      <span>Collapse</span>
+    </button>
+  </nav>
+
+  <div class="rl-sidebar__foot">
+    <%= link_to settings_path, class: "rl-userchip" do %>
+      <span class="rl-avatar rl-avatar--sm rl-avatar--c1"><%= current_user&.name.to_s.split.map(&:first).join[0, 2].upcase %></span>
+      <div class="rl-userchip__main">
+        <div class="rl-userchip__name"><%= current_user&.name %></div>
+        <div class="rl-userchip__role" style="text-transform:capitalize"><%= current_user&.highest_role&.name %><% if current_organization&.name.present? %> · <%= current_organization.name %><% end %></div>
+      </div>
+      <%= relay_icon("chevron-up", size: 15) %>
+    <% end %>
+  </div>
+</aside>
