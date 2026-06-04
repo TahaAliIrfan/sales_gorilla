@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>body{margin:0;padding:18px 20px;background:var(--color-bg);font-family:var(--font-sans);display:flex;flex-direction:column;gap:10px}
+.rl-toast{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:12px;box-shadow:var(--shadow-lg)}
+.ic{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none}.ic svg{width:17px;height:17px}.m{flex:1}.t{font-size:13px;font-weight:600}.s{font-size:12px;color:var(--color-fg-3);margin-top:1px}</style></head>
+<body>
+<div class="rl-toast"><div class="ic" style="background:var(--color-success-subtle);color:var(--color-success-text)"><i data-lucide="check"></i></div><div class="m"><div class="t">Lead created</div><div class="s">Northwind Retail added to Qualified.</div></div><button class="rl-btn rl-btn--ghost rl-btn--sm">Undo</button></div>
+<div class="rl-toast"><div class="ic" style="background:var(--color-danger-subtle);color:var(--color-danger-text)"><i data-lucide="triangle-alert"></i></div><div class="m"><div class="t">Couldn't save note</div><div class="s">Changes were not stored.</div></div><button class="rl-btn rl-btn--ghost rl-btn--sm">Retry</button></div>
+<script>lucide.createIcons();</script>
+</body></html>

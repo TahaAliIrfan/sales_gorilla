@@ -1,0 +1,11 @@
+/* ============================================================
+   Relay Design System — Webfonts
+   ------------------------------------------------------------
+   Three families, loaded from Google Fonts CDN:
+     • Bricolage Grotesque — display & headings (editorial character)
+     • Hanken Grotesk      — UI & body (workhorse, tabular figures)
+     • JetBrains Mono      — data, IDs, timestamps, code
+   For production, self-host these (woff2) and replace this @import.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:ital,wght@0,400..800;1,400..600&family=JetBrains+Mono:ital,wght@0,400..600;1,400..500&display=swap');

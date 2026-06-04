@@ -1,0 +1,76 @@
+/* ============================================================
+   Relay Design System — Documentation site chrome
+   (Only used by the gallery pages, not by consumers.)
+   ============================================================ */
+
+.ds-shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+
+/* sidebar */
+.ds-side { position: sticky; top: 0; align-self: start; height: 100vh; overflow-y: auto;
+  background: var(--color-sidebar); color: var(--color-fg-on-sidebar); padding: var(--space-5) var(--space-4);
+  border-right: 1px solid var(--color-border-sidebar); }
+.ds-brand { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-1) var(--space-2) var(--space-5); }
+.ds-brand .ds-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--color-primary); display: grid; place-items: center; color: #fff; flex: none; }
+.ds-brand .ds-mark svg { width: 20px; height: 20px; }
+.ds-brand b { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.02em; color: #fff; }
+.ds-brand span { display: block; font-size: 11px; color: var(--color-fg-on-sidebar-3); font-weight: 500; letter-spacing: 0.02em; }
+.ds-navgroup { margin-bottom: var(--space-5); }
+.ds-navgroup > p { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-fg-on-sidebar-3); padding: 0 var(--space-2); margin: 0 0 var(--space-2); }
+.ds-nav a { display: flex; align-items: center; gap: var(--space-2); padding: 7px var(--space-2); border-radius: var(--radius-md);
+  font-size: var(--text-sm); font-weight: 500; color: var(--color-fg-on-sidebar-2); transition: background var(--dur-fast), color var(--dur-fast); }
+.ds-nav a svg { width: 16px; height: 16px; opacity: 0.8; }
+.ds-nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.ds-nav a[aria-current="page"] { background: var(--color-primary-subtle); color: #fff; }
+:root:not([data-theme="dark"]) .ds-nav a[aria-current="page"] { background: rgba(255,255,255,0.12); }
+
+/* main */
+.ds-main { min-width: 0; background: var(--color-bg); }
+.ds-topbar { position: sticky; top: 0; z-index: 50; height: var(--topbar-h); display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-4); padding: 0 var(--space-8); background: color-mix(in oklch, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--color-border); }
+.ds-topbar h1 { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.01em; margin: 0; }
+.ds-controls { display: flex; align-items: center; gap: var(--space-2); }
+.ds-swatchpick { display: flex; gap: 6px; align-items: center; padding: 4px; border-radius: var(--radius-pill); background: var(--color-surface-2); border: 1px solid var(--color-border); }
+.ds-swatchpick button { width: 20px; height: 20px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.ds-swatchpick button[aria-pressed="true"] { border-color: var(--color-fg); }
+
+.ds-content { padding: var(--space-10) var(--space-8) var(--space-24); max-width: 1180px; }
+.ds-hero { margin-bottom: var(--space-12); }
+.ds-hero .rl-eyebrow { color: var(--color-primary-text); }
+.ds-hero h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.04; letter-spacing: -0.03em; margin: var(--space-3) 0; max-width: 18ch; }
+.ds-hero p { font-size: var(--text-lg); color: var(--color-fg-2); max-width: 62ch; line-height: var(--leading-relaxed); }
+
+.ds-section { margin-top: var(--space-16); scroll-margin-top: 80px; }
+.ds-section > header { margin-bottom: var(--space-6); }
+.ds-section > header h3 { font-family: var(--font-display); font-weight: 700; font-size: var(--text-h2); letter-spacing: -0.02em; margin: 0 0 6px; }
+.ds-section > header p { color: var(--color-fg-2); margin: 0; max-width: 64ch; }
+
+/* demo surface where components sit */
+.ds-demo { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl);
+  padding: var(--space-8); box-shadow: var(--shadow-sm); }
+.ds-demo + .ds-demo { margin-top: var(--space-4); }
+.ds-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.ds-stack { display: flex; flex-direction: column; gap: var(--space-4); }
+.ds-grid { display: grid; gap: var(--space-4); }
+.ds-label { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-fg-3); margin-bottom: var(--space-3); }
+.ds-sub { margin-top: var(--space-8); }
+.ds-sub:first-child { margin-top: 0; }
+
+/* swatch grid */
+.ds-swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--space-2); }
+.ds-swatch { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--color-border); background: var(--color-surface); }
+.ds-swatch .ds-chip { height: 56px; }
+.ds-swatch .ds-meta { padding: 7px 9px; }
+.ds-swatch .ds-meta b { display: block; font-size: 12px; font-weight: 600; }
+.ds-swatch .ds-meta code { font-size: 10.5px; color: var(--color-fg-3); font-family: var(--font-mono); }
+
+.ds-callout { display: flex; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg);
+  background: var(--color-info-subtle); border: 1px solid var(--color-info-border); color: var(--color-info-text); font-size: var(--text-sm); }
+.ds-callout svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
+@media (max-width: 900px) {
+  .ds-shell { grid-template-columns: 1fr; }
+  .ds-side { display: none; }
+  .ds-content { padding: var(--space-6) var(--space-4) var(--space-16); }
+  .ds-topbar { padding: 0 var(--space-4); }
+}

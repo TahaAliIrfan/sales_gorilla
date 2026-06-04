@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay DS — Controls &amp; Forms</title>
+<link rel="icon" href="assets/relay-logo.svg">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="site.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="ds.js"></script>
+</head>
+<body>
+<div class="ds-shell">
+  <aside class="ds-side">
+    <div class="ds-brand">
+      <span class="ds-mark"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <div><b>Relay</b><span>Design System</span></div>
+    </div>
+    <nav class="ds-nav">
+      <div class="ds-navgroup"><p>Foundations</p>
+        <a href="index.html"><i data-lucide="layers"></i> Overview &amp; tokens</a></div>
+      <div class="ds-navgroup"><p>Library</p>
+        <a href="controls.html"><i data-lucide="mouse-pointer-click"></i> Controls &amp; forms</a>
+        <a href="data.html"><i data-lucide="table"></i> Data &amp; comms</a>
+        <a href="overlays.html"><i data-lucide="panels-top-left"></i> Nav &amp; overlays</a>
+        <a href="feedback.html"><i data-lucide="bell-ring"></i> Feedback &amp; states</a></div>
+    </nav>
+  </aside>
+
+  <main class="ds-main">
+    <div class="ds-topbar">
+      <h1>Controls &amp; forms</h1>
+      <div class="ds-controls">
+        <span class="rl-eyebrow" style="margin-right:2px;">Brand</span>
+        <div class="ds-swatchpick" role="group" aria-label="White-label brand">
+          <button data-brand-pick="teal"   style="background:oklch(0.586 0.106 190)" onclick="RelayDS.applyBrand('teal')"></button>
+          <button data-brand-pick="cobalt" style="background:oklch(0.520 0.170 256)" onclick="RelayDS.applyBrand('cobalt')"></button>
+          <button data-brand-pick="violet" style="background:oklch(0.530 0.200 295)" onclick="RelayDS.applyBrand('violet')"></button>
+          <button data-brand-pick="amber"  style="background:oklch(0.640 0.150 64)"  onclick="RelayDS.applyBrand('amber')"></button>
+          <button data-brand-pick="rose"   style="background:oklch(0.580 0.205 12)"  onclick="RelayDS.applyBrand('rose')"></button>
+        </div>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="RelayDS.toggleTheme()"><i data-lucide="sun-moon"></i> <span data-theme-label>Light</span></button>
+      </div>
+    </div>
+
+    <div class="ds-content">
+      <header class="ds-hero" style="margin-bottom:var(--space-10);">
+        <p class="rl-eyebrow" style="color:var(--color-primary-text);">Library</p>
+        <h2 style="font-size:clamp(2rem,4vw,2.8rem);">Controls &amp; forms</h2>
+        <p>Buttons, inputs and selection controls — every variant, size and interaction state a rep touches all day. All keyboard-focusable with a visible focus ring.</p>
+      </header>
+
+      <!-- BUTTONS -->
+      <section class="ds-section" id="buttons" style="margin-top:0;">
+        <header><h3>Buttons</h3><p>Six intents × three sizes. Primary carries the brand; destructive is reserved for irreversible actions.</p></header>
+        <div class="ds-demo ds-stack">
+          <div><p class="ds-label">Intents</p>
+            <div class="ds-row">
+              <button class="rl-btn rl-btn--primary">Add lead</button>
+              <button class="rl-btn rl-btn--secondary">Filters</button>
+              <button class="rl-btn rl-btn--tertiary">Assign</button>
+              <button class="rl-btn rl-btn--ghost">Cancel</button>
+              <button class="rl-btn rl-btn--brand-soft">Log call</button>
+              <button class="rl-btn rl-btn--destructive">Delete</button>
+            </div>
+          </div>
+          <div><p class="ds-label">With icons</p>
+            <div class="ds-row">
+              <button class="rl-btn rl-btn--primary"><i data-lucide="plus"></i> New deal</button>
+              <button class="rl-btn rl-btn--secondary"><i data-lucide="download"></i> Export</button>
+              <button class="rl-btn rl-btn--secondary">Sort <i data-lucide="chevron-down"></i></button>
+              <button class="rl-btn rl-btn--brand-soft"><i data-lucide="phone"></i> Call</button>
+            </div>
+          </div>
+          <div><p class="ds-label">Sizes</p>
+            <div class="ds-row" style="align-items:center;">
+              <button class="rl-btn rl-btn--primary rl-btn--sm">Small</button>
+              <button class="rl-btn rl-btn--primary">Medium</button>
+              <button class="rl-btn rl-btn--primary rl-btn--lg">Large</button>
+            </div>
+          </div>
+          <div><p class="ds-label">States — default · hover · active · focus · loading · disabled</p>
+            <div class="ds-row">
+              <button class="rl-btn rl-btn--primary">Default</button>
+              <button class="rl-btn rl-btn--primary" style="background:var(--color-primary-hover)">Hover</button>
+              <button class="rl-btn rl-btn--primary" style="background:var(--color-primary-active);transform:scale(.985)">Active</button>
+              <button class="rl-btn rl-btn--primary" style="box-shadow:var(--shadow-focus)">Focus</button>
+              <button class="rl-btn rl-btn--primary"><span class="rl-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.4);width:15px;height:15px"></span> Saving</button>
+              <button class="rl-btn rl-btn--primary" disabled>Disabled</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ICON BUTTONS + GROUPS + SEGMENTED -->
+      <section class="ds-section" id="iconbtn">
+        <header><h3>Icon buttons, groups &amp; segmented</h3><p>Compact actions for toolbars and table rows.</p></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:1fr 1fr 1fr;gap:var(--space-8);">
+            <div><p class="ds-label">Icon buttons</p>
+              <div class="ds-row">
+                <button class="rl-iconbtn" aria-label="more"><i data-lucide="more-horizontal"></i></button>
+                <button class="rl-iconbtn rl-iconbtn--bordered" aria-label="edit"><i data-lucide="pencil"></i></button>
+                <button class="rl-iconbtn rl-iconbtn--active" aria-label="star"><i data-lucide="star"></i></button>
+                <button class="rl-iconbtn" aria-label="archive"><i data-lucide="archive"></i></button>
+              </div>
+            </div>
+            <div><p class="ds-label">Button group</p>
+              <div class="rl-btngroup">
+                <button class="rl-btn rl-btn--secondary"><i data-lucide="align-left"></i></button>
+                <button class="rl-btn rl-btn--secondary"><i data-lucide="align-center"></i></button>
+                <button class="rl-btn rl-btn--secondary"><i data-lucide="align-right"></i></button>
+              </div>
+            </div>
+            <div><p class="ds-label">Segmented control</p>
+              <div class="rl-segmented" id="seg">
+                <button class="is-active" onclick="seg(this)">Open</button>
+                <button onclick="seg(this)">Won</button>
+                <button onclick="seg(this)">Lost</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TOGGLES / SWITCHES / SLIDERS / STEPPERS -->
+      <section class="ds-section" id="toggles">
+        <header><h3>Switches, sliders &amp; steppers</h3></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:repeat(3,1fr);gap:var(--space-8);">
+            <div><p class="ds-label">Switches</p>
+              <div class="ds-stack" style="gap:var(--space-3);">
+                <label class="rl-switch"><input type="checkbox" checked><span class="rl-track"></span></label>
+                <label class="rl-switch"><input type="checkbox"><span class="rl-track"></span></label>
+                <label class="rl-switch rl-switch--sm"><input type="checkbox" checked><span class="rl-track"></span></label>
+                <label class="rl-switch"><input type="checkbox" disabled checked><span class="rl-track"></span></label>
+              </div>
+            </div>
+            <div><p class="ds-label">Slider</p>
+              <input type="range" class="rl-range" min="0" max="100" value="64" style="margin-top:8px;">
+              <div class="rl-mono rl-xs rl-muted" style="margin-top:10px;">Deal probability · 64%</div>
+            </div>
+            <div><p class="ds-label">Stepper</p>
+              <div class="rl-stepper">
+                <button onclick="step(this,-1)"><i data-lucide="minus"></i></button>
+                <input value="3" class="rl-tnum" readonly>
+                <button onclick="step(this,1)"><i data-lucide="plus"></i></button>
+              </div>
+              <div class="rl-mono rl-xs rl-muted" style="margin-top:10px;">Follow-up attempts</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEXT FIELDS -->
+      <section class="ds-section" id="fields">
+        <header><h3>Text fields</h3><p>Default → focus → filled → disabled → read-only → error → success. Sizes sm / md / lg.</p></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:repeat(3,1fr);gap:var(--space-6);">
+            <div class="rl-field"><label class="rl-label">Default</label><input class="rl-input" placeholder="Lead name"></div>
+            <div class="rl-field"><label class="rl-label">Focused</label><input class="rl-input" value="Northwind Retail" style="border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-ring);background:var(--color-surface)"></div>
+            <div class="rl-field"><label class="rl-label">With icon</label><div class="rl-inputwrap"><span class="rl-affix"><i data-lucide="search"></i></span><input class="rl-input" placeholder="Search leads"></div></div>
+            <div class="rl-field"><label class="rl-label">Disabled</label><input class="rl-input" placeholder="Unavailable" disabled></div>
+            <div class="rl-field"><label class="rl-label">Read-only</label><input class="rl-input" value="LEAD-4821" readonly></div>
+            <div class="rl-field"><label class="rl-label">Trailing affix</label><div class="rl-inputwrap rl-inputwrap--trailing"><span class="rl-affix"><i data-lucide="percent"></i></span><input class="rl-input" value="64"></div></div>
+            <div class="rl-field"><label class="rl-label">Error <span class="rl-req">*</span></label><input class="rl-input is-error" value="not-an-email"><span class="rl-help rl-help--error"><i data-lucide="alert-circle"></i> Enter a valid email address</span></div>
+            <div class="rl-field"><label class="rl-label">Success</label><input class="rl-input is-success" value="ada@northwind.co"><span class="rl-help rl-help--success"><i data-lucide="check-circle-2"></i> Looks good</span></div>
+            <div class="rl-field"><label class="rl-label">Helper text <span class="rl-optional">optional</span></label><input class="rl-input" placeholder="WhatsApp number"><span class="rl-help">Include country code, e.g. +1</span></div>
+          </div>
+          <hr class="rl-divider">
+          <div class="ds-grid" style="grid-template-columns:repeat(3,1fr);gap:var(--space-6);align-items:end;">
+            <div class="rl-field"><label class="rl-label">Small</label><input class="rl-input rl-input--sm" placeholder="sm"></div>
+            <div class="rl-field"><label class="rl-label">Medium</label><input class="rl-input" placeholder="md (default)"></div>
+            <div class="rl-field"><label class="rl-label">Large</label><input class="rl-input rl-input--lg" placeholder="lg"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TEXTAREA / SELECT / FILE -->
+      <section class="ds-section" id="more-fields">
+        <header><h3>Textarea, select, number &amp; file</h3></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-6);">
+            <div class="rl-field"><label class="rl-label">Note</label><textarea class="rl-textarea" placeholder="Add a note about this lead…">Called — interested in the Pro plan, asked for pricing. Following up Thu.</textarea></div>
+            <div class="ds-stack">
+              <div class="rl-field"><label class="rl-label">Pipeline stage</label>
+                <select class="rl-select"><option>New</option><option selected>Qualified</option><option>Proposal sent</option><option>Negotiation</option></select></div>
+              <div class="rl-field"><label class="rl-label">Deal value</label>
+                <div class="rl-inputwrap"><span class="rl-affix"><i data-lucide="dollar-sign"></i></span><input class="rl-input rl-tnum" value="24,000"></div></div>
+            </div>
+            <div class="rl-field"><label class="rl-label">Owner</label>
+              <select class="rl-select"><option>Ada Okafor</option><option>Marco Diaz</option><option>Priya Nair</option></select></div>
+            <div class="rl-field"><label class="rl-label">Attachment</label>
+              <label class="rl-fileupload" tabindex="0">
+                <i data-lucide="upload-cloud"></i>
+                <div><b>Drop a file or browse</b><span>PDF, PNG, CSV up to 10MB</span></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHECK / RADIO / COMBOBOX -->
+      <section class="ds-section" id="selection">
+        <header><h3>Checkboxes, radios &amp; multiselect</h3></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:1fr 1fr 1.2fr;gap:var(--space-8);">
+            <div><p class="ds-label">Checkboxes</p>
+              <div class="ds-stack" style="gap:var(--space-3);">
+                <label class="rl-check"><input type="checkbox" checked id="c1"><span class="rl-box"><i data-lucide="check"></i></span> Subscribed to WhatsApp</label>
+                <label class="rl-check"><input type="checkbox" id="c2"><span class="rl-box"><i data-lucide="check"></i></span> Email opt-in</label>
+                <label class="rl-check"><input type="checkbox" id="c3"><span class="rl-box"><i data-lucide="minus"></i></span> Select all <span class="rl-muted">(some)</span></label>
+                <label class="rl-check"><input type="checkbox" disabled><span class="rl-box"><i data-lucide="check"></i></span> <span class="rl-muted">Disabled</span></label>
+              </div>
+            </div>
+            <div><p class="ds-label">Radios</p>
+              <div class="ds-stack" style="gap:var(--space-3);">
+                <label class="rl-check rl-check--radio"><input type="radio" name="r" checked><span class="rl-box"></span> Hot lead</label>
+                <label class="rl-check rl-check--radio"><input type="radio" name="r"><span class="rl-box"></span> Warm</label>
+                <label class="rl-check rl-check--radio"><input type="radio" name="r"><span class="rl-box"></span> Cold</label>
+                <label class="rl-check rl-check--radio"><input type="radio" name="r" disabled><span class="rl-box"></span> <span class="rl-muted">Archived</span></label>
+              </div>
+            </div>
+            <div><p class="ds-label">Multiselect / combobox</p>
+              <div class="rl-input" style="height:auto;min-height:var(--field-h-md);display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px;">
+                <span class="rl-tag"><span class="rl-tag-dot" style="background:var(--cat-1)"></span> Enterprise <button aria-label="remove"><i data-lucide="x"></i></button></span>
+                <span class="rl-tag"><span class="rl-tag-dot" style="background:var(--cat-3)"></span> Inbound <button aria-label="remove"><i data-lucide="x"></i></button></span>
+                <input style="border:none;outline:none;background:none;flex:1;min-width:60px;font-size:var(--text-sm)" placeholder="Add tag…">
+              </div>
+              <div class="rl-mono rl-xs rl-muted" style="margin-top:8px;">Selected tags render as removable chips inline.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LINKS -->
+      <section class="ds-section" id="links">
+        <header><h3>Links</h3></header>
+        <div class="ds-demo ds-row" style="gap:var(--space-6);">
+          <a href="#" class="rl-link">View full profile</a>
+          <a href="#" class="rl-link rl-link--inline">Inline text link</a>
+          <a href="#" class="rl-link" style="display:inline-flex;align-items:center;gap:4px;">Open deal <i data-lucide="arrow-up-right" style="width:14px;height:14px"></i></a>
+          <a href="#" class="rl-link rl-link--muted">Muted link</a>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<style>
+  .rl-fileupload{display:flex;align-items:center;gap:var(--space-3);padding:var(--space-4);border:1.5px dashed var(--color-field-border);border-radius:var(--radius-md);background:var(--color-surface-2);cursor:pointer;transition:all var(--dur-fast) var(--ease-out)}
+  .rl-fileupload:hover{border-color:var(--color-primary);background:var(--color-primary-subtle)}
+  .rl-fileupload svg{width:24px;height:24px;color:var(--color-primary)}
+  .rl-fileupload b{display:block;font-size:var(--text-sm);font-weight:600}
+  .rl-fileupload span{font-size:var(--text-xs);color:var(--color-fg-3)}
+  .rl-link{font-weight:600;font-size:var(--text-sm);color:var(--color-primary-text)}
+  .rl-link:hover{text-decoration:underline;text-underline-offset:2px}
+  .rl-link--inline{text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--color-primary-border)}
+  .rl-link--muted{color:var(--color-fg-3);font-weight:500}
+</style>
+<script>
+  function seg(b){b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('is-active'));b.classList.add('is-active');}
+  function step(b,d){const i=b.parentNode.querySelector('input');i.value=Math.max(0,(+i.value||0)+d);}
+  document.querySelector('#c3 + .rl-box')?.parentElement.querySelector('input').setAttribute('checked','');
+  document.addEventListener('DOMContentLoaded',()=>{const x=document.getElementById('c3');if(x)x.indeterminate=true;});
+</script>
+</body>
+</html>

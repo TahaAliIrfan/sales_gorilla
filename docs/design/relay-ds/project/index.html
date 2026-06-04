@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay Design System — Foundations</title>
+<link rel="icon" href="assets/relay-logo.svg">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="site.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="ds.js"></script>
+</head>
+<body>
+<div class="ds-shell">
+  <!-- ================= SIDE NAV (shared) ================= -->
+  <aside class="ds-side">
+    <div class="ds-brand">
+      <span class="ds-mark"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <div><b>Relay</b><span>Design System</span></div>
+    </div>
+    <nav class="ds-nav">
+      <div class="ds-navgroup">
+        <p>Foundations</p>
+        <a href="index.html"><i data-lucide="layers"></i> Overview &amp; tokens</a>
+      </div>
+      <div class="ds-navgroup">
+        <p>Library</p>
+        <a href="controls.html"><i data-lucide="mouse-pointer-click"></i> Controls &amp; forms</a>
+        <a href="data.html"><i data-lucide="table"></i> Data &amp; comms</a>
+        <a href="overlays.html"><i data-lucide="panels-top-left"></i> Nav &amp; overlays</a>
+        <a href="feedback.html"><i data-lucide="bell-ring"></i> Feedback &amp; states</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <main class="ds-main">
+    <div class="ds-topbar">
+      <h1>Foundations</h1>
+      <div class="ds-controls">
+        <span class="rl-eyebrow" style="margin-right:2px;">Brand</span>
+        <div class="ds-swatchpick" role="group" aria-label="White-label brand">
+          <button data-brand-pick="teal"   style="background:oklch(0.586 0.106 190)" title="Teal"   onclick="RelayDS.applyBrand('teal')"></button>
+          <button data-brand-pick="cobalt" style="background:oklch(0.520 0.170 256)" title="Cobalt" onclick="RelayDS.applyBrand('cobalt')"></button>
+          <button data-brand-pick="violet" style="background:oklch(0.530 0.200 295)" title="Violet" onclick="RelayDS.applyBrand('violet')"></button>
+          <button data-brand-pick="amber"  style="background:oklch(0.640 0.150 64)"  title="Amber"  onclick="RelayDS.applyBrand('amber')"></button>
+          <button data-brand-pick="rose"   style="background:oklch(0.580 0.205 12)"  title="Rose"   onclick="RelayDS.applyBrand('rose')"></button>
+        </div>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="RelayDS.toggleTheme()">
+          <i data-lucide="sun-moon"></i> <span data-theme-label>Light</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="ds-content">
+      <!-- HERO -->
+      <header class="ds-hero">
+        <p class="rl-eyebrow">White-label CRM &amp; call-center platform</p>
+        <h2>A token-driven system, ready to wear any brand.</h2>
+        <p>Every surface, control and status in Relay is painted from semantic tokens — never a hard-coded color. Swap the brand swatch above or flip the theme: the entire system reskins without touching a single component. This is the foundation layer — color, type, space, elevation and motion.</p>
+        <div class="ds-row" style="margin-top:var(--space-6);">
+          <span class="rl-pill rl-pill--brand"><span class="rl-dot"></span> 1 brand ramp · 11 stops</span>
+          <span class="rl-pill"><span class="rl-dot"></span> Full dark-mode parity</span>
+          <span class="rl-pill"><span class="rl-dot"></span> AA contrast, both themes</span>
+        </div>
+      </header>
+
+      <!-- COLOR -->
+      <section class="ds-section" id="color">
+        <header><h3>Color</h3><p>Primitive ramps feed semantic tokens. Components only ever reference semantics (<code class="rl-mono rl-xs">--color-primary</code>, <code class="rl-mono rl-xs">--color-fg-2</code>), so a tenant overrides 11 brand stops and is done.</p></header>
+
+        <div class="ds-demo">
+          <p class="ds-label">Brand ramp — the only thing a tenant supplies</p>
+          <div class="ds-swatches" id="sw-brand"></div>
+        </div>
+        <div class="ds-demo">
+          <p class="ds-label">Neutral ramp — cool slate (no warm beige)</p>
+          <div class="ds-swatches" id="sw-slate"></div>
+        </div>
+        <div class="ds-demo">
+          <p class="ds-label">Semantic — success / warning / danger / info</p>
+          <div class="ds-grid" style="grid-template-columns:repeat(4,1fr);gap:var(--space-5);" id="sw-semantic"></div>
+        </div>
+        <div class="ds-demo">
+          <p class="ds-label">Channel accents &amp; categorical (tags · charts)</p>
+          <div class="ds-row" id="sw-channel" style="gap:var(--space-2);margin-bottom:var(--space-5);"></div>
+          <div class="ds-row" id="sw-cat" style="gap:var(--space-2);"></div>
+        </div>
+      </section>
+
+      <!-- TYPE -->
+      <section class="ds-section" id="type">
+        <header><h3>Typography</h3><p>Bricolage Grotesque carries display &amp; headings; Hanken Grotesk does the UI work with tabular figures; JetBrains Mono handles IDs, timestamps and code.</p></header>
+        <div class="ds-demo ds-stack">
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-4);">
+            <span class="rl-display">Pipeline</span>
+            <code class="rl-mono rl-xs rl-muted">display · Bricolage 800 · 56/1.12</code>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-4);">
+            <span class="rl-h1">Close more, faster</span>
+            <code class="rl-mono rl-xs rl-muted">h1 · Bricolage 700 · 36</code>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-4);">
+            <span class="rl-h2">Today’s follow-ups</span>
+            <code class="rl-mono rl-xs rl-muted">h2 · Bricolage 700 · 28</code>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-4);">
+            <span class="rl-h3">Deal: Northwind Retail</span>
+            <code class="rl-mono rl-xs rl-muted">h3 · Hanken 600 · 22</code>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;border-bottom:1px solid var(--color-divider);padding-bottom:var(--space-4);">
+            <span class="rl-body">Body — the rep works a focused book of leads from one screen, switching between WhatsApp, email and browser calling without losing context.</span>
+            <code class="rl-mono rl-xs rl-muted" style="flex:none;">base · Hanken 400 · 15</code>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:var(--space-4);justify-content:space-between;">
+            <span class="rl-mono rl-sm">LEAD-4821 · +1 415 555 0134 · 14:08:22</span>
+            <code class="rl-mono rl-xs rl-muted">mono · JetBrains 500 · 13</code>
+          </div>
+        </div>
+      </section>
+
+      <!-- SPACING + RADIUS -->
+      <section class="ds-section" id="space">
+        <header><h3>Spacing &amp; radius</h3><p>A 4px grid. Dense data views lean on 8–16px rhythm; marketing surfaces breathe with 32–96px.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);">
+          <div class="ds-demo"><p class="ds-label">Spacing scale (4px base)</p><div class="ds-stack" id="sw-space" style="gap:var(--space-2);"></div></div>
+          <div class="ds-demo"><p class="ds-label">Radius</p><div class="ds-row" id="sw-radius" style="gap:var(--space-4);align-items:flex-end;"></div></div>
+        </div>
+      </section>
+
+      <!-- ELEVATION -->
+      <section class="ds-section" id="elevation">
+        <header><h3>Elevation</h3><p>Cool-tinted, two-layer shadows read as depth, not grime. Inputs sit flat; menus, popovers and modals rise through xs → xl.</p></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:repeat(5,1fr);gap:var(--space-5);" id="sw-shadow"></div>
+        </div>
+      </section>
+
+      <!-- MOTION + ICONS -->
+      <section class="ds-section" id="motion">
+        <header><h3>Motion &amp; iconography</h3><p>Short, decisive transitions on an <code class="rl-mono rl-xs">ease-out</code> curve. Icons are Lucide — one consistent 1.5px stroke family across the whole product.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);">
+          <div class="ds-demo">
+            <p class="ds-label">Duration &amp; easing</p>
+            <div class="ds-stack rl-mono rl-sm" style="gap:10px;">
+              <div style="display:flex;justify-content:space-between;"><span>instant</span><span class="rl-muted">80ms</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>fast</span><span class="rl-muted">140ms · hovers</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>base</span><span class="rl-muted">220ms · enters</span></div>
+              <div style="display:flex;justify-content:space-between;"><span>slow</span><span class="rl-muted">340ms · overlays</span></div>
+              <div style="display:flex;justify-content:space-between;border-top:1px solid var(--color-divider);padding-top:10px;"><span>ease-out</span><span class="rl-muted">cubic-bezier(.16,1,.3,1)</span></div>
+            </div>
+          </div>
+          <div class="ds-demo">
+            <p class="ds-label">Icon set — Lucide, 1.5px stroke</p>
+            <div class="ds-row" style="gap:var(--space-5);color:var(--color-fg-2);">
+              <i data-lucide="message-circle"></i><i data-lucide="phone"></i><i data-lucide="mail"></i>
+              <i data-lucide="users"></i><i data-lucide="kanban"></i><i data-lucide="calendar-check"></i>
+              <i data-lucide="bar-chart-3"></i><i data-lucide="bell"></i><i data-lucide="search"></i>
+              <i data-lucide="filter"></i><i data-lucide="settings"></i><i data-lucide="more-horizontal"></i>
+            </div>
+            <div class="ds-callout" style="margin-top:var(--space-5);">
+              <i data-lucide="info"></i>
+              <span>Sized in 16 / 18 / 20px. Stroke inherits <code class="rl-mono rl-xs">currentColor</code>, so icons theme automatically.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+(function () {
+  const steps = [50,100,200,300,400,500,600,700,800,900,950];
+  const onLight = new Set([50,100,200,300,400]); // dark text on these
+  function swatchHTML(varName, label, dark) {
+    return `<div class="ds-swatch"><div class="ds-chip" style="background:var(${varName})"></div><div class="ds-meta"><b>${label}</b><code>${varName.replace('--','')}</code></div></div>`;
+  }
+  const brand = document.getElementById('sw-brand');
+  brand.innerHTML = steps.map(s => swatchHTML(`--brand-${s}`, s)).join('');
+  const slate = document.getElementById('sw-slate');
+  [0,50,100,200,300,400,500,600,700,800,900,950].forEach(s => {
+    slate.insertAdjacentHTML('beforeend', swatchHTML(`--slate-${s}`, s));
+  });
+  // semantic columns
+  const sem = [['success','Success'],['warning','Warning'],['danger','Danger'],['info','Info']];
+  document.getElementById('sw-semantic').innerHTML = sem.map(([k,name]) => `
+    <div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span class="rl-pill rl-pill--${k}"><span class="rl-dot"></span> ${name}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);border-radius:var(--radius-md);overflow:hidden;border:1px solid var(--color-border);">
+        ${[100,300,500,700,900].map(st => `<div style="height:40px;background:var(--${k}-${st})"></div>`).join('')}
+      </div>
+      <div class="rl-mono rl-xs rl-muted" style="margin-top:6px;">100 · 300 · 500 · 700 · 900</div>
+    </div>`).join('');
+  // channels
+  const ch = [['whatsapp','WhatsApp','message-circle'],['call','Call','phone'],['email','Email','mail'],['sms','SMS','message-square']];
+  document.getElementById('sw-channel').innerHTML = ch.map(([k,n,ic]) =>
+    `<span class="rl-pill" style="background:color-mix(in oklch,var(--channel-${k}) 16%,transparent);color:var(--channel-${k});border-color:color-mix(in oklch,var(--channel-${k}) 34%,transparent)"><span class="rl-dot"></span> ${n}</span>`).join('');
+  let cat = '';
+  for (let i=1;i<=8;i++) cat += `<div title="cat-${i}" style="width:52px;height:34px;border-radius:var(--radius-sm);background:var(--cat-${i})"></div>`;
+  document.getElementById('sw-cat').innerHTML = cat;
+  // spacing
+  const sp = [['1','4'],['2','8'],['3','12'],['4','16'],['6','24'],['8','32'],['12','48'],['16','64']];
+  document.getElementById('sw-space').innerHTML = sp.map(([t,px]) =>
+    `<div style="display:flex;align-items:center;gap:12px;"><code class="rl-mono rl-xs rl-muted" style="width:64px;">space-${t}</code><div style="height:14px;width:var(--space-${t});background:var(--color-primary);border-radius:3px;"></div><span class="rl-mono rl-xs rl-muted">${px}px</span></div>`).join('');
+  // radius
+  const rad = [['sm','5'],['md','8'],['lg','12'],['xl','16'],['pill','∞']];
+  document.getElementById('sw-radius').innerHTML = rad.map(([r,px]) =>
+    `<div style="text-align:center;"><div style="width:60px;height:60px;background:var(--color-primary-subtle);border:1.5px solid var(--color-primary-border);border-radius:var(--radius-${r});border-bottom-left-radius:${r==='pill'?'var(--radius-pill)':'var(--radius-'+r+')'};"></div><code class="rl-mono rl-xs rl-muted" style="display:block;margin-top:6px;">${r}</code></div>`).join('');
+  // shadows
+  const sh = ['xs','sm','md','lg','xl'];
+  document.getElementById('sw-shadow').innerHTML = sh.map(s =>
+    `<div style="text-align:center;"><div style="height:72px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-${s});"></div><code class="rl-mono rl-xs rl-muted" style="display:block;margin-top:8px;">shadow-${s}</code></div>`).join('');
+  if (window.lucide) window.lucide.createIcons();
+})();
+</script>
+</body>
+</html>

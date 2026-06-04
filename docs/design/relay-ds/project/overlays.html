@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay DS — Nav &amp; Overlays</title>
+<link rel="icon" href="assets/relay-logo.svg">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="components-nav.css">
+<link rel="stylesheet" href="site.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="ds.js"></script>
+</head>
+<body>
+<div class="ds-shell">
+  <aside class="ds-side">
+    <div class="ds-brand">
+      <span class="ds-mark"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <div><b>Relay</b><span>Design System</span></div>
+    </div>
+    <nav class="ds-nav">
+      <div class="ds-navgroup"><p>Foundations</p>
+        <a href="index.html"><i data-lucide="layers"></i> Overview &amp; tokens</a></div>
+      <div class="ds-navgroup"><p>Library</p>
+        <a href="controls.html"><i data-lucide="mouse-pointer-click"></i> Controls &amp; forms</a>
+        <a href="data.html"><i data-lucide="table"></i> Data &amp; comms</a>
+        <a href="overlays.html"><i data-lucide="panels-top-left"></i> Nav &amp; overlays</a>
+        <a href="feedback.html"><i data-lucide="bell-ring"></i> Feedback &amp; states</a></div>
+    </nav>
+  </aside>
+
+  <main class="ds-main">
+    <div class="ds-topbar">
+      <h1>Nav &amp; overlays</h1>
+      <div class="ds-controls">
+        <span class="rl-eyebrow" style="margin-right:2px;">Brand</span>
+        <div class="ds-swatchpick" role="group" aria-label="White-label brand">
+          <button data-brand-pick="teal"   style="background:oklch(0.586 0.106 190)" onclick="RelayDS.applyBrand('teal')"></button>
+          <button data-brand-pick="cobalt" style="background:oklch(0.520 0.170 256)" onclick="RelayDS.applyBrand('cobalt')"></button>
+          <button data-brand-pick="violet" style="background:oklch(0.530 0.200 295)" onclick="RelayDS.applyBrand('violet')"></button>
+          <button data-brand-pick="amber"  style="background:oklch(0.640 0.150 64)"  onclick="RelayDS.applyBrand('amber')"></button>
+          <button data-brand-pick="rose"   style="background:oklch(0.580 0.205 12)"  onclick="RelayDS.applyBrand('rose')"></button>
+        </div>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="RelayDS.toggleTheme()"><i data-lucide="sun-moon"></i> <span data-theme-label>Light</span></button>
+      </div>
+    </div>
+
+    <div class="ds-content">
+      <header class="ds-hero" style="margin-bottom:var(--space-10);">
+        <p class="rl-eyebrow" style="color:var(--color-primary-text);">Library</p>
+        <h2 style="font-size:clamp(2rem,4vw,2.8rem);">Navigation &amp; overlays</h2>
+        <p>The structural chrome that frames the product — collapsible sidebar, topbar, tabs, breadcrumbs — and every transient surface: menus, popovers, tooltips, modals, the right-hand drawer and a ⌘K command palette.</p>
+      </header>
+
+      <!-- APP SHELL -->
+      <section class="ds-section" id="shell" style="margin-top:0;">
+        <header><h3>Application shell</h3><p>The signature layout: dark slate sidebar against a light console. Collapsible, with grouped nav, unread badges and a user chip.</p></header>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" style="margin-bottom:var(--space-3);" onclick="document.getElementById('appSidebar').classList.toggle('is-collapsed')"><i data-lucide="panel-left"></i> Toggle sidebar</button>
+        <div class="rl-appshell">
+          <aside class="rl-sidebar" id="appSidebar">
+            <div class="rl-sidebar__brand"><span class="rl-logo"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span><b>Relay</b></div>
+            <div class="rl-sidebar__nav">
+              <div class="rl-navgroup-label">Workspace</div>
+              <div class="rl-navlink is-active"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></div>
+              <div class="rl-navlink"><i data-lucide="users"></i><span>Leads</span><span class="rl-navbadge">24</span></div>
+              <div class="rl-navlink"><i data-lucide="kanban"></i><span>Pipeline</span></div>
+              <div class="rl-navlink"><i data-lucide="message-circle"></i><span>Inbox</span><span class="rl-navbadge">7</span></div>
+              <div class="rl-navlink"><i data-lucide="phone"></i><span>Calls</span></div>
+              <div class="rl-navgroup-label">Insights</div>
+              <div class="rl-navlink"><i data-lucide="bar-chart-3"></i><span>Reports</span></div>
+              <div class="rl-navlink"><i data-lucide="target"></i><span>Goals</span></div>
+            </div>
+            <div class="rl-sidebar__foot">
+              <div class="rl-userchip">
+                <div class="rl-avatar rl-avatar--sm rl-avatar--c1">AO</div>
+                <div class="rl-userchip__main"><div class="rl-userchip__name">Ada Okafor</div><div class="rl-userchip__role">Account Exec</div></div>
+                <i data-lucide="chevrons-up-down" style="width:15px;height:15px;color:var(--color-fg-on-sidebar-3)"></i>
+              </div>
+            </div>
+          </aside>
+          <div class="rl-appmain">
+            <div class="rl-apptop">
+              <div class="rl-crumbs"><a href="#">Leads</a><i data-lucide="chevron-right"></i><span class="rl-crumb-current">Northwind Retail</span></div>
+              <div style="flex:1"></div>
+              <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="openCmd()"><i data-lucide="search"></i> Search <span class="rl-kbd">⌘K</span></button>
+              <button class="rl-iconbtn" aria-label="Notifications" style="position:relative"><i data-lucide="bell"></i><span style="position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--color-danger);border:1.5px solid var(--color-surface)"></span></button>
+              <button class="rl-btn rl-btn--primary rl-btn--sm"><i data-lucide="plus"></i> New lead</button>
+            </div>
+            <div class="rl-appbody">
+              <div class="rl-tabs" style="margin-bottom:var(--space-4)">
+                <button class="rl-tab is-active"><i data-lucide="activity"></i> Overview</button>
+                <button class="rl-tab"><i data-lucide="message-square"></i> Conversations <span class="rl-tab-count">12</span></button>
+                <button class="rl-tab"><i data-lucide="file-text"></i> Notes</button>
+                <button class="rl-tab"><i data-lucide="paperclip"></i> Files</button>
+              </div>
+              <div class="ds-row" style="gap:var(--space-3);">
+                <div class="rl-stat" style="flex:1"><div class="rl-stat__label">Deal value</div><div class="rl-stat__value" style="font-size:1.5rem">$24,000</div></div>
+                <div class="rl-stat" style="flex:1"><div class="rl-stat__label">Stage</div><div style="margin-top:8px"><span class="rl-pill rl-pill--brand"><span class="rl-dot"></span> Qualified</span></div></div>
+                <div class="rl-stat" style="flex:1"><div class="rl-stat__label">Next step</div><div class="rl-sm" style="margin-top:8px;font-weight:600">Call · Thu 3pm</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABS + BREADCRUMBS -->
+      <section class="ds-section" id="tabs">
+        <header><h3>Tabs &amp; breadcrumbs</h3></header>
+        <div class="ds-demo ds-stack" style="gap:var(--space-6);">
+          <div><p class="ds-label">Underline tabs</p>
+            <div class="rl-tabs">
+              <button class="rl-tab is-active">All leads <span class="rl-tab-count">1,284</span></button>
+              <button class="rl-tab">My leads <span class="rl-tab-count">86</span></button>
+              <button class="rl-tab">Unassigned <span class="rl-tab-count">12</span></button>
+              <button class="rl-tab">Archived</button>
+            </div>
+          </div>
+          <div><p class="ds-label">Pill tabs &amp; breadcrumbs</p>
+            <div class="ds-row" style="gap:var(--space-6)">
+              <div class="rl-pilltabs">
+                <button class="rl-pilltab is-active">Day</button>
+                <button class="rl-pilltab">Week</button>
+                <button class="rl-pilltab">Month</button>
+              </div>
+              <div class="rl-crumbs"><a href="#">Home</a><i data-lucide="chevron-right"></i><a href="#">Pipeline</a><i data-lucide="chevron-right"></i><span class="rl-crumb-current">Q3 Enterprise</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MENUS + POPOVER + TOOLTIP -->
+      <section class="ds-section" id="menus">
+        <header><h3>Menus, popovers &amp; tooltips</h3></header>
+        <div class="ds-demo">
+          <div class="ds-grid" style="grid-template-columns:repeat(3,1fr);gap:var(--space-6);align-items:start;">
+            <div><p class="ds-label">Dropdown menu</p>
+              <div class="rl-menu">
+                <div class="rl-menu__label">Lead actions</div>
+                <div class="rl-menuitem"><i data-lucide="phone"></i> Call now <span class="rl-kbd rl-menukbd">C</span></div>
+                <div class="rl-menuitem"><i data-lucide="message-circle"></i> Send WhatsApp</div>
+                <div class="rl-menuitem"><i data-lucide="user-plus"></i> Reassign</div>
+                <div class="rl-menu__sep"></div>
+                <div class="rl-menuitem"><i data-lucide="check"></i> Mark qualified <span class="rl-check-trail"><i data-lucide="check" style="width:15px;height:15px"></i></span></div>
+                <div class="rl-menuitem is-danger"><i data-lucide="trash-2"></i> Delete lead</div>
+              </div>
+            </div>
+            <div><p class="ds-label">Popover</p>
+              <div class="rl-popover" style="position:relative;width:100%">
+                <span class="rl-popover__arrow"></span>
+                <div class="rl-popover__head"><b class="rl-h4">Filter leads</b><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="x"></i></button></div>
+                <div class="rl-popover__body ds-stack" style="gap:var(--space-3)">
+                  <label class="rl-check"><input type="checkbox" checked><span class="rl-box"><i data-lucide="check"></i></span> Hot leads only</label>
+                  <label class="rl-check"><input type="checkbox"><span class="rl-box"><i data-lucide="check"></i></span> Assigned to me</label>
+                  <div class="rl-field"><label class="rl-label">Stage</label><select class="rl-select rl-input--sm"><option>Any stage</option><option>Qualified</option></select></div>
+                  <button class="rl-btn rl-btn--primary rl-btn--sm rl-btn--block">Apply filters</button>
+                </div>
+              </div>
+            </div>
+            <div><p class="ds-label">Tooltips (always-on for demo)</p>
+              <div class="ds-row" style="gap:var(--space-8);padding-top:30px">
+                <span class="rl-tooltip"><button class="rl-iconbtn rl-iconbtn--bordered"><i data-lucide="phone"></i></button><span class="rl-tooltip__bubble">Call lead</span></span>
+                <span class="rl-tooltip"><button class="rl-iconbtn rl-iconbtn--bordered"><i data-lucide="archive"></i></button><span class="rl-tooltip__bubble">Archive</span></span>
+                <span class="rl-tooltip"><button class="rl-iconbtn rl-iconbtn--bordered"><i data-lucide="star"></i></button><span class="rl-tooltip__bubble">Add to favorites</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- OVERLAY TRIGGERS -->
+      <section class="ds-section" id="overlays">
+        <header><h3>Modals, drawer &amp; command palette</h3><p>Click to open each — they mount over a scrim. Esc or the backdrop dismisses.</p></header>
+        <div class="ds-demo ds-row">
+          <button class="rl-btn rl-btn--secondary" onclick="show('modalConfirm')"><i data-lucide="alert-triangle"></i> Confirm dialog</button>
+          <button class="rl-btn rl-btn--secondary" onclick="show('modalForm')"><i data-lucide="square-pen"></i> Form modal</button>
+          <button class="rl-btn rl-btn--secondary" onclick="show('drawer')"><i data-lucide="panel-right"></i> Detail drawer</button>
+          <button class="rl-btn rl-btn--secondary" onclick="openCmd()"><i data-lucide="command"></i> Command palette <span class="rl-kbd">⌘K</span></button>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<!-- ===== OVERLAYS (fixed to viewport) ===== -->
+<div class="rl-portal" id="modalConfirm" hidden>
+  <div class="rl-scrim" style="position:fixed" onclick="if(event.target===this)hide('modalConfirm')">
+    <div class="rl-modal">
+      <div class="rl-modal__head">
+        <div class="rl-modal__icon rl-modal__icon--danger"><i data-lucide="trash-2"></i></div>
+        <div><div class="rl-modal__title">Delete this lead?</div></div>
+        <button class="rl-iconbtn rl-modal__close" onclick="hide('modalConfirm')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="rl-modal__body">Northwind Retail and its 12 conversations, 3 calls and all notes will be permanently removed. This can't be undone.</div>
+      <div class="rl-modal__foot">
+        <button class="rl-btn rl-btn--ghost" onclick="hide('modalConfirm')">Cancel</button>
+        <button class="rl-btn rl-btn--destructive" onclick="hide('modalConfirm')">Delete lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rl-portal" id="modalForm" hidden>
+  <div class="rl-scrim" style="position:fixed" onclick="if(event.target===this)hide('modalForm')">
+    <div class="rl-modal" style="width:min(520px,92%)">
+      <div class="rl-modal__head">
+        <div class="rl-modal__icon rl-modal__icon--brand"><i data-lucide="user-plus"></i></div>
+        <div><div class="rl-modal__title">New lead</div></div>
+        <button class="rl-iconbtn rl-modal__close" onclick="hide('modalForm')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="rl-modal__body">
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4)">
+          <div class="rl-field"><label class="rl-label">Company <span class="rl-req">*</span></label><input class="rl-input" placeholder="Acme Inc."></div>
+          <div class="rl-field"><label class="rl-label">Contact</label><input class="rl-input" placeholder="Full name"></div>
+          <div class="rl-field"><label class="rl-label">Channel</label><select class="rl-select"><option>WhatsApp</option><option>Email</option><option>Call</option></select></div>
+          <div class="rl-field"><label class="rl-label">Deal value</label><div class="rl-inputwrap"><span class="rl-affix"><i data-lucide="dollar-sign"></i></span><input class="rl-input" placeholder="0"></div></div>
+        </div>
+      </div>
+      <div class="rl-modal__foot">
+        <button class="rl-btn rl-btn--ghost" onclick="hide('modalForm')">Cancel</button>
+        <button class="rl-btn rl-btn--primary" onclick="hide('modalForm')">Create lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rl-portal" id="drawer" hidden>
+  <div class="rl-scrim" style="position:fixed;place-items:stretch;justify-content:flex-end" onclick="if(event.target===this)hide('drawer')">
+    <div class="rl-drawer" style="position:relative">
+      <div class="rl-drawer__head">
+        <div class="rl-avatar rl-avatar--lg rl-avatar--c2">NR</div>
+        <div style="flex:1"><div class="rl-h4">Northwind Retail</div><div class="rl-xs rl-muted">LEAD-4821 · Qualified</div></div>
+        <button class="rl-iconbtn" onclick="hide('drawer')"><i data-lucide="x"></i></button>
+      </div>
+      <div class="rl-drawer__body ds-stack" style="gap:var(--space-5)">
+        <div class="ds-row"><span class="rl-pill rl-pill--brand"><span class="rl-dot"></span> Qualified</span><span class="rl-pill" style="background:color-mix(in oklch,var(--channel-whatsapp) 14%,transparent);color:var(--channel-whatsapp);border-color:color-mix(in oklch,var(--channel-whatsapp) 30%,transparent)"><i data-lucide="message-circle" style="width:12px;height:12px"></i> WhatsApp</span></div>
+        <dl class="rl-kv"><dt>Contact</dt><dd>Ada Okafor</dd><dt>Email</dt><dd>ada@northwind.co</dd><dt>Deal value</dt><dd class="rl-mono">$24,000</dd><dt>Owner</dt><dd>Marco Diaz</dd></dl>
+        <div><p class="ds-label">Recent activity</p>
+          <div class="rl-timeline">
+            <div class="rl-tl-item"><div class="rl-tl-dot rl-tl-dot--whatsapp"><i data-lucide="message-circle"></i></div><div class="rl-tl-body"><div class="rl-tl-title">Message sent</div><div class="rl-tl-time">14:04 Today</div></div></div>
+            <div class="rl-tl-item"><div class="rl-tl-dot rl-tl-dot--brand"><i data-lucide="phone"></i></div><div class="rl-tl-body"><div class="rl-tl-title">Call · 4:38</div><div class="rl-tl-time">13:20 Today</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="rl-drawer__foot">
+        <button class="rl-btn rl-btn--secondary rl-btn--block"><i data-lucide="message-circle"></i> Message</button>
+        <button class="rl-btn rl-btn--primary rl-btn--block"><i data-lucide="phone"></i> Call</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rl-portal" id="cmd" hidden>
+  <div class="rl-scrim" style="position:fixed;align-items:flex-start;padding-top:12vh" onclick="if(event.target===this)hide('cmd')">
+    <div class="rl-cmd">
+      <div class="rl-cmd__input"><i data-lucide="search"></i><input placeholder="Search leads, deals, or run a command…" id="cmdInput"><span class="rl-kbd">esc</span></div>
+      <div class="rl-cmd__list">
+        <div class="rl-cmd__group">Quick actions</div>
+        <div class="rl-cmd__item is-active"><i data-lucide="plus"></i> Create new lead <span class="rl-cmd-trail rl-kbd">N</span></div>
+        <div class="rl-cmd__item"><i data-lucide="phone"></i> Start a call</div>
+        <div class="rl-cmd__item"><i data-lucide="message-circle"></i> New WhatsApp message</div>
+        <div class="rl-cmd__group">Recent leads</div>
+        <div class="rl-cmd__item"><div class="rl-avatar rl-avatar--xs rl-avatar--c2">NR</div> Northwind Retail <span class="rl-cmd-trail rl-badge rl-badge--neutral">Qualified</span></div>
+        <div class="rl-cmd__item"><div class="rl-avatar rl-avatar--xs rl-avatar--c3">BH</div> Brightline Health <span class="rl-cmd-trail rl-badge rl-badge--neutral">Proposal</span></div>
+      </div>
+      <div class="rl-cmd__foot">
+        <span class="rl-cmd-hint"><span class="rl-kbd">↑</span><span class="rl-kbd">↓</span> Navigate</span>
+        <span class="rl-cmd-hint"><span class="rl-kbd">↵</span> Select</span>
+        <span class="rl-cmd-hint"><span class="rl-kbd">esc</span> Close</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>.rl-portal[hidden]{display:none}</style>
+<script>
+  function show(id){ document.getElementById(id).hidden=false; }
+  function hide(id){ document.getElementById(id).hidden=true; }
+  function openCmd(){ show('cmd'); setTimeout(()=>document.getElementById('cmdInput').focus(),20); }
+  document.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){ e.preventDefault(); openCmd(); }
+    if(e.key==='Escape'){ ['modalConfirm','modalForm','drawer','cmd'].forEach(hide); }
+  });
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.lucide) lucide.createIcons(); });
+</script>
+</body>
+</html>

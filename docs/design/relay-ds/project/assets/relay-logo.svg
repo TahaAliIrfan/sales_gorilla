@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none" role="img" aria-label="Relay logo">
+  <rect width="40" height="40" rx="11" fill="var(--brand-600, #137a72)"></rect>
+  <path d="M11 11 L19.5 20 L11 29" stroke="#fff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"></path>
+  <path d="M21 11 L29.5 20 L21 29" stroke="#fff" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"></path>
+</svg>

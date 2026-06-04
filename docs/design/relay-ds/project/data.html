@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay DS — Data &amp; Comms</title>
+<link rel="icon" href="assets/relay-logo.svg">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="components-data.css">
+<link rel="stylesheet" href="site.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="ds.js"></script>
+</head>
+<body>
+<div class="ds-shell">
+  <aside class="ds-side">
+    <div class="ds-brand">
+      <span class="ds-mark"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <div><b>Relay</b><span>Design System</span></div>
+    </div>
+    <nav class="ds-nav">
+      <div class="ds-navgroup"><p>Foundations</p>
+        <a href="index.html"><i data-lucide="layers"></i> Overview &amp; tokens</a></div>
+      <div class="ds-navgroup"><p>Library</p>
+        <a href="controls.html"><i data-lucide="mouse-pointer-click"></i> Controls &amp; forms</a>
+        <a href="data.html"><i data-lucide="table"></i> Data &amp; comms</a>
+        <a href="overlays.html"><i data-lucide="panels-top-left"></i> Nav &amp; overlays</a>
+        <a href="feedback.html"><i data-lucide="bell-ring"></i> Feedback &amp; states</a></div>
+    </nav>
+  </aside>
+
+  <main class="ds-main">
+    <div class="ds-topbar">
+      <h1>Data &amp; comms</h1>
+      <div class="ds-controls">
+        <span class="rl-eyebrow" style="margin-right:2px;">Brand</span>
+        <div class="ds-swatchpick" role="group" aria-label="White-label brand">
+          <button data-brand-pick="teal"   style="background:oklch(0.586 0.106 190)" onclick="RelayDS.applyBrand('teal')"></button>
+          <button data-brand-pick="cobalt" style="background:oklch(0.520 0.170 256)" onclick="RelayDS.applyBrand('cobalt')"></button>
+          <button data-brand-pick="violet" style="background:oklch(0.530 0.200 295)" onclick="RelayDS.applyBrand('violet')"></button>
+          <button data-brand-pick="amber"  style="background:oklch(0.640 0.150 64)"  onclick="RelayDS.applyBrand('amber')"></button>
+          <button data-brand-pick="rose"   style="background:oklch(0.580 0.205 12)"  onclick="RelayDS.applyBrand('rose')"></button>
+        </div>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="RelayDS.toggleTheme()"><i data-lucide="sun-moon"></i> <span data-theme-label>Light</span></button>
+      </div>
+    </div>
+
+    <div class="ds-content">
+      <header class="ds-hero" style="margin-bottom:var(--space-10);">
+        <p class="rl-eyebrow" style="color:var(--color-primary-text);">Library</p>
+        <h2 style="font-size:clamp(2rem,4vw,2.8rem);">Data &amp; communication</h2>
+        <p>The dense surfaces a sales rep lives in — tables, pipeline, metrics — plus the comms primitives that make Relay a call-center: chat bubbles, conversation lists, call playback and transcripts.</p>
+      </header>
+
+      <!-- STAT TILES -->
+      <section class="ds-section" id="stats" style="margin-top:0;">
+        <header><h3>Metric tiles &amp; badges</h3></header>
+        <div class="ds-grid" style="grid-template-columns:repeat(4,1fr);gap:var(--space-4);">
+          <div class="rl-stat"><div class="rl-stat__label">Calls today</div><div class="rl-stat__value">128</div><div class="rl-stat__delta rl-delta-up"><i data-lucide="trending-up"></i> 12% vs yesterday</div></div>
+          <div class="rl-stat"><div class="rl-stat__label">Connect rate</div><div class="rl-stat__value">41%</div><div class="rl-stat__delta rl-delta-up"><i data-lucide="trending-up"></i> 3.2 pts</div></div>
+          <div class="rl-stat"><div class="rl-stat__label">Pipeline</div><div class="rl-stat__value">$284k</div><div class="rl-stat__delta rl-delta-down"><i data-lucide="trending-down"></i> 4% this week</div></div>
+          <div class="rl-stat"><div class="rl-stat__label">Avg. response</div><div class="rl-stat__value">2:14</div><div class="rl-stat__delta rl-muted" style="color:var(--color-fg-3)"><i data-lucide="minus"></i> flat</div></div>
+        </div>
+        <div class="ds-demo" style="margin-top:var(--space-4);">
+          <p class="ds-label">Badges · status pills · tags</p>
+          <div class="ds-row" style="margin-bottom:var(--space-4);">
+            <span class="rl-badge rl-badge--neutral">Draft</span>
+            <span class="rl-badge rl-badge--primary">New</span>
+            <span class="rl-badge rl-badge--success">Won</span>
+            <span class="rl-badge rl-badge--warning">At risk</span>
+            <span class="rl-badge rl-badge--danger">Overdue</span>
+            <span class="rl-badge rl-badge--info">Scheduled</span>
+            <span class="rl-badge rl-badge--solid">12</span>
+          </div>
+          <div class="ds-row" style="margin-bottom:var(--space-4);">
+            <span class="rl-pill rl-pill--success"><span class="rl-dot"></span> Connected</span>
+            <span class="rl-pill rl-pill--warning"><span class="rl-dot"></span> No answer</span>
+            <span class="rl-pill rl-pill--danger"><span class="rl-dot"></span> Lost</span>
+            <span class="rl-pill rl-pill--info"><span class="rl-dot"></span> Callback</span>
+            <span class="rl-pill rl-pill--brand"><span class="rl-dot"></span> Qualified</span>
+            <span class="rl-pill"><span class="rl-dot"></span> Cold</span>
+          </div>
+          <div class="ds-row">
+            <span class="rl-tag"><span class="rl-tag-dot" style="background:var(--cat-1)"></span> Enterprise <button aria-label="x"><i data-lucide="x"></i></button></span>
+            <span class="rl-tag"><span class="rl-tag-dot" style="background:var(--cat-2)"></span> Inbound <button aria-label="x"><i data-lucide="x"></i></button></span>
+            <span class="rl-tag"><span class="rl-tag-dot" style="background:var(--cat-5)"></span> Referral <button aria-label="x"><i data-lucide="x"></i></button></span>
+            <span class="rl-chip"><i data-lucide="plus" style="width:14px;height:14px"></i> Add filter</span>
+            <span class="rl-chip is-active">WhatsApp</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- AVATARS -->
+      <section class="ds-section" id="avatars">
+        <header><h3>Avatars</h3></header>
+        <div class="ds-demo ds-row" style="gap:var(--space-6);">
+          <div class="rl-avatar rl-avatar--xs">AO</div>
+          <div class="rl-avatar rl-avatar--sm rl-avatar--c1">MD</div>
+          <div class="rl-avatar rl-avatar--c2">PN<span class="rl-presence rl-presence--online"></span></div>
+          <div class="rl-avatar rl-avatar--lg rl-avatar--c3">JT<span class="rl-presence rl-presence--busy"></span></div>
+          <div class="rl-avatar rl-avatar--xl rl-avatar--c5">RK</div>
+          <div class="rl-avatar rl-avatar--lg rl-avatar--square rl-avatar--c4"><i data-lucide="building-2" style="width:20px;height:20px"></i></div>
+          <div class="rl-avatar-group">
+            <div class="rl-avatar rl-avatar--sm rl-avatar--c1">AO</div>
+            <div class="rl-avatar rl-avatar--sm rl-avatar--c2">MD</div>
+            <div class="rl-avatar rl-avatar--sm rl-avatar--c3">PN</div>
+            <div class="rl-avatar rl-avatar--sm rl-more">+5</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TABLE -->
+      <section class="ds-section" id="table">
+        <header><h3>Data table</h3><p>Sortable headers, row-select, bulk-action bar, sticky header, pagination and a density toggle.</p></header>
+        <div class="ds-demo" style="padding:0;background:transparent;border:none;box-shadow:none;">
+          <div class="rl-table-wrap">
+            <div class="rl-tabletools" style="flex-wrap:wrap;">
+              <div class="ds-row" style="gap:var(--space-2);">
+                <div class="rl-inputwrap" style="width:240px;"><span class="rl-affix"><i data-lucide="search"></i></span><input class="rl-input rl-input--sm" placeholder="Search leads"></div>
+                <button class="rl-btn rl-btn--secondary rl-btn--sm"><i data-lucide="filter"></i> Filter</button>
+              </div>
+              <div class="rl-segmented" style="padding:2px;">
+                <button class="is-active" onclick="dens(this,false)" style="height:26px;font-size:12px">Comfortable</button>
+                <button onclick="dens(this,true)" style="height:26px;font-size:12px">Dense</button>
+              </div>
+            </div>
+            <div class="rl-bulkbar" id="bulkbar" hidden>
+              <span><b id="selcount">0</b> selected</span>
+              <div class="ds-row" style="gap:var(--space-2);">
+                <button class="rl-btn rl-btn--sm rl-btn--brand-soft"><i data-lucide="user-plus"></i> Assign</button>
+                <button class="rl-btn rl-btn--sm rl-btn--brand-soft"><i data-lucide="tag"></i> Tag</button>
+                <button class="rl-btn rl-btn--sm rl-btn--destructive-ghost"><i data-lucide="trash-2"></i> Delete</button>
+              </div>
+            </div>
+            <div class="rl-table-scroll"><table class="rl-table" id="leadtable" style="min-width:760px;">
+              <thead><tr>
+                <th style="width:40px;"><label class="rl-check"><input type="checkbox" onchange="selAll(this)"><span class="rl-box"><i data-lucide="check"></i></span></label></th>
+                <th class="is-sortable" aria-sort="ascending"><span class="rl-sort">Lead <i data-lucide="arrow-up"></i></span></th>
+                <th>Channel</th>
+                <th>Stage</th>
+                <th>Owner</th>
+                <th class="is-sortable" style="text-align:right;"><span class="rl-sort">Value <i data-lucide="chevrons-up-down"></i></span></th>
+                <th style="width:44px;"></th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td><label class="rl-check"><input type="checkbox" onchange="selRow(this)"><span class="rl-box"><i data-lucide="check"></i></span></label></td>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="rl-avatar rl-avatar--sm rl-avatar--c2">NR</div><div><div class="rl-cell-strong">Northwind Retail</div><div class="rl-xs rl-muted">ada@northwind.co</div></div></div></td>
+                  <td><span class="rl-pill" style="background:color-mix(in oklch,var(--channel-whatsapp) 14%,transparent);color:var(--channel-whatsapp);border-color:color-mix(in oklch,var(--channel-whatsapp) 30%,transparent)"><i data-lucide="message-circle" style="width:12px;height:12px"></i> WhatsApp</span></td>
+                  <td><span class="rl-pill rl-pill--brand"><span class="rl-dot"></span> Qualified</span></td>
+                  <td><div style="display:flex;align-items:center;gap:8px"><div class="rl-avatar rl-avatar--xs rl-avatar--c1">AO</div> Ada O.</div></td>
+                  <td class="rl-cell-num">$24,000</td>
+                  <td><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></td>
+                </tr>
+                <tr>
+                  <td><label class="rl-check"><input type="checkbox" onchange="selRow(this)"><span class="rl-box"><i data-lucide="check"></i></span></label></td>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="rl-avatar rl-avatar--sm rl-avatar--c3">BH</div><div><div class="rl-cell-strong">Brightline Health</div><div class="rl-xs rl-muted">+1 415 555 0134</div></div></div></td>
+                  <td><span class="rl-pill" style="background:var(--color-info-subtle);color:var(--color-info-text);border-color:var(--color-info-border)"><i data-lucide="phone" style="width:12px;height:12px"></i> Call</span></td>
+                  <td><span class="rl-pill rl-pill--warning"><span class="rl-dot"></span> Proposal</span></td>
+                  <td><div style="display:flex;align-items:center;gap:8px"><div class="rl-avatar rl-avatar--xs rl-avatar--c4">MD</div> Marco D.</div></td>
+                  <td class="rl-cell-num">$58,500</td>
+                  <td><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></td>
+                </tr>
+                <tr>
+                  <td><label class="rl-check"><input type="checkbox" onchange="selRow(this)"><span class="rl-box"><i data-lucide="check"></i></span></label></td>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="rl-avatar rl-avatar--sm rl-avatar--c5">QC</div><div><div class="rl-cell-strong">Quanta Cloud</div><div class="rl-xs rl-muted">sam@quanta.io</div></div></div></td>
+                  <td><span class="rl-pill" style="background:var(--color-primary-subtle);color:var(--color-primary-text);border-color:var(--color-primary-border)"><i data-lucide="mail" style="width:12px;height:12px"></i> Email</span></td>
+                  <td><span class="rl-pill rl-pill--success"><span class="rl-dot"></span> Won</span></td>
+                  <td><div style="display:flex;align-items:center;gap:8px"><div class="rl-avatar rl-avatar--xs rl-avatar--c2">PN</div> Priya N.</div></td>
+                  <td class="rl-cell-num">$112,000</td>
+                  <td><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></td>
+                </tr>
+                <tr>
+                  <td><label class="rl-check"><input type="checkbox" onchange="selRow(this)"><span class="rl-box"><i data-lucide="check"></i></span></label></td>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div class="rl-avatar rl-avatar--sm rl-avatar--c1">VG</div><div><div class="rl-cell-strong">Vertex Group</div><div class="rl-xs rl-muted">+44 20 7946 0991</div></div></div></td>
+                  <td><span class="rl-pill" style="background:color-mix(in oklch,var(--channel-sms) 14%,transparent);color:var(--channel-sms);border-color:color-mix(in oklch,var(--channel-sms) 30%,transparent)"><i data-lucide="message-square" style="width:12px;height:12px"></i> SMS</span></td>
+                  <td><span class="rl-pill rl-pill--danger"><span class="rl-dot"></span> Lost</span></td>
+                  <td><div style="display:flex;align-items:center;gap:8px"><div class="rl-avatar rl-avatar--xs rl-avatar--c3">JT</div> Jess T.</div></td>
+                  <td class="rl-cell-num">$9,200</td>
+                  <td><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></td>
+                </tr>
+              </tbody>
+            </table></div>
+            <div class="rl-pagination">
+              <span>Showing 1–4 of 1,284 leads</span>
+              <div class="rl-pagebtns">
+                <button class="rl-pagebtn"><i data-lucide="chevron-left" style="width:15px;height:15px"></i></button>
+                <button class="rl-pagebtn is-active">1</button>
+                <button class="rl-pagebtn">2</button>
+                <button class="rl-pagebtn">3</button>
+                <button class="rl-pagebtn">…</button>
+                <button class="rl-pagebtn">64</button>
+                <button class="rl-pagebtn"><i data-lucide="chevron-right" style="width:15px;height:15px"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KANBAN -->
+      <section class="ds-section" id="kanban">
+        <header><h3>Pipeline (kanban)</h3><p>Drag-and-drop deal columns with per-stage totals.</p></header>
+        <div class="ds-demo">
+          <div class="rl-board">
+            <div class="rl-col">
+              <div class="rl-col__head"><span class="rl-dotmark" style="background:var(--cat-1)"></span><b>Qualified</b><span class="rl-count">3</span></div>
+              <div class="rl-col__body">
+                <div class="rl-dealcard"><div class="rl-dealcard__top"><div class="rl-dealcard__title">Northwind Retail</div><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></div><div class="rl-dealcard__value">$24,000</div><div class="rl-dealcard__foot"><span class="rl-badge rl-badge--neutral"><i data-lucide="calendar" style="width:11px;height:11px"></i> Thu</span><div class="rl-avatar rl-avatar--xs rl-avatar--c1">AO</div></div></div>
+                <div class="rl-dealcard"><div class="rl-dealcard__top"><div class="rl-dealcard__title">Helio Logistics</div><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></div><div class="rl-dealcard__value">$41,200</div><div class="rl-dealcard__foot"><span class="rl-badge rl-badge--warning">At risk</span><div class="rl-avatar rl-avatar--xs rl-avatar--c4">MD</div></div></div>
+              </div>
+              <button class="rl-col--add"><i data-lucide="plus" style="width:15px;height:15px"></i> Add deal</button>
+            </div>
+            <div class="rl-col">
+              <div class="rl-col__head"><span class="rl-dotmark" style="background:var(--cat-3)"></span><b>Proposal</b><span class="rl-count">2</span></div>
+              <div class="rl-col__body">
+                <div class="rl-dealcard is-dragging"><div class="rl-dealcard__top"><div class="rl-dealcard__title">Brightline Health</div><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></div><div class="rl-dealcard__value">$58,500</div><div class="rl-dealcard__foot"><span class="rl-badge rl-badge--info">Demo set</span><div class="rl-avatar rl-avatar--xs rl-avatar--c4">MD</div></div></div>
+              </div>
+              <button class="rl-col--add"><i data-lucide="plus" style="width:15px;height:15px"></i> Add deal</button>
+            </div>
+            <div class="rl-col">
+              <div class="rl-col__head"><span class="rl-dotmark" style="background:var(--cat-2)"></span><b>Won</b><span class="rl-count">1</span></div>
+              <div class="rl-col__body">
+                <div class="rl-dealcard"><div class="rl-dealcard__top"><div class="rl-dealcard__title">Quanta Cloud</div><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="more-horizontal"></i></button></div><div class="rl-dealcard__value">$112,000</div><div class="rl-dealcard__foot"><span class="rl-badge rl-badge--success"><i data-lucide="check" style="width:11px;height:11px"></i> Closed</span><div class="rl-avatar rl-avatar--xs rl-avatar--c2">PN</div></div></div>
+              </div>
+              <button class="rl-col--add"><i data-lucide="plus" style="width:15px;height:15px"></i> Add deal</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMMS: CHAT + CONVO LIST -->
+      <section class="ds-section" id="chat">
+        <header><h3>Messaging</h3><p>WhatsApp is the #1 channel — bubbles cover inbound, outbound, media, attachments, system events, delivery/read receipts and typing.</p></header>
+        <div class="ds-demo" style="padding:0;overflow:hidden;">
+          <div class="ds-grid" style="grid-template-columns:300px 1fr;gap:0;">
+            <div style="border-right:1px solid var(--color-border);">
+              <div class="rl-convo is-active">
+                <div class="rl-avatar rl-avatar--c2">NR<span class="rl-presence rl-presence--online"></span></div>
+                <div class="rl-convo__main"><div class="rl-convo__row"><span class="rl-convo__name">Northwind Retail</span><span class="rl-convo__time">14:08</span></div><div class="rl-convo__row"><span class="rl-convo__preview"><i data-lucide="message-circle" style="width:12px;height:12px;color:var(--channel-whatsapp)"></i> Sounds great — send it over</span><span class="rl-convo__unread">2</span></div></div>
+              </div>
+              <div class="rl-convo">
+                <div class="rl-avatar rl-avatar--c3">BH</div>
+                <div class="rl-convo__main"><div class="rl-convo__row"><span class="rl-convo__name">Brightline Health</span><span class="rl-convo__time">12:51</span></div><div class="rl-convo__row"><span class="rl-convo__preview"><i data-lucide="check-check" style="width:12px;height:12px"></i> You: I'll call at 3pm</span></div></div>
+              </div>
+              <div class="rl-convo">
+                <div class="rl-avatar rl-avatar--c5">QC</div>
+                <div class="rl-convo__main"><div class="rl-convo__row"><span class="rl-convo__name">Quanta Cloud</span><span class="rl-convo__time">Mon</span></div><div class="rl-convo__row"><span class="rl-convo__preview"><i data-lucide="mic" style="width:12px;height:12px"></i> Voice message · 0:42</span></div></div>
+              </div>
+            </div>
+            <div class="rl-chat" style="border:none;border-radius:0;min-height:380px;">
+              <div class="rl-sysmsg">Today · WhatsApp</div>
+              <div class="rl-msgrow rl-msgrow--in"><div class="rl-bubble rl-bubble--in">Hi! Saw your message about the Pro plan — what's included?<div class="rl-bubble__meta">14:02</div></div></div>
+              <div class="rl-msgrow rl-msgrow--out"><div class="rl-bubble rl-bubble--out">Happy to help, Ada 👋 Pro covers unlimited seats, call recording and the full pipeline. Want the one-pager?<div class="rl-bubble__meta">14:04 <i data-lucide="check-check" class="rl-read"></i></div></div></div>
+              <div class="rl-msgrow rl-msgrow--out"><div class="rl-bubble rl-bubble--out rl-bubble--media"><div class="rl-attach"><div class="rl-attach-ic"><i data-lucide="file-text"></i></div><div><div style="font-weight:600;font-size:13px">Relay-Pro.pdf</div><div style="font-size:11px;opacity:.8">240 KB · PDF</div></div></div><div class="rl-bubble__meta" style="padding:0 6px 2px">14:05 <i data-lucide="check-check" class="rl-read"></i></div></div></div>
+              <div class="rl-msgrow rl-msgrow--in"><div class="rl-bubble rl-bubble--in">Sounds great — send it over to the team too?<div class="rl-bubble__meta">14:08</div></div></div>
+              <div class="rl-msgrow rl-msgrow--in"><div class="rl-bubble rl-bubble--in rl-typing"><i></i><i></i><i></i></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMMS: CALL PLAYER + TRANSCRIPT -->
+      <section class="ds-section" id="call">
+        <header><h3>Call playback &amp; transcript</h3><p>Every browser call is recorded and transcribed automatically.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start;">
+          <div class="ds-stack">
+            <div class="rl-player">
+              <button class="rl-player__play"><i data-lucide="play"></i></button>
+              <div class="rl-player__main">
+                <div class="rl-wave" id="wave"></div>
+                <div class="rl-player__time"><span>1:12</span><span>4:38</span></div>
+              </div>
+              <button class="rl-iconbtn"><i data-lucide="download"></i></button>
+            </div>
+            <div class="ds-row" style="gap:var(--space-2);">
+              <span class="rl-pill rl-pill--success"><span class="rl-dot"></span> Connected</span>
+              <span class="rl-badge rl-badge--neutral"><i data-lucide="phone-outgoing" style="width:11px;height:11px"></i> Outbound</span>
+              <span class="rl-badge rl-badge--neutral"><i data-lucide="sparkles" style="width:11px;height:11px"></i> AI summary</span>
+            </div>
+          </div>
+          <div class="rl-card"><div class="rl-card__body">
+            <div class="rl-transcript">
+              <div class="rl-tx"><div class="rl-tx__time">00:04</div><div><div class="rl-tx__who rl-tx__who--rep">Ada (Rep)</div><div class="rl-tx__text">Hi Sam, thanks for taking the call. I wanted to walk you through the <mark>Pro plan</mark> pricing.</div></div></div>
+              <div class="rl-tx"><div class="rl-tx__time">00:11</div><div><div class="rl-tx__who rl-tx__who--lead">Sam (Lead)</div><div class="rl-tx__text">Perfect. We're mostly worried about onboarding time for the team.</div></div></div>
+              <div class="rl-tx"><div class="rl-tx__time">00:19</div><div><div class="rl-tx__who rl-tx__who--rep">Ada (Rep)</div><div class="rl-tx__text">Totally fair — most teams are live in under a week with guided <mark>migration</mark>.</div></div></div>
+            </div>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- LIST + TIMELINE + KV -->
+      <section class="ds-section" id="lists">
+        <header><h3>Lists, activity feed &amp; detail rows</h3></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start;">
+          <div class="rl-card">
+            <div class="rl-card__header"><b class="rl-h4" style="white-space:nowrap;">Today's tasks</b><span class="rl-badge rl-badge--primary">4</span></div>
+            <div class="rl-list">
+              <div class="rl-listitem"><label class="rl-check"><input type="checkbox"><span class="rl-box"><i data-lucide="check"></i></span></label><div class="rl-listitem__main"><div class="rl-listitem__title">Call Brightline Health</div><div class="rl-listitem__sub">Follow-up · due 3:00 PM</div></div><span class="rl-pill rl-pill--danger"><span class="rl-dot"></span> Overdue</span></div>
+              <div class="rl-listitem"><label class="rl-check"><input type="checkbox" checked><span class="rl-box"><i data-lucide="check"></i></span></label><div class="rl-listitem__main"><div class="rl-listitem__title" style="text-decoration:line-through;color:var(--color-fg-3)">Send Quanta proposal</div><div class="rl-listitem__sub">Done · 11:20 AM</div></div></div>
+              <div class="rl-listitem"><label class="rl-check"><input type="checkbox"><span class="rl-box"><i data-lucide="check"></i></span></label><div class="rl-listitem__main"><div class="rl-listitem__title">WhatsApp Vertex Group</div><div class="rl-listitem__sub">Reminder · 4:30 PM</div></div><div class="rl-avatar rl-avatar--xs rl-avatar--c3">JT</div></div>
+            </div>
+          </div>
+          <div class="rl-card"><div class="rl-card__body">
+            <p class="ds-label">Activity feed</p>
+            <div class="rl-timeline">
+              <div class="rl-tl-item"><div class="rl-tl-dot rl-tl-dot--whatsapp"><i data-lucide="message-circle"></i></div><div class="rl-tl-body"><div class="rl-tl-title"><b>Ada</b> sent a WhatsApp message</div><div class="rl-tl-time">14:04 · Today</div></div></div>
+              <div class="rl-tl-item"><div class="rl-tl-dot rl-tl-dot--brand"><i data-lucide="phone"></i></div><div class="rl-tl-body"><div class="rl-tl-title"><b>Call</b> connected · 4:38</div><div class="rl-tl-time">13:20 · Today</div></div></div>
+              <div class="rl-tl-item"><div class="rl-tl-dot rl-tl-dot--success"><i data-lucide="arrow-right"></i></div><div class="rl-tl-body"><div class="rl-tl-title">Moved to <b>Qualified</b></div><div class="rl-tl-time">Yesterday · 16:45</div></div></div>
+              <div class="rl-tl-item"><div class="rl-tl-dot"><i data-lucide="user-plus"></i></div><div class="rl-tl-body"><div class="rl-tl-title">Lead created from inbound form</div><div class="rl-tl-time">Mon · 09:02</div></div></div>
+            </div>
+            <hr class="rl-divider">
+            <dl class="rl-kv">
+              <dt>Company</dt><dd>Northwind Retail</dd>
+              <dt>Deal value</dt><dd class="rl-mono">$24,000</dd>
+              <dt>Source</dt><dd>Inbound · WhatsApp</dd>
+              <dt>Owner</dt><dd>Ada Okafor</dd>
+            </dl>
+          </div></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<script>
+  function selRow(cb){ cb.closest('tr').classList.toggle('is-selected', cb.checked); refreshBulk(); }
+  function selAll(cb){ document.querySelectorAll('#leadtable tbody input[type=checkbox]').forEach(x=>{x.checked=cb.checked; x.closest('tr').classList.toggle('is-selected',cb.checked);}); refreshBulk(); }
+  function refreshBulk(){ const n=document.querySelectorAll('#leadtable tbody input:checked').length; const bar=document.getElementById('bulkbar'); document.getElementById('selcount').textContent=n; bar.hidden=n===0; }
+  function dens(b,on){ b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('is-active')); b.classList.add('is-active'); document.getElementById('leadtable').classList.toggle('is-dense',on); }
+  (function(){ const w=document.getElementById('wave'); const heights=[30,52,40,68,80,55,72,90,60,44,78,96,70,50,84,62,40,74,58,88,52,66,46,80,60,38,72,90,54,68,42,76,58,86,48,70]; w.innerHTML=heights.map((h,i)=>`<i class="${i<13?'is-played':''}" style="height:${h}%"></i>`).join(''); })();
+  document.addEventListener('DOMContentLoaded',()=>{ if(window.lucide) lucide.createIcons(); });
+</script>
+</body>
+</html>

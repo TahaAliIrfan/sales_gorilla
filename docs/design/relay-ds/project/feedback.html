@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relay DS — Feedback &amp; States</title>
+<link rel="icon" href="assets/relay-logo.svg">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="components-data.css">
+<link rel="stylesheet" href="site.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="ds.js"></script>
+<style>
+  .rl-alert { display: flex; gap: var(--space-3); padding: var(--space-4); border-radius: var(--radius-lg); border: 1px solid; }
+  .rl-alert__ic { flex: none; }
+  .rl-alert__ic svg { width: 20px; height: 20px; }
+  .rl-alert__title { font-weight: var(--weight-semibold); font-size: var(--text-sm); }
+  .rl-alert__msg { font-size: var(--text-sm); margin-top: 2px; line-height: 1.5; color: var(--color-fg-2); }
+  .rl-alert--info { background: var(--color-info-subtle); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .rl-alert--success { background: var(--color-success-subtle); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .rl-alert--warning { background: var(--color-warning-subtle); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .rl-alert--danger { background: var(--color-danger-subtle); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .rl-toast { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); width: 372px; }
+  .rl-toast__ic { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+  .rl-toast__ic svg { width: 17px; height: 17px; }
+  .rl-toast__ic--success { background: var(--color-success-subtle); color: var(--color-success-text); }
+  .rl-toast__ic--danger { background: var(--color-danger-subtle); color: var(--color-danger-text); }
+  .rl-toast__ic--brand { background: var(--color-primary-subtle); color: var(--color-primary-text); }
+  .rl-toast__main { flex: 1; min-width: 0; }
+  .rl-toast__title { font-size: var(--text-sm); font-weight: var(--weight-semibold); }
+  .rl-toast__msg { font-size: var(--text-xs); color: var(--color-fg-3); margin-top: 1px; }
+  .rl-empty { text-align: center; padding: var(--space-10) var(--space-6); }
+  .rl-empty__art { width: 64px; height: 64px; margin: 0 auto var(--space-4); border-radius: var(--radius-xl); background: var(--color-surface-3); display: grid; place-items: center; color: var(--color-fg-3); }
+  .rl-empty__art svg { width: 30px; height: 30px; }
+  .rl-empty h4 { font-size: var(--text-h4); font-weight: var(--weight-semibold); margin: 0 0 6px; }
+  .rl-empty p { color: var(--color-fg-3); font-size: var(--text-sm); max-width: 40ch; margin: 0 auto var(--space-5); line-height: 1.55; }
+  .rl-errpage { text-align: center; padding: var(--space-10) var(--space-6); }
+  .rl-errpage__code { font-family: var(--font-display); font-weight: 800; font-size: 4rem; line-height: 1; letter-spacing: -0.04em; color: var(--color-primary-text); }
+  .rl-statematrix { display: grid; grid-template-columns: 116px repeat(6, 1fr); gap: 10px; align-items: center; min-width: 720px; }
+  .rl-statematrix .rl-mh { font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-fg-3); text-align: center; }
+  .rl-statematrix .rl-rl { font-size: var(--text-sm); font-weight: 600; color: var(--color-fg-2); }
+  .rl-statematrix .rl-mc { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+<div class="ds-shell">
+  <aside class="ds-side">
+    <div class="ds-brand">
+      <span class="ds-mark"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 14.5 16 6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 24 16 15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <div><b>Relay</b><span>Design System</span></div>
+    </div>
+    <nav class="ds-nav">
+      <div class="ds-navgroup"><p>Foundations</p>
+        <a href="index.html"><i data-lucide="layers"></i> Overview &amp; tokens</a></div>
+      <div class="ds-navgroup"><p>Library</p>
+        <a href="controls.html"><i data-lucide="mouse-pointer-click"></i> Controls &amp; forms</a>
+        <a href="data.html"><i data-lucide="table"></i> Data &amp; comms</a>
+        <a href="overlays.html"><i data-lucide="panels-top-left"></i> Nav &amp; overlays</a>
+        <a href="feedback.html"><i data-lucide="bell-ring"></i> Feedback &amp; states</a></div>
+    </nav>
+  </aside>
+
+  <main class="ds-main">
+    <div class="ds-topbar">
+      <h1>Feedback &amp; states</h1>
+      <div class="ds-controls">
+        <span class="rl-eyebrow" style="margin-right:2px;">Brand</span>
+        <div class="ds-swatchpick" role="group" aria-label="White-label brand">
+          <button data-brand-pick="teal"   style="background:oklch(0.586 0.106 190)" onclick="RelayDS.applyBrand('teal')"></button>
+          <button data-brand-pick="cobalt" style="background:oklch(0.520 0.170 256)" onclick="RelayDS.applyBrand('cobalt')"></button>
+          <button data-brand-pick="violet" style="background:oklch(0.530 0.200 295)" onclick="RelayDS.applyBrand('violet')"></button>
+          <button data-brand-pick="amber"  style="background:oklch(0.640 0.150 64)"  onclick="RelayDS.applyBrand('amber')"></button>
+          <button data-brand-pick="rose"   style="background:oklch(0.580 0.205 12)"  onclick="RelayDS.applyBrand('rose')"></button>
+        </div>
+        <button class="rl-btn rl-btn--secondary rl-btn--sm" onclick="RelayDS.toggleTheme()"><i data-lucide="sun-moon"></i> <span data-theme-label>Light</span></button>
+      </div>
+    </div>
+
+    <div class="ds-content">
+      <header class="ds-hero" style="margin-bottom:var(--space-10);">
+        <p class="rl-eyebrow" style="color:var(--color-primary-text);">Library</p>
+        <h2 style="font-size:clamp(2rem,4vw,2.8rem);">Feedback &amp; states</h2>
+        <p>How the system talks back — toasts, alerts and progress — plus the often-skipped states that make a product feel finished: empty, loading, error and offline.</p>
+      </header>
+
+      <!-- TOASTS -->
+      <section class="ds-section" id="toasts" style="margin-top:0;">
+        <header><h3>Toasts</h3><p>Transient, corner-anchored confirmations with an optional inline action.</p></header>
+        <div class="ds-demo ds-stack" style="gap:var(--space-3);max-width:420px;">
+          <div class="rl-toast"><div class="rl-toast__ic rl-toast__ic--success"><i data-lucide="check"></i></div><div class="rl-toast__main"><div class="rl-toast__title">Lead created</div><div class="rl-toast__msg">Northwind Retail added to Qualified.</div></div><button class="rl-btn rl-btn--ghost rl-btn--sm">Undo</button></div>
+          <div class="rl-toast"><div class="rl-toast__ic rl-toast__ic--brand"><i data-lucide="message-circle"></i></div><div class="rl-toast__main"><div class="rl-toast__title">Message sent</div><div class="rl-toast__msg">Delivered to Ada via WhatsApp.</div></div><button class="rl-iconbtn rl-iconbtn--sm"><i data-lucide="x"></i></button></div>
+          <div class="rl-toast"><div class="rl-toast__ic rl-toast__ic--danger"><i data-lucide="triangle-alert"></i></div><div class="rl-toast__main"><div class="rl-toast__title">Couldn't save note</div><div class="rl-toast__msg">Changes were not stored. Try again.</div></div><button class="rl-btn rl-btn--ghost rl-btn--sm">Retry</button></div>
+        </div>
+      </section>
+
+      <!-- ALERTS -->
+      <section class="ds-section" id="alerts">
+        <header><h3>Inline alerts</h3><p>Persistent, contextual banners — four intents.</p></header>
+        <div class="ds-demo ds-stack" style="gap:var(--space-3);">
+          <div class="rl-alert rl-alert--info"><span class="rl-alert__ic"><i data-lucide="info"></i></span><div><div class="rl-alert__title">Sync in progress</div><div class="rl-alert__msg">Importing 1,284 leads from your previous CRM. This may take a few minutes.</div></div></div>
+          <div class="rl-alert rl-alert--success"><span class="rl-alert__ic"><i data-lucide="circle-check"></i></span><div><div class="rl-alert__title">Number verified</div><div class="rl-alert__msg">Your WhatsApp Business number is connected and ready to send.</div></div></div>
+          <div class="rl-alert rl-alert--warning"><span class="rl-alert__ic"><i data-lucide="triangle-alert"></i></span><div><div class="rl-alert__title">Trial ends in 3 days</div><div class="rl-alert__msg">Add a payment method to keep your pipeline and call history.</div></div><button class="rl-btn rl-btn--secondary rl-btn--sm" style="margin-left:auto;align-self:center;white-space:nowrap">Upgrade</button></div>
+          <div class="rl-alert rl-alert--danger"><span class="rl-alert__ic"><i data-lucide="circle-alert"></i></span><div><div class="rl-alert__title">Call recording failed</div><div class="rl-alert__msg">We couldn't reach the recording service. The last 2 calls weren't saved.</div></div></div>
+        </div>
+      </section>
+
+      <!-- PROGRESS / LOADING -->
+      <section class="ds-section" id="loading">
+        <header><h3>Loading &amp; progress</h3><p>Spinners, progress bars and skeletons keep dense views feeling responsive.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4);align-items:start;">
+          <div class="ds-demo">
+            <p class="ds-label">Spinners &amp; progress</p>
+            <div class="ds-row" style="gap:var(--space-6);align-items:center;margin-bottom:var(--space-5)">
+              <span class="rl-spinner"></span>
+              <span class="rl-spinner" style="width:26px;height:26px"></span>
+              <button class="rl-btn rl-btn--primary"><span class="rl-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.4);width:15px;height:15px"></span> Importing…</button>
+            </div>
+            <div class="ds-stack" style="gap:var(--space-3)">
+              <div><div class="rl-progress"><i style="width:34%"></i></div><div class="rl-xs rl-muted" style="margin-top:6px">Uploading recording · 34%</div></div>
+              <div><div class="rl-progress"><i style="width:78%;background:var(--color-success)"></i></div><div class="rl-xs rl-muted" style="margin-top:6px">Migration · 78%</div></div>
+            </div>
+          </div>
+          <div class="ds-demo">
+            <p class="ds-label">Skeleton loader</p>
+            <div class="ds-stack" style="gap:var(--space-3)">
+              <div class="ds-row" style="gap:var(--space-3);align-items:center">
+                <div class="rl-skel" style="width:40px;height:40px;border-radius:50%"></div>
+                <div style="flex:1"><div class="rl-skel" style="height:11px;width:60%;margin-bottom:8px"></div><div class="rl-skel" style="height:9px;width:40%"></div></div>
+              </div>
+              <div class="rl-skel" style="height:11px;width:100%"></div>
+              <div class="rl-skel" style="height:11px;width:92%"></div>
+              <div class="rl-skel" style="height:11px;width:68%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EMPTY STATES -->
+      <section class="ds-section" id="empty">
+        <header><h3>Empty states</h3><p>Every list, table and inbox needs a considered zero-state with a clear next action.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4)">
+          <div class="rl-card"><div class="rl-empty">
+            <div class="rl-empty__art" style="background:var(--color-primary-subtle);color:var(--color-primary-text)"><i data-lucide="inbox"></i></div>
+            <h4>Inbox zero</h4>
+            <p>You've replied to every lead. New WhatsApp and email messages will land here.</p>
+            <button class="rl-btn rl-btn--secondary rl-btn--sm"><i data-lucide="plus"></i> Start a conversation</button>
+          </div></div>
+          <div class="rl-card"><div class="rl-empty">
+            <div class="rl-empty__art"><i data-lucide="search-x"></i></div>
+            <h4>No leads match</h4>
+            <p>Try clearing a filter or widening your search to see more results.</p>
+            <button class="rl-btn rl-btn--ghost rl-btn--sm">Clear all filters</button>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- ERROR PAGES -->
+      <section class="ds-section" id="errors">
+        <header><h3>Error &amp; system pages</h3><p>404, 500, permission-denied and offline — full-page states that stay on-brand.</p></header>
+        <div class="ds-grid" style="grid-template-columns:1fr 1fr;gap:var(--space-4)">
+          <div class="rl-card"><div class="rl-errpage">
+            <div class="rl-errpage__code">404</div>
+            <h4 class="rl-h4" style="margin:var(--space-2) 0 6px">Page not found</h4>
+            <p class="rl-sm rl-muted" style="max-width:36ch;margin:0 auto var(--space-5)">The lead or deal you're looking for may have been moved or deleted.</p>
+            <button class="rl-btn rl-btn--primary rl-btn--sm"><i data-lucide="arrow-left"></i> Back to dashboard</button>
+          </div></div>
+          <div class="rl-card"><div class="rl-errpage">
+            <div class="rl-empty__art" style="margin-bottom:var(--space-4);background:var(--color-warning-subtle);color:var(--color-warning-text)"><i data-lucide="lock"></i></div>
+            <h4 class="rl-h4" style="margin:0 0 6px">Permission denied</h4>
+            <p class="rl-sm rl-muted" style="max-width:36ch;margin:0 auto var(--space-5)">You don't have access to this team's reports. Ask an admin to grant the Manager role.</p>
+            <button class="rl-btn rl-btn--secondary rl-btn--sm">Request access</button>
+          </div></div>
+          <div class="rl-card"><div class="rl-errpage">
+            <div class="rl-errpage__code" style="color:var(--color-danger-text)">500</div>
+            <h4 class="rl-h4" style="margin:var(--space-2) 0 6px">Something broke</h4>
+            <p class="rl-sm rl-muted" style="max-width:36ch;margin:0 auto var(--space-5)">Our team's been notified. Give it a moment, then try again.</p>
+            <button class="rl-btn rl-btn--secondary rl-btn--sm"><i data-lucide="refresh-cw"></i> Reload</button>
+          </div></div>
+          <div class="rl-card"><div class="rl-errpage">
+            <div class="rl-empty__art" style="margin-bottom:var(--space-4)"><i data-lucide="wifi-off"></i></div>
+            <h4 class="rl-h4" style="margin:0 0 6px">You're offline</h4>
+            <p class="rl-sm rl-muted" style="max-width:36ch;margin:0 auto var(--space-5)">Reconnecting… Calls are paused and messages will send when you're back.</p>
+            <span class="rl-pill rl-pill--warning"><span class="rl-dot"></span> Reconnecting</span>
+          </div></div>
+        </div>
+      </section>
+
+      <!-- INTERACTION STATE MATRIX -->
+      <section class="ds-section" id="matrix">
+        <header><h3>Interaction-state matrix</h3><p>Every interactive element must answer all six states. This is the contract.</p></header>
+        <div class="ds-demo" style="overflow-x:auto">
+          <div class="rl-statematrix">
+            <div></div>
+            <div class="rl-mh">Default</div><div class="rl-mh">Hover</div><div class="rl-mh">Focus-visible</div><div class="rl-mh">Active</div><div class="rl-mh">Disabled</div><div class="rl-mh">Loading</div>
+
+            <div class="rl-rl">Primary</div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm">Save</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--color-primary-hover)">Save</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm" style="box-shadow:var(--shadow-focus)">Save</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--color-primary-active);transform:scale(.96)">Save</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm" disabled>Save</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--primary rl-btn--sm"><span class="rl-spinner" style="border-top-color:#fff;border-color:rgba(255,255,255,.4);width:13px;height:13px"></span></button></div>
+
+            <div class="rl-rl">Secondary</div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm">Edit</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm" style="background:var(--color-surface-2);border-color:var(--color-field-border-hover)">Edit</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm" style="box-shadow:var(--shadow-focus)">Edit</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm" style="background:var(--color-surface-3);transform:scale(.96)">Edit</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm" disabled>Edit</button></div>
+            <div class="rl-mc"><button class="rl-btn rl-btn--secondary rl-btn--sm"><span class="rl-spinner" style="width:13px;height:13px"></span></button></div>
+
+            <div class="rl-rl">Input</div>
+            <div class="rl-mc"><input class="rl-input rl-input--sm" style="width:78px" value="Text"></div>
+            <div class="rl-mc"><input class="rl-input rl-input--sm" style="width:78px;border-color:var(--color-field-border-hover)" value="Text"></div>
+            <div class="rl-mc"><input class="rl-input rl-input--sm" style="width:78px;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-ring)" value="Text"></div>
+            <div class="rl-mc"><input class="rl-input rl-input--sm" style="width:78px;border-color:var(--color-primary)" value="Typing"></div>
+            <div class="rl-mc"><input class="rl-input rl-input--sm" style="width:78px" value="Text" disabled></div>
+            <div class="rl-mc"><div class="rl-input rl-input--sm" style="width:78px;display:flex;align-items:center"><span class="rl-skel" style="height:8px;width:80%"></span></div></div>
+
+            <div class="rl-rl">Checkbox</div>
+            <div class="rl-mc"><span class="rl-check"><input type="checkbox" style="display:none"><span class="rl-box"></span></span></div>
+            <div class="rl-mc"><span class="rl-check"><span class="rl-box" style="border-color:var(--color-field-border-hover)"></span></span></div>
+            <div class="rl-mc"><span class="rl-check"><span class="rl-box" style="box-shadow:var(--shadow-focus)"></span></span></div>
+            <div class="rl-mc"><span class="rl-check"><span class="rl-box" style="background:var(--color-primary);border-color:var(--color-primary);color:#fff"><i data-lucide="check" style="width:13px;height:13px"></i></span></span></div>
+            <div class="rl-mc"><span class="rl-check"><span class="rl-box" style="background:var(--color-field-disabled-bg)"></span></span></div>
+            <div class="rl-mc"><span class="rl-spinner" style="width:14px;height:14px"></span></div>
+          </div>
+        </div>
+        <div class="ds-callout" style="margin-top:var(--space-4)"><i data-lucide="accessibility"></i><span>Focus-visible always renders a 3px brand ring at AA contrast. Disabled drops to 50% opacity and removes pointer events. Every pairing here passes AA in both light and dark themes.</span></div>
+      </section>
+    </div>
+  </main>
+</div>
+<script>document.addEventListener('DOMContentLoaded',()=>{ if(window.lucide) lucide.createIcons(); });</script>
+</body>
+</html>

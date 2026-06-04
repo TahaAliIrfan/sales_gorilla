@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css">
+<style>body{margin:0;padding:20px;background:var(--color-surface);font-family:var(--font-sans)}
+.lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-fg-3);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.cell{text-align:center}
+.card{border:1px solid var(--color-border);border-radius:12px;padding:13px;background:var(--color-surface-2)}
+.btn{height:30px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:600;margin-bottom:9px}
+.dots{display:flex;gap:4px;justify-content:center}.dots i{width:8px;height:8px;border-radius:50%}
+.name{font-family:var(--font-mono);font-size:11px;color:var(--color-fg-3);margin-top:9px;display:block}</style></head>
+<body>
+<p class="lab">One system · five tenant brands · zero component changes</p>
+<div class="grid" id="g"></div>
+<script>
+const B={Teal:[190,.118],Cobalt:[256,.17],Violet:[295,.19],Amber:[64,.15],Rose:[12,.20]};
+const L=[.984,.91,.682,.498,.35],C=[.16,.56,1,.76,.48],S=[50,200,500,700,900];
+let h='';for(const[n,[hue,c]] of Object.entries(B)){
+const p=`oklch(0.586 ${c} ${hue})`;
+h+=`<div class="cell"><div class="card"><div class="btn" style="background:${p}">Aa</div><div class="dots">${S.map((s,i)=>`<i style="background:oklch(${L[i]} ${(c*C[i]).toFixed(3)} ${hue})"></i>`).join('')}</div></div><span class="name">${n}</span></div>`;}
+document.getElementById('g').innerHTML=h;
+</script>
+</body></html>

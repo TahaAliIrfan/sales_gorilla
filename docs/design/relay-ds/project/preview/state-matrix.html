@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>body{margin:0;padding:18px 20px;background:var(--color-surface);font-family:var(--font-sans)}
+.lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-fg-3);margin:0 0 12px}
+.g{display:grid;grid-template-columns:84px repeat(5,1fr);gap:9px;align-items:center}
+.mh{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-fg-3);text-align:center}
+.rl{font-size:12px;font-weight:600;color:var(--color-fg-2)}.c{display:flex;justify-content:center}</style></head>
+<body>
+<p class="lab">Interaction-state matrix</p>
+<div class="g">
+<div></div><div class="mh">Default</div><div class="mh">Hover</div><div class="mh">Focus</div><div class="mh">Active</div><div class="mh">Disabled</div>
+<div class="rl">Primary</div>
+<div class="c"><button class="rl-btn rl-btn--primary rl-btn--sm">Save</button></div>
+<div class="c"><button class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--color-primary-hover)">Save</button></div>
+<div class="c"><button class="rl-btn rl-btn--primary rl-btn--sm" style="box-shadow:var(--shadow-focus)">Save</button></div>
+<div class="c"><button class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--color-primary-active);transform:scale(.95)">Save</button></div>
+<div class="c"><button class="rl-btn rl-btn--primary rl-btn--sm" disabled>Save</button></div>
+<div class="rl">Input</div>
+<div class="c"><input class="rl-input rl-input--sm" style="width:64px" value="Text"></div>
+<div class="c"><input class="rl-input rl-input--sm" style="width:64px;border-color:var(--color-field-border-hover)" value="Text"></div>
+<div class="c"><input class="rl-input rl-input--sm" style="width:64px;border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-ring)" value="Text"></div>
+<div class="c"><input class="rl-input rl-input--sm" style="width:64px;border-color:var(--color-primary)" value="Typ"></div>
+<div class="c"><input class="rl-input rl-input--sm" style="width:64px" value="Text" disabled></div>
+</div>
+<script>lucide.createIcons();</script>
+</body></html>

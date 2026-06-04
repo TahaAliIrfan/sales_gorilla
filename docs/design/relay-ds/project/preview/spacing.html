@@ -1,0 +1,8 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css">
+<style>body{margin:0;padding:18px 20px;background:var(--color-surface);font-family:var(--font-sans)}.lab{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-fg-3);margin:0 0 12px}.r{display:flex;align-items:center;gap:12px;margin-bottom:8px}.r code{font-family:var(--font-mono);font-size:11px;color:var(--color-fg-3);width:62px}.bar{height:13px;background:var(--color-primary);border-radius:3px}.px{font-family:var(--font-mono);font-size:11px;color:var(--color-fg-4)}</style></head>
+<body>
+<p class="lab">Spacing scale · 4px base grid</p>
+<div id="s"></div>
+<script>const sp=[['1','4'],['2','8'],['3','12'],['4','16'],['6','24'],['8','32'],['12','48']];document.getElementById('s').innerHTML=sp.map(([t,p])=>`<div class="r"><code>space-${t}</code><div class="bar" style="width:var(--space-${t})"></div><span class="px">${p}px</span></div>`).join('');</script>
+</body></html>

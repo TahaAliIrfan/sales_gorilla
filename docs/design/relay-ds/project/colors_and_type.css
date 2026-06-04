@@ -1,0 +1,306 @@
+/* ============================================================
+   Relay Design System — Colors & Type tokens
+   ------------------------------------------------------------
+   The single, dependency-free source of truth for color + type.
+   Everything consumes these CSS custom properties. White-label
+   theming = override the --brand-* ramp (and optionally a logo).
+   Dark mode = add data-theme="dark" to <html>.
+   A mirrored Tailwind v4 @theme layer lives in tailwind-theme.css.
+   ============================================================ */
+
+:root {
+  /* ---------- PRIMITIVE: Brand ramp (demo = teal) ----------
+     White-label tenants override ONLY these 11 stops.
+     Authored in oklch for perceptual evenness. */
+  --brand-50:  oklch(0.984 0.018 192);
+  --brand-100: oklch(0.954 0.040 192);
+  --brand-200: oklch(0.910 0.066 191);
+  --brand-300: oklch(0.846 0.092 190);
+  --brand-400: oklch(0.762 0.110 189);
+  --brand-500: oklch(0.682 0.118 189);
+  --brand-600: oklch(0.586 0.106 190);
+  --brand-700: oklch(0.498 0.090 191);
+  --brand-800: oklch(0.420 0.073 192);
+  --brand-900: oklch(0.350 0.057 194);
+  --brand-950: oklch(0.272 0.044 196);
+
+  /* ---------- PRIMITIVE: Neutral ramp (cool slate) ---------- */
+  --slate-0:   oklch(1 0 0);
+  --slate-25:  oklch(0.992 0.002 256);
+  --slate-50:  oklch(0.982 0.004 256);
+  --slate-100: oklch(0.966 0.006 256);
+  --slate-150: oklch(0.948 0.008 256);
+  --slate-200: oklch(0.922 0.010 256);
+  --slate-300: oklch(0.878 0.013 256);
+  --slate-400: oklch(0.738 0.018 256);
+  --slate-500: oklch(0.612 0.021 257);
+  --slate-600: oklch(0.512 0.023 258);
+  --slate-700: oklch(0.414 0.024 260);
+  --slate-800: oklch(0.318 0.023 262);
+  --slate-850: oklch(0.266 0.021 264);
+  --slate-900: oklch(0.214 0.019 266);
+  --slate-925: oklch(0.182 0.017 267);
+  --slate-950: oklch(0.152 0.015 268);
+
+  /* ---------- PRIMITIVE: Semantic ramps ---------- */
+  /* success — green */
+  --success-50:  oklch(0.972 0.030 152);
+  --success-100: oklch(0.936 0.060 153);
+  --success-200: oklch(0.882 0.090 153);
+  --success-300: oklch(0.792 0.120 152);
+  --success-400: oklch(0.706 0.140 151);
+  --success-500: oklch(0.626 0.142 150);
+  --success-600: oklch(0.540 0.122 150);
+  --success-700: oklch(0.452 0.098 151);
+  --success-800: oklch(0.380 0.078 152);
+  --success-900: oklch(0.316 0.060 154);
+
+  /* warning — amber */
+  --warning-50:  oklch(0.984 0.026 92);
+  --warning-100: oklch(0.958 0.058 90);
+  --warning-200: oklch(0.918 0.098 86);
+  --warning-300: oklch(0.866 0.130 82);
+  --warning-400: oklch(0.820 0.146 78);
+  --warning-500: oklch(0.772 0.142 72);
+  --warning-600: oklch(0.674 0.130 60);
+  --warning-700: oklch(0.556 0.108 52);
+  --warning-800: oklch(0.460 0.086 50);
+  --warning-900: oklch(0.386 0.066 50);
+
+  /* danger — red/rose */
+  --danger-50:  oklch(0.972 0.018 18);
+  --danger-100: oklch(0.940 0.040 18);
+  --danger-200: oklch(0.892 0.074 19);
+  --danger-300: oklch(0.812 0.124 21);
+  --danger-400: oklch(0.706 0.184 24);
+  --danger-500: oklch(0.628 0.214 26);
+  --danger-600: oklch(0.560 0.206 27);
+  --danger-700: oklch(0.476 0.172 27);
+  --danger-800: oklch(0.404 0.138 27);
+  --danger-900: oklch(0.348 0.108 26);
+
+  /* info — blue */
+  --info-50:  oklch(0.974 0.016 248);
+  --info-100: oklch(0.940 0.036 248);
+  --info-200: oklch(0.892 0.064 250);
+  --info-300: oklch(0.812 0.100 252);
+  --info-400: oklch(0.706 0.140 254);
+  --info-500: oklch(0.616 0.156 254);
+  --info-600: oklch(0.538 0.162 256);
+  --info-700: oklch(0.460 0.142 258);
+  --info-800: oklch(0.392 0.112 260);
+  --info-900: oklch(0.336 0.086 262);
+
+  /* ---------- Channel accents (comms integrations) ---------- */
+  --channel-whatsapp: oklch(0.722 0.168 154);
+  --channel-email:    oklch(0.586 0.106 190); /* falls back near brand */
+  --channel-call:     oklch(0.616 0.156 254);
+  --channel-sms:      oklch(0.674 0.150 300);
+
+  /* ---------- Categorical palette (tags, charts) ----------
+     Eight distinct, equal-weight hues for labels & KPI charts. */
+  --cat-1: oklch(0.640 0.150 254); /* blue   */
+  --cat-2: oklch(0.700 0.150 154); /* green  */
+  --cat-3: oklch(0.760 0.140 70);  /* amber  */
+  --cat-4: oklch(0.660 0.190 25);  /* red    */
+  --cat-5: oklch(0.640 0.160 300); /* violet */
+  --cat-6: oklch(0.700 0.130 200); /* teal   */
+  --cat-7: oklch(0.700 0.150 350); /* pink   */
+  --cat-8: oklch(0.660 0.130 130); /* lime   */
+
+  /* =========================================================
+     SEMANTIC TOKENS — LIGHT (default)
+     Components reference ONLY these, never primitives above.
+     ========================================================= */
+
+  /* Brand / primary intent */
+  --color-primary:           var(--brand-600);
+  --color-primary-hover:     var(--brand-700);
+  --color-primary-active:    var(--brand-800);
+  --color-primary-subtle:    var(--brand-50);
+  --color-primary-subtle-hover: var(--brand-100);
+  --color-primary-border:    var(--brand-200);
+  --color-primary-text:      var(--brand-700);
+  --color-on-primary:        var(--slate-0);
+  --color-primary-ring:      oklch(0.586 0.106 190 / 0.40);
+
+  /* Background layers */
+  --color-bg:        var(--slate-100);   /* app canvas behind everything */
+  --color-surface:   var(--slate-0);     /* cards, panels, console */
+  --color-surface-2: var(--slate-50);    /* nested / inset surfaces */
+  --color-surface-3: var(--slate-100);   /* deepest inset / table stripe */
+  --color-overlay:   oklch(0.214 0.019 266 / 0.48); /* scrim */
+  --color-sidebar:   var(--slate-900);   /* dark sidebar */
+  --color-sidebar-2: var(--slate-925);
+
+  /* Text */
+  --color-fg:        var(--slate-900);   /* primary text */
+  --color-fg-2:      var(--slate-700);   /* secondary */
+  --color-fg-3:      var(--slate-500);   /* tertiary / muted */
+  --color-fg-4:      var(--slate-400);   /* placeholder / disabled */
+  --color-fg-inverse: var(--slate-0);
+  --color-fg-on-sidebar:    oklch(0.948 0.008 256);
+  --color-fg-on-sidebar-2:  oklch(0.738 0.018 256);
+  --color-fg-on-sidebar-3:  oklch(0.560 0.022 258);
+
+  /* Borders & dividers */
+  --color-border:        var(--slate-200);
+  --color-border-strong: var(--slate-300);
+  --color-border-subtle: var(--slate-150);
+  --color-divider:       var(--slate-150);
+  --color-border-sidebar: oklch(1 0 0 / 0.08);
+
+  /* Inputs */
+  --color-field-bg:        var(--slate-0);
+  --color-field-border:    var(--slate-300);
+  --color-field-border-hover: var(--slate-400);
+  --color-field-placeholder:  var(--slate-400);
+  --color-field-disabled-bg:  var(--slate-100);
+
+  /* Focus ring (keyboard) */
+  --color-focus-ring: oklch(0.586 0.106 190 / 0.55);
+
+  /* Semantic intents — solid / subtle bg / border / text */
+  --color-success:        var(--success-600);
+  --color-success-subtle: var(--success-50);
+  --color-success-border: var(--success-200);
+  --color-success-text:   var(--success-700);
+  --color-on-success:     var(--slate-0);
+
+  --color-warning:        var(--warning-500);
+  --color-warning-subtle: var(--warning-50);
+  --color-warning-border: var(--warning-200);
+  --color-warning-text:   var(--warning-700);
+  --color-on-warning:     var(--slate-900);
+
+  --color-danger:        var(--danger-600);
+  --color-danger-hover:  var(--danger-700);
+  --color-danger-subtle: var(--danger-50);
+  --color-danger-border: var(--danger-200);
+  --color-danger-text:   var(--danger-700);
+  --color-on-danger:     var(--slate-0);
+
+  --color-info:        var(--info-600);
+  --color-info-subtle: var(--info-50);
+  --color-info-border: var(--info-200);
+  --color-info-text:   var(--info-700);
+  --color-on-info:     var(--slate-0);
+
+  /* Chat surfaces */
+  --color-bubble-out:      var(--brand-600);   /* rep / outbound */
+  --color-bubble-out-text: var(--slate-0);
+  --color-bubble-in:       var(--slate-0);     /* lead / inbound */
+  --color-bubble-in-text:  var(--slate-900);
+  --color-bubble-in-border: var(--slate-200);
+  --color-chat-canvas:     var(--slate-100);
+
+  /* =========================================================
+     TYPE tokens
+     ========================================================= */
+  --font-display: 'Bricolage Grotesque', 'Hanken Grotesk', system-ui, sans-serif;
+  --font-sans:    'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale — fluid-ish, fixed px for UI predictability */
+  --text-display: 3.5rem;   /* 56 — marketing / hero numbers */
+  --text-h1:      2.25rem;  /* 36 */
+  --text-h2:      1.75rem;  /* 28 */
+  --text-h3:      1.375rem; /* 22 */
+  --text-h4:      1.125rem; /* 18 */
+  --text-lg:      1.0625rem;/* 17 */
+  --text-base:    0.9375rem;/* 15 — default UI body */
+  --text-sm:      0.8125rem;/* 13 */
+  --text-xs:      0.75rem;  /* 12 */
+  --text-2xs:     0.6875rem;/* 11 — micro labels, caps */
+
+  --leading-tight:   1.12;
+  --leading-snug:    1.3;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0em;
+  --tracking-wide:   0.02em;
+  --tracking-caps:   0.06em;  /* eyebrow / micro caps */
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+  --weight-extra:    800;
+}
+
+/* =========================================================
+   SEMANTIC TOKENS — DARK
+   Only semantic + layer tokens flip. Primitives stay fixed;
+   we re-point semantics and lighten brand for dark surfaces.
+   ========================================================= */
+:root[data-theme="dark"] {
+  --color-primary:           var(--brand-500);
+  --color-primary-hover:     var(--brand-400);
+  --color-primary-active:    var(--brand-300);
+  --color-primary-subtle:    oklch(0.586 0.106 190 / 0.16);
+  --color-primary-subtle-hover: oklch(0.586 0.106 190 / 0.24);
+  --color-primary-border:    oklch(0.682 0.118 189 / 0.34);
+  --color-primary-text:      var(--brand-300);
+  --color-on-primary:        var(--slate-950);
+  --color-primary-ring:      oklch(0.682 0.118 189 / 0.55);
+
+  --color-bg:        var(--slate-950);
+  --color-surface:   var(--slate-900);
+  --color-surface-2: var(--slate-925);
+  --color-surface-3: var(--slate-850);
+  --color-overlay:   oklch(0.152 0.015 268 / 0.62);
+  --color-sidebar:   var(--slate-925);
+  --color-sidebar-2: var(--slate-950);
+
+  --color-fg:        oklch(0.966 0.006 256);
+  --color-fg-2:      oklch(0.800 0.014 256);
+  --color-fg-3:      oklch(0.640 0.020 258);
+  --color-fg-4:      oklch(0.500 0.022 260);
+  --color-fg-inverse: var(--slate-950);
+  --color-fg-on-sidebar:    oklch(0.948 0.008 256);
+  --color-fg-on-sidebar-2:  oklch(0.700 0.020 258);
+  --color-fg-on-sidebar-3:  oklch(0.520 0.022 260);
+
+  --color-border:        oklch(1 0 0 / 0.10);
+  --color-border-strong: oklch(1 0 0 / 0.18);
+  --color-border-subtle: oklch(1 0 0 / 0.06);
+  --color-divider:       oklch(1 0 0 / 0.07);
+  --color-border-sidebar: oklch(1 0 0 / 0.07);
+
+  --color-field-bg:        var(--slate-925);
+  --color-field-border:    oklch(1 0 0 / 0.14);
+  --color-field-border-hover: oklch(1 0 0 / 0.26);
+  --color-field-placeholder:  oklch(0.560 0.022 258);
+  --color-field-disabled-bg:  oklch(1 0 0 / 0.03);
+
+  --color-focus-ring: oklch(0.682 0.118 189 / 0.65);
+
+  --color-success-subtle: oklch(0.626 0.142 150 / 0.16);
+  --color-success-border: oklch(0.626 0.142 150 / 0.32);
+  --color-success-text:   var(--success-300);
+
+  --color-warning-subtle: oklch(0.772 0.142 72 / 0.16);
+  --color-warning-border: oklch(0.772 0.142 72 / 0.30);
+  --color-warning-text:   var(--warning-300);
+
+  --color-danger-subtle: oklch(0.628 0.214 26 / 0.16);
+  --color-danger-border: oklch(0.628 0.214 26 / 0.34);
+  --color-danger-text:   var(--danger-300);
+
+  --color-info-subtle: oklch(0.616 0.156 254 / 0.16);
+  --color-info-border: oklch(0.616 0.156 254 / 0.32);
+  --color-info-text:   var(--info-300);
+
+  --color-bubble-out:      var(--brand-600);
+  --color-bubble-out-text: oklch(0.984 0.006 256);
+  --color-bubble-in:       var(--slate-850);
+  --color-bubble-in-text:  oklch(0.966 0.006 256);
+  --color-bubble-in-border: oklch(1 0 0 / 0.08);
+  --color-chat-canvas:     var(--slate-950);
+}
+
+:root { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }

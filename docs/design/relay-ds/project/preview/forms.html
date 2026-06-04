@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>body{margin:0;padding:20px;background:var(--color-surface);font-family:var(--font-sans);display:flex;flex-direction:column;gap:14px}.row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}</style></head>
+<body>
+<div class="row">
+<div class="rl-field" style="flex:1;min-width:150px"><label class="rl-label">Default</label><input class="rl-input" placeholder="Lead name"></div>
+<div class="rl-field" style="flex:1;min-width:150px"><label class="rl-label">Focused</label><input class="rl-input" value="Northwind" style="border-color:var(--color-primary);box-shadow:0 0 0 3px var(--color-primary-ring)"></div>
+<div class="rl-field" style="flex:1;min-width:150px"><label class="rl-label">Error</label><input class="rl-input is-error" value="bad@"></div>
+</div>
+<div class="row">
+<label class="rl-check"><input type="checkbox" checked><span class="rl-box"><i data-lucide="check"></i></span> Checkbox</label>
+<label class="rl-check rl-check--radio"><input type="radio" checked><span class="rl-box"></span> Radio</label>
+<label class="rl-switch"><input type="checkbox" checked><span class="rl-track"></span></label>
+<div class="rl-segmented"><button class="is-active">Open</button><button>Won</button><button>Lost</button></div>
+</div>
+<script>lucide.createIcons();</script>
+</body></html>

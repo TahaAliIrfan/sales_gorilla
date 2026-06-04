@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Invoice INV-2044 — Meridian</title>
+<link rel="stylesheet" href="ds/fonts.css" />
+<link rel="stylesheet" href="ds/colors_and_type.css" />
+<link rel="stylesheet" href="ds/tokens.css" />
+<link rel="stylesheet" href="ds/components.css" />
+<style>
+  body { background: var(--color-bg); min-height: 100vh; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand .logo { width: 38px; height: 38px; border-radius: 10px; background: var(--color-primary); display: grid; place-items: center; color: #fff; }
+  .brand .logo svg { width: 22px; height: 22px; }
+  .brand b { font-family: var(--font-display); font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
+  .doc { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+  .doc__band { height: 6px; background: var(--color-primary); }
+  .doc__pad { padding: 36px 40px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+  .h-title { font-family: var(--font-display); font-weight: 800; font-size: 32px; letter-spacing: -.02em; }
+  .meta { text-align: right; font-size: var(--text-sm); color: var(--color-fg-2); }
+  .meta .mono { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  .parties { display: grep; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .eyebrow { font-size: var(--text-2xs); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--color-fg-3); margin-bottom: 7px; }
+  .party b { font-weight: 700; font-size: var(--text-base); }
+  .party div { font-size: var(--text-sm); color: var(--color-fg-2); line-height: 1.5; }
+  table.lines { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.lines th { text-align: left; font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: .05em; color: var(--color-fg-3); padding: 0 0 10px; border-bottom: 1px solid var(--color-border); font-weight: 700; }
+  table.lines th.r, table.lines td.r { text-align: right; }
+  table.lines td { padding: 14px 0; border-bottom: 1px solid var(--color-divider); font-size: var(--text-sm); vertical-align: top; }
+  table.lines td .sub { color: var(--color-fg-3); font-size: var(--text-xs); margin-top: 2px; }
+  table.lines .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .totals { margin-left: auto; width: 280px; margin-top: 16px; }
+  .totals .row { display: flex; justify-content: space-between; padding: 7px 0; font-size: var(--text-sm); }
+  .totals .grand { border-top: 2px solid var(--color-border-strong); margin-top: 6px; padding-top: 14px; }
+  .totals .grand .lbl { font-weight: 700; font-size: var(--text-base); }
+  .totals .grand .val { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; }
+  .pay { background: var(--color-surface-2); border-top: 1px solid var(--color-border); padding: 24px 40px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+  .pay__due { font-size: var(--text-sm); color: var(--color-fg-2); }
+  .pay__due b { font-family: var(--font-mono); font-size: var(--text-h4); color: var(--color-fg); }
+  .methods { display: flex; gap: 8px; margin-top: 12px; }
+  .method { width: 44px; height: 30px; border-radius: 6px; border: 1px solid var(--color-border); background: var(--color-surface); display: grid; place-items: center; color: var(--color-fg-3); font-size: 10px; font-weight: 700; }
+  .foot { text-align: center; color: var(--color-fg-3); font-size: var(--text-xs); margin-top: 24px; line-height: 1.6; }
+  .paidstamp { display: none; align-items: center; gap: 8px; color: var(--color-success-text); font-weight: 700; }
+  .paidstamp svg { width: 20px; height: 20px; }
+  body.is-paid .paidstamp { display: inline-flex; }
+  body.is-paid .pay__cta { display: none; }
+  body.is-paid .doc__band { background: var(--color-success); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <span class="logo"><svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg></span>
+      <b>Meridian</b>
+    </div>
+    <span class="rl-badge rl-badge--neutral">Secure payment</span>
+  </div>
+
+  <div class="doc">
+    <div class="doc__band"></div>
+    <div class="doc__pad">
+      <div class="head">
+        <div>
+          <div class="h-title">Invoice</div>
+          <div class="rl-badge rl-badge--info" style="margin-top:8px;">Due Jun 18, 2026</div>
+          <span class="paidstamp" style="margin-top:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Paid · Jun 4, 2026</span>
+        </div>
+        <div class="meta">
+          <div><span class="eyebrow" style="display:inline;">Invoice no.</span> <span class="mono">INV-2044</span></div>
+          <div style="margin-top:4px;"><span class="eyebrow" style="display:inline;">Issued</span> <span class="mono">Jun 4, 2026</span></div>
+          <div style="margin-top:4px;"><span class="eyebrow" style="display:inline;">Terms</span> Net 14</div>
+        </div>
+      </div>
+
+      <div class="parties">
+        <div class="party">
+          <div class="eyebrow">From</div>
+          <b>Meridian Growth Co.</b>
+          <div>billing@meridiangrowth.co<br/>128 Harbor St, Austin, TX 78701<br/>EIN 47-0921338</div>
+        </div>
+        <div class="party">
+          <div class="eyebrow">Bill to</div>
+          <b>Northwind Labs</b>
+          <div>Maya Brennan · VP Marketing<br/>accounts@northwindlabs.com<br/>500 Congress Ave, Austin, TX</div>
+        </div>
+      </div>
+
+      <table class="lines">
+        <thead><tr><th>Description</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead>
+        <tbody>
+          <tr><td>Outbound pilot — Month 1<div class="sub">2 reps · calls, WhatsApp & email · managed</div></td><td class="r mono">1</td><td class="r mono">$16,000</td><td class="r mono">$16,000</td></tr>
+          <tr><td>Onboarding & setup<div class="sub">ICP build, sequencing, list sourcing</div></td><td class="r mono">1</td><td class="r mono">$2,500</td><td class="r mono">$2,500</td></tr>
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="row"><span>Subtotal</span><span class="mono">$18,500</span></div>
+        <div class="row"><span>Tax (0%)</span><span class="mono">$0</span></div>
+        <div class="row grand"><span class="lbl">Total due</span><span class="val">$18,500</span></div>
+      </div>
+    </div>
+
+    <div class="pay">
+      <div>
+        <div class="pay__due">Amount due <b>$18,500</b></div>
+        <div class="methods"><span class="method">VISA</span><span class="method">MC</span><span class="method">AMEX</span><span class="method">ACH</span></div>
+      </div>
+      <button class="rl-btn rl-btn--primary rl-btn--lg pay__cta" onclick="document.body.classList.add('is-paid')"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>&nbsp;Pay $18,500</button>
+    </div>
+  </div>
+
+  <div class="foot">Powered by Meridian on Relay · Questions? Reply to billing@meridiangrowth.co<br/>This is a demo invoice page. No real payment is processed.</div>
+</div>
+</body>
+</html>

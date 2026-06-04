@@ -1,0 +1,12 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../fonts/fonts.css"><link rel="stylesheet" href="../colors_and_type.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><link rel="stylesheet" href="../components-data.css">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>body{margin:0;padding:20px;background:var(--color-bg);font-family:var(--font-sans)}</style></head>
+<body>
+<div class="rl-player">
+<button class="rl-player__play"><i data-lucide="play"></i></button>
+<div class="rl-player__main"><div class="rl-wave" id="w"></div><div class="rl-player__time"><span>1:12</span><span>4:38</span></div></div>
+<button class="rl-iconbtn"><i data-lucide="download"></i></button>
+</div>
+<script>const h=[30,52,40,68,80,55,72,90,60,44,78,96,70,50,84,62,40,74,58,88,52,66,46,80,60,38,72,90,54,68,42,76];document.getElementById('w').innerHTML=h.map((x,i)=>`<i class="${i<12?'is-played':''}" style="height:${x}%"></i>`).join('');lucide.createIcons();</script>
+</body></html>

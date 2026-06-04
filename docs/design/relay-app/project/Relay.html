@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Meridian — powered by Relay</title>
+
+<!-- Relay Design System -->
+<link rel="stylesheet" href="ds/fonts.css?v=4" />
+<link rel="stylesheet" href="ds/colors_and_type.css?v=4" />
+<link rel="stylesheet" href="ds/tokens.css?v=4" />
+<link rel="stylesheet" href="ds/components.css?v=4" />
+<link rel="stylesheet" href="ds/components-data.css?v=4" />
+<link rel="stylesheet" href="ds/components-nav.css?v=4" />
+<link rel="stylesheet" href="app/app.css?v=4" />
+
+<!-- Lucide icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<!-- React + Babel (pinned) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  /* boot splash */
+  #boot { position: fixed; inset: 0; display: grid; place-items: center; background: var(--color-bg); z-index: 9999; transition: opacity .4s ease; }
+  #boot .b { display: flex; align-items: center; gap: 12px; }
+  #boot .m { width: 42px; height: 42px; border-radius: 11px; background: var(--color-primary); display: grid; place-items: center; }
+  #boot .m svg { width: 26px; height: 26px; color: #fff; }
+  #boot b { font-family: var(--font-display); font-weight: 800; font-size: 24px; letter-spacing: -.02em; color: var(--color-fg); }
+  #boot .sp { margin-left: 6px; }
+</style>
+</head>
+<body>
+<div id="boot">
+  <div class="b">
+    <span class="m">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
+    </span>
+    <b>Meridian</b>
+    <span class="sp rl-spinner"></span>
+  </div>
+</div>
+
+<div id="root"></div>
+
+<!-- Brand engine (provides window.RelayDS.applyBrand / applyTheme) -->
+<script src="ds/ds.js"></script>
+
+<!-- App modules (order matters; main.jsx mounts last) -->
+<script type="text/babel" src="app/data.jsx?v=4"></script>
+<script type="text/babel" src="app/ui.jsx?v=4"></script>
+<script type="text/babel" src="app/tweaks-panel.jsx?v=4"></script>
+<script type="text/babel" src="app/shell.jsx?v=4"></script>
+<script type="text/babel" src="app/billing.jsx?v=4"></script>
+<script type="text/babel" src="app/view-today.jsx?v=4"></script>
+<script type="text/babel" src="app/view-leads.jsx?v=4"></script>
+<script type="text/babel" src="app/view-lead.jsx?v=4"></script>
+<script type="text/babel" src="app/view-pipeline.jsx?v=4"></script>
+<script type="text/babel" src="app/view-inbox.jsx?v=4"></script>
+<script type="text/babel" src="app/view-outreach.jsx?v=4"></script>
+<script type="text/babel" src="app/view-insights.jsx?v=4"></script>
+<script type="text/babel" src="app/view-settings.jsx?v=4"></script>
+<script type="text/babel" src="app/main.jsx?v=4"></script>
+
+<!-- Thumbnail for offline bundling -->
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#0f766e"/><g transform="translate(28,30)"><path d="M0 0 L17 18 L0 36" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M22 0 L39 18 L22 36" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.55"/></g></svg>
+</template>
+</body>
+</html>
