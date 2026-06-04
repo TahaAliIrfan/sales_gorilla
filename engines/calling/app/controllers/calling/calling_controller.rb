@@ -7,6 +7,17 @@ module Calling
     def index
       @twilio_numbers = provider.fetch_available_numbers
 
+      # Pre-generate the access token so the browser doesn't need a round trip
+      # before `new Twilio.Device(token)` can run. If gen fails for any reason,
+      # the JS controller falls back to fetching from /calling/token.
+      @access_token = begin
+        identity = current_user&.id&.to_s || current_user&.email || "web_user"
+        provider.generate_capability_token(identity)
+      rescue => e
+        Rails.logger.warn("Pre-generating Twilio token failed: #{e.message}")
+        nil
+      end
+
       if current_user&.admin?
         @customers = Customer.where.not(phone: [ nil, "" ]).order(created_at: :desc)
         @users = User.all.order(:name)

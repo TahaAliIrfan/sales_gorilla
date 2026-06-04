@@ -2,13 +2,13 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = [
-    "callButton", 
-    "hangupButton", 
-    "phoneNumber", 
+    "callButton",
+    "hangupButton",
+    "phoneNumber",
     "callerId",
     "customerSelect",
-    "callStatus", 
-    "statusMessage", 
+    "callStatus",
+    "statusMessage",
     "callControls",
     "dtmf",
     "refreshRecordings",
@@ -23,6 +23,10 @@ export default class extends Controller {
     "dateFromFilter",
     "dateToFilter"
   ]
+
+  // Token can be rendered into the page by the server (zero round-trip path)
+  // via `data-calling-token-value="..."`. Empty string => fetch fallback.
+  static values = { token: String }
 
   connect() {
     this.device = null
@@ -125,47 +129,60 @@ export default class extends Controller {
     return /^\+\d{6,15}$/.test(phoneNumber)
   }
 
-  // Initialize the Twilio Device
+  // Initialize the Twilio Device. Prefers the server-embedded token
+  // (data-calling-token-value) so there's no /calling/token round trip on
+  // page load. Falls back to fetch if the value is missing or unusable.
   async setupDevice() {
-    this.showStatus('Initializing phone service...')
-    
+    this.showStatus('Connecting…')
+
     try {
-      const response = await fetch('/calling/token')
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`)
+      let token = this.hasTokenValue && this.tokenValue ? this.tokenValue : null
+      if (!token) {
+        const response = await fetch('/calling/token')
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`)
+        }
+        const data = await response.json()
+        token = data.data?.token || data.token
       }
-      
-      const data = await response.json()
-      // Support both old and new token response formats
-      const token = data.data?.token || data.token
 
       if (!token) {
         throw new Error('No token received from server')
       }
 
-      this.showStatus('Setting up phone service...')
-      console.log('Token received, initializing device...')
+      // Wait for the Twilio Voice SDK to be available (the <script> tag is at
+      // the bottom of the page; on Turbo navigations it may not be parsed
+      // before connect() fires).
+      await this.waitForTwilioSdk()
 
-      // Import Device from Twilio Voice SDK 2.x
-      if (!window.Twilio || !window.Twilio.Device) {
-        throw new Error('Twilio Voice SDK not loaded properly')
-      }
-
-      // Create device instance with Voice SDK 2.x
       this.device = new window.Twilio.Device(token, {
         logLevel: 1, // 0=silent, 1=errors, 2=warnings, 3=info, 4=debug
         codecPreferences: ['opus', 'pcmu']
       })
-      
+
       this.setupDeviceListeners()
-      
-      this.showStatus('Phone service configured successfully. Ready to make calls.', 'success')
+
+      // Quietly mark ready and dismiss the banner promptly.
+      this.showStatus('Ready', 'success')
       setTimeout(() => {
         this.callStatusTarget.classList.add('hidden')
-      }, 3000)
+      }, 800)
     } catch (error) {
       console.error('Error setting up device:', error)
       this.showError(`Unable to initialize phone service: ${error.message}. Please refresh the page or contact support.`)
+    }
+  }
+
+  // Resolves once window.Twilio.Device is defined, polling lightly. Caps
+  // wait at ~5s to surface a clear error if the CDN is unreachable.
+  async waitForTwilioSdk(timeoutMs = 5000) {
+    if (window.Twilio?.Device) return
+    const start = Date.now()
+    while (!window.Twilio?.Device) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error('Twilio Voice SDK failed to load')
+      }
+      await new Promise((r) => setTimeout(r, 50))
     }
   }
 

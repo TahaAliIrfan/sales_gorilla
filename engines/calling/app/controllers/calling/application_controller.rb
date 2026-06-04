@@ -4,12 +4,14 @@ module Calling
   # checks, Pundit, etc. Gates every request behind the per-organization
   # `calling` feature flag.
   class ApplicationController < ::ApplicationController
-    # `isolate_namespace Calling` swaps URL helpers to engine-scoped ones, but
-    # the tenant layout (and any host-rendered partials) reference host paths
-    # like `dashboard_path`, `customers_path`, etc. Expose host helpers so those
-    # views render correctly. Engine-internal routes are accessed via the engine
-    # routes proxy when needed.
-    helper Rails.application.routes.url_helpers
+    # `isolate_namespace Calling` rebinds URL generation so the engine's
+    # SCRIPT_NAME (`/calling`) is propagated into every `*_path` helper called
+    # from this controller — including host helpers, which then incorrectly
+    # render as `/calling/customers`, `/calling/recordings`, etc. The bridge
+    # below forwards host helpers through `main_app`, which resets the routing
+    # context and emits unprefixed paths.
+    helper Calling::MainAppRoutesHelper
+    helper ::ApplicationHelper
 
     before_action :require_calling_enabled
 
