@@ -19,9 +19,12 @@ class WhatsappInboundPushWorker
     title = 'New WhatsApp message'
     body  = "#{customer.name.presence || 'Customer'} has sent you a message"
     data  = {
-      type:        'whatsapp_us_message',
-      customer_id: customer.id,
-      message_id:  message.id
+      type:          'whatsapp_us_message',
+      customer_id:   customer.id,
+      message_id:    message.id,
+      # Flutter side: tap handler does `context.go(message.data['route'])`.
+      route:         "/whatsapp_us/chat/#{customer.id}",
+      customer_name: customer.name.to_s
     }
 
     svc = FirebasePushService.new
