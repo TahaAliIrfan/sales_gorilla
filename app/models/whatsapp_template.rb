@@ -1,6 +1,8 @@
 # Approved WhatsApp Content templates synced from Twilio's Content API.
 # Used to send messages outside the 24h freeform reply window.
 class WhatsappTemplate < ApplicationRecord
+  acts_as_tenant(:organization)
+
   validates :content_sid, presence: true, uniqueness: true
 
   scope :approved, -> { where(approval_status: 'approved') }

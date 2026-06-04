@@ -1,5 +1,5 @@
 class DealStagesController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_deal_stage, only: [:edit, :update, :destroy]
   after_action :verify_authorized

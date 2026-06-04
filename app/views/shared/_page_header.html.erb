@@ -1,0 +1,17 @@
+<%#
+  locals: title, subtitle (optional), actions (optional html), eyebrow (optional)
+%>
+<div class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-6">
+  <div>
+    <% if local_assigns[:eyebrow].present? %>
+      <p class="micro mb-2"><%= eyebrow %></p>
+    <% end %>
+    <h1 class="font-display text-4xl font-bold tracking-tight text-ink"><%= title %></h1>
+    <% if local_assigns[:subtitle].present? %>
+      <p class="mt-2 text-ink-soft"><%= subtitle %></p>
+    <% end %>
+  </div>
+  <% if local_assigns[:actions].present? %>
+    <div class="flex items-center gap-2"><%= actions %></div>
+  <% end %>
+</div>

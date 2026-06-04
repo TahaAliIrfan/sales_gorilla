@@ -1,0 +1,15 @@
+<%#
+  Renders an organization's logo, or a brand-colored initial avatar fallback.
+  locals: organization, size (default "h-10 w-10")
+%>
+<% size ||= "h-10 w-10" %>
+<% if organization&.logo&.attached? %>
+  <%= image_tag organization.logo, class: "#{size} rounded-lg object-cover ring-1 ring-black/10", alt: organization.name %>
+<% elsif organization %>
+  <span class="<%= size %> grid place-items-center rounded-lg font-display text-base font-bold text-white ring-1 ring-black/10"
+        style="background: var(--brand-primary, #1b4d3e)">
+    <%= organization.initial %>
+  </span>
+<% else %>
+  <span class="<%= size %> rounded-lg bg-[var(--color-line-2)]"></span>
+<% end %>

@@ -1,5 +1,5 @@
 class CampaignsController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :set_campaign, only: [:show, :edit, :update, :destroy, :send_now, :schedule, :restart, :stop, :add_customers, :remove_customer]
 
   def index

@@ -1,0 +1,10 @@
+<% flash.each do |level, message| %>
+  <% next if message.blank? %>
+  <div class="fixed top-5 right-5 z-50 flex max-w-sm items-start gap-3 overflow-hidden rounded-lg bg-panel py-3 pr-4 pl-3 text-sm font-medium text-ink shadow-lift ring-1 ring-[var(--color-line-2)] motion-safe:animate-rise"
+       role="<%= level.to_s.in?(%w[alert error]) ? "alert" : "status" %>"
+       data-controller="flash" data-action="click->flash#dismiss">
+    <span class="-my-3 -ml-3 w-1 self-stretch" style="background: <%= flash_accent(level) %>"></span>
+    <span class="micro mt-0.5 shrink-0" style="color: <%= flash_accent(level) %>"><%= level.to_s.in?(%w[alert error]) ? "Notice" : "OK" %></span>
+    <span><%= message %></span>
+  </div>
+<% end %>

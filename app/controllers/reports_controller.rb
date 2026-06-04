@@ -1,5 +1,5 @@
 class ReportsController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :require_admin_or_manager, only: [:index]
 

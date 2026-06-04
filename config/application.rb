@@ -31,6 +31,11 @@ module TecaudexCrm
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w(assets tasks))
 
+    # Routing constraints (subdomain-based) live under app/constraints and need
+    # to load before routes.rb runs.
+    config.autoload_paths << Rails.root.join("app/constraints")
+    config.eager_load_paths << Rails.root.join("app/constraints")
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

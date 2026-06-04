@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :require_admin
   before_action :set_user, only: [:show, :update_role, :toggle_active]

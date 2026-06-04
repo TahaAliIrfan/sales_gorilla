@@ -2,7 +2,7 @@ require 'json'
 
 class RecordingsController < ApplicationController
   before_action :require_login
-  layout 'dashboard'
+  layout "tenant"
   before_action :set_recording, only: [:show, :transcript, :download]
   
   after_action :verify_authorized, except: [:index, :my_recordings]

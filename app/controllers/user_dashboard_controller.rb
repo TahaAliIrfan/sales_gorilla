@@ -1,5 +1,5 @@
 class UserDashboardController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
 
   def index

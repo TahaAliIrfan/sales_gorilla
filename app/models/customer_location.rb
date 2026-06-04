@@ -1,4 +1,6 @@
 class CustomerLocation < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
 
   validates :customer_id, uniqueness: true

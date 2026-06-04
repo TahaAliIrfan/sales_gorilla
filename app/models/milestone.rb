@@ -1,4 +1,6 @@
 class Milestone < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
   belongs_to :user
   has_many :milestone_items, -> { order(:position) }, dependent: :destroy

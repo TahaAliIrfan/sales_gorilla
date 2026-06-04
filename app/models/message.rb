@@ -1,4 +1,6 @@
 class Message < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :user, optional: true
   belongs_to :customer, optional: true
   

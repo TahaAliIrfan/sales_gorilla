@@ -1,4 +1,6 @@
 class Recording < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :user
   belongs_to :customer
   has_many :ai_analyses, dependent: :destroy

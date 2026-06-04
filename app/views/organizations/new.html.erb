@@ -1,0 +1,44 @@
+<% content_for :title, "Create workspace" %>
+
+<div class="mx-auto max-w-lg px-6 py-16 motion-safe:animate-rise">
+  <p class="micro mb-2">New workspace</p>
+  <h1 class="font-display text-4xl font-bold tracking-tight text-ink">Create a workspace</h1>
+  <p class="mt-2 text-ink-soft">You'll be the owner and get a branded workspace at your own subdomain.</p>
+
+  <div class="mt-9 rounded-xl bg-panel p-7 shadow-card ring-1 ring-[var(--color-line-2)]">
+    <%= form_with model: @organization, class: "space-y-6" do |f| %>
+      <% if @organization.errors.any? %>
+        <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
+          <ul class="list-inside list-disc space-y-1">
+            <% @organization.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div>
+        <%= f.label :name, class: "micro", style: "color: var(--color-ink-soft)" %>
+        <%= f.text_field :name, autofocus: true, class: public_input_classes %>
+      </div>
+
+      <div data-controller="subdomain-check"
+           data-subdomain-check-url-value="<%= check_subdomain_organizations_path %>">
+        <%= f.label :subdomain, class: "micro", style: "color: var(--color-ink-soft)" %>
+        <div class="mt-1 flex overflow-hidden rounded-md shadow-sm ring-1 ring-[var(--color-line-2)] focus-within:ring-2 focus-within:ring-accent">
+          <%= f.text_field :subdomain,
+                autocomplete: "off",
+                data: { "subdomain-check-target": "input", action: "input->subdomain-check#onInput" },
+                class: "mono block w-full border-0 bg-paper px-3.5 py-2.5 text-ink focus:bg-panel focus:outline-none focus:ring-0 sm:text-sm" %>
+          <span class="mono inline-flex items-center border-l border-[var(--color-line-2)] bg-panel-2 px-3 text-sm text-ink-soft">.<%= root_host_for_request %></span>
+        </div>
+        <p data-subdomain-check-target="status" aria-live="polite"></p>
+      </div>
+
+      <div class="flex items-center gap-3 pt-1">
+        <%= f.submit "Create workspace",
+              data: { turbo_submits_with: "Creating your workspace…" },
+              class: "rounded-md bg-accent px-6 py-3 text-sm font-semibold text-paper shadow-card transition hover:bg-accent-dim disabled:opacity-60 cursor-pointer" %>
+        <%= link_to "Cancel", organizations_path, class: "text-sm font-medium text-ink-soft transition hover:text-ink" %>
+      </div>
+    <% end %>
+  </div>
+</div>

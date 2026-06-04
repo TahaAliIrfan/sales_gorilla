@@ -1,4 +1,6 @@
 class Campaign < ApplicationRecord
+  acts_as_tenant(:organization)
+
   STATUSES = %w[draft scheduled in_progress completed failed stopped].freeze
 
   belongs_to :user

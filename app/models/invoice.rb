@@ -1,4 +1,6 @@
 class Invoice < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
   belongs_to :milestone
   belongs_to :user

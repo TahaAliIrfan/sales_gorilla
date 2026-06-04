@@ -2,7 +2,7 @@ class DealsController < ApplicationController
   include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::DateHelper
   
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_deal, only: [:show, :edit, :update, :destroy, :update_stage, :mark_as_won, :mark_as_lost, :assign_user]
   skip_before_action :verify_authenticity_token, only: [:update_stage], if: -> { request.format.json? }

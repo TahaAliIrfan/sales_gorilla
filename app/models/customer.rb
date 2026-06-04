@@ -1,4 +1,6 @@
 class Customer < ApplicationRecord
+  acts_as_tenant(:organization)
+
   #relationship
   belongs_to :user, optional: true
   has_one :customer_location, dependent: :destroy

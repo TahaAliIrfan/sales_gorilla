@@ -1,4 +1,6 @@
 class WhatsappMessage < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
 
   # Outbound media (documents/images) sent through the Twilio WhatsApp path.

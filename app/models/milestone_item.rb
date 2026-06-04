@@ -1,4 +1,6 @@
 class MilestoneItem < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :milestone
   has_many :invoice_line_items, dependent: :nullify
 

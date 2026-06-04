@@ -2,7 +2,7 @@ require 'cgi'
 require 'fileutils'
 
 class CsvImportsController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :authorize_import_access
   

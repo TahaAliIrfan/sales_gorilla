@@ -1,4 +1,6 @@
 class CustomerActivity < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
   belongs_to :user, optional: true
   

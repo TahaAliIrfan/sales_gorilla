@@ -1,4 +1,6 @@
 class InvoiceLineItem < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :invoice
   belongs_to :milestone_item, optional: true
 

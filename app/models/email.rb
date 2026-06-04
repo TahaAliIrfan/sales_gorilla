@@ -1,4 +1,6 @@
 class Email < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer
   belongs_to :user
   has_one_attached :raw_message

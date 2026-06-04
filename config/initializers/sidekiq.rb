@@ -1,6 +1,10 @@
 require 'sidekiq'
 require 'sidekiq-scheduler'
 
+# Propagate the current tenant from the request thread into Sidekiq jobs, so
+# acts_as_tenant scoping survives the hop into the worker process.
+require 'acts_as_tenant/sidekiq'
+
 # Configure Sidekiq client
 Sidekiq.configure_client do |config|
   redis_url = if Rails.env.production?

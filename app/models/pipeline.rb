@@ -1,4 +1,6 @@
 class Pipeline < ApplicationRecord
+  acts_as_tenant(:organization)
+
   has_many :deal_stages, dependent: :destroy
   has_many :deals, through: :deal_stages
   has_many :user_pipeline_assignments, dependent: :destroy

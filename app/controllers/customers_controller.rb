@@ -1,5 +1,5 @@
 class CustomersController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
   after_action :verify_authorized, except: [:index, :export_csv]

@@ -1,5 +1,5 @@
 class NotificationsController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_notification, only: [:show, :mark_as_read]
   

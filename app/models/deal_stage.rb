@@ -1,4 +1,6 @@
 class DealStage < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :pipeline
   has_many :deals
   has_many :deal_recordings

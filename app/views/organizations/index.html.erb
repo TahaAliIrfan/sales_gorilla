@@ -1,0 +1,39 @@
+<% content_for :title, "Your workspaces" %>
+
+<div class="mx-auto max-w-3xl px-6 py-16 motion-safe:animate-rise">
+  <div class="mb-10 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-6">
+    <div>
+      <p class="micro mb-2">Account</p>
+      <h1 class="font-display text-4xl font-bold tracking-tight text-ink">Your workspaces</h1>
+      <p class="mt-2 text-ink-soft">Open a workspace or create a new one.</p>
+    </div>
+    <%= link_to "New workspace", new_organization_path,
+          class: "rounded-md bg-accent px-5 py-2.5 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim" %>
+  </div>
+
+  <% if @organizations.any? %>
+    <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+      <% @organizations.each_with_index do |org, i| %>
+        <%= link_to tenant_root_url(subdomain: org.subdomain, host: tenant_host_for(org.subdomain)),
+              data: { turbo: false },
+              style: "animation-delay: #{i * 60}ms",
+              class: "group flex items-center gap-4 border-b border-[var(--color-line)] px-5 py-4 transition last:border-b-0 hover:bg-[var(--color-line)] motion-safe:animate-fade" do %>
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg font-display text-base font-bold text-white"
+                style="background: <%= org.primary_color %>"><%= org.initial %></span>
+          <div class="min-w-0">
+            <p class="truncate font-display text-base font-bold text-ink"><%= org.name %></p>
+            <p class="mono truncate text-xs text-ink-soft"><%= org.subdomain %>.<%= root_host_for_request %></p>
+          </div>
+          <span class="ml-auto text-ink-soft/40 transition group-hover:translate-x-0.5 group-hover:text-accent">→</span>
+        <% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-dashed border-[var(--color-line-2)] bg-panel px-6 py-20 text-center">
+      <p class="font-display text-xl font-bold text-ink">No workspaces yet.</p>
+      <p class="mt-1 text-ink-soft">Create your first workspace to get started.</p>
+      <%= link_to "Create workspace", new_organization_path,
+            class: "mt-5 inline-block rounded-md bg-accent px-6 py-3 text-sm font-semibold text-paper transition hover:bg-accent-dim" %>
+    </div>
+  <% end %>
+</div>

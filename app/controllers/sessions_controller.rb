@@ -31,8 +31,9 @@ class SessionsController < ApplicationController
     if user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
       session[:user_id] = user.id
       session[:user_email] = user.email
+      ensure_membership_in_default_org(user)
       flash[:success] = 'Successfully signed in!'
-      redirect_to dashboard_path
+      redirect_to organizations_path
     else
       flash[:error] = 'Access restricted to authorized email addresses'
       redirect_to root_path
@@ -52,5 +53,18 @@ class SessionsController < ApplicationController
   def failure
     flash[:error] = "Authentication failed: #{params[:message]}"
     redirect_to root_path
+  end
+
+  private
+
+  # New users created via OAuth need a default-org membership so they land in
+  # the existing Tecaudex workspace automatically.
+  def ensure_membership_in_default_org(user)
+    default_org = Organization.find_by(subdomain: 'tecaudex')
+    return unless default_org
+    return if user.member_of?(default_org)
+
+    role = user.admin? ? 'owner' : 'admin'
+    user.memberships.create(organization: default_org, role: role)
   end
 end

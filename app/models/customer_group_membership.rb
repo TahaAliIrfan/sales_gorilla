@@ -1,4 +1,6 @@
 class CustomerGroupMembership < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer_group
   belongs_to :customer
 

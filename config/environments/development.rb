@@ -38,6 +38,12 @@ Rails.application.configure do
   config.hosts << /.*\.ngrok-free\.app/
   config.hosts << /.*\.ngrok\.io/
 
+  # Multi-tenant subdomain dev: use lvh.me (resolves to 127.0.0.1) so
+  # `acme.lvh.me:3000` reaches the dev server as a tenant subdomain without
+  # touching /etc/hosts.
+  config.hosts << "lvh.me"
+  config.hosts << /.*\.lvh\.me/
+
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :amazon
 

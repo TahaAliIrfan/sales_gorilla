@@ -1,5 +1,5 @@
 class AiAnalysesController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :set_recording
   
   def create

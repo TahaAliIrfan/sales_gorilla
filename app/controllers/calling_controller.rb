@@ -1,6 +1,6 @@
 class CallingController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [:voice, :recording_status]
-  layout 'dashboard'
+  layout "tenant"
   rescue_from StandardError, with: :handle_calling_error
 
   # Display the browser-based phone interface

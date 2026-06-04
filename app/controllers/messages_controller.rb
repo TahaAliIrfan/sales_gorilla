@@ -1,5 +1,5 @@
 class MessagesController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login, except: :webhook
   before_action :set_customer, only: [:index, :create, :sync, :refresh]
   skip_before_action :verify_authenticity_token, only: [:webhook, :sync]

@@ -1,4 +1,6 @@
 class Deal < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :customer, optional: true
   belongs_to :user
   belongs_to :deal_stage

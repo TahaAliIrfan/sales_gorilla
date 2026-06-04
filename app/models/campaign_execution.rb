@@ -1,4 +1,6 @@
 class CampaignExecution < ApplicationRecord
+  acts_as_tenant(:organization)
+
   STATUSES = %w[pending processing completed failed].freeze
 
   belongs_to :campaign

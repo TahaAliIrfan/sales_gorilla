@@ -1,5 +1,5 @@
 class OdooProposalsController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_proposal, only: [:show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative]
 

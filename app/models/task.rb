@@ -1,4 +1,6 @@
 class Task < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :user
   belongs_to :customer, optional: true
 

@@ -46,7 +46,8 @@
       "Bash(xargs ls -la)",
       "Bash(ruby -c app/controllers/api/v2/whatsapp_us_controller.rb)",
       "Bash(ruby -c app/workers/twilio_whatsapp_media_worker.rb)",
-      "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)"
+      "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)",
+      "Bash(bundle exec rails runner ' *)"
     ],
     "additionalDirectories": [
       "/tmp"

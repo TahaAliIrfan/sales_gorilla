@@ -1,5 +1,5 @@
 class TasksController < ApplicationController
-  layout 'dashboard'
+  layout "tenant"
   before_action :require_login
   before_action :set_task, only: [:show, :edit, :update, :destroy, :complete]
   after_action :verify_authorized, except: [:index, :my_tasks]

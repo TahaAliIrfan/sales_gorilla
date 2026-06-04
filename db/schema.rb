@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_04_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -55,10 +55,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "phone_number"
+    t.bigint "organization_id", null: false
     t.index ["call_type"], name: "index_calls_on_call_type"
     t.index ["caller_id", "status"], name: "index_calls_on_caller_id_and_status"
     t.index ["caller_id"], name: "index_calls_on_caller_id"
     t.index ["customer_id"], name: "index_calls_on_customer_id"
+    t.index ["organization_id"], name: "index_calls_on_organization_id"
     t.index ["receiver_id", "status"], name: "index_calls_on_receiver_id_and_status"
     t.index ["receiver_id"], name: "index_calls_on_receiver_id"
     t.index ["status"], name: "index_calls_on_status"
@@ -74,9 +76,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "error_message"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["campaign_id", "customer_id"], name: "index_campaign_executions_unique", unique: true
     t.index ["campaign_id"], name: "index_campaign_executions_on_campaign_id"
     t.index ["customer_id"], name: "index_campaign_executions_on_customer_id"
+    t.index ["organization_id"], name: "index_campaign_executions_on_organization_id"
     t.index ["scheduled_at"], name: "index_campaign_executions_on_scheduled_at"
     t.index ["status"], name: "index_campaign_executions_on_status"
   end
@@ -86,8 +90,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "customer_group_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["campaign_id"], name: "index_campaign_groups_on_campaign_id"
     t.index ["customer_group_id"], name: "index_campaign_groups_on_customer_group_id"
+    t.index ["organization_id"], name: "index_campaign_groups_on_organization_id"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -98,6 +104,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_campaigns_on_organization_id"
     t.index ["scheduled_at"], name: "index_campaigns_on_scheduled_at"
     t.index ["status"], name: "index_campaigns_on_status"
     t.index ["user_id"], name: "index_campaigns_on_user_id"
@@ -133,7 +141,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.string "pdf_url"
     t.text "executive_summary"
     t.text "feature_prioritization"
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_cost_estimates_on_customer_id"
+    t.index ["organization_id"], name: "index_cost_estimates_on_organization_id"
     t.index ["status"], name: "index_cost_estimates_on_status"
     t.index ["user_id"], name: "index_cost_estimates_on_user_id"
   end
@@ -151,6 +161,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "lead_source"
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_csv_uploads_on_organization_id"
     t.index ["upload_token"], name: "index_csv_uploads_on_upload_token", unique: true
     t.index ["user_id"], name: "index_csv_uploads_on_user_id"
   end
@@ -162,7 +174,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
+    t.index ["organization_id"], name: "index_customer_activities_on_organization_id"
     t.index ["user_id"], name: "index_customer_activities_on_user_id"
   end
 
@@ -171,9 +185,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "customer_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_group_id", "customer_id"], name: "index_customer_group_memberships_unique", unique: true
     t.index ["customer_group_id"], name: "index_customer_group_memberships_on_customer_group_id"
     t.index ["customer_id"], name: "index_customer_group_memberships_on_customer_id"
+    t.index ["organization_id"], name: "index_customer_group_memberships_on_organization_id"
   end
 
   create_table "customer_groups", force: :cascade do |t|
@@ -182,6 +198,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_customer_groups_on_organization_id"
     t.index ["user_id", "name"], name: "index_customer_groups_on_user_id_and_name"
     t.index ["user_id"], name: "index_customer_groups_on_user_id"
   end
@@ -217,6 +235,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.integer "timezone_confidence", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["analysis_version"], name: "index_customer_locations_on_analysis_version"
     t.index ["analyzed_at"], name: "index_customer_locations_on_analyzed_at"
     t.index ["area_code"], name: "index_customer_locations_on_area_code"
@@ -225,6 +244,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.index ["country_iso"], name: "index_customer_locations_on_country_iso"
     t.index ["customer_id"], name: "index_customer_locations_on_customer_id", unique: true
     t.index ["latitude", "longitude"], name: "index_customer_locations_on_coordinates"
+    t.index ["organization_id"], name: "index_customer_locations_on_organization_id"
     t.index ["state_province"], name: "index_customer_locations_on_state_province"
     t.index ["timezone"], name: "index_customer_locations_on_timezone"
   end
@@ -316,6 +336,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.string "phone_carrier"
     t.datetime "phone_lookup_checked_at"
     t.string "phone_country_code"
+    t.bigint "organization_id", null: false
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"
@@ -326,6 +347,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.index ["latitude", "longitude"], name: "index_customers_on_coordinates"
     t.index ["lead_quality"], name: "index_customers_on_lead_quality"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
+    t.index ["organization_id"], name: "index_customers_on_organization_id"
     t.index ["phone_analysis_completed_at"], name: "index_customers_on_phone_analysis_completed_at"
     t.index ["state"], name: "index_customers_on_state"
     t.index ["user_id"], name: "index_customers_on_user_id"
@@ -339,7 +361,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["deal_id"], name: "index_deal_activities_on_deal_id"
+    t.index ["organization_id"], name: "index_deal_activities_on_organization_id"
     t.index ["user_id"], name: "index_deal_activities_on_user_id"
   end
 
@@ -351,8 +375,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "recording_sid"
+    t.bigint "organization_id", null: false
     t.index ["deal_id"], name: "index_deal_recordings_on_deal_id"
     t.index ["deal_stage_id"], name: "index_deal_recordings_on_deal_stage_id"
+    t.index ["organization_id"], name: "index_deal_recordings_on_organization_id"
     t.index ["user_id"], name: "index_deal_recordings_on_user_id"
   end
 
@@ -364,6 +390,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "updated_at", null: false
     t.bigint "pipeline_id", null: false
     t.boolean "active", default: true
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_deal_stages_on_organization_id"
     t.index ["pipeline_id"], name: "index_deal_stages_on_pipeline_id"
   end
 
@@ -379,8 +407,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.date "closing_date"
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_deals_on_customer_id"
     t.index ["deal_stage_id"], name: "index_deals_on_deal_stage_id"
+    t.index ["organization_id"], name: "index_deals_on_organization_id"
     t.index ["user_id"], name: "index_deals_on_user_id"
   end
 
@@ -398,9 +428,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.text "transcription"
+    t.bigint "organization_id", null: false
     t.index ["call_id"], name: "index_eleven_labs_calls_on_call_id", unique: true
     t.index ["created_at"], name: "index_eleven_labs_calls_on_created_at"
     t.index ["customer_id"], name: "index_eleven_labs_calls_on_customer_id"
+    t.index ["organization_id"], name: "index_eleven_labs_calls_on_organization_id"
     t.index ["status"], name: "index_eleven_labs_calls_on_status"
     t.index ["user_id"], name: "index_eleven_labs_calls_on_user_id"
   end
@@ -426,9 +458,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "updated_at", null: false
     t.text "snippet"
     t.string "label_ids"
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_emails_on_customer_id"
     t.index ["label_ids"], name: "index_emails_on_label_ids"
     t.index ["message_id"], name: "index_emails_on_message_id"
+    t.index ["organization_id"], name: "index_emails_on_organization_id"
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
 
@@ -441,6 +475,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_google_meets_on_organization_id"
     t.index ["start_time"], name: "index_google_meets_on_start_time"
     t.index ["status"], name: "index_google_meets_on_status"
     t.index ["user_id"], name: "index_google_meets_on_user_id"
@@ -454,8 +490,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["invoice_id"], name: "index_invoice_line_items_on_invoice_id"
     t.index ["milestone_item_id"], name: "index_invoice_line_items_on_milestone_item_id"
+    t.index ["organization_id"], name: "index_invoice_line_items_on_organization_id"
     t.index ["position"], name: "index_invoice_line_items_on_position"
   end
 
@@ -477,10 +515,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.string "status", default: "pending", null: false
     t.string "public_token"
     t.string "payment_link_label"
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
     t.index ["issue_date"], name: "index_invoices_on_issue_date"
     t.index ["milestone_id"], name: "index_invoices_on_milestone_id"
+    t.index ["organization_id"], name: "index_invoices_on_organization_id"
     t.index ["public_token"], name: "index_invoices_on_public_token", unique: true
     t.index ["status"], name: "index_invoices_on_status"
     t.index ["user_id"], name: "index_invoices_on_user_id"
@@ -492,10 +532,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.integer "role", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["google_meet_id", "user_id"], name: "index_meeting_participants_on_google_meet_id_and_user_id", unique: true
     t.index ["google_meet_id"], name: "index_meeting_participants_on_google_meet_id"
+    t.index ["organization_id"], name: "index_meeting_participants_on_organization_id"
     t.index ["role"], name: "index_meeting_participants_on_role"
     t.index ["user_id"], name: "index_meeting_participants_on_user_id"
+  end
+
+  create_table "memberships", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "organization_id", null: false
+    t.string "role", default: "member", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id"], name: "index_memberships_on_organization_id"
+    t.index ["user_id", "organization_id"], name: "index_memberships_on_user_id_and_organization_id", unique: true
+    t.index ["user_id"], name: "index_memberships_on_user_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -510,9 +563,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_messages_on_customer_id"
     t.index ["direction"], name: "index_messages_on_direction"
     t.index ["message_id"], name: "index_messages_on_message_id"
+    t.index ["organization_id"], name: "index_messages_on_organization_id"
     t.index ["user_id"], name: "index_messages_on_user_id"
     t.index ["whatsapp_chat_id"], name: "index_messages_on_whatsapp_chat_id"
   end
@@ -527,8 +582,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.jsonb "request_payload"
+    t.bigint "organization_id", null: false
     t.index ["customer_id", "created_at"], name: "index_meta_conversion_logs_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_meta_conversion_logs_on_customer_id"
+    t.index ["organization_id"], name: "index_meta_conversion_logs_on_organization_id"
   end
 
   create_table "milestone_items", force: :cascade do |t|
@@ -539,7 +596,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["milestone_id"], name: "index_milestone_items_on_milestone_id"
+    t.index ["organization_id"], name: "index_milestone_items_on_organization_id"
     t.index ["position"], name: "index_milestone_items_on_position"
   end
 
@@ -555,7 +614,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_milestones_on_customer_id"
+    t.index ["organization_id"], name: "index_milestones_on_organization_id"
     t.index ["schedule_type"], name: "index_milestones_on_schedule_type"
     t.index ["status"], name: "index_milestones_on_status"
     t.index ["user_id"], name: "index_milestones_on_user_id"
@@ -570,7 +631,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "user_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_ndas_on_customer_id"
+    t.index ["organization_id"], name: "index_ndas_on_organization_id"
     t.index ["user_id"], name: "index_ndas_on_user_id"
   end
 
@@ -582,7 +645,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "message_preview"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_notification_logs_on_customer_id"
+    t.index ["organization_id"], name: "index_notification_logs_on_organization_id"
     t.index ["user_id", "customer_id", "notification_type", "sent_at"], name: "idx_notification_logs_lookup"
     t.index ["user_id"], name: "index_notification_logs_on_user_id"
   end
@@ -596,7 +661,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "resource_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["organization_id"], name: "index_notifications_on_organization_id"
     t.index ["resource_type", "resource_id"], name: "index_notifications_on_resource"
     t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
     t.index ["user_id"], name: "index_notifications_on_user_id"
@@ -625,8 +692,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "claude_next_steps"
     t.datetime "narrative_generated_at"
     t.jsonb "custom_modules", default: []
+    t.bigint "organization_id", null: false
     t.index ["customer_id"], name: "index_odoo_proposals_on_customer_id"
+    t.index ["organization_id"], name: "index_odoo_proposals_on_organization_id"
     t.index ["user_id"], name: "index_odoo_proposals_on_user_id"
+  end
+
+  create_table "organizations", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "subdomain", null: false
+    t.string "primary_color", default: "#1E3A8A", null: false
+    t.string "accent_color", default: "#10B981", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subdomain"], name: "index_organizations_on_subdomain", unique: true
   end
 
   create_table "pipelines", force: :cascade do |t|
@@ -635,8 +714,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["active"], name: "index_pipelines_on_active"
     t.index ["name"], name: "index_pipelines_on_name", unique: true
+    t.index ["organization_id"], name: "index_pipelines_on_organization_id"
   end
 
   create_table "recordings", force: :cascade do |t|
@@ -652,8 +733,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.jsonb "transcription"
     t.string "transcription_status"
     t.boolean "called_at_prefered_time", default: false, null: false
+    t.bigint "organization_id", null: false
     t.index ["called_at_prefered_time"], name: "index_recordings_on_called_at_prefered_time"
     t.index ["customer_id"], name: "index_recordings_on_customer_id"
+    t.index ["organization_id"], name: "index_recordings_on_organization_id"
     t.index ["user_id"], name: "index_recordings_on_user_id"
   end
 
@@ -698,11 +781,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.jsonb "metadata", default: {}
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["created_at"], name: "index_sms_on_created_at"
     t.index ["customer_id"], name: "index_sms_on_customer_id"
     t.index ["direction"], name: "index_sms_on_direction"
     t.index ["from_number"], name: "index_sms_on_from_number"
     t.index ["message_sid"], name: "index_sms_on_message_sid", unique: true
+    t.index ["organization_id"], name: "index_sms_on_organization_id"
     t.index ["status"], name: "index_sms_on_status"
     t.index ["to_number"], name: "index_sms_on_to_number"
     t.index ["user_id"], name: "index_sms_on_user_id"
@@ -728,9 +813,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.boolean "completed", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["completed"], name: "index_tasks_on_completed"
     t.index ["customer_id"], name: "index_tasks_on_customer_id"
     t.index ["due_date"], name: "index_tasks_on_due_date"
+    t.index ["organization_id"], name: "index_tasks_on_organization_id"
     t.index ["status"], name: "index_tasks_on_status"
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
@@ -744,6 +831,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.integer "emails_sent", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_user_kpi_records_on_organization_id"
     t.index ["record_date"], name: "index_user_kpi_records_on_record_date"
     t.index ["user_id", "record_date"], name: "index_user_kpi_records_on_user_id_and_record_date", unique: true
     t.index ["user_id"], name: "index_user_kpi_records_on_user_id"
@@ -754,6 +843,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.bigint "pipeline_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
+    t.index ["organization_id"], name: "index_user_pipeline_assignments_on_organization_id"
     t.index ["pipeline_id"], name: "index_user_pipeline_assignments_on_pipeline_id"
     t.index ["user_id", "pipeline_id"], name: "index_user_pipeline_assignments_on_user_id_and_pipeline_id", unique: true
     t.index ["user_id"], name: "index_user_pipeline_assignments_on_user_id"
@@ -790,9 +881,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.jsonb "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["customer_id", "timestamp"], name: "index_whatsapp_messages_on_customer_id_and_timestamp"
     t.index ["customer_id"], name: "index_whatsapp_messages_on_customer_id"
     t.index ["message_id"], name: "index_whatsapp_messages_on_message_id", unique: true
+    t.index ["organization_id"], name: "index_whatsapp_messages_on_organization_id"
     t.index ["timestamp"], name: "index_whatsapp_messages_on_timestamp"
   end
 
@@ -808,76 +901,117 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "last_synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "organization_id", null: false
     t.index ["approval_status"], name: "index_whatsapp_templates_on_approval_status"
     t.index ["content_sid"], name: "index_whatsapp_templates_on_content_sid", unique: true
+    t.index ["organization_id"], name: "index_whatsapp_templates_on_organization_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "calls", "customers"
+  add_foreign_key "calls", "organizations"
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
   add_foreign_key "campaign_executions", "campaigns"
   add_foreign_key "campaign_executions", "customers"
+  add_foreign_key "campaign_executions", "organizations"
   add_foreign_key "campaign_groups", "campaigns"
   add_foreign_key "campaign_groups", "customer_groups"
+  add_foreign_key "campaign_groups", "organizations"
+  add_foreign_key "campaigns", "organizations"
   add_foreign_key "campaigns", "users"
   add_foreign_key "cost_estimates", "customers", on_delete: :nullify
+  add_foreign_key "cost_estimates", "organizations"
   add_foreign_key "cost_estimates", "users"
+  add_foreign_key "csv_uploads", "organizations"
   add_foreign_key "csv_uploads", "users"
   add_foreign_key "customer_activities", "customers"
+  add_foreign_key "customer_activities", "organizations"
   add_foreign_key "customer_activities", "users"
   add_foreign_key "customer_group_memberships", "customer_groups"
   add_foreign_key "customer_group_memberships", "customers"
+  add_foreign_key "customer_group_memberships", "organizations"
+  add_foreign_key "customer_groups", "organizations"
   add_foreign_key "customer_groups", "users"
   add_foreign_key "customer_locations", "customers"
+  add_foreign_key "customer_locations", "organizations"
+  add_foreign_key "customers", "organizations"
   add_foreign_key "customers", "users"
   add_foreign_key "customers", "users", column: "lead_quality_marked_by_id"
   add_foreign_key "deal_activities", "deals"
+  add_foreign_key "deal_activities", "organizations"
   add_foreign_key "deal_activities", "users"
   add_foreign_key "deal_recordings", "deal_stages"
   add_foreign_key "deal_recordings", "deals"
+  add_foreign_key "deal_recordings", "organizations"
   add_foreign_key "deal_recordings", "users"
+  add_foreign_key "deal_stages", "organizations"
   add_foreign_key "deal_stages", "pipelines"
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
+  add_foreign_key "deals", "organizations"
   add_foreign_key "deals", "users"
   add_foreign_key "eleven_labs_calls", "customers"
+  add_foreign_key "eleven_labs_calls", "organizations"
   add_foreign_key "eleven_labs_calls", "users"
   add_foreign_key "emails", "customers"
+  add_foreign_key "emails", "organizations"
   add_foreign_key "emails", "users"
+  add_foreign_key "google_meets", "organizations"
   add_foreign_key "google_meets", "users"
   add_foreign_key "invoice_line_items", "invoices"
   add_foreign_key "invoice_line_items", "milestone_items"
+  add_foreign_key "invoice_line_items", "organizations"
   add_foreign_key "invoices", "customers"
   add_foreign_key "invoices", "milestones"
+  add_foreign_key "invoices", "organizations"
   add_foreign_key "invoices", "users"
   add_foreign_key "meeting_participants", "google_meets"
+  add_foreign_key "meeting_participants", "organizations"
   add_foreign_key "meeting_participants", "users"
+  add_foreign_key "memberships", "organizations"
+  add_foreign_key "memberships", "users"
   add_foreign_key "messages", "customers"
+  add_foreign_key "messages", "organizations"
   add_foreign_key "messages", "users"
   add_foreign_key "meta_conversion_logs", "customers"
+  add_foreign_key "meta_conversion_logs", "organizations"
   add_foreign_key "milestone_items", "milestones"
+  add_foreign_key "milestone_items", "organizations"
   add_foreign_key "milestones", "customers"
+  add_foreign_key "milestones", "organizations"
   add_foreign_key "milestones", "users"
   add_foreign_key "ndas", "customers"
+  add_foreign_key "ndas", "organizations"
   add_foreign_key "ndas", "users"
   add_foreign_key "notification_logs", "customers"
+  add_foreign_key "notification_logs", "organizations"
   add_foreign_key "notification_logs", "users"
+  add_foreign_key "notifications", "organizations"
   add_foreign_key "notifications", "users"
   add_foreign_key "odoo_proposals", "customers"
+  add_foreign_key "odoo_proposals", "organizations"
   add_foreign_key "odoo_proposals", "users"
+  add_foreign_key "pipelines", "organizations"
   add_foreign_key "recordings", "customers"
+  add_foreign_key "recordings", "organizations"
   add_foreign_key "recordings", "users"
   add_foreign_key "role_assignments", "roles"
   add_foreign_key "role_assignments", "users"
   add_foreign_key "role_assignments", "users", column: "assigned_by_id"
   add_foreign_key "sms", "customers"
+  add_foreign_key "sms", "organizations"
   add_foreign_key "sms", "users"
   add_foreign_key "tasks", "customers"
+  add_foreign_key "tasks", "organizations"
   add_foreign_key "tasks", "users"
+  add_foreign_key "user_kpi_records", "organizations"
   add_foreign_key "user_kpi_records", "users"
+  add_foreign_key "user_pipeline_assignments", "organizations"
   add_foreign_key "user_pipeline_assignments", "pipelines"
   add_foreign_key "user_pipeline_assignments", "users"
   add_foreign_key "whatsapp_messages", "customers"
+  add_foreign_key "whatsapp_messages", "organizations"
+  add_foreign_key "whatsapp_templates", "organizations"
 end

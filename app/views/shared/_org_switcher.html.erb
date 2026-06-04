@@ -1,0 +1,27 @@
+<div class="relative" data-controller="dropdown">
+  <button type="button" data-action="dropdown#toggle"
+          class="flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-ink-soft ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] hover:text-ink">
+    <span class="micro">Switch</span>
+    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+  </button>
+  <div data-dropdown-target="menu"
+       class="hidden absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-lg bg-panel p-1.5 shadow-lift ring-1 ring-[var(--color-line-2)] motion-safe:animate-fade">
+    <p class="micro px-2.5 py-2">Your workspaces</p>
+    <% current_member_orgs.each do |org| %>
+      <%= link_to tenant_root_url(subdomain: org.subdomain, host: tenant_host_for(org.subdomain)), data: { turbo: false },
+            class: "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition hover:bg-[var(--color-line)] #{'bg-[var(--color-line)] font-semibold' if org == current_organization}" do %>
+        <span class="grid h-8 w-8 place-items-center rounded-md font-display text-xs font-bold text-white"
+              style="background: <%= org.primary_color %>"><%= org.initial %></span>
+        <span class="truncate text-ink"><%= org.name %></span>
+        <% if org == current_organization %><span class="mono ml-auto text-[11px] text-accent-bright">●</span><% end %>
+      <% end %>
+    <% end %>
+    <div class="mt-1 border-t border-[var(--color-line)] pt-1">
+      <%= link_to organizations_url(host: root_host_for_request), data: { turbo: false },
+            class: "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink" do %>
+        <span class="grid h-8 w-8 place-items-center rounded-md text-ink-soft ring-1 ring-[var(--color-line-2)]">+</span>
+        <span>New workspace</span>
+      <% end %>
+    </div>
+  </div>
+</div>

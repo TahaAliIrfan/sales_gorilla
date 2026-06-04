@@ -1,4 +1,6 @@
 class CustomerGroup < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :user
   has_many :customer_group_memberships, dependent: :destroy
   has_many :customers, through: :customer_group_memberships

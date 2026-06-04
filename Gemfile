@@ -72,6 +72,9 @@ gem 'google-api-client', '~> 0.53.0', require: ['google/apis/gmail_v1', 'google/
 # Authorization
 gem 'pundit'
 
+# Row-level multi-tenancy: scopes queries by current organization [https://github.com/ErwinM/acts_as_tenant]
+gem 'acts_as_tenant'
+
 # JWT Authentication
 gem 'jwt'
 

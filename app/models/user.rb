@@ -1,4 +1,8 @@
 class User < ApplicationRecord
+  # Organization memberships (Slack/Notion-style: one global user, many orgs).
+  has_many :memberships, dependent: :destroy
+  has_many :organizations, through: :memberships
+
   has_many :deals
   has_many :deal_activities
   has_many :deal_recordings
@@ -38,6 +42,14 @@ class User < ApplicationRecord
   # Check if phone number is set
   def phone_number_set?
     phone_number.present?
+  end
+
+  def member_of?(organization)
+    memberships.exists?(organization_id: organization.id)
+  end
+
+  def membership_for(organization)
+    memberships.find_by(organization_id: organization.id)
   end
 
   # User activation methods
