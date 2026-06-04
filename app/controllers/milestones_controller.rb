@@ -4,7 +4,7 @@ class MilestonesController < ApplicationController
   layout "tenant"
   before_action :require_login
   before_action :set_customer
-  before_action :set_milestone, only: [:show, :edit, :update, :destroy, :mark_paid, :mark_unpaid]
+  before_action :set_milestone, only: [ :show, :edit, :update, :destroy, :mark_paid, :mark_unpaid ]
 
   def index
     @milestones = @customer.milestones.includes(:milestone_items, :user).order(created_at: :desc)
@@ -16,7 +16,7 @@ class MilestonesController < ApplicationController
   end
 
   def new
-    @milestone = @customer.milestones.build(schedule_type: 'milestone', status: 'unpaid')
+    @milestone = @customer.milestones.build(schedule_type: "milestone", status: "unpaid")
     @milestone.milestone_items.build(amount: 0, position: 0) if @milestone.milestone_items.empty?
     authorize @milestone
   end
@@ -78,7 +78,7 @@ class MilestonesController < ApplicationController
   def milestone_params
     params.require(:milestone).permit(
       :name, :total_amount, :schedule_type, :currency, :notes,
-      milestone_items_attributes: [:id, :description, :amount, :due_date, :position, :_destroy]
+      milestone_items_attributes: [ :id, :description, :amount, :due_date, :position, :_destroy ]
     )
   end
 end

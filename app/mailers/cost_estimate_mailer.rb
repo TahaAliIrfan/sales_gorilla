@@ -6,11 +6,11 @@ class CostEstimateMailer < ApplicationMailer
     @customer = cost_estimate.customer
 
     @app_types = cost_estimate.application_types_array.any? ?
-                 cost_estimate.application_types_array.join(', ') :
+                 cost_estimate.application_types_array.join(", ") :
                  cost_estimate.app_type_display
 
     attachments[filename] = {
-      mime_type: 'application/pdf',
+      mime_type: "application/pdf",
       content: pdf_binary
     }
 

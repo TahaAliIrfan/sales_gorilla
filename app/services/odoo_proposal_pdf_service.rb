@@ -1,5 +1,5 @@
-require 'prawn'
-require 'prawn/table'
+require "prawn"
+require "prawn/table"
 Prawn::Fonts::AFM.hide_m17n_warning = true
 
 class OdooProposalPdfService
@@ -26,14 +26,14 @@ class OdooProposalPdfService
   def initialize(proposal)
     @p    = proposal
     @name = clean(proposal.display_name)
-    @date = Date.current.strftime('%d %B %Y')
+    @date = Date.current.strftime("%d %B %Y")
     @year = Date.current.year
   end
 
   def generate
-    Prawn::Document.new(page_size: 'A4', margin: [0, 0, 0, 0]) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: [ 0, 0, 0, 0 ]) do |pdf|
       @pdf = pdf
-      @pdf.font 'Helvetica'
+      @pdf.font "Helvetica"
 
       cover
       if @p.narrative_generated?
@@ -62,10 +62,10 @@ class OdooProposalPdfService
 
     # Large decorative circle top-right (red tones on white)
     @pdf.fill_color RED_DARK
-    @pdf.fill_ellipse [PW + 20, PH + 20], 220, 220
+    @pdf.fill_ellipse [ PW + 20, PH + 20 ], 220, 220
 
     @pdf.fill_color "FFCDD2"
-    @pdf.fill_ellipse [PW - 30, PH - 180], 120, 120
+    @pdf.fill_ellipse [ PW - 30, PH - 180 ], 120, 120
 
     # ── Odoo ERP text ──────────────────────────────────────────────────────
     color INK
@@ -88,7 +88,7 @@ class OdooProposalPdfService
     # Thin divider
     @pdf.stroke_color "DDDDDD"
     @pdf.line_width 0.5
-    @pdf.stroke_line [60, PH - 298], [PW - 60, PH - 298]
+    @pdf.stroke_line [ 60, PH - 298 ], [ PW - 60, PH - 298 ]
 
     # ── Key numbers on cover ───────────────────────────────────────────────
     stats = [
@@ -122,7 +122,7 @@ class OdooProposalPdfService
     rect 0, 60, PW, 60, "F8F8F8"
     @pdf.stroke_color "E5E7EB"
     @pdf.line_width 0.5
-    @pdf.stroke_line [0, 60], [PW, 60]
+    @pdf.stroke_line [ 0, 60 ], [ PW, 60 ]
 
     color MID
     normal 9, "Prepared by", x: 60, y: 46, w: 100
@@ -166,11 +166,11 @@ class OdooProposalPdfService
       rect ML, y, 4, h + 28, RED
 
       color INK
-      @pdf.font 'Helvetica', style: :normal
+      @pdf.font "Helvetica", style: :normal
       @pdf.font_size 11
       @pdf.fill_color INK
       @pdf.text_box summary_text,
-        at: [ML + 14, y - 14], width: CW - 28, leading: 5
+        at: [ ML + 14, y - 14 ], width: CW - 28, leading: 5
 
       y -= (h + 28 + 14)
     end
@@ -186,11 +186,11 @@ class OdooProposalPdfService
       rect ML, y, 4, h + 28, SLATE
 
       color CHARCOAL
-      @pdf.font 'Helvetica', style: :normal
+      @pdf.font "Helvetica", style: :normal
       @pdf.font_size 10
       @pdf.fill_color CHARCOAL
       @pdf.text_box rationale_text,
-        at: [ML + 14, y - 14], width: CW - 28, leading: 4
+        at: [ ML + 14, y - 14 ], width: CW - 28, leading: 4
 
       y -= (h + 28 + 14)
     end
@@ -290,12 +290,12 @@ class OdooProposalPdfService
 
     sub_info = @p.odoo_subscription_info
     rows = [
-      ["Plan",             sub_info[:plan]],
-      ["Billing",          "Annual ($#{sub_info[:usd_monthly]}/user/mo)"],
-      ["Per User/Month",   "PKR #{fmt(sub_info[:pkr_monthly])}"],
-      ["Users",            @p.num_users.to_s],
-      ["Monthly Total",    "PKR #{fmt(@p.subscription_monthly_total)}"],
-      ["Yearly Total",     "PKR #{fmt(@p.subscription_yearly_total)}"]
+      [ "Plan",             sub_info[:plan] ],
+      [ "Billing",          "Annual ($#{sub_info[:usd_monthly]}/user/mo)" ],
+      [ "Per User/Month",   "PKR #{fmt(sub_info[:pkr_monthly])}" ],
+      [ "Users",            @p.num_users.to_s ],
+      [ "Monthly Total",    "PKR #{fmt(@p.subscription_monthly_total)}" ],
+      [ "Yearly Total",     "PKR #{fmt(@p.subscription_yearly_total)}" ]
     ]
     rows.each_with_index do |(k, v), i|
       ry = y3 - 36 - i * 24
@@ -310,8 +310,8 @@ class OdooProposalPdfService
     section_label "Module Implementation Costs", y: y4
     y4 -= 16
 
-    mcw = [CW * 0.42, CW * 0.32, CW * 0.26]
-    draw_table_row(["Module", "Category", "Implementation Fee (PKR)"],
+    mcw = [ CW * 0.42, CW * 0.32, CW * 0.26 ]
+    draw_table_row([ "Module", "Category", "Implementation Fee (PKR)" ],
       mcw, y4, row_h: 20, header: true, hi_col: nil)
 
     all_mods   = @p.respond_to?(:all_module_details) ? @p.all_module_details : @p.selected_module_details
@@ -320,10 +320,10 @@ class OdooProposalPdfService
     end
 
     all_mods.each_with_index do |mod, i|
-      cat = cat_lookup[mod[:key]] || mod[:category] || '—'
+      cat = cat_lookup[mod[:key]] || mod[:category] || "—"
       break if y4 - 20 - (i + 1) * 18 < 65
       draw_table_row(
-        [clean(mod[:label]), clean(cat), fmt(mod[:impl_cost])],
+        [ clean(mod[:label]), clean(cat), fmt(mod[:impl_cost]) ],
         mcw, y4 - 20 - i * 18, row_h: 18, hi_col: nil, alt: i.odd?,
         align_last: :right
       )
@@ -347,24 +347,24 @@ class OdooProposalPdfService
          y: PH - 128
 
     # Header
-    cw = [CW * 0.62, CW * 0.18, CW * 0.20]
+    cw = [ CW * 0.62, CW * 0.18, CW * 0.20 ]
     header_h = 24
     table_top = PH - 168
-    draw_table_row ["Module / Component", "Type", "Amount (PKR)"],
+    draw_table_row [ "Module / Component", "Type", "Amount (PKR)" ],
       cw, table_top, row_h: header_h, header: true, hi_col: nil
 
     y_cursor = table_top - header_h
 
     mods.each_with_index do |mod, i|
       kind = mod[:custom] ? "Custom Dev" : "Standard"
-      cells = [clean(mod[:label]), kind, fmt(mod[:impl_cost])]
+      cells = [ clean(mod[:label]), kind, fmt(mod[:impl_cost]) ]
       rh = measure_row_height(cells, cw, min: 22)
 
       if y_cursor - rh < 90
         footer
         @pdf.start_new_page
         header "Selected Modules (cont.)"
-        draw_table_row ["Module / Component", "Type", "Amount (PKR)"],
+        draw_table_row [ "Module / Component", "Type", "Amount (PKR)" ],
           cw, PH - 128, row_h: header_h, header: true, hi_col: nil
         y_cursor = PH - 128 - header_h
       end
@@ -434,7 +434,7 @@ class OdooProposalPdfService
       # Thin accent rule
       @pdf.stroke_color mod[:custom] ? "8B5CF6" : RED
       @pdf.line_width 1.2
-      @pdf.stroke_line [ML, y], [ML + 36, y]
+      @pdf.stroke_line [ ML, y ], [ ML + 36, y ]
       y -= 10
 
       # Body paragraph
@@ -468,9 +468,9 @@ class OdooProposalPdfService
     color INK
     bold 16, dlabel, x: ML + 18, y: y - 14, w: CW - 180
     desc = {
-      'online'     => "Fully managed SaaS by Odoo. Odoo handles all upgrades, backups and security. No server to manage.",
-      'sh'         => "Odoo.sh: managed cloud with Git deployment, staging branches and full developer access.",
-      'on_premise' => "Self-hosted on Tecaudex-managed AWS infrastructure. Full data sovereignty and custom integrations."
+      "online"     => "Fully managed SaaS by Odoo. Odoo handles all upgrades, backups and security. No server to manage.",
+      "sh"         => "Odoo.sh: managed cloud with Git deployment, staging branches and full developer access.",
+      "on_premise" => "Self-hosted on Tecaudex-managed AWS infrastructure. Full data sovereignty and custom integrations."
     }[dtype]
     color MID
     normal 9, desc, x: ML + 18, y: y - 36, w: CW - 26
@@ -493,19 +493,19 @@ class OdooProposalPdfService
     c1 = CW * 0.235
     c2 = CW * 0.235
     c3 = CW * 0.23
-    col_ws = [c0, c1, c2, c3]
-    heads  = ["Feature", "Odoo Online", "Odoo.sh", "On-Premise"]
+    col_ws = [ c0, c1, c2, c3 ]
+    heads  = [ "Feature", "Odoo Online", "Odoo.sh", "On-Premise" ]
     rows   = [
-      ["Odoo Plan",        "Standard",      "Custom",          "Custom"],
-      ["License/User/Mo",  "$7.25 (annual)","$10.90 (annual)", "$10.90 (annual)"],
-      ["Odoo Studio",      "No",            "Yes",             "Yes"],
-      ["Multi-Company",    "No",            "Yes",             "Yes"],
-      ["External API",     "No",            "Yes",             "Yes"],
-      ["Data Location",    "Odoo servers",  "Odoo / GitHub",   "Your servers"],
-      ["Platform Cost",    "Included",      "Extra (workers)", "Hosting required"],
-      ["Best For",         "SMBs / start",  "Dev teams",       "Enterprise"]
+      [ "Odoo Plan",        "Standard",      "Custom",          "Custom" ],
+      [ "License/User/Mo",  "$7.25 (annual)", "$10.90 (annual)", "$10.90 (annual)" ],
+      [ "Odoo Studio",      "No",            "Yes",             "Yes" ],
+      [ "Multi-Company",    "No",            "Yes",             "Yes" ],
+      [ "External API",     "No",            "Yes",             "Yes" ],
+      [ "Data Location",    "Odoo servers",  "Odoo / GitHub",   "Your servers" ],
+      [ "Platform Cost",    "Included",      "Extra (workers)", "Hosting required" ],
+      [ "Best For",         "SMBs / start",  "Dev teams",       "Enterprise" ]
     ]
-    hi_col = dtype == 'online' ? 1 : (dtype == 'sh' ? 2 : 3)
+    hi_col = dtype == "online" ? 1 : (dtype == "sh" ? 2 : 3)
 
     # Header row
     header_h = 24
@@ -523,8 +523,8 @@ class OdooProposalPdfService
 
     # ── Hosting / SH tier card ─────────────────────────────────────────────
     if (tier = @p.current_tier_info)
-      tier_label = dtype == 'sh' ? "Odoo.sh Platform Plan" : "Selected Hosting Tier"
-      tier_note  = dtype == 'sh' ? "Odoo.sh worker-based infrastructure managed by Odoo." \
+      tier_label = dtype == "sh" ? "Odoo.sh Platform Plan" : "Selected Hosting Tier"
+      tier_note  = dtype == "sh" ? "Odoo.sh worker-based infrastructure managed by Odoo." \
                                  : "Based on AWS EC2 estimates. Actual cost may vary."
       section_label tier_label, y: ty
       ty -= 16
@@ -568,15 +568,15 @@ class OdooProposalPdfService
     y -= 16
 
     # Wider Module column so long labels like "Pakistani Chart of Accounts..." fit cleanly
-    cw = [CW * 0.50, CW * 0.28, CW * 0.22]
+    cw = [ CW * 0.50, CW * 0.28, CW * 0.22 ]
     header_h = 24
-    draw_table_row(["Module / Component", "Description", "Amount (PKR)"],
+    draw_table_row([ "Module / Component", "Description", "Amount (PKR)" ],
       cw, y, row_h: header_h, header: true, hi_col: nil)
 
     y_cursor = y - header_h
     @p.all_module_details.each_with_index do |mod, i|
       kind  = mod[:custom] ? "Custom Dev / Integration" : "Setup & Configuration"
-      cells = [clean(mod[:label]), kind, fmt(mod[:impl_cost])]
+      cells = [ clean(mod[:label]), kind, fmt(mod[:impl_cost]) ]
       rh    = measure_row_height(cells, cw, min: 22)
       draw_table_row(cells, cw, y_cursor, row_h: rh,
         hi_col: nil, alt: i.odd?, align_last: :right)
@@ -591,8 +591,8 @@ class OdooProposalPdfService
     section_label "B  Recurring Costs  (Monthly & Yearly)", y: y, underline: false
     y -= 16
 
-    rcw = [CW * 0.32, CW * 0.26, CW * 0.21, CW * 0.21]
-    draw_table_row(["Item", "Basis", "Monthly (PKR)", "Yearly (PKR)"],
+    rcw = [ CW * 0.32, CW * 0.26, CW * 0.21, CW * 0.21 ]
+    draw_table_row([ "Item", "Basis", "Monthly (PKR)", "Yearly (PKR)" ],
       rcw, y, row_h: header_h, header: true, hi_col: nil)
 
     sub_info = @p.odoo_subscription_info
@@ -607,7 +607,7 @@ class OdooProposalPdfService
 
     if @p.hosting_monthly > 0
       tier_info  = @p.current_tier_info
-      host_label = @p.deployment_type == 'sh' \
+      host_label = @p.deployment_type == "sh" \
                      ? "Odoo.sh Platform (#{tier_info&.dig(:label)})" \
                      : "Server Hosting (#{tier_info&.dig(:label)})"
       recur_rows << [
@@ -639,15 +639,15 @@ class OdooProposalPdfService
     section_label "C  Year-on-Year Cost Summary", y: y, underline: false
     y -= 16
 
-    ycw = [CW * 0.42, CW * 0.29, CW * 0.29]
-    draw_table_row ["Cost Item", "Year 1", "Year 2 onwards"],
+    ycw = [ CW * 0.42, CW * 0.29, CW * 0.29 ]
+    draw_table_row [ "Cost Item", "Year 1", "Year 2 onwards" ],
       ycw, y, row_h: header_h, header: true, hi_col: nil
 
-    hosting_yr_label = @p.deployment_type == 'sh' ? "Odoo.sh Platform" : "Server Hosting"
+    hosting_yr_label = @p.deployment_type == "sh" ? "Odoo.sh Platform" : "Server Hosting"
     year_rows = [
-      ["Implementation Fee (one-time)", fmt(@p.implementation_fee.to_i), "—"],
-      ["Odoo Subscription",             fmt(@p.subscription_yearly_total), fmt(@p.subscription_yearly_total)],
-      [hosting_yr_label,                fmt(@p.hosting_yearly), fmt(@p.hosting_yearly)]
+      [ "Implementation Fee (one-time)", fmt(@p.implementation_fee.to_i), "—" ],
+      [ "Odoo Subscription",             fmt(@p.subscription_yearly_total), fmt(@p.subscription_yearly_total) ],
+      [ hosting_yr_label,                fmt(@p.hosting_yearly), fmt(@p.hosting_yearly) ]
     ]
 
     year_y = y - header_h
@@ -696,12 +696,12 @@ class OdooProposalPdfService
       parse_ai_next_steps(@p.claude_next_steps)
     else
       [
-        ["01", "Proposal Review",      "This week",  "Share this with your team. We are available to present in person or virtually."],
-        ["02", "Discovery Workshop",   "Week 1-2",   "A structured session to finalise scope, map workflows and agree on timeline."],
-        ["03", "Agreement & Kickoff",  "Week 2-3",   "Sign the service agreement and launch with your dedicated project manager."],
-        ["04", "Implementation",       "Weeks 4-10", "Configuration, customisation, data migration and integrations with weekly updates."],
-        ["05", "Training & Go-Live",   "Week 10-11", "Hands-on training, UAT sign-off and go-live on the agreed date."],
-        ["06", "Post-Go-Live Support", "2 weeks",    "Dedicated hypercare — rapid resolution of any issues after launch."]
+        [ "01", "Proposal Review",      "This week",  "Share this with your team. We are available to present in person or virtually." ],
+        [ "02", "Discovery Workshop",   "Week 1-2",   "A structured session to finalise scope, map workflows and agree on timeline." ],
+        [ "03", "Agreement & Kickoff",  "Week 2-3",   "Sign the service agreement and launch with your dedicated project manager." ],
+        [ "04", "Implementation",       "Weeks 4-10", "Configuration, customisation, data migration and integrations with weekly updates." ],
+        [ "05", "Training & Go-Live",   "Week 10-11", "Hands-on training, UAT sign-off and go-live on the agreed date." ],
+        [ "06", "Post-Go-Live Support", "2 weeks",    "Dedicated hypercare — rapid resolution of any issues after launch." ]
       ]
     end
 
@@ -737,7 +737,7 @@ class OdooProposalPdfService
       # Border line between steps
       @pdf.stroke_color BORDER
       @pdf.line_width 0.4
-      @pdf.stroke_line [ML, y - 50], [ML + CW, y - 50]
+      @pdf.stroke_line [ ML, y - 50 ], [ ML + CW, y - 50 ]
 
       y -= 54
     end
@@ -776,12 +776,12 @@ class OdooProposalPdfService
 
     @pdf.stroke_color BORDER
     @pdf.line_width 0.8
-    @pdf.stroke_line [0, PH - 82], [PW, PH - 82]
+    @pdf.stroke_line [ 0, PH - 82 ], [ PW, PH - 82 ]
 
     # Red accent line under title
     @pdf.stroke_color RED
     @pdf.line_width 2
-    @pdf.stroke_line [5, PH - 82], [80, PH - 82]
+    @pdf.stroke_line [ 5, PH - 82 ], [ 80, PH - 82 ]
   end
 
   def footer
@@ -800,7 +800,7 @@ class OdooProposalPdfService
     if underline
       @pdf.stroke_color RED
       @pdf.line_width 0.5
-      @pdf.stroke_line [ML, y - 6], [ML + CW, y - 6]
+      @pdf.stroke_line [ ML, y - 6 ], [ ML + CW, y - 6 ]
     end
   end
 
@@ -813,7 +813,7 @@ class OdooProposalPdfService
   def draw_table_row(cells, col_ws, y, row_h:, header: false, hi_col: nil, alt: false, align_last: :left)
     x = ML
     txt_top    = 7
-    txt_height = [row_h - 10, 10].max
+    txt_height = [ row_h - 10, 10 ].max
 
     cells.each_with_index do |cell, ci|
       cw = col_ws[ci]
@@ -833,7 +833,7 @@ class OdooProposalPdfService
       # Cell border
       @pdf.stroke_color BORDER
       @pdf.line_width 0.3
-      @pdf.stroke_rectangle [x, y], cw, row_h
+      @pdf.stroke_rectangle [ x, y ], cw, row_h
 
       align = (ci == cells.size - 1 ? (align_last || :left) : :left)
       align = :right if header && ci == cells.size - 1
@@ -874,20 +874,20 @@ class OdooProposalPdfService
   # ── Text primitives ────────────────────────────────────────────────────────
 
   def bold(size, text, x:, y:, w:, align: :left, h: nil)
-    opts = { at: [x, y], width: w, align: align }
+    opts = { at: [ x, y ], width: w, align: align }
     opts[:height] = h if h
     @pdf.fill_color @_color || "000000"
     @pdf.font_size  size
-    @pdf.font 'Helvetica', style: :bold
+    @pdf.font "Helvetica", style: :bold
     @pdf.text_box clean(text), **opts
   end
 
   def normal(size, text, x:, y:, w:, align: :left, leading: 0, h: nil)
-    opts = { at: [x, y], width: w, align: align, leading: leading }
+    opts = { at: [ x, y ], width: w, align: align, leading: leading }
     opts[:height] = h if h
     @pdf.fill_color @_color || "000000"
     @pdf.font_size  size
-    @pdf.font 'Helvetica', style: :normal
+    @pdf.font "Helvetica", style: :normal
     @pdf.text_box clean(text), **opts
   end
 
@@ -899,7 +899,7 @@ class OdooProposalPdfService
   # Solid rectangle — top-left origin style (y is the top edge)
   def rect(x, top_y, w, h, hex)
     @pdf.fill_color hex
-    @pdf.fill_rectangle [x, top_y], w, h
+    @pdf.fill_rectangle [ x, top_y ], w, h
   end
 
   def fmt(n)
@@ -913,28 +913,28 @@ class OdooProposalPdfService
     lines = raw.to_s.split(/\r?\n/).map(&:strip).reject(&:empty?)
     lines.each_with_index.map do |line, idx|
       num = format("%02d", idx + 1)
-      stripped = line.sub(/^(?:step\s*)?\d+[\.\):]\s*/i, '').sub(/^[-•*]\s*/, '')
+      stripped = line.sub(/^(?:step\s*)?\d+[\.\):]\s*/i, "").sub(/^[-•*]\s*/, "")
 
-      time = ''
+      time = ""
       if (m = stripped.match(/\(([^)]+)\)/))
         time = m[1].strip
-        stripped = stripped.sub(/\s*\([^)]+\)/, '')
+        stripped = stripped.sub(/\s*\([^)]+\)/, "")
       end
 
-      if stripped.include?(' - ') || stripped.include?(' — ') || stripped.include?(': ')
+      if stripped.include?(" - ") || stripped.include?(" — ") || stripped.include?(": ")
         parts = stripped.split(/\s+[-—:]\s+/, 2)
         title = parts[0].to_s.strip
         desc  = parts[1].to_s.strip
       else
         title = stripped.split(/[.!?]/, 2).first.to_s.strip
-        desc  = stripped[title.length..-1].to_s.strip.sub(/^[.!?]\s*/, '')
+        desc  = stripped[title.length..-1].to_s.strip.sub(/^[.!?]\s*/, "")
       end
 
       title = title[0, 60]
-      desc  = desc.presence || ''
+      desc  = desc.presence || ""
       time  = time.presence || "Step #{idx + 1}"
 
-      [num, title, time, desc]
+      [ num, title, time, desc ]
     end
   end
 
@@ -959,13 +959,13 @@ class OdooProposalPdfService
       next 0 if text.length < 18
       estimate_text_height(text, col_ws[i] - 14, font_size: font_size, leading: 1) + padding
     end.max
-    [needed.to_i, min].max
+    [ needed.to_i, min ].max
   end
 
   def clean(text)
     text.to_s
         .gsub(/["""]/, '"').gsub(/[''']/, "'")
-        .gsub(/[–—]/, '-').gsub(/…/, '...')
-        .gsub(/[^\x00-\x7F]/, '').strip
+        .gsub(/[–—]/, "-").gsub(/…/, "...")
+        .gsub(/[^\x00-\x7F]/, "").strip
   end
 end

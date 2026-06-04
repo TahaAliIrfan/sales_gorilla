@@ -11,10 +11,10 @@ class Campaign < ApplicationRecord
   validates :message, presence: true
   validates :status, presence: true, inclusion: { in: STATUSES }
 
-  scope :draft, -> { where(status: 'draft') }
-  scope :scheduled, -> { where(status: 'scheduled') }
-  scope :in_progress, -> { where(status: 'in_progress') }
-  scope :completed, -> { where(status: 'completed') }
+  scope :draft, -> { where(status: "draft") }
+  scope :scheduled, -> { where(status: "scheduled") }
+  scope :in_progress, -> { where(status: "in_progress") }
+  scope :completed, -> { where(status: "completed") }
 
   def add_customers(customer_ids)
     return if customer_ids.blank?
@@ -30,7 +30,7 @@ class Campaign < ApplicationRecord
 
       campaign_executions.find_or_create_by(customer_id: customer_id) do |execution|
         execution.scheduled_at = current_time
-        execution.status = 'pending'
+        execution.status = "pending"
       end
     end
 
@@ -75,7 +75,7 @@ class Campaign < ApplicationRecord
     end
 
     # Update campaign status
-    update(status: 'scheduled')
+    update(status: "scheduled")
     puts "Campaign status updated to: scheduled"
 
     # Queue the scheduler worker to trigger at the scheduled time
@@ -103,7 +103,7 @@ class Campaign < ApplicationRecord
       execution.update(scheduled_at: current_time)
     end
 
-    update(status: 'in_progress')
+    update(status: "in_progress")
 
     # Queue all pending executions with their new times
     campaign_executions.pending.each do |execution|
@@ -112,7 +112,7 @@ class Campaign < ApplicationRecord
   end
 
   def clear_scheduled_jobs!
-    require 'sidekiq/api'
+    require "sidekiq/api"
 
     # Get all scheduled jobs
     scheduled_set = Sidekiq::ScheduledSet.new
@@ -120,26 +120,26 @@ class Campaign < ApplicationRecord
 
     # Find and delete jobs for this campaign's executions
     scheduled_set.each do |job|
-      if job.klass == 'CampaignExecutionWorker' && execution_ids.include?(job.args.first)
+      if job.klass == "CampaignExecutionWorker" && execution_ids.include?(job.args.first)
         job.delete
       end
     end
   end
 
   def draft?
-    status == 'draft'
+    status == "draft"
   end
 
   def scheduled?
-    status == 'scheduled'
+    status == "scheduled"
   end
 
   def in_progress?
-    status == 'in_progress'
+    status == "in_progress"
   end
 
   def completed?
-    status == 'completed'
+    status == "completed"
   end
 
   def check_completion!
@@ -148,7 +148,7 @@ class Campaign < ApplicationRecord
     total = campaign_executions.count
     completed_count = campaign_executions.where(status: %w[completed failed]).count
 
-    update(status: 'completed') if total > 0 && total == completed_count
+    update(status: "completed") if total > 0 && total == completed_count
   end
 
   def total_recipients
@@ -183,13 +183,13 @@ class Campaign < ApplicationRecord
 
     # Reset ALL executions (completed, failed, processing) back to pending
     campaign_executions.update_all(
-      status: 'pending',
+      status: "pending",
       executed_at: nil,
       error_message: nil
     )
 
     # Reset campaign status to draft
-    update(status: 'draft')
+    update(status: "draft")
 
     puts "Campaign restarted - all executions reset to pending"
     puts "Campaign status set to: draft"
@@ -199,11 +199,11 @@ class Campaign < ApplicationRecord
   end
 
   def failed?
-    status == 'failed'
+    status == "failed"
   end
 
   def stopped?
-    status == 'stopped'
+    status == "stopped"
   end
 
   def stop!
@@ -220,13 +220,13 @@ class Campaign < ApplicationRecord
 
     # Cancel all pending executions (keep completed/failed as is)
     cancelled_count = campaign_executions.pending.update_all(
-      status: 'failed',
+      status: "failed",
       executed_at: Time.current,
-      error_message: 'Campaign stopped by user'
+      error_message: "Campaign stopped by user"
     )
 
     # Update campaign status to stopped
-    update(status: 'stopped')
+    update(status: "stopped")
 
     puts "Campaign stopped - #{cancelled_count} pending executions cancelled"
     puts "Campaign status set to: stopped"

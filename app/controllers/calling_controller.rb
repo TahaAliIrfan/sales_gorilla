@@ -1,5 +1,5 @@
 class CallingController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:voice, :recording_status]
+  skip_before_action :verify_authenticity_token, only: [ :voice, :recording_status ]
   layout "tenant"
   rescue_from StandardError, with: :handle_calling_error
 
@@ -7,22 +7,22 @@ class CallingController < ApplicationController
   def index
     begin
       @twilio_numbers = twilio_service.fetch_available_numbers
-      
+
       # Filter customers by current user unless they're an admin
       if current_user&.admin?
-        @customers = Customer.where.not(phone: [nil, ""]).order(created_at: :desc)
+        @customers = Customer.where.not(phone: [ nil, "" ]).order(created_at: :desc)
         # Load all users for admin filter dropdown
         @users = User.all.order(:name)
       elsif current_user&.manager?
         subordinate_ids = current_user.managed_associates.pluck(:id)
-        visible_user_ids = subordinate_ids + [current_user.id]
-        @customers = Customer.where(user_id: visible_user_ids).where.not(phone: [nil, ""]).order(created_at: :desc)
+        visible_user_ids = subordinate_ids + [ current_user.id ]
+        @customers = Customer.where(user_id: visible_user_ids).where.not(phone: [ nil, "" ]).order(created_at: :desc)
         # Manager can filter by themselves or any of their associates
         @users = User.where(id: visible_user_ids).order(:name)
       else
-        @customers = Customer.where(user_id: current_user&.id).where.not(phone: [nil, ""]).order(created_at: :desc)
+        @customers = Customer.where(user_id: current_user&.id).where.not(phone: [ nil, "" ]).order(created_at: :desc)
         # Non-admin can only see themselves in filter
-        @users = [current_user].compact
+        @users = [ current_user ].compact
       end
 
       # Add search functionality
@@ -49,7 +49,7 @@ class CallingController < ApplicationController
   def token
     begin
       # Use current user's ID or email as identity
-      identity = current_user&.id&.to_s || current_user&.email || 'web_user'
+      identity = current_user&.id&.to_s || current_user&.email || "web_user"
       token = twilio_service.generate_capability_token(identity)
 
       render json: {
@@ -81,7 +81,7 @@ class CallingController < ApplicationController
 
       # Check if this is a client-to-PSTN call (from web/mobile app)
       # Client calls have From starting with "client:"
-      is_client_call = from&.start_with?('client:')
+      is_client_call = from&.start_with?("client:")
 
       # Handle outgoing calls (from web/mobile client to PSTN)
       if is_client_call
@@ -100,7 +100,7 @@ class CallingController < ApplicationController
           user_id = customer.user_id
         else
           # Extract user ID from client identity (e.g., "client:2" -> user_id: 2)
-          identity = from.gsub('client:', '')
+          identity = from.gsub("client:", "")
           user_id = identity.to_i > 0 ? identity.to_i : 1
         end
 
@@ -119,8 +119,8 @@ class CallingController < ApplicationController
         # Handle incoming calls (from PSTN to sales rep)
         customer = Customer.find_by(phone: params[:Caller])
         # Default user
-        user = User.find_by(email: 'sarmad.mansoor@tecaudex.com')
-        user_phone_number = user&.phone_number || '+447897021964'
+        user = User.find_by(email: "sarmad.mansoor@tecaudex.com")
+        user_phone_number = user&.phone_number || "+447897021964"
         user_id = user&.id
 
         if customer.present?
@@ -129,7 +129,7 @@ class CallingController < ApplicationController
             user_id = customer.user_id
           end
         else
-          customer = Customer.create(name: 'Unknown Caller', phone: params[:Caller])
+          customer = Customer.create(name: "Unknown Caller", phone: params[:Caller])
         end
 
         Rails.logger.info("PSTN-to-Sales call - Caller: #{params[:Caller]}, Sales Rep: #{user_phone_number}")
@@ -143,7 +143,7 @@ class CallingController < ApplicationController
 
       # Provide a basic TwiML response that informs the caller of the error
       response = Twilio::TwiML::VoiceResponse.new do |r|
-        r.say('An error occurred while processing your call. Please try again later.')
+        r.say("An error occurred while processing your call. Please try again later.")
       end
 
       render xml: response.to_s
@@ -182,7 +182,7 @@ class CallingController < ApplicationController
       RecordingStorageWorker.perform_async(recording.id)
 
       customer.customer_activities.create(
-        action: 'Call Recording',
+        action: "Call Recording",
         details: "Call recording saved (#{duration} seconds)",
         user: user
       )
@@ -214,34 +214,34 @@ class CallingController < ApplicationController
   def twilio_service
     @twilio_service ||= TwilioService.new
   end
-  
+
   def handle_calling_error(exception)
     Rails.logger.error("Unhandled exception in CallingController: #{exception.message}")
     Rails.logger.error(exception.backtrace.join("\n"))
-    
+
     respond_to do |format|
-      format.html { 
+      format.html {
         flash[:alert] = "An error occurred with the calling service. Please try again later."
-        redirect_to root_path 
+        redirect_to root_path
       }
       format.json { render json: { error: "Calling service error" }, status: :internal_server_error }
-      format.xml { 
+      format.xml {
         response = Twilio::TwiML::VoiceResponse.new do |r|
-          r.say('We are sorry, but there was an error processing your call. Please try again later.', voice: 'alice')
+          r.say("We are sorry, but there was an error processing your call. Please try again later.", voice: "alice")
         end
         render xml: response.to_s
       }
     end
   end
-  
+
   def require_admin
     unless current_user&.admin?
       flash[:error] = "You must be an admin to access recordings"
       redirect_to calling_path
     end
   end
-  
+
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
   end
-end 
+end

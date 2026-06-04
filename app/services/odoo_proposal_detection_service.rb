@@ -1,6 +1,6 @@
-require 'net/http'
-require 'json'
-require 'base64'
+require "net/http"
+require "json"
+require "base64"
 
 # Analyses a free-form requirements input (text / PDF / image / docx) and returns
 # a structured set of detected standard Odoo modules and suggested custom modules,
@@ -27,15 +27,15 @@ class OdooProposalDetectionService
   PKR_PER_HOUR     = (USD_HOURLY_RATE * USD_TO_PKR).to_i  # 4_200
 
   IMAGE_TYPES = {
-    'image/png'  => 'image/png',
-    'image/jpeg' => 'image/jpeg',
-    'image/jpg'  => 'image/jpeg',
-    'image/gif'  => 'image/gif',
-    'image/webp' => 'image/webp'
+    "image/png"  => "image/png",
+    "image/jpeg" => "image/jpeg",
+    "image/jpg"  => "image/jpeg",
+    "image/gif"  => "image/gif",
+    "image/webp" => "image/webp"
   }.freeze
 
-  PDF_TYPE   = 'application/pdf'.freeze
-  DOCX_TYPE  = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'.freeze
+  PDF_TYPE   = "application/pdf".freeze
+  DOCX_TYPE  = "application/vnd.openxmlformats-officedocument.wordprocessingml.document".freeze
   TEXT_TYPES = %w[text/plain text/markdown].freeze
 
   attr_reader :error
@@ -43,18 +43,18 @@ class OdooProposalDetectionService
   def initialize(text: nil, file: nil)
     @text  = text.to_s.strip
     @file  = file
-    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
-    @model   = 'claude-sonnet-4-6'
+    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV["ANTHROPIC_API_KEY"]
+    @model   = "claude-sonnet-4-6"
     @error   = nil
   end
 
   def analyze
     if @api_key.blank?
-      @error = 'Anthropic API key not configured.'
+      @error = "Anthropic API key not configured."
       return nil
     end
     if @text.blank? && @file.blank?
-      @error = 'Provide text or upload a file.'
+      @error = "Provide text or upload a file."
       return nil
     end
 
@@ -179,9 +179,9 @@ class OdooProposalDetectionService
     end
 
     if @text.present?
-      blocks << { type: 'text', text: "Client requirements (pasted):\n#{@text[0, MAX_TEXT_CHARS]}" }
+      blocks << { type: "text", text: "Client requirements (pasted):\n#{@text[0, MAX_TEXT_CHARS]}" }
     elsif blocks.any?
-      blocks << { type: 'text', text: "Analyse the attached and return the JSON described in the system prompt." }
+      blocks << { type: "text", text: "Analyse the attached and return the JSON described in the system prompt." }
     end
 
     blocks
@@ -194,28 +194,28 @@ class OdooProposalDetectionService
       return nil
     end
 
-    content_type = (file.respond_to?(:content_type) && file.content_type.to_s.downcase) || ''
-    data = file.respond_to?(:read) ? file.read : File.read(file.to_s, mode: 'rb')
+    content_type = (file.respond_to?(:content_type) && file.content_type.to_s.downcase) || ""
+    data = file.respond_to?(:read) ? file.read : File.read(file.to_s, mode: "rb")
 
     if IMAGE_TYPES.key?(content_type)
-      [{
-        type: 'image',
-        source: { type: 'base64', media_type: IMAGE_TYPES[content_type], data: Base64.strict_encode64(data) }
-      }]
+      [ {
+        type: "image",
+        source: { type: "base64", media_type: IMAGE_TYPES[content_type], data: Base64.strict_encode64(data) }
+      } ]
     elsif content_type == PDF_TYPE
-      [{
-        type: 'document',
-        source: { type: 'base64', media_type: 'application/pdf', data: Base64.strict_encode64(data) }
-      }]
-    elsif content_type == DOCX_TYPE || file.respond_to?(:original_filename) && file.original_filename.to_s.downcase.end_with?('.docx')
+      [ {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: Base64.strict_encode64(data) }
+      } ]
+    elsif content_type == DOCX_TYPE || file.respond_to?(:original_filename) && file.original_filename.to_s.downcase.end_with?(".docx")
       text = extract_docx_text(data)
       if text.blank?
-        @error = 'Could not read .docx file.'
+        @error = "Could not read .docx file."
         return nil
       end
-      [{ type: 'text', text: "Client requirements (from uploaded .docx):\n#{text[0, MAX_TEXT_CHARS]}" }]
+      [ { type: "text", text: "Client requirements (from uploaded .docx):\n#{text[0, MAX_TEXT_CHARS]}" } ]
     elsif TEXT_TYPES.include?(content_type)
-      [{ type: 'text', text: "Client requirements (from uploaded text file):\n#{data.to_s[0, MAX_TEXT_CHARS]}" }]
+      [ { type: "text", text: "Client requirements (from uploaded text file):\n#{data.to_s[0, MAX_TEXT_CHARS]}" } ]
     else
       @error = "Unsupported file type (#{content_type.presence || 'unknown'}). Use PDF, image, .docx, or text."
       nil
@@ -227,8 +227,8 @@ class OdooProposalDetectionService
   end
 
   def extract_docx_text(bytes)
-    require 'docx'
-    require 'stringio'
+    require "docx"
+    require "stringio"
     doc = Docx::Document.open(StringIO.new(bytes))
     doc.paragraphs.map(&:text).reject(&:blank?).join("\n")
   rescue => e
@@ -237,26 +237,26 @@ class OdooProposalDetectionService
   end
 
   def call_claude(user_content)
-    uri = URI('https://api.anthropic.com/v1/messages')
+    uri = URI("https://api.anthropic.com/v1/messages")
 
     request = Net::HTTP::Post.new(uri)
-    request['Content-Type']      = 'application/json'
-    request['x-api-key']         = @api_key
-    request['anthropic-version'] = '2023-06-01'
+    request["Content-Type"]      = "application/json"
+    request["x-api-key"]         = @api_key
+    request["anthropic-version"] = "2023-06-01"
 
     request.body = {
       model: @model,
       max_tokens: 2500,
       system: system_prompt,
-      messages: [{ role: 'user', content: user_content }]
+      messages: [ { role: "user", content: user_content } ]
     }.to_json
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) do |http|
       http.request(request)
     end
 
-    if response.code == '200'
-      JSON.parse(response.body).dig('content', 0, 'text')
+    if response.code == "200"
+      JSON.parse(response.body).dig("content", 0, "text")
     else
       Rails.logger.error("Claude detection API error (#{response.code}): #{response.body}")
       @error = "AI service returned #{response.code}."
@@ -282,14 +282,14 @@ class OdooProposalDetectionService
   def normalise(parsed)
     valid_keys = OdooProposal::MODULES.values.flatten.map { |m| m[:key] }.to_set
 
-    modules = Array(parsed['modules']).map(&:to_s).select { |k| valid_keys.include?(k) }.uniq
+    modules = Array(parsed["modules"]).map(&:to_s).select { |k| valid_keys.include?(k) }.uniq
 
-    custom_modules = Array(parsed['custom_modules']).filter_map do |m|
+    custom_modules = Array(parsed["custom_modules"]).filter_map do |m|
       next nil unless m.is_a?(Hash)
-      label = m['label'].to_s.strip
+      label = m["label"].to_s.strip
       next nil if label.empty?
 
-      hours = m['hours'].to_i
+      hours = m["hours"].to_i
       hours = 8 if hours <= 0  # floor for malformed responses
 
       # Round to nearest 1,000 PKR for a clean fixed-amount feel.
@@ -297,27 +297,27 @@ class OdooProposalDetectionService
       impl_cost = ((raw_cost + 500) / 1000) * 1000
 
       {
-        'label'       => label,
-        'description' => m['description'].to_s.strip,
-        'hours'       => hours,
-        'impl_cost'   => impl_cost
+        "label"       => label,
+        "description" => m["description"].to_s.strip,
+        "hours"       => hours,
+        "impl_cost"   => impl_cost
       }
     end
 
-    industry     = parsed['industry'].to_s.strip
+    industry     = parsed["industry"].to_s.strip
     industry     = nil unless OdooProposal::INDUSTRIES.include?(industry)
-    company_size = parsed['company_size'].to_s.strip
+    company_size = parsed["company_size"].to_s.strip
     company_size = nil unless OdooProposal::COMPANY_SIZES.map { |_, v| v }.include?(company_size)
-    pain_points  = Array(parsed['pain_points']).map(&:to_s).map(&:strip)
+    pain_points  = Array(parsed["pain_points"]).map(&:to_s).map(&:strip)
                        .select { |p| OdooProposal::PAIN_POINTS.include?(p) }
                        .uniq
 
     {
-      'modules'        => modules,
-      'custom_modules' => custom_modules,
-      'industry'       => industry,
-      'company_size'   => company_size,
-      'pain_points'    => pain_points
+      "modules"        => modules,
+      "custom_modules" => custom_modules,
+      "industry"       => industry,
+      "company_size"   => company_size,
+      "pain_points"    => pain_points
     }
   end
 end

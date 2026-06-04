@@ -9,8 +9,8 @@
 #   "When a message comes in"  -> POST https://crm.tecaudex.com/twilio/whatsapp/inbound
 #   "Status callback URL"      -> POST https://crm.tecaudex.com/twilio/whatsapp/status
 class TwilioWhatsappController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [:inbound, :status]
-  before_action :verify_twilio_signature, only: [:inbound, :status]
+  skip_before_action :verify_authenticity_token, only: [ :inbound, :status ]
+  before_action :verify_twilio_signature, only: [ :inbound, :status ]
 
   # Incoming WhatsApp message from a customer.
   def inbound
@@ -30,8 +30,8 @@ class TwilioWhatsappController < ApplicationController
     message.assign_attributes(
       remote_id: params[:WaId].presence || from_phone,
       body:      params[:Body].presence || media_summary,
-      direction: 'inbound',
-      status:    'received',
+      direction: "inbound",
+      status:    "received",
       timestamp: Time.current,
       metadata:  inbound_metadata
     )
@@ -72,7 +72,7 @@ class TwilioWhatsappController < ApplicationController
 
   def inbound_metadata
     {
-      provider:     'twilio',
+      provider:     "twilio",
       from:         params[:From],
       to:           params[:To],
       profile_name: params[:ProfileName],
@@ -108,7 +108,7 @@ class TwilioWhatsappController < ApplicationController
   def phone_from_whatsapp(value)
     return nil if value.blank?
 
-    value.to_s.sub(/\Awhatsapp:/, '').strip
+    value.to_s.sub(/\Awhatsapp:/, "").strip
   end
 
   def find_customer_by_phone(phone)
@@ -125,7 +125,7 @@ class TwilioWhatsappController < ApplicationController
 
     auth_token = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
     validator  = Twilio::Security::RequestValidator.new(auth_token)
-    signature  = request.headers['X-Twilio-Signature']
+    signature  = request.headers["X-Twilio-Signature"]
 
     unless validator.validate(request.original_url, request.request_parameters, signature)
       Rails.logger.error("[TwilioWhatsapp] invalid Twilio signature for #{request.original_url}")

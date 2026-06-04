@@ -5,7 +5,7 @@ class MilestoneItemsController < ApplicationController
   before_action :require_login
   before_action :set_customer
   before_action :set_milestone
-  before_action :set_milestone_item, only: [:update]
+  before_action :set_milestone_item, only: [ :update ]
 
   def create
     @milestone_item = @milestone.milestone_items.build(milestone_item_params)

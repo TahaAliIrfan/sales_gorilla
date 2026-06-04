@@ -1,6 +1,6 @@
 class ServerHealthMonitorWorker
   include Sidekiq::Worker
-  sidekiq_options queue: 'default', retry: 1
+  sidekiq_options queue: "default", retry: 1
 
   # Thresholds for alerts
   SLOW_RESPONSE_THRESHOLD = 3.0 # seconds
@@ -38,7 +38,7 @@ class ServerHealthMonitorWorker
     # Send alerts if issues detected
     send_alerts_if_needed(health_status)
 
-    Rails.logger.info("Health check completed: #{health_status[:checks].map { |k,v| "#{k}=#{v[:status]}" }.join(', ')}")
+    Rails.logger.info("Health check completed: #{health_status[:checks].map { |k, v| "#{k}=#{v[:status]}" }.join(', ')}")
 
     health_status
   rescue => e
@@ -48,7 +48,7 @@ class ServerHealthMonitorWorker
     # Send critical alert about monitoring failure
     send_alert_with_cooldown(
       :health_check_failed_alert,
-      'health_check_failed',
+      "health_check_failed",
       "Health monitoring failed: #{e.message}"
     )
   end
@@ -66,20 +66,20 @@ class ServerHealthMonitorWorker
 
       if response_time > SLOW_RESPONSE_THRESHOLD
         {
-          status: 'slow',
+          status: "slow",
           response_time: response_time.round(3),
           message: "Application responding slowly (#{response_time.round(2)}s)"
         }
       else
         {
-          status: 'healthy',
+          status: "healthy",
           response_time: response_time.round(3),
-          message: 'Application responding normally'
+          message: "Application responding normally"
         }
       end
     rescue => e
       {
-        status: 'critical',
+        status: "critical",
         error: e.message,
         message: "Application health check failed: #{e.message}"
       }
@@ -97,20 +97,20 @@ class ServerHealthMonitorWorker
 
       if query_time > SLOW_DATABASE_THRESHOLD
         {
-          status: 'slow',
+          status: "slow",
           query_time: query_time.round(3),
           message: "Database queries slow (#{query_time.round(2)}s)"
         }
       else
         {
-          status: 'healthy',
+          status: "healthy",
           query_time: query_time.round(3),
-          message: 'Database responding normally'
+          message: "Database responding normally"
         }
       end
     rescue => e
       {
-        status: 'critical',
+        status: "critical",
         error: e.message,
         message: "Database check failed: #{e.message}"
       }
@@ -123,19 +123,19 @@ class ServerHealthMonitorWorker
       redis_info = Sidekiq.redis { |conn| conn.info }
 
       memory_info = {
-        status: 'healthy',
-        message: 'Redis running'
+        status: "healthy",
+        message: "Redis running"
       }
 
       # Check if we can get memory usage
-      if redis_info['used_memory_human']
-        memory_info[:redis_memory] = redis_info['used_memory_human']
+      if redis_info["used_memory_human"]
+        memory_info[:redis_memory] = redis_info["used_memory_human"]
       end
 
       memory_info
     rescue => e
       {
-        status: 'warning',
+        status: "warning",
         message: "Could not check system resources: #{e.message}"
       }
     end
@@ -151,29 +151,29 @@ class ServerHealthMonitorWorker
 
       if queue_size > 1000
         {
-          status: 'warning',
+          status: "warning",
           enqueued: queue_size,
           failed: failed_jobs,
           message: "Large Sidekiq queue backlog (#{queue_size} jobs)"
         }
       elsif failed_jobs > 100
         {
-          status: 'warning',
+          status: "warning",
           enqueued: queue_size,
           failed: failed_jobs,
           message: "High number of failed jobs (#{failed_jobs})"
         }
       else
         {
-          status: 'healthy',
+          status: "healthy",
           enqueued: queue_size,
           failed: failed_jobs,
-          message: 'Sidekiq running normally'
+          message: "Sidekiq running normally"
         }
       end
     rescue => e
       {
-        status: 'critical',
+        status: "critical",
         message: "Sidekiq check failed: #{e.message}"
       }
     end
@@ -183,46 +183,46 @@ class ServerHealthMonitorWorker
     checks = health_status[:checks]
 
     # Application slow or crashed
-    if checks[:application][:status] == 'slow'
+    if checks[:application][:status] == "slow"
       send_alert_with_cooldown(
         :server_slow_alert,
-        'app_slow',
+        "app_slow",
         "Response time: #{checks[:application][:response_time]}s (threshold: #{SLOW_RESPONSE_THRESHOLD}s)"
       )
-    elsif checks[:application][:status] == 'critical'
+    elsif checks[:application][:status] == "critical"
       send_alert_with_cooldown(
         :server_crashed_alert,
-        'app_crash',
+        "app_crash",
         checks[:application][:message]
       )
     end
 
     # Database slow
-    if checks[:database][:status] == 'slow'
+    if checks[:database][:status] == "slow"
       send_alert_with_cooldown(
         :database_slow_alert,
-        'db_slow',
+        "db_slow",
         "Query time: #{checks[:database][:query_time]}s (threshold: #{SLOW_DATABASE_THRESHOLD}s)"
       )
-    elsif checks[:database][:status] == 'critical'
+    elsif checks[:database][:status] == "critical"
       send_alert_with_cooldown(
         :database_slow_alert,
-        'db_crash',
+        "db_crash",
         checks[:database][:message]
       )
     end
 
     # Sidekiq issues
-    if checks[:sidekiq][:status] == 'warning'
+    if checks[:sidekiq][:status] == "warning"
       send_alert_with_cooldown(
         :server_slow_alert,
-        'sidekiq_backlog',
+        "sidekiq_backlog",
         checks[:sidekiq][:message]
       )
-    elsif checks[:sidekiq][:status] == 'critical'
+    elsif checks[:sidekiq][:status] == "critical"
       send_alert_with_cooldown(
         :server_crashed_alert,
-        'sidekiq_crash',
+        "sidekiq_crash",
         checks[:sidekiq][:message]
       )
     end

@@ -1,0 +1,50 @@
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
+AllCops:
+  TargetRubyVersion: 3.3
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - "bin/**/*"
+    - "db/schema.rb"
+    - "db/migrate/2020*.rb"     # auto-generated, pre-existing legacy
+    - "db/migrate/2021*.rb"
+    - "db/migrate/2022*.rb"
+    - "db/migrate/2023*.rb"
+    - "db/migrate/2024*.rb"
+    - "node_modules/**/*"
+    - "tmp/**/*"
+    - "vendor/**/*"
+    - "log/**/*"
+    - "storage/**/*"
+    - "public/**/*"
+    - "config/credentials.yml.enc"
+    - "config/master.key"
+    - "test_*.rb"               # ad-hoc smoke scripts at the repo root
+
+# This codebase has many long methods/classes/blocks. Lint-only on these;
+# don't try to autosplit large methods — that's a manual refactor.
+Metrics:
+  Enabled: false
+
+# Documentation isn't expected on every class.
+Style/Documentation:
+  Enabled: false
+
+# Inline ternaries / single-line conditionals are fine.
+Style/IfUnlessModifier:
+  Enabled: false
+
+# Acts_as_tenant declarations look like macros; keep them readable.
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - "spec/**/*"
+
+# Generated migrations + early code use plenty of variables; let it be.
+Naming/AccessorMethodName:
+  Enabled: false
+
+# Allow CamelCase top-level constants like `TENANT_TABLES`.
+Naming/ConstantName:
+  Enabled: true

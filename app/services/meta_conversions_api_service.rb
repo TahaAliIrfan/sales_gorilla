@@ -1,7 +1,7 @@
-require 'net/http'
-require 'uri'
-require 'json'
-require 'digest'
+require "net/http"
+require "uri"
+require "json"
+require "digest"
 
 class MetaConversionsApiService
   attr_reader :pixel_id, :access_token
@@ -17,8 +17,8 @@ class MetaConversionsApiService
     @pixel_id.present? && @access_token.present?
   end
 
-  def send_form_lead_event(customer, event_name, amount=nil, action_source='system_generated', options={})
-    payload = build_payload([form_lead_event(customer, event_name, amount, action_source, options)])
+  def send_form_lead_event(customer, event_name, amount = nil, action_source = "system_generated", options = {})
+    payload = build_payload([ form_lead_event(customer, event_name, amount, action_source, options) ])
     result = post(payload)
     log_result(customer, event_name, payload, result)
     result
@@ -90,15 +90,15 @@ class MetaConversionsApiService
 
   # Returns [first_name, last_name] from a full name string
   def split_name(full_name)
-    return [nil, nil] if full_name.blank?
+    return [ nil, nil ] if full_name.blank?
 
-    parts = full_name.strip.split(' ', 2)
-    [parts[0], parts[1]]
+    parts = full_name.strip.split(" ", 2)
+    [ parts[0], parts[1] ]
   end
 
   # E.164 phone numbers from the DB include a leading "+"; Meta expects digits only
   def normalize_phone(phone)
-    phone.to_s.gsub(/\D/, '')
+    phone.to_s.gsub(/\D/, "")
   end
 
   def sha256(value)
@@ -111,7 +111,7 @@ class MetaConversionsApiService
     http.use_ssl = true
 
     request = Net::HTTP::Post.new(uri.request_uri)
-    request['Content-Type'] = 'application/json'
+    request["Content-Type"] = "application/json"
     request.body = payload.to_json
 
     response = http.request(request)

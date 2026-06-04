@@ -7,7 +7,7 @@ class CreatePipelines < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
-    
+
     add_index :pipelines, :name, unique: true
     add_index :pipelines, :active
   end

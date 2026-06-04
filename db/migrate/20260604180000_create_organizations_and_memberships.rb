@@ -35,7 +35,7 @@ class CreateOrganizationsAndMemberships < ActiveRecord::Migration[7.1]
       t.string :role, null: false, default: "member"
       t.timestamps
     end
-    add_index :memberships, [:user_id, :organization_id], unique: true
+    add_index :memberships, [ :user_id, :organization_id ], unique: true
 
     # Default organization holding all existing CRM data.
     default_org_id = execute(<<~SQL.squish).first["id"]

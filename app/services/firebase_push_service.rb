@@ -13,13 +13,13 @@
 #     body:  "#{customer.name} has sent you a message",
 #     data:  { customer_id: customer.id.to_s }
 #   )
-require 'googleauth'
-require 'net/http'
-require 'json'
-require 'stringio'
+require "googleauth"
+require "net/http"
+require "json"
+require "stringio"
 
 class FirebasePushService
-  FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging'.freeze
+  FCM_SCOPE = "https://www.googleapis.com/auth/firebase.messaging".freeze
 
   def initialize
     @service_account = Rails.application.credentials.dig(:firebase)
@@ -34,8 +34,8 @@ class FirebasePushService
 
   # Send a notification to a single FCM device token. Returns a result hash.
   def send_to_token(token:, title:, body:, data: {})
-    return { success: false, error: 'FCM token is missing' }   if token.blank?
-    return { success: false, error: 'FCM is not configured' }  unless configured?
+    return { success: false, error: "FCM token is missing" }   if token.blank?
+    return { success: false, error: "FCM is not configured" }  unless configured?
 
     payload = {
       message: {
@@ -68,15 +68,15 @@ class FirebasePushService
       json_key_io: StringIO.new(@service_account.to_h.to_json),
       scope: FCM_SCOPE
     )
-    credentials.fetch_access_token!['access_token']
+    credentials.fetch_access_token!["access_token"]
   end
 
   def post_to_fcm(payload)
     uri = URI.parse("https://fcm.googleapis.com/v1/projects/#{project_id}/messages:send")
 
     req = Net::HTTP::Post.new(uri)
-    req['Authorization'] = "Bearer #{access_token}"
-    req['Content-Type']  = 'application/json'
+    req["Authorization"] = "Bearer #{access_token}"
+    req["Content-Type"]  = "application/json"
     req.body = payload.to_json
 
     Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) { |http| http.request(req) }

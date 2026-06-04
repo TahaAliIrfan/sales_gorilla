@@ -6,7 +6,7 @@ class CreateUserPipelineAssignments < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
-    
-    add_index :user_pipeline_assignments, [:user_id, :pipeline_id], unique: true
+
+    add_index :user_pipeline_assignments, [ :user_id, :pipeline_id ], unique: true
   end
 end

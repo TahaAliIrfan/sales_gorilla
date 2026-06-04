@@ -15,7 +15,7 @@ namespace :sidekiq do
     on roles(:app) do
       within current_path do
         with rails_env: fetch(:rails_env) do
-          if fetch(:rails_env) == 'production'
+          if fetch(:rails_env) == "production"
             execute :nohup, :bundle, :exec, :sidekiq,
               "-e production -C config/sidekiq.yml >> #{shared_path}/log/sidekiq.log 2>&1 &"
           else
@@ -28,11 +28,11 @@ namespace :sidekiq do
   end
 
   task :restart do
-    invoke 'sidekiq:stop'
+    invoke "sidekiq:stop"
     sleep 5  # Add a delay to ensure the process is fully stopped
-    invoke 'sidekiq:start'
+    invoke "sidekiq:start"
   end
 end
 
-after 'deploy:starting', 'sidekiq:quiet'
-after 'deploy:published', 'sidekiq:restart' 
+after "deploy:starting", "sidekiq:quiet"
+after "deploy:published", "sidekiq:restart"

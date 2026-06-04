@@ -1,5 +1,5 @@
-require 'google/apis/calendar_v3'
-require 'googleauth'
+require "google/apis/calendar_v3"
+require "googleauth"
 
 class GoogleCalendarService
   attr_reader :calendar_api
@@ -11,7 +11,7 @@ class GoogleCalendarService
   end
 
   def create_customer_followup_event(customer, followup_date, description)
-    return { success: false, error: 'Google Calendar not connected' } unless @calendar_api.authorization
+    return { success: false, error: "Google Calendar not connected" } unless @calendar_api.authorization
 
     date_time_start = (followup_date.to_datetime - 5.hours).rfc3339
     date_time_end = (followup_date.to_datetime - 4.5.hours).rfc3339
@@ -21,11 +21,11 @@ class GoogleCalendarService
       description: description,
       start: {
         date_time: date_time_start,
-        time_zone: 'UTC'
+        time_zone: "UTC"
       },
       end: {
         date_time: date_time_end,
-        time_zone: 'UTC'
+        time_zone: "UTC"
       },
       reminders: {
         use_default: true
@@ -33,7 +33,7 @@ class GoogleCalendarService
     )
 
     begin
-      result = @calendar_api.insert_event('primary', event)
+      result = @calendar_api.insert_event("primary", event)
       { success: true, event_id: result.id, html_link: result.html_link }
     rescue Google::Apis::Error => e
       Rails.logger.error("Failed to create Google Calendar event: #{e.message}")
@@ -85,4 +85,4 @@ class GoogleCalendarService
 
     creds
   end
-end 
+end

@@ -28,8 +28,8 @@ class PublicInvoicesController < ApplicationController
     filename = "Invoice_#{@invoice.invoice_number}_#{Date.current.strftime('%Y%m%d')}.pdf"
     send_data pdf.render,
       filename: filename,
-      type: 'application/pdf',
-      disposition: 'attachment'
+      type: "application/pdf",
+      disposition: "attachment"
   end
 
   def upload_payment_proof

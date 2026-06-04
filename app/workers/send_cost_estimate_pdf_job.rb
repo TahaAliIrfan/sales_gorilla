@@ -34,11 +34,11 @@ class SendCostEstimatePdfJob
         analysis = ai_service.generate_project_analysis(cost_estimate)
         if analysis
           cost_estimate.update!(
-            app_name: analysis['app_name'],
-            similar_apps: analysis['similar_apps'].to_json,
-            technical_information_summary: analysis['technical_info'].to_json,
-            executive_summary: analysis['executive_summary'].to_json,
-            feature_prioritization: analysis['feature_prioritization'].to_json
+            app_name: analysis["app_name"],
+            similar_apps: analysis["similar_apps"].to_json,
+            technical_information_summary: analysis["technical_info"].to_json,
+            executive_summary: analysis["executive_summary"].to_json,
+            feature_prioritization: analysis["feature_prioritization"].to_json
           )
           Rails.logger.info("Generated app name: #{analysis['app_name']}")
           Rails.logger.info("Generated technical information")
@@ -57,10 +57,10 @@ class SendCostEstimatePdfJob
       Rails.logger.info("Generating PDF for cost estimate #{cost_estimate_id}")
       proposal_service = ProposalGenerationService.new(cost_estimate)
       pdf = proposal_service.generate_pdf
-      pdf_binary = pdf.render.force_encoding('BINARY')
+      pdf_binary = pdf.render.force_encoding("BINARY")
       pdf_content = Base64.strict_encode64(pdf_binary)
 
-      app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
+      app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, "_") : customer.name.gsub(/\s+/, "_")
       filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
 
       # Only send WhatsApp if not already sent (prevents duplicate messages on retry)
@@ -70,7 +70,7 @@ class SendCostEstimatePdfJob
         cost_estimate.pdf_file.attach(
           io: StringIO.new(pdf_binary),
           filename: filename,
-          content_type: 'application/pdf'
+          content_type: "application/pdf"
         )
         Rails.logger.info("PDF saved to Active Storage: #{filename}")
       end
@@ -78,7 +78,7 @@ class SendCostEstimatePdfJob
       # Store public URL — non-critical, don't let it fail the job
       if cost_estimate.pdf_file.attached? && cost_estimate.pdf_url.blank?
         begin
-          url_options = Rails.application.config.action_mailer.default_url_options || { host: 'localhost', port: 3000 }
+          url_options = Rails.application.config.action_mailer.default_url_options || { host: "localhost", port: 3000 }
           cost_estimate.update_column(:pdf_url, Rails.application.routes.url_helpers.rails_blob_url(cost_estimate.pdf_file, **url_options))
         rescue => e
           Rails.logger.warn("Could not generate PDF URL: #{e.message}")
@@ -107,7 +107,7 @@ class SendCostEstimatePdfJob
         chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
 
         app_types = cost_estimate.application_types_array.any? ?
-                    cost_estimate.application_types_array.join(', ').upcase :
+                    cost_estimate.application_types_array.join(", ").upcase :
                     cost_estimate.app_type_display
 
         caption = "Hi #{customer.name}! 👋\n\n" \
@@ -126,7 +126,7 @@ class SendCostEstimatePdfJob
           pdf_content,
           filename,
           caption,
-          'application/pdf'
+          "application/pdf"
         )
 
         Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")

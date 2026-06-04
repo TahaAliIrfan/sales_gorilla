@@ -3,11 +3,11 @@ class Api::V2::TwilioController < Api::V2::BaseController
   def token
     begin
       # Use current user's ID or email as identity, or accept from params
-      identity = params[:identity] || current_user&.id&.to_s || current_user&.email || 'mobile_user'
+      identity = params[:identity] || current_user&.id&.to_s || current_user&.email || "mobile_user"
 
       token = twilio_service.generate_capability_token(identity)
 
-      render_success({ token: token }, 'Token generated successfully')
+      render_success({ token: token }, "Token generated successfully")
     rescue => e
       Rails.logger.error("Error generating Twilio token: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))

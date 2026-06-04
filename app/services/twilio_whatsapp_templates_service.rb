@@ -3,17 +3,17 @@
 # UI can offer them as send-options outside the 24h freeform window.
 #
 #   https://www.twilio.com/docs/content-api/content-api-resources#contentandapprovals
-require 'net/http'
-require 'uri'
-require 'json'
+require "net/http"
+require "uri"
+require "json"
 
 class TwilioWhatsappTemplatesService
-  CONTENT_AND_APPROVALS_URL = 'https://content.twilio.com/v1/ContentAndApprovals'.freeze
+  CONTENT_AND_APPROVALS_URL = "https://content.twilio.com/v1/ContentAndApprovals".freeze
 
   def initialize
     @account_sid = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
     @auth_token  = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-    raise 'Twilio credentials not configured' unless @account_sid && @auth_token
+    raise "Twilio credentials not configured" unless @account_sid && @auth_token
   end
 
   # Fetches approved WhatsApp templates from Twilio and upserts them.
@@ -28,9 +28,9 @@ class TwilioWhatsappTemplatesService
       return { success: false, error: response[:error] } unless response[:success]
 
       data = response[:body]
-      Array(data['contents']).each do |c|
+      Array(data["contents"]).each do |c|
         approval = whatsapp_approval(c)
-        if approval && approval['status'].to_s.downcase == 'approved'
+        if approval && approval["status"].to_s.downcase == "approved"
           upsert(c, approval)
           synced += 1
         else
@@ -38,7 +38,7 @@ class TwilioWhatsappTemplatesService
         end
       end
 
-      next_url = data.dig('meta', 'next_page_url').presence
+      next_url = data.dig("meta", "next_page_url").presence
     end
 
     { success: true, synced: synced, skipped: skipped }
@@ -53,25 +53,25 @@ class TwilioWhatsappTemplatesService
   # ({"status" => "approved", "category" => "UTILITY", ...}); some legacy
   # accounts have observed it as an Array. Be defensive about both shapes.
   def whatsapp_approval(content)
-    raw = content['approval_requests']
+    raw = content["approval_requests"]
     return nil if raw.blank?
 
     if raw.is_a?(Hash)
       raw
     elsif raw.is_a?(Array)
-      raw.find { |a| a.is_a?(Hash) && a['channel'].to_s.downcase == 'whatsapp' } || raw.first
+      raw.find { |a| a.is_a?(Hash) && a["channel"].to_s.downcase == "whatsapp" } || raw.first
     end
   end
 
   def upsert(content, approval)
-    template = WhatsappTemplate.find_or_initialize_by(content_sid: content['sid'])
-    template.friendly_name   = content['friendly_name']
-    template.language        = content['language']
-    template.category        = approval['category']
-    template.approval_status = approval['status']
-    template.types           = content['types'] || {}
-    template.variables       = content['variables'] || {}
-    template.body            = extract_body(content['types'])
+    template = WhatsappTemplate.find_or_initialize_by(content_sid: content["sid"])
+    template.friendly_name   = content["friendly_name"]
+    template.language        = content["language"]
+    template.category        = approval["category"]
+    template.approval_status = approval["status"]
+    template.types           = content["types"] || {}
+    template.variables       = content["variables"] || {}
+    template.body            = extract_body(content["types"])
     template.last_synced_at  = Time.current
     template.save!
   end
@@ -82,13 +82,13 @@ class TwilioWhatsappTemplatesService
   def extract_body(types)
     return nil if types.blank?
 
-    if types['twilio/text'].is_a?(Hash) && types['twilio/text']['body'].present?
-      return types['twilio/text']['body']
+    if types["twilio/text"].is_a?(Hash) && types["twilio/text"]["body"].present?
+      return types["twilio/text"]["body"]
     end
 
     types.each_value do |def_|
       next unless def_.is_a?(Hash)
-      return def_['body'] if def_['body'].present?
+      return def_["body"] if def_["body"].present?
     end
     nil
   end

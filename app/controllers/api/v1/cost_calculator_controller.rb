@@ -1,7 +1,6 @@
 module Api
   module V1
     class CostCalculatorController < Api::V1::BaseController
-
       def inbound_lead
         name = params[:name]
         email = params[:email]
@@ -9,7 +8,7 @@ module Api
         country = params[:country]
         description = params[:description] || nil
         preferred_calling_time = parse_preferred_time(params[:preferred_time])
-        lead_source = params[:lead_source] || 'Inbound'
+        lead_source = params[:lead_source] || "Inbound"
 
         customer = Customer.find_by(email: email)
 
@@ -23,7 +22,7 @@ module Api
             phone: phone_number,
             country: country,
             lead_source: lead_source,
-            status: 'Pending',
+            status: "Pending",
             idea_description: description,
             preferred_calling_time: preferred_calling_time,
 
@@ -38,7 +37,7 @@ module Api
 
           if customer.save
             if customer.phone.present?
-              phone_without_plus = customer.phone.gsub(/\A\+/, '')
+              phone_without_plus = customer.phone.gsub(/\A\+/, "")
               whatsapp_chat_id = "#{phone_without_plus}@c.us"
               customer.update!(whatsapp_chat_id: whatsapp_chat_id)
             end
@@ -62,7 +61,7 @@ module Api
         begin
           customer = Customer.find_by(email: email)
 
-          phone_without_plus = phone_number.gsub(/\A\+/, '')
+          phone_without_plus = phone_number.gsub(/\A\+/, "")
           whatsapp_chat_id = "#{phone_without_plus}@c.us"
 
           if customer.present?
@@ -71,7 +70,7 @@ module Api
               name: name,
               phone: phone_number,
               repeat_lead: true,
-              lead_source: 'CCR',
+              lead_source: "CCR",
               created_at: Time.current,
               gclid: gclid,
               whatsapp_chat_id: whatsapp_chat_id,
@@ -83,7 +82,7 @@ module Api
               name: name,
               email: email,
               phone: phone_number,
-              lead_source: 'CCR',
+              lead_source: "CCR",
               gclid: gclid,
               idea_description: params[:description],
               whatsapp_chat_id: whatsapp_chat_id,
@@ -93,7 +92,7 @@ module Api
 
           # Find the first admin or manager user to assign the estimate to
           default_user = User.joins(:role_assignments)
-                            .where(role_assignments: { role_id: Role.where(key: ['admin', 'manager']).pluck(:id) })
+                            .where(role_assignments: { role_id: Role.where(key: [ "admin", "manager" ]).pluck(:id) })
                             .first || User.first
 
           # Extract and convert parameters to proper types
@@ -176,7 +175,7 @@ module Api
             customer.update!(
               name: name,
               phone: phone_number,
-              lead_source: 'CCR',
+              lead_source: "CCR",
               gclid: params[:gclid],
               **tracking_params
             )
@@ -186,8 +185,8 @@ module Api
               name: name,
               email: email.downcase,
               phone: phone_number,
-              lead_source: 'CCR',
-              status: 'Pending',
+              lead_source: "CCR",
+              status: "Pending",
               gclid: params[:gclid],
               idea_description: params[:description],
               repeat_lead: false,
@@ -198,7 +197,7 @@ module Api
 
           # Find the first admin or manager user to assign the estimate to
           default_user = User.joins(:role_assignments)
-                            .where(role_assignments: { role_id: Role.where(key: ['admin', 'manager']).pluck(:id) })
+                            .where(role_assignments: { role_id: Role.where(key: [ "admin", "manager" ]).pluck(:id) })
                             .first || User.first
 
           # Check if an init status estimate already exists for this customer
@@ -274,13 +273,13 @@ module Api
         cleaned_phone = phone.strip
 
         # Check if the phone already has a plus sign
-        has_plus = cleaned_phone.start_with?('+')
+        has_plus = cleaned_phone.start_with?("+")
 
         # Remove all non-digit characters
-        digits_only = cleaned_phone.gsub(/\D/, '')
+        digits_only = cleaned_phone.gsub(/\D/, "")
 
         # Add the plus sign back if it was there, or add it if it wasn't
-        '+' + digits_only
+        "+" + digits_only
       end
 
       def parse_preferred_time(timestamp)
@@ -296,11 +295,11 @@ module Api
           timezone_offset = parsed_time.strftime("%z")
           formatted_offset = "#{timezone_offset[0]}#{timezone_offset[1..2]}:#{timezone_offset[3..4]}"
 
-          return "#{formatted_time} (#{formatted_offset})"
+          "#{formatted_time} (#{formatted_offset})"
         rescue => e
           Rails.logger.warn("Failed to parse preferred_time '#{timestamp}': #{e.message}")
           # Return the original value if parsing fails
-          return timestamp
+          timestamp
         end
       end
 
@@ -316,9 +315,9 @@ module Api
             formatted_offset = "#{offset[0]}#{offset[1..2]}:#{offset[3..4]}"
             return formatted_offset
           end
-          return nil
+          nil
         rescue
-          return nil
+          nil
         end
       end
 

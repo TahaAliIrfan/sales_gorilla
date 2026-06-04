@@ -7,37 +7,37 @@ class Deal < ApplicationRecord
   has_one :pipeline, through: :deal_stage
   has_many :deal_activities, dependent: :destroy
   has_many :deal_recordings, dependent: :destroy
-  
+
   validates :title, presence: { message: "is required" }
-  validates :amount, presence: { message: "is required" }, 
+  validates :amount, presence: { message: "is required" },
                     numericality: { greater_than: 0, message: "must be greater than 0" }
   validates :status, presence: { message: "is required" }
   validates :customer_id, presence: { message: "is required - please select a customer" }
   validates :deal_stage_id, presence: { message: "is required - please select a deal stage" }
   validates :user_id, presence: { message: "is required - please select an owner" }
   validate :deal_stage_belongs_to_user_pipeline
-  
+
   # Lifecycle hooks for Meta tracking
   after_save :track_meta_conversions_deal_events
-  
+
   enum status: {
-    active: 'active',
-    won: 'won',
-    lost: 'lost'
+    active: "active",
+    won: "won",
+    lost: "lost"
   }
-  
+
   scope :assigned_to, ->(user) { where(user: user) }
   scope :by_stage, ->(stage) { where(deal_stage: stage) }
   scope :by_pipeline, ->(pipeline) { joins(:deal_stage).where(deal_stages: { pipeline: pipeline }) }
-  scope :for_user_pipeline, ->(user) { 
+  scope :for_user_pipeline, ->(user) {
     pipeline_ids = user.assigned_pipeline_ids
     return none if pipeline_ids.empty?
     joins(deal_stage: :pipeline).where(pipelines: { id: pipeline_ids, active: true })
   }
-  scope :active, -> { where(status: 'active') }
-  scope :won, -> { where(status: 'won') }
-  scope :lost, -> { where(status: 'lost') }
-  
+  scope :active, -> { where(status: "active") }
+  scope :won, -> { where(status: "won") }
+  scope :lost, -> { where(status: "lost") }
+
   # Log an activity for this deal
   def log_activity(user, action, details = nil)
     deal_activities.create(
@@ -60,12 +60,12 @@ class Deal < ApplicationRecord
 
     # Schedule — fires once when the deal is first created
     if saved_change_to_id?
-      service.send_form_lead_event(customer, 'Schedule', nil, action_source)
+      service.send_form_lead_event(customer, "Schedule", nil, action_source)
     end
 
     # Purchase — fires when the deal is marked as won
-    if saved_change_to_status? && status == 'won'
-      service.send_form_lead_event(customer, 'Purchase', amount, action_source)
+    if saved_change_to_status? && status == "won"
+      service.send_form_lead_event(customer, "Purchase", amount, action_source)
     end
   end
 

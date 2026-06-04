@@ -55,62 +55,74 @@ gem "twilio-ruby", "~> 7.8"
 gem "httparty", "~> 0.21.0"
 
 # CORS support for Rails API
-gem 'rack-cors'
+gem "rack-cors"
 
 # Tailwind CSS for styling
 gem "tailwindcss-rails"
 
 # Authentication
-gem 'omniauth-google-oauth2'
-gem 'omniauth'
-gem 'omniauth-rails_csrf_protection'
-gem 'aws-sdk-s3'
+gem "omniauth-google-oauth2"
+gem "omniauth"
+gem "omniauth-rails_csrf_protection"
+gem "aws-sdk-s3"
 
 # Google API client for Calendar and Gmail integration
-gem 'google-api-client', '~> 0.53.0', require: ['google/apis/gmail_v1', 'google/apis/calendar_v3']
+gem "google-api-client", "~> 0.53.0", require: [ "google/apis/gmail_v1", "google/apis/calendar_v3" ]
 
 # Authorization
-gem 'pundit'
+gem "pundit"
 
 # Row-level multi-tenancy: scopes queries by current organization [https://github.com/ErwinM/acts_as_tenant]
-gem 'acts_as_tenant'
+gem "acts_as_tenant"
 
 # JWT Authentication
-gem 'jwt'
+gem "jwt"
 
 # Time-based grouping for ActiveRecord
-gem 'groupdate', "~> 6.4"
+gem "groupdate", "~> 6.4"
 
 # Pagination
-gem 'kaminari'
+gem "kaminari"
 
 # Background job processing
 gem "sidekiq", "~> 7.2"
 gem "sidekiq-scheduler", "~> 5.0"
 
 # Mail gem for email processing
-gem 'mail'
+gem "mail"
 
 # Phone number parsing and geographic location detection
-gem 'phonelib'
+gem "phonelib"
 
 # Timezone detection and conversion
-gem 'timezone'
+gem "timezone"
 
 # PDF generation
-gem 'prawn'
-gem 'prawn-table'
-gem 'prawn-svg'
+gem "prawn"
+gem "prawn-table"
+gem "prawn-svg"
 
 # HTML → PDF via headless Chromium (used by OdooProposalHtmlPdfService)
-gem 'grover', '~> 1.2'
+gem "grover", "~> 1.2"
 
 # .docx text extraction (used by OdooProposalDetectionService)
-gem 'docx', '~> 0.8'
+gem "docx", "~> 0.8"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
+
+  # Rails-blessed Omakase style for Rubocop (Sane defaults, minimal cop noise).
+  gem "rubocop-rails-omakase", require: false
+
+  # RSpec + factory_bot for the spec suite.
+  gem "rspec-rails", "~> 7.0"
+  gem "factory_bot_rails", "~> 6.4"
+end
+
+group :test do
+  # Mock Active Storage uploads without hitting S3.
+  gem "rails-controller-testing"
 end
 
 group :development do
@@ -123,8 +135,8 @@ group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
 
-  gem 'capistrano', '~> 3.17'
-  gem 'capistrano-rails', '~> 1.6'
-  gem 'capistrano-passenger', '~> 0.2.1'
-  gem 'capistrano-rbenv', '~> 2.2'
+  gem "capistrano", "~> 3.17"
+  gem "capistrano-rails", "~> 1.6"
+  gem "capistrano-passenger", "~> 0.2.1"
+  gem "capistrano-rbenv", "~> 2.2"
 end

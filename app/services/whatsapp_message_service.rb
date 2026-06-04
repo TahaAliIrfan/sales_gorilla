@@ -1,5 +1,5 @@
-require 'base64'
-require 'stringio'
+require "base64"
+require "stringio"
 
 class WhatsappMessageService
   attr_reader :api_service
@@ -15,13 +15,12 @@ class WhatsappMessageService
       response = @api_service.get_chats
       return { success: false, error: response[:error] } unless response[:success]
 
-      return { success: true, chats: response[:data] }
+      { success: true, chats: response[:data] }
 
     rescue StandardError => e
       Rails.logger.error("WhatsappMessageService Error: #{e.message}")
       { success: false, error: e.message }
     end
-
   end
 
   def fetch_and_store_messages(whatsapp_chat_id, customer = nil)
@@ -35,11 +34,10 @@ class WhatsappMessageService
       stored_messages = []
 
       messages_data.each do |message|
-
         message_id = message[:id]
         next if Message.exists?(message_id: message_id)
 
-        direction = message[:fromMe] == true ? 'outbound' : 'inbound'
+        direction = message[:fromMe] == true ? "outbound" : "inbound"
         processed_message = process_message(message, customer, direction)
         stored_messages << processed_message if processed_message
       end
@@ -67,12 +65,12 @@ class WhatsappMessageService
       chats_data.each do |chat|
         chat_id = chat[:id]
         phone_number = extract_phone_from_chat_id(chat_id)
-        
+
         next unless phone_number
 
         # Try to find customer by phone number
         customer = find_customer_by_phone(phone_number)
-        
+
         if customer && customer.whatsapp_chat_id.blank?
           customer.update(whatsapp_chat_id: chat_id)
           associations_made += 1
@@ -81,8 +79,8 @@ class WhatsappMessageService
         end
       end
 
-      { 
-        success: true, 
+      {
+        success: true,
         total_chats: chats_data.count,
         associations_made: associations_made,
         new_chat_ids: new_chat_ids
@@ -110,13 +108,13 @@ class WhatsappMessageService
         message_attrs = {
           message_id: message_id,
           customer: customer,
-          direction: 'outbound',
-          status: 'delivered',
-          message_type: 'text',
+          direction: "outbound",
+          status: "delivered",
+          message_type: "text",
           content: message_content,
           whatsapp_chat_id: whatsapp_chat_id,
           created_at: timestamp,
-          updated_at: timestamp,
+          updated_at: timestamp
         }
 
 
@@ -125,7 +123,7 @@ class WhatsappMessageService
         if message.save
           {
             success: true,
-            message: "message sent successfully",
+            message: "message sent successfully"
           }
         else
           {
@@ -160,7 +158,7 @@ class WhatsappMessageService
 
     begin
       # Ensure we have raw binary data
-      raw_data = file_data.is_a?(String) ? file_data.dup.force_encoding('BINARY') : file_data
+      raw_data = file_data.is_a?(String) ? file_data.dup.force_encoding("BINARY") : file_data
 
       # Detect format from raw bytes
       format_info = detect_format_from_bytes(raw_data)
@@ -179,13 +177,13 @@ class WhatsappMessageService
         message_attrs = {
           message_id: message_id,
           customer: customer,
-          direction: 'outbound',
-          status: 'delivered',
+          direction: "outbound",
+          status: "delivered",
           message_type: format_info[:type],
           content: caption.present? ? caption : filename,
           whatsapp_chat_id: chat_id,
           created_at: timestamp,
-          updated_at: timestamp,
+          updated_at: timestamp
         }
 
         message = Message.new(message_attrs)
@@ -194,7 +192,7 @@ class WhatsappMessageService
           attachment_success = attach_file_to_message(raw_data, filename, format_info[:content_type], message)
           {
             success: true,
-            message: "Media message sent successfully",
+            message: "Media message sent successfully"
           }
         else
           {
@@ -219,7 +217,6 @@ class WhatsappMessageService
   private
 
   def process_message(message, customer, direction)
-
     message_type = message[:type]
     message_id = message[:id]
     timestamp = Time.at(message[:timestamp])
@@ -231,12 +228,12 @@ class WhatsappMessageService
       direction: direction,
       message_type: message_type,
       created_at: timestamp,
-      updated_at: timestamp,
+      updated_at: timestamp
     }
 
-    if message_type == 'chat' or message_type == 'e2e_notification' or message_type == 'notification_template'
-      if message[:body] == ''
-        message_attrs[:content] = 'Unable To Read Message'
+    if message_type == "chat" or message_type == "e2e_notification" or message_type == "notification_template"
+      if message[:body] == ""
+        message_attrs[:content] = "Unable To Read Message"
       else
         message_attrs[:content] = message[:body]
       end
@@ -268,36 +265,36 @@ class WhatsappMessageService
     # WhatsApp chat IDs are typically in format: phone_number@c.us
     # Extract the phone number part
     return nil unless chat_id.present?
-    
+
     # Remove @c.us suffix if present
-    phone = chat_id.gsub(/@c\.us$/, '')
-    
+    phone = chat_id.gsub(/@c\.us$/, "")
+
     # Basic validation - should be numeric and reasonable length
     return nil unless phone.match?(/^\d{10,15}$/)
-    
+
     phone
   end
 
   def find_customer_by_phone(phone_number)
     return nil unless phone_number.present?
-    
+
     # Try exact match first
     customer = Customer.find_by(phone: phone_number)
     return customer if customer
-    
+
     # Try with different formatting (with +, without +, etc.)
     formatted_variations = [
       "+#{phone_number}",
       "#{phone_number}",
-      phone_number.gsub(/^\+/, ''),
-      phone_number.gsub(/\D/, '') # Remove all non-digits
+      phone_number.gsub(/^\+/, ""),
+      phone_number.gsub(/\D/, "") # Remove all non-digits
     ]
-    
+
     formatted_variations.each do |variation|
       customer = Customer.find_by(phone: variation)
       return customer if customer
     end
-    
+
     # Try partial matches (last 10 digits)
     if phone_number.length > 10
       last_10 = phone_number.last(10)
@@ -310,40 +307,39 @@ class WhatsappMessageService
   def decode_base64_data(data)
     return nil if data.blank?
 
-    Base64.decode64(data).force_encoding('BINARY')
+    Base64.decode64(data).force_encoding("BINARY")
   rescue ArgumentError => e
     Rails.logger.error("Failed to decode Base64 data: #{e.message}")
     nil
   end
 
   def detect_format_from_bytes(raw_data)
-    return { type: 'document', content_type: 'application/octet-stream' } if raw_data.blank?
+    return { type: "document", content_type: "application/octet-stream" } if raw_data.blank?
 
     # Read first 8 bytes to check magic numbers
-    hex = raw_data.bytes.first(8).map { |b| b.to_s(16).rjust(2, '0') }.join.upcase
+    hex = raw_data.bytes.first(8).map { |b| b.to_s(16).rjust(2, "0") }.join.upcase
 
     case hex
     when /^FFD8FF/
-      { type: 'image', content_type: 'image/jpeg' }
+      { type: "image", content_type: "image/jpeg" }
     when /^89504E47/
-      { type: 'image', content_type: 'image/png' }
+      { type: "image", content_type: "image/png" }
     when /^47494638/
-      { type: 'image', content_type: 'image/gif' }
+      { type: "image", content_type: "image/gif" }
     when /^25504446/
-      { type: 'document', content_type: 'application/pdf' }
+      { type: "document", content_type: "application/pdf" }
     when /^504B0304/
-      { type: 'document', content_type: 'application/zip' }
+      { type: "document", content_type: "application/zip" }
     when /^00000.*66747970/
-      { type: 'video', content_type: 'video/mp4' }
+      { type: "video", content_type: "video/mp4" }
     when /^494433/, /^FFFB/, /^FFF3/
-      { type: 'audio', content_type: 'audio/mpeg' }
+      { type: "audio", content_type: "audio/mpeg" }
     else
-      { type: 'document', content_type: 'application/octet-stream' }
+      { type: "document", content_type: "application/octet-stream" }
     end
   end
 
   def attach_file_to_message(file_data, filename, content_type, message)
-
     return false if file_data.blank? || message.nil?
 
     begin

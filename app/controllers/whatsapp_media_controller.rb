@@ -12,7 +12,7 @@ class WhatsappMediaController < ApplicationController
 
   def show
     blob = ActiveStorage::Blob.find_signed!(params[:signed_id])
-    redirect_to blob.url(expires_in: 1.hour, disposition: 'inline'),
+    redirect_to blob.url(expires_in: 1.hour, disposition: "inline"),
                 allow_other_host: true,
                 status: :found
   rescue ActiveSupport::MessageVerifier::InvalidSignature,

@@ -7,19 +7,19 @@
 class WhatsappInboundPushWorker
   include Sidekiq::Worker
 
-  sidekiq_options retry: 3, queue: 'notifications'
+  sidekiq_options retry: 3, queue: "notifications"
 
   def perform(message_id)
     message  = WhatsappMessage.find_by(id: message_id)
-    return unless message && message.direction == 'inbound'
+    return unless message && message.direction == "inbound"
 
     customer = message.customer
     return unless customer
 
-    title = 'New WhatsApp message'
+    title = "New WhatsApp message"
     body  = "#{customer.name.presence || 'Customer'} has sent you a message"
     data  = {
-      type:          'whatsapp_us_message',
+      type:          "whatsapp_us_message",
       customer_id:   customer.id,
       message_id:    message.id,
       # Flutter side: tap handler does `context.go(message.data['route'])`.
@@ -47,7 +47,7 @@ class WhatsappInboundPushWorker
   def recipients(customer)
     list = []
     list << customer.user if customer.user&.active?
-    list.concat(User.active_users.joins(:roles).where(roles: { key: 'admin' }).distinct.to_a)
+    list.concat(User.active_users.joins(:roles).where(roles: { key: "admin" }).distinct.to_a)
     list.uniq
   end
 end

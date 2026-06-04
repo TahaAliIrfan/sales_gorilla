@@ -7,5 +7,5 @@ class WhatsappMessage < ApplicationRecord
   has_one_attached :media
 
   validates :message_id, presence: true, uniqueness: true
-  validates :direction, presence: true, inclusion: { in: ['inbound', 'outbound'] }
+  validates :direction, presence: true, inclusion: { in: [ "inbound", "outbound" ] }
 end

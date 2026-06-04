@@ -9,7 +9,7 @@ module Api
       private
 
       def record_not_found
-        render json: { success: false, error: 'Record not found' }, status: :not_found
+        render json: { success: false, error: "Record not found" }, status: :not_found
       end
 
       def record_invalid(exception)

@@ -32,10 +32,10 @@ class WhatsappUsController < ApplicationController
   # change). Returns the refreshed reachability info.
   def lookup_phone
     authorize @customer, :show?
-    return render_error('Customer has no phone number') if @customer.phone.blank?
+    return render_error("Customer has no phone number") if @customer.phone.blank?
 
     result = PhoneLookupService.new.check!(@customer, force: true)
-    return render_error(result[:error] || 'Lookup failed', :unprocessable_entity) unless result[:success]
+    return render_error(result[:error] || "Lookup failed", :unprocessable_entity) unless result[:success]
 
     render json: {
       success: true,
@@ -53,15 +53,15 @@ class WhatsappUsController < ApplicationController
 
     file = params[:file]
     body = params[:body].to_s.strip
-    return render_error('Customer has no phone number') if @customer.phone.blank?
-    return render_error('Message cannot be blank') if body.blank? && file.blank?
+    return render_error("Customer has no phone number") if @customer.phone.blank?
+    return render_error("Message cannot be blank") if body.blank? && file.blank?
 
     if @customer.whatsapp_phone_unreachable?
       return render_error("Can't send — #{@customer.whatsapp_reachability_reason}", :forbidden)
     end
 
     unless @customer.whatsapp_us_window_open?
-      return render_error('The 24-hour reply window has closed. The customer must message first before you can send a freeform message.', :forbidden)
+      return render_error("The 24-hour reply window has closed. The customer must message first before you can send a freeform message.", :forbidden)
     end
 
     file.present? ? send_media_message(file, body) : send_text_message(body)
@@ -73,7 +73,7 @@ class WhatsappUsController < ApplicationController
   # rows keep their attached media and locally-tracked metadata.
   def sync_chat
     authorize @customer, :show?
-    return render_error('Customer has no phone number') if @customer.phone.blank?
+    return render_error("Customer has no phone number") if @customer.phone.blank?
 
     twilio_msgs = TwilioWhatsappService.new.list_messages_for(phone: @customer.phone)
     created, updated = 0, 0
@@ -107,10 +107,10 @@ class WhatsappUsController < ApplicationController
   # Admin-only: pulls latest approved templates from Twilio.
   def sync_templates
     authorize @customer, :show?
-    return render_error('Admins only', :forbidden) unless current_user&.admin?
+    return render_error("Admins only", :forbidden) unless current_user&.admin?
 
     result = TwilioWhatsappTemplatesService.new.sync!
-    return render_error(result[:error] || 'Sync failed', :unprocessable_entity) unless result[:success]
+    return render_error(result[:error] || "Sync failed", :unprocessable_entity) unless result[:success]
 
     render json: {
       success: true,
@@ -123,13 +123,13 @@ class WhatsappUsController < ApplicationController
   # POST /customers/:customer_id/whatsapp_us/send_template
   def send_template
     authorize @customer, :show?
-    return render_error('Customer has no phone number') if @customer.phone.blank?
+    return render_error("Customer has no phone number") if @customer.phone.blank?
     if @customer.whatsapp_phone_unreachable?
       return render_error("Can't send — #{@customer.whatsapp_reachability_reason}", :forbidden)
     end
 
     template = WhatsappTemplate.approved.find_by(content_sid: params[:content_sid])
-    return render_error('Template not found or not approved', :not_found) unless template
+    return render_error("Template not found or not approved", :not_found) unless template
 
     variables = sanitize_variables(template, params[:variables])
 
@@ -142,7 +142,7 @@ class WhatsappUsController < ApplicationController
     media_blob = nil
 
     if template.requires_media_upload?
-      return render_error('This template requires a file attachment') if file.blank?
+      return render_error("This template requires a file attachment") if file.blank?
 
       validation = validate_media(file)
       return render_error(validation[:error]) unless validation[:valid]
@@ -169,7 +169,7 @@ class WhatsappUsController < ApplicationController
 
     unless result[:success]
       media_blob&.purge_later
-      return render_error(result[:error] || 'Failed to send template', :unprocessable_entity)
+      return render_error(result[:error] || "Failed to send template", :unprocessable_entity)
     end
 
     message = persist_outbound(sid: result[:sid], status: result[:status], body: rendered_body)
@@ -217,7 +217,7 @@ class WhatsappUsController < ApplicationController
   # Text-only outbound message.
   def send_text_message(body)
     result = TwilioWhatsappService.new.send_text(to_phone: @customer.phone, body: body)
-    return render_error(result[:error] || 'Failed to send message', :unprocessable_entity) unless result[:success]
+    return render_error(result[:error] || "Failed to send message", :unprocessable_entity) unless result[:success]
 
     message = persist_outbound(sid: result[:sid], status: result[:status], body: body)
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
@@ -248,7 +248,7 @@ class WhatsappUsController < ApplicationController
 
     unless result[:success]
       blob.purge_later
-      return render_error(result[:error] || 'Failed to send file', :unprocessable_entity)
+      return render_error(result[:error] || "Failed to send file", :unprocessable_entity)
     end
 
     message = persist_outbound(
@@ -268,10 +268,10 @@ class WhatsappUsController < ApplicationController
       message_id: sid,
       remote_id:  @customer.phone,
       body:       body,
-      direction:  'outbound',
-      status:     status || 'queued',
+      direction:  "outbound",
+      status:     status || "queued",
       timestamp:  Time.current,
-      metadata:   { provider: 'twilio', to: "whatsapp:#{@customer.phone}", from: TwilioWhatsappService::FROM, sent_by_user_id: current_user&.id }
+      metadata:   { provider: "twilio", to: "whatsapp:#{@customer.phone}", from: TwilioWhatsappService::FROM, sent_by_user_id: current_user&.id }
     )
   end
 
@@ -292,7 +292,7 @@ class WhatsappUsController < ApplicationController
   MAX_MEDIA_BYTES = 16.megabytes
 
   def validate_media(file)
-    return { valid: false, error: 'No file provided' } unless file.respond_to?(:content_type)
+    return { valid: false, error: "No file provided" } unless file.respond_to?(:content_type)
 
     bare = bare_content_type(file.content_type)
     unless ALLOWED_MEDIA_TYPES.include?(bare)
@@ -308,7 +308,7 @@ class WhatsappUsController < ApplicationController
   # Strip parameters like "audio/mp4; codecs=mp4a.40.2" → "audio/mp4" so the
   # allow-list comparison isn't defeated by a benign codec hint.
   def bare_content_type(ct)
-    ct.to_s.split(';').first.to_s.strip.downcase
+    ct.to_s.split(";").first.to_s.strip.downcase
   end
 
   def set_customer
@@ -324,26 +324,26 @@ class WhatsappUsController < ApplicationController
       direction: message.direction,
       status: message.status,
       display_status: display_status_for(message),
-      error_code: message.metadata&.dig('error_code'),
-      error_message: message.metadata&.dig('error_message'),
+      error_code: message.metadata&.dig("error_code"),
+      error_message: message.metadata&.dig("error_message"),
       timestamp: (message.timestamp || message.created_at).iso8601,
-      formatted_time: (message.timestamp || message.created_at).strftime('%b %d, %H:%M'),
+      formatted_time: (message.timestamp || message.created_at).strftime("%b %d, %H:%M"),
       media_url: attached ? rails_blob_path(attached, only_path: true) : nil,
       media_filename: attached&.filename.to_s.presence,
       media_content_type: attached&.content_type,
-      media: message.metadata&.dig('media') || []
+      media: message.metadata&.dig("media") || []
     }
   end
 
   # User-friendly bucket for the status badge: pending | sent | delivered | failed.
   def display_status_for(message)
-    return nil if message.direction != 'outbound'
+    return nil if message.direction != "outbound"
 
     case message.status.to_s.downcase
-    when 'delivered', 'read'                  then 'delivered'
-    when 'sent'                               then 'sent'
-    when 'failed', 'undelivered'              then 'failed'
-    else 'pending'
+    when "delivered", "read"                  then "delivered"
+    when "sent"                               then "sent"
+    when "failed", "undelivered"              then "failed"
+    else "pending"
     end
   end
 
@@ -354,8 +354,8 @@ class WhatsappUsController < ApplicationController
   # we don't hammer Twilio on every 15s UI poll.
   def refresh_stale_outbound_statuses
     stale = @customer.whatsapp_messages
-              .where(direction: 'outbound', status: NON_FINAL_OUTBOUND_STATUSES)
-              .where('created_at > ?', 1.hour.ago)
+              .where(direction: "outbound", status: NON_FINAL_OUTBOUND_STATUSES)
+              .where("created_at > ?", 1.hour.ago)
               .to_a
               .reject { |m| recently_refreshed?(m) || m.message_id.blank? }
 
@@ -384,20 +384,20 @@ class WhatsappUsController < ApplicationController
   def upsert_from_twilio(t)
     return :unchanged if t.sid.blank?
 
-    is_inbound = t.direction.to_s == 'inbound'
+    is_inbound = t.direction.to_s == "inbound"
     customer_addr = "whatsapp:#{@customer.phone}"
 
     message = @customer.whatsapp_messages.find_or_initialize_by(message_id: t.sid)
     new_record = message.new_record?
 
     message.assign_attributes(
-      remote_id: (is_inbound ? t.from : t.to).to_s.sub(/\Awhatsapp:/, ''),
+      remote_id: (is_inbound ? t.from : t.to).to_s.sub(/\Awhatsapp:/, ""),
       body:      t.body.presence || (t.num_media.to_i.positive? ? "[#{t.num_media} media attachment(s)]" : nil),
-      direction: is_inbound ? 'inbound' : 'outbound',
+      direction: is_inbound ? "inbound" : "outbound",
       status:    t.status,
       timestamp: t.date_sent || t.date_created || Time.current,
       metadata:  (message.metadata || {}).merge(
-        provider:      'twilio',
+        provider:      "twilio",
         from:          t.from,
         to:            t.to,
         error_code:    t.error_code,
@@ -435,7 +435,7 @@ class WhatsappUsController < ApplicationController
   end
 
   def recently_refreshed?(message)
-    last = message.metadata&.dig('status_refreshed_at')
+    last = message.metadata&.dig("status_refreshed_at")
     return false if last.blank?
     Time.iso8601(last) > 30.seconds.ago
   rescue ArgumentError

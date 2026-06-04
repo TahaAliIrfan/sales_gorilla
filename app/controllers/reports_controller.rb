@@ -1,17 +1,17 @@
 class ReportsController < ApplicationController
   layout "tenant"
   before_action :require_login
-  before_action :require_admin_or_manager, only: [:index]
+  before_action :require_admin_or_manager, only: [ :index ]
 
   def index
     setup_date_filters
     setup_kpi_targets
 
     @users = if current_user.admin?
-               User.active_users.where.not(id: User.joins(:roles).where(roles: { name: 'admin' }).select(:id))
-             else
+               User.active_users.where.not(id: User.joins(:roles).where(roles: { name: "admin" }).select(:id))
+    else
                current_user.associates.active_users
-             end
+    end
 
     prepare_user_performance
     prepare_customer_status_overview
@@ -21,12 +21,12 @@ class ReportsController < ApplicationController
     setup_date_filters
     setup_kpi_targets
 
-    @users = [current_user]
+    @users = [ current_user ]
 
     prepare_user_performance
     prepare_customer_status_overview
 
-    render 'user_reports'
+    render "user_reports"
   end
 
   private
@@ -50,24 +50,24 @@ class ReportsController < ApplicationController
   end
 
   def setup_date_filters
-    @filter_range = params[:filter_range] || 'today'
+    @filter_range = params[:filter_range] || "today"
     @custom_start_date = params[:start_date].present? ? Date.parse(params[:start_date]) : nil
     @custom_end_date = params[:end_date].present? ? Date.parse(params[:end_date]) : nil
 
     case @filter_range
-    when 'today'
+    when "today"
       @start_date = Time.current.beginning_of_day
       @end_date = Time.current.end_of_day
-    when 'yesterday'
+    when "yesterday"
       @start_date = 1.day.ago.beginning_of_day
       @end_date = 1.day.ago.end_of_day
-    when 'last_week'
+    when "last_week"
       @start_date = 1.week.ago.beginning_of_week(:monday)
       @end_date = 1.week.ago.end_of_week(:monday).end_of_day
-    when 'month'
+    when "month"
       @start_date = Time.current.beginning_of_month
       @end_date = Time.current.end_of_day
-    when 'custom'
+    when "custom"
       @start_date = @custom_start_date&.beginning_of_day || 30.days.ago.beginning_of_day
       @end_date = @custom_end_date&.end_of_day || Time.current.end_of_day
     else
@@ -78,12 +78,12 @@ class ReportsController < ApplicationController
 
   def setup_kpi_targets
     days = case @filter_range
-           when 'today', 'yesterday' then 1
-           when 'last_week' then 7
-           when 'month' then ((@end_date.to_date - @start_date.to_date).to_i + 1)
-           when 'custom' then ((@end_date.to_date - @start_date.to_date).to_i + 1)
-           else 1
-           end
+    when "today", "yesterday" then 1
+    when "last_week" then 7
+    when "month" then ((@end_date.to_date - @start_date.to_date).to_i + 1)
+    when "custom" then ((@end_date.to_date - @start_date.to_date).to_i + 1)
+    else 1
+    end
 
     @kpi_targets = {
       calls_attempted: 10 * days,
@@ -108,7 +108,7 @@ class ReportsController < ApplicationController
     customer_ids_in_scope = customer_scope.pluck(:id, :user_id)
     cid_to_uid = customer_ids_in_scope.each_with_object({}) { |(cid, uid), h| h[cid] = uid }
 
-    inbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: 'inbound')
+    inbound_by_customer = Message.where(customer_id: cid_to_uid.keys, direction: "inbound")
                                  .group(:customer_id).count
     whatsapp_replies_by_user = inbound_by_customer.each_with_object({}) do |(cid, count), h|
       uid = cid_to_uid[cid]
@@ -146,22 +146,22 @@ class ReportsController < ApplicationController
 
     deals_won = Deal.joins(:customer)
                     .where(customers: { user_id: user_ids })
-                    .where(deals: { status: 'won', closing_date: @start_date.to_date..@end_date.to_date })
+                    .where(deals: { status: "won", closing_date: @start_date.to_date..@end_date.to_date })
                     .group("customers.user_id").count
 
     @user_status_overview = @users.map do |user|
       uid = user.id
       {
         user: user,
-        pending: status_counts[[uid, 'Pending']] || 0,
-        contact_established: status_counts[[uid, 'Contact Established']] || 0,
-        contact_not_established: (status_counts[[uid, 'Contact Not Established']] || 0) + (status_counts[[uid, 'Unresponsive']] || 0),
-        exhausted: status_counts[[uid, 'Exhausted']] || 0,
-        invalid: status_counts[[uid, 'Invalid']] || 0,
-        converted: status_counts[[uid, 'Converted']] || 0,
-        proposal_sent: status_counts[[uid, 'Proposal Sent']] || 0,
-        not_interested: status_counts[[uid, 'Not Interested']] || 0,
-        retarget: status_counts[[uid, 'Retarget']] || 0,
+        pending: status_counts[[ uid, "Pending" ]] || 0,
+        contact_established: status_counts[[ uid, "Contact Established" ]] || 0,
+        contact_not_established: (status_counts[[ uid, "Contact Not Established" ]] || 0) + (status_counts[[ uid, "Unresponsive" ]] || 0),
+        exhausted: status_counts[[ uid, "Exhausted" ]] || 0,
+        invalid: status_counts[[ uid, "Invalid" ]] || 0,
+        converted: status_counts[[ uid, "Converted" ]] || 0,
+        proposal_sent: status_counts[[ uid, "Proposal Sent" ]] || 0,
+        not_interested: status_counts[[ uid, "Not Interested" ]] || 0,
+        retarget: status_counts[[ uid, "Retarget" ]] || 0,
         deals_created: deals_created[uid] || 0,
         deals_won: deals_won[uid] || 0
       }

@@ -1,6 +1,6 @@
 class CustomerGroupsController < ApplicationController
   layout "tenant"
-  before_action :set_customer_group, only: [:show, :edit, :update, :destroy, :add_customer, :remove_customer]
+  before_action :set_customer_group, only: [ :show, :edit, :update, :destroy, :add_customer, :remove_customer ]
 
   def index
     @customer_groups = policy_scope(CustomerGroup).order(created_at: :desc)
@@ -26,7 +26,7 @@ class CustomerGroupsController < ApplicationController
     authorize @customer_group
 
     if @customer_group.save
-      redirect_to @customer_group, notice: 'Customer group was successfully created.'
+      redirect_to @customer_group, notice: "Customer group was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -36,7 +36,7 @@ class CustomerGroupsController < ApplicationController
     authorize @customer_group
 
     if @customer_group.update(customer_group_params)
-      redirect_to @customer_group, notice: 'Customer group was successfully updated.'
+      redirect_to @customer_group, notice: "Customer group was successfully updated."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -45,7 +45,7 @@ class CustomerGroupsController < ApplicationController
   def destroy
     authorize @customer_group
     @customer_group.destroy
-    redirect_to customer_groups_url, notice: 'Customer group was successfully deleted.'
+    redirect_to customer_groups_url, notice: "Customer group was successfully deleted."
   end
 
   def add_customer
@@ -53,7 +53,7 @@ class CustomerGroupsController < ApplicationController
     customer = Customer.find(params[:customer_id])
 
     @customer_group.add_customer(customer)
-    redirect_to @customer_group, notice: 'Customer added to group.'
+    redirect_to @customer_group, notice: "Customer added to group."
   end
 
   def remove_customer
@@ -61,7 +61,7 @@ class CustomerGroupsController < ApplicationController
     customer = Customer.find(params[:customer_id])
 
     @customer_group.remove_customer(customer)
-    redirect_to @customer_group, notice: 'Customer removed from group.'
+    redirect_to @customer_group, notice: "Customer removed from group."
   end
 
   private

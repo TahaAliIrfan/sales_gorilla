@@ -9,8 +9,8 @@ class CostEstimate < ApplicationRecord
 
   # Status constants
   STATUSES = {
-    init: 'init',
-    final: 'final'
+    init: "init",
+    final: "final"
   }.freeze
 
   validates :app_type, presence: true, unless: -> { application_types.present? }
@@ -27,35 +27,35 @@ class CostEstimate < ApplicationRecord
 
   before_validation :calculate_total_cost, if: :should_calculate_cost?
   before_validation :set_default_status, if: :new_record?
-  
+
   APP_TYPES = {
-    'web' => 'Web Application',
-    'mobile_ios' => 'Mobile Application (iOS)',
-    'mobile_android' => 'Mobile Application (Android)',
-    'mobile_cross' => 'Mobile Application (Cross-platform)',
-    'desktop' => 'Desktop Application',
-    'ecommerce' => 'E-commerce Platform',
-    'crm' => 'CRM System',
-    'api' => 'API/Backend Service',
-    'custom' => 'Custom Software'
+    "web" => "Web Application",
+    "mobile_ios" => "Mobile Application (iOS)",
+    "mobile_android" => "Mobile Application (Android)",
+    "mobile_cross" => "Mobile Application (Cross-platform)",
+    "desktop" => "Desktop Application",
+    "ecommerce" => "E-commerce Platform",
+    "crm" => "CRM System",
+    "api" => "API/Backend Service",
+    "custom" => "Custom Software"
   }.freeze
-  
+
   SCALES = {
-    'mvp' => 'MVP',
-    'moderate' => 'Moderate Scale',
-    'enterprise' => 'Enterprise'
+    "mvp" => "MVP",
+    "moderate" => "Moderate Scale",
+    "enterprise" => "Enterprise"
   }.freeze
-  
+
   def features
     return [] if features_json.blank?
-    
+
     begin
       JSON.parse(features_json)
     rescue JSON::ParserError
       []
     end
   end
-  
+
   def features=(features_array)
     self.features_json = features_array.to_json
   end
@@ -99,27 +99,27 @@ class CostEstimate < ApplicationRecord
   def app_type_display
     APP_TYPES[app_type] || app_type&.humanize
   end
-  
+
   def scale_display
     SCALES[scale] || scale&.humanize
   end
-  
+
   def formatted_total_cost
     "$#{total_cost.to_f.round(2)}"
   end
-  
+
   def customer_display_name
     customer&.name || customer_name || "Unknown Customer"
   end
-  
+
   def customer_phone
     customer&.phone_number || ""
   end
-  
+
   def customer_email
     customer&.email || ""
   end
-  
+
   private
 
   def set_default_status

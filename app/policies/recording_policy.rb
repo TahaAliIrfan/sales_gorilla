@@ -4,7 +4,7 @@ class RecordingPolicy < ApplicationPolicy
   end
 
   def show?
-    user.admin? || record.user_id == user.id || 
+    user.admin? || record.user_id == user.id ||
     (user.manager? && user.associates.pluck(:id).include?(record.user_id))
   end
 
@@ -23,10 +23,10 @@ class RecordingPolicy < ApplicationPolicy
       elsif user.manager?
         # Managers can see their own recordings and recordings of their associates
         associate_ids = user.associates.pluck(:id)
-        scope.where(user_id: [user.id] + associate_ids)
+        scope.where(user_id: [ user.id ] + associate_ids)
       else
         scope.where(user_id: user.id)
       end
     end
   end
-end 
+end

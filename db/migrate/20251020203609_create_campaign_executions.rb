@@ -13,6 +13,6 @@ class CreateCampaignExecutions < ActiveRecord::Migration[7.1]
 
     add_index :campaign_executions, :status
     add_index :campaign_executions, :scheduled_at
-    add_index :campaign_executions, [:campaign_id, :customer_id], unique: true, name: 'index_campaign_executions_unique'
+    add_index :campaign_executions, [ :campaign_id, :customer_id ], unique: true, name: 'index_campaign_executions_unique'
   end
 end

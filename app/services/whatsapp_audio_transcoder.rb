@@ -1,6 +1,6 @@
-require 'open3'
-require 'shellwords'
-require 'tempfile'
+require "open3"
+require "shellwords"
+require "tempfile"
 
 # Normalizes an uploaded audio file into a format Twilio WhatsApp will accept.
 #
@@ -22,8 +22,8 @@ class WhatsappAudioTranscoder
   # form. Mapping lets the file pass through unchanged but uploaded with the
   # canonical content-type so Twilio is happy.
   ALIAS_MAP = {
-    'audio/x-m4a' => 'audio/mp4',
-    'audio/mp3'   => 'audio/mpeg'
+    "audio/x-m4a" => "audio/mp4",
+    "audio/mp3"   => "audio/mpeg"
   }.freeze
 
   def self.normalize(uploaded_file)
@@ -51,11 +51,11 @@ class WhatsappAudioTranscoder
 
   # Strip "audio/mp4; codecs=mp4a.40.2" → "audio/mp4".
   def bare(ct)
-    ct.to_s.split(';').first.to_s.strip.downcase
+    ct.to_s.split(";").first.to_s.strip.downcase
   end
 
   def audio?
-    @content_type.start_with?('audio/')
+    @content_type.start_with?("audio/")
   end
 
   def twilio_compatible?
@@ -69,23 +69,23 @@ class WhatsappAudioTranscoder
 
   def transcode_to_ogg
     input  = @file.tempfile.path
-    output = Tempfile.new(['wa-voice', '.ogg'], binmode: true)
+    output = Tempfile.new([ "wa-voice", ".ogg" ], binmode: true)
     output.close
 
     cmd = [
-      'ffmpeg', '-y', '-loglevel', 'error',
-      '-i', input,
-      '-vn',
-      '-c:a', 'libopus',
-      '-b:a', '32k',
-      '-f', 'ogg',
+      "ffmpeg", "-y", "-loglevel", "error",
+      "-i", input,
+      "-vn",
+      "-c:a", "libopus",
+      "-b:a", "32k",
+      "-f", "ogg",
       output.path
     ]
     _stdout, stderr, status = Open3.capture3(*cmd)
 
     if status.success? && File.size?(output.path).to_i.positive?
-      base = File.basename(@filename, '.*').presence || 'voice-note'
-      { io: File.open(output.path, 'rb'), filename: "#{base}.ogg", content_type: 'audio/ogg' }
+      base = File.basename(@filename, ".*").presence || "voice-note"
+      { io: File.open(output.path, "rb"), filename: "#{base}.ogg", content_type: "audio/ogg" }
     else
       Rails.logger.warn("[WhatsappAudio] ffmpeg failed (#{status.exitstatus}): #{stderr.to_s.truncate(300)}")
       File.unlink(output.path) if File.exist?(output.path)

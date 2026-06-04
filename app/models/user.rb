@@ -22,10 +22,10 @@ class User < ApplicationRecord
   # Role relationships
   has_many :role_assignments, dependent: :destroy
   has_many :roles, through: :role_assignments
-  has_many :assigned_roles, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
+  has_many :assigned_roles, class_name: "RoleAssignment", foreign_key: "assigned_by_id"
 
   # Associate relationships
-  has_many :manager_assignments, -> { where(role: Role.associate) }, class_name: 'RoleAssignment', foreign_key: 'assigned_by_id'
+  has_many :manager_assignments, -> { where(role: Role.associate) }, class_name: "RoleAssignment", foreign_key: "assigned_by_id"
   has_many :associates, through: :manager_assignments, source: :user
 
   # Campaign relationships
@@ -183,72 +183,72 @@ class User < ApplicationRecord
   def remove_associate(associate)
     return false unless manager?
     return false unless associate.is_a?(User)
-    
+
     # Find and destroy the role assignment
     assignment = RoleAssignment.find_by(
       user: associate,
       role: Role.associate,
       assigned_by: self
     )
-    
+
     assignment&.destroy.present?
   end
-  
+
   # Associate methods - get all users who are associates of this manager
   def managed_associates
     return User.none unless manager? || admin?
     User.joins(:role_assignments)
         .where(role_assignments: { role: Role.associate })
   end
-  
+
   # Get all managers of this user
   def managers
     User.joins(:role_assignments)
-        .where(role_assignments: { 
+        .where(role_assignments: {
           role: Role.manager,
           assigned_by_id: RoleAssignment.where(user: self, role: Role.associate).select(:assigned_by_id)
         })
         .distinct
   end
-  
+
   # Task methods
   def pending_tasks
     tasks.pending
   end
-  
+
   def tasks_for_today
     tasks.for_today
   end
-  
+
   def overdue_tasks
     tasks.overdue
   end
-  
+
   # Notification methods
   def unread_notifications_count
     notifications.unread.count
   end
-  
+
   def recent_notifications(limit = 10)
     notifications.recent.limit(limit)
   end
-  
+
   def mark_all_notifications_as_read!
     notifications.unread.update_all(read: true)
   end
-  
+
   # Google Calendar methods
   def google_auth_configured?
     google_token.present? && google_refresh_token.present?
   end
-  
+
   def schedule_customer_followup(customer, followup_date, notes)
     return false unless google_auth_configured?
-    
+
     # Create a Google Calendar event
     calendar_service = GoogleCalendarService.new(self)
     result = calendar_service.create_customer_followup_event(customer, followup_date, notes)
-    
+
     if result[:success]
       customer.update(
         followup_date: followup_date,
@@ -256,7 +256,7 @@ class User < ApplicationRecord
         google_calendar_event_id: result[:event_id],
         google_calendar_event_link: result[:html_link]
       )
-      
+
       # Create a task for the follow-up
       Task.create!(
         user: self,
@@ -264,18 +264,18 @@ class User < ApplicationRecord
         title: "Follow up with #{customer.name}",
         description: notes,
         due_date: followup_date,
-        priority: 'Medium',
-        status: 'pending'
+        priority: "Medium",
+        status: "pending"
       )
-      
+
       true
     else
       false
     end
   end
-  
+
   # Resource access methods for role-based authorization
-  
+
   # Can user access recordings for a given user?
   def can_access_recordings_for?(target_user)
     return true if admin?
@@ -283,7 +283,7 @@ class User < ApplicationRecord
     return true if manager? && associates.include?(target_user)
     false
   end
-  
+
   # Can user access customers for a given user?
   def can_access_customers_for?(target_user)
     return true if admin?
@@ -291,37 +291,37 @@ class User < ApplicationRecord
     return true if manager? && associates.include?(target_user)
     false
   end
-  
+
   # Can user assign roles?
   def can_assign_role?(role_key)
     role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
     return false unless role
-    
+
     admin? || (highest_role && highest_role.outranks?(role))
   end
-  
+
   # Pipeline access methods
   def assigned_pipeline_ids
     assigned_pipelines.pluck(:id)
   end
-  
+
   def can_access_pipeline?(pipeline)
     return true if admin?
     assigned_pipelines.include?(pipeline)
   end
-  
+
   def accessible_deals
     return Deal.all if admin?
     Deal.for_user_pipeline(self)
   end
-  
+
   def accessible_deal_stages
     return DealStage.all if admin?
-    
+
     # If user has no pipeline assignments, return empty relation
     pipeline_ids = assigned_pipeline_ids
     return DealStage.none if pipeline_ids.empty?
-    
+
     DealStage.joins(:pipeline).where(pipelines: { id: pipeline_ids, active: true })
   end
 end

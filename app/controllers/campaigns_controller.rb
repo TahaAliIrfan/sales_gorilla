@@ -1,6 +1,6 @@
 class CampaignsController < ApplicationController
   layout "tenant"
-  before_action :set_campaign, only: [:show, :edit, :update, :destroy, :send_now, :schedule, :restart, :stop, :add_customers, :remove_customer]
+  before_action :set_campaign, only: [ :show, :edit, :update, :destroy, :send_now, :schedule, :restart, :stop, :add_customers, :remove_customer ]
 
   def index
     @campaigns = policy_scope(Campaign).order(created_at: :desc)
@@ -45,7 +45,7 @@ class CampaignsController < ApplicationController
         @campaign.add_customers(customer_ids)
       end
 
-      redirect_to @campaign, notice: 'Campaign was successfully created.'
+      redirect_to @campaign, notice: "Campaign was successfully created."
     else
       @customers = get_accessible_customers
       @customer_groups = current_user.customer_groups
@@ -86,7 +86,7 @@ class CampaignsController < ApplicationController
       end
 
       puts "=" * 80
-      redirect_to @campaign, notice: 'Campaign was successfully updated.'
+      redirect_to @campaign, notice: "Campaign was successfully updated."
     else
       puts "Campaign update FAILED"
       puts "Errors: #{@campaign.errors.full_messages}"
@@ -99,7 +99,7 @@ class CampaignsController < ApplicationController
   def destroy
     authorize @campaign
     @campaign.destroy
-    redirect_to campaigns_url, notice: 'Campaign was successfully deleted.'
+    redirect_to campaigns_url, notice: "Campaign was successfully deleted."
   end
 
   def send_now
@@ -107,7 +107,7 @@ class CampaignsController < ApplicationController
 
     begin
       @campaign.execute_now!
-      redirect_to @campaign, notice: 'Campaign is being sent. Check the executions tab for progress.'
+      redirect_to @campaign, notice: "Campaign is being sent. Check the executions tab for progress."
     rescue StandardError => e
       redirect_to @campaign, alert: "Failed to send campaign: #{e.message}"
     end
@@ -118,7 +118,7 @@ class CampaignsController < ApplicationController
 
     begin
       if @campaign.scheduled_at.blank?
-        redirect_to @campaign, alert: 'Please set a scheduled time before scheduling the campaign.'
+        redirect_to @campaign, alert: "Please set a scheduled time before scheduling the campaign."
       elsif @campaign.scheduled_at <= Time.current
         redirect_to @campaign, alert: 'Scheduled time must be in the future. Use "Send Now" for immediate sending.'
       else
@@ -135,7 +135,7 @@ class CampaignsController < ApplicationController
 
     begin
       @campaign.restart!
-      redirect_to edit_campaign_path(@campaign), notice: 'Campaign restarted! Update the message and scheduled time, then save to re-send.'
+      redirect_to edit_campaign_path(@campaign), notice: "Campaign restarted! Update the message and scheduled time, then save to re-send."
     rescue StandardError => e
       redirect_to @campaign, alert: "Failed to restart campaign: #{e.message}"
     end
@@ -146,7 +146,7 @@ class CampaignsController < ApplicationController
 
     begin
       @campaign.stop!
-      redirect_to @campaign, notice: 'Campaign stopped! All pending messages have been cancelled.'
+      redirect_to @campaign, notice: "Campaign stopped! All pending messages have been cancelled."
     rescue StandardError => e
       redirect_to @campaign, alert: "Failed to stop campaign: #{e.message}"
     end
@@ -156,7 +156,7 @@ class CampaignsController < ApplicationController
     authorize @campaign
 
     if params[:customer_ids].present?
-      customer_ids = params[:customer_ids].is_a?(Array) ? params[:customer_ids] : [params[:customer_ids]]
+      customer_ids = params[:customer_ids].is_a?(Array) ? params[:customer_ids] : [ params[:customer_ids] ]
       customer_ids = customer_ids.reject(&:blank?)
 
       @campaign.add_customers(customer_ids)
@@ -169,7 +169,7 @@ class CampaignsController < ApplicationController
       @campaign.add_customers(customer_ids)
       redirect_to @campaign, notice: "#{customer_ids.count} customer(s) from group '#{group.name}' added to campaign."
     else
-      redirect_to @campaign, alert: 'No customers selected.'
+      redirect_to @campaign, alert: "No customers selected."
     end
   end
 
@@ -179,9 +179,9 @@ class CampaignsController < ApplicationController
 
     if execution
       execution.destroy
-      redirect_to @campaign, notice: 'Customer removed from campaign.'
+      redirect_to @campaign, notice: "Customer removed from campaign."
     else
-      redirect_to @campaign, alert: 'Customer not found in campaign.'
+      redirect_to @campaign, alert: "Customer not found in campaign."
     end
   end
 
@@ -202,7 +202,7 @@ class CampaignsController < ApplicationController
     elsif current_user.manager?
       # Managers can see their own customers and their associates' customers
       associate_ids = current_user.associates.pluck(:id)
-      Customer.where(user_id: [current_user.id] + associate_ids).order(:name)
+      Customer.where(user_id: [ current_user.id ] + associate_ids).order(:name)
     else
       # Associates can only see their own customers
       current_user.customers.order(:name)

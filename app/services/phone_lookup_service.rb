@@ -20,24 +20,24 @@ class PhoneLookupService
   def initialize
     sid   = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
     token = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-    raise 'Twilio credentials not configured' unless sid && token
+    raise "Twilio credentials not configured" unless sid && token
     @client = Twilio::REST::Client.new(sid, token)
   end
 
   # Calls Twilio Lookup for `phone` and writes the result onto the customer
   # record. Skips the call if we've checked recently unless `force: true`.
   def check!(customer, force: false)
-    return { success: false, error: 'Customer has no phone' } if customer.phone.blank?
+    return { success: false, error: "Customer has no phone" } if customer.phone.blank?
     if !force && fresh?(customer)
       return { success: true, cached: true, line_type: customer.phone_line_type, carrier: customer.phone_carrier }
     end
 
     result = @client.lookups.v2.phone_numbers(customer.phone)
-                                .fetch(fields: 'line_type_intelligence')
+                                .fetch(fields: "line_type_intelligence")
 
     customer.update(
-      phone_line_type:         result.line_type_intelligence&.dig('type'),
-      phone_carrier:           result.line_type_intelligence&.dig('carrier_name'),
+      phone_line_type:         result.line_type_intelligence&.dig("type"),
+      phone_carrier:           result.line_type_intelligence&.dig("carrier_name"),
       phone_country_code:      result.country_code,
       phone_lookup_checked_at: Time.current
     )

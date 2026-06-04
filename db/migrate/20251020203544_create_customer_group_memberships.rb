@@ -7,6 +7,6 @@ class CreateCustomerGroupMemberships < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :customer_group_memberships, [:customer_group_id, :customer_id], unique: true, name: 'index_customer_group_memberships_unique'
+    add_index :customer_group_memberships, [ :customer_group_id, :customer_id ], unique: true, name: 'index_customer_group_memberships_unique'
   end
 end

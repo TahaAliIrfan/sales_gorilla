@@ -11,13 +11,13 @@
 #   - Outside that window an approved Content template (content_sid) is required.
 class TwilioWhatsappService
   # Twilio WhatsApp sender (hardcoded for now).
-  FROM = 'whatsapp:+13022067878'.freeze
+  FROM = "whatsapp:+13022067878".freeze
 
   def initialize
     account_sid = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
     auth_token  = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
 
-    raise 'Twilio credentials not configured' unless account_sid && auth_token
+    raise "Twilio credentials not configured" unless account_sid && auth_token
 
     @client      = Twilio::REST::Client.new(account_sid, auth_token)
     @status_callback = "#{app_url}/twilio/whatsapp/status"
@@ -26,8 +26,8 @@ class TwilioWhatsappService
   # Send a freeform text message. Returns a result hash; on success includes the
   # Twilio message SID and status.
   def send_text(to_phone:, body:)
-    return { success: false, error: 'Phone number is missing' } if to_phone.blank?
-    return { success: false, error: 'Message cannot be blank' }  if body.blank?
+    return { success: false, error: "Phone number is missing" } if to_phone.blank?
+    return { success: false, error: "Message cannot be blank" }  if body.blank?
 
     message = @client.messages.create(
       from: FROM,
@@ -49,8 +49,8 @@ class TwilioWhatsappService
   # the whole reason templates exist. `content_variables` is a hash keyed by
   # variable position ("1", "2", ...) that Twilio substitutes into the template.
   def send_template(to_phone:, content_sid:, content_variables: {})
-    return { success: false, error: 'Phone number is missing' } if to_phone.blank?
-    return { success: false, error: 'Template is missing' }    if content_sid.blank?
+    return { success: false, error: "Phone number is missing" } if to_phone.blank?
+    return { success: false, error: "Template is missing" }    if content_sid.blank?
 
     params = {
       from: FROM,
@@ -106,13 +106,13 @@ class TwilioWhatsappService
   # fetchable URL — Twilio downloads the file from it. `body` is an optional
   # caption. Same 24h-window rules apply as send_text.
   def send_media(to_phone:, media_url:, body: nil)
-    return { success: false, error: 'Phone number is missing' } if to_phone.blank?
-    return { success: false, error: 'Media URL is missing' }    if media_url.blank?
+    return { success: false, error: "Phone number is missing" } if to_phone.blank?
+    return { success: false, error: "Media URL is missing" }    if media_url.blank?
 
     params = {
       from: FROM,
       to:   to_whatsapp(to_phone),
-      media_url: [media_url],
+      media_url: [ media_url ],
       status_callback: @status_callback
     }
     params[:body] = body if body.present?
@@ -131,19 +131,19 @@ class TwilioWhatsappService
   private
 
   def to_whatsapp(phone)
-    phone.to_s.start_with?('whatsapp:') ? phone : "whatsapp:#{phone}"
+    phone.to_s.start_with?("whatsapp:") ? phone : "whatsapp:#{phone}"
   end
 
   def twilio_error_message(error)
     # 63016: freeform message sent outside the 24-hour customer service window.
     if error.code == 63016
-      'The 24-hour reply window has closed. The customer must message first, or use an approved template.'
+      "The 24-hour reply window has closed. The customer must message first, or use an approved template."
     else
       error.message
     end
   end
 
   def app_url
-    'https://crm.tecaudex.com'
+    "https://crm.tecaudex.com"
   end
 end

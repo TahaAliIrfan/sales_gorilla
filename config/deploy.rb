@@ -3,10 +3,10 @@ lock "~> 3.19.2"
 
 set :application, "crm"
 set :repo_url, "git@github.com:tahairfan13/crm.git"
-set :user,            'ubuntu'
-set :puma_threads,    [4, 16]
+set :user,            "ubuntu"
+set :puma_threads,    [ 4, 16 ]
 set :puma_workers,    0
-set :branch,          'master'
+set :branch,          "master"
 set :passenger_restart_with_touch, true
 # Don't change these unless you know what you're doing
 set :pty,             true
@@ -18,18 +18,18 @@ set :puma_state,      "/home/#{fetch(:user)}/#{fetch(:application)}/shared/tmp/p
 set :puma_pid,        "/home/#{fetch(:user)}/#{fetch(:application)}/shared/tmp/pids/puma.pid"
 set :puma_access_log, "/home/#{fetch(:user)}/#{fetch(:application)}/shared/log/puma.error.log"
 set :puma_error_log,  "/home/#{fetch(:user)}/#{fetch(:application)}/shared/log/puma.access.log"
-set :ssh_options,     { forward_agent: true, user: fetch(:user), keys: %w(~/.ssh/id_rsa.pub) }
+set :ssh_options,     { forward_agent: true, user: fetch(:user), keys: %w[~/.ssh/id_rsa.pub] }
 set :puma_preload_app, true
 set :puma_worker_timeout, nil
 set :puma_init_active_record, true  # Change to true if using ActiveRecord
-set :linked_dirs, fetch(:linked_dirs, []).push('log', 'tmp/pids', 'tmp/cache', 'tmp/sockets', 'node_modules')
+set :linked_dirs, fetch(:linked_dirs, []).push("log", "tmp/pids", "tmp/cache", "tmp/sockets", "node_modules")
 append :linked_files, "config/master.key"
 append :linked_files, "config/database.yml"
 
 # PDF generation (Grover/Puppeteer) needs a real Chrome binary on the server.
 # Installed via `apt install google-chrome-stable`; OdooProposalHtmlPdfService reads this env var.
 set :default_env, fetch(:default_env, {}).merge(
-  'GROVER_CHROME_PATH' => '/usr/bin/google-chrome'
+  "GROVER_CHROME_PATH" => "/usr/bin/google-chrome"
 )
 # Default branch is :master
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp
@@ -66,9 +66,9 @@ set :keep_releases, 5
 set :sidekiq_config, "config/sidekiq.yml"
 set :sidekiq_roles, :app
 set :sidekiq_default_hooks, true
-set :sidekiq_pid, File.join(shared_path, 'tmp', 'pids', 'sidekiq.pid')
+set :sidekiq_pid, File.join(shared_path, "tmp", "pids", "sidekiq.pid")
 set :sidekiq_env, fetch(:rack_env, fetch(:rails_env, fetch(:stage)))
-set :sidekiq_log, File.join(shared_path, 'log', 'sidekiq.log')
+set :sidekiq_log, File.join(shared_path, "log", "sidekiq.log")
 set :sidekiq_timeout, 60
 set :sidekiq_processes, 1
 

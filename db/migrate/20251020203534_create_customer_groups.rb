@@ -8,6 +8,6 @@ class CreateCustomerGroups < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :customer_groups, [:user_id, :name]
+    add_index :customer_groups, [ :user_id, :name ]
   end
 end

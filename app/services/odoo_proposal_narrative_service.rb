@@ -1,5 +1,5 @@
-require 'net/http'
-require 'json'
+require "net/http"
+require "json"
 
 class OdooProposalNarrativeService
   SECTIONS = %w[summary rationale module_justifications next_steps].freeze
@@ -8,7 +8,7 @@ class OdooProposalNarrativeService
 
   def initialize(proposal)
     @proposal = proposal
-    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
+    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV["ANTHROPIC_API_KEY"]
     @model = "claude-sonnet-4-6"
   end
 
@@ -20,10 +20,10 @@ class OdooProposalNarrativeService
     return nil unless parsed.is_a?(Hash)
 
     {
-      'summary'               => parsed['summary'].to_s.strip,
-      'rationale'             => parsed['rationale'].to_s.strip,
-      'module_justifications' => (parsed['module_justifications'].is_a?(Hash) ? parsed['module_justifications'] : {}),
-      'next_steps'            => parsed['next_steps'].to_s.strip
+      "summary"               => parsed["summary"].to_s.strip,
+      "rationale"             => parsed["rationale"].to_s.strip,
+      "module_justifications" => (parsed["module_justifications"].is_a?(Hash) ? parsed["module_justifications"] : {}),
+      "next_steps"            => parsed["next_steps"].to_s.strip
     }
   end
 
@@ -36,8 +36,8 @@ class OdooProposalNarrativeService
     parsed = parse_json(response)
     return nil unless parsed.is_a?(Hash)
 
-    if section == 'module_justifications'
-      parsed['module_justifications'].is_a?(Hash) ? parsed['module_justifications'] : nil
+    if section == "module_justifications"
+      parsed["module_justifications"].is_a?(Hash) ? parsed["module_justifications"] : nil
     else
       parsed[section].to_s.strip.presence
     end
@@ -48,7 +48,7 @@ class OdooProposalNarrativeService
   def proposal_context
     mods = @proposal.all_module_details
     modules_text = mods.map do |m|
-      tag = m[:custom] ? ' [CUSTOM DEV]' : ''
+      tag = m[:custom] ? " [CUSTOM DEV]" : ""
       "- #{m[:key]} | #{m[:label]}#{tag} | PKR #{m[:impl_cost]} | #{m[:description]}"
     end.join("\n")
 
@@ -56,7 +56,7 @@ class OdooProposalNarrativeService
     tier_text = tier ? "#{tier[:label]} — #{tier[:specs]}, suitable for #{tier[:users]}" : "Not applicable (Online deployment, managed by Odoo)"
 
     pain = @proposal.pain_points_array
-    pain_text = pain.any? ? pain.join('; ') : 'Not stated — infer reasonable enterprise pain points for this industry & size'
+    pain_text = pain.any? ? pain.join("; ") : "Not stated — infer reasonable enterprise pain points for this industry & size"
 
     <<~CTX
       ## Client Profile
@@ -129,14 +129,14 @@ class OdooProposalNarrativeService
 
   def build_section_prompt(section)
     instruction = case section
-    when 'summary'
+    when "summary"
       'Write ONLY the executive summary (3–5 sentences). Return JSON: { "summary": "..." }'
-    when 'rationale'
+    when "rationale"
       'Write ONLY the recommendation rationale (4–6 sentences). Return JSON: { "rationale": "..." }'
-    when 'module_justifications'
+    when "module_justifications"
       keys = module_keys_list
       "Write ONLY per-module justifications. Return JSON shaped like { \"module_justifications\": { #{keys.map { |k| "\"#{k}\": \"...\"" }.join(', ')} } }. Include an entry for every key exactly: #{keys.inspect}."
-    when 'next_steps'
+    when "next_steps"
       'Write ONLY the customised next steps (4–6 steps, each on its own line in a single string, \\n-separated). Return JSON: { "next_steps": "..." }'
     end
 
@@ -152,25 +152,25 @@ class OdooProposalNarrativeService
   end
 
   def call_claude(prompt, max_tokens:)
-    uri = URI('https://api.anthropic.com/v1/messages')
+    uri = URI("https://api.anthropic.com/v1/messages")
 
     request = Net::HTTP::Post.new(uri)
-    request['Content-Type'] = 'application/json'
-    request['x-api-key'] = @api_key
-    request['anthropic-version'] = '2023-06-01'
+    request["Content-Type"] = "application/json"
+    request["x-api-key"] = @api_key
+    request["anthropic-version"] = "2023-06-01"
 
     request.body = {
       model: @model,
       max_tokens: max_tokens,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [ { role: "user", content: prompt } ]
     }.to_json
 
     response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 90) do |http|
       http.request(request)
     end
 
-    if response.code == '200'
-      JSON.parse(response.body).dig('content', 0, 'text')
+    if response.code == "200"
+      JSON.parse(response.body).dig("content", 0, "text")
     else
       Rails.logger.error("Claude API error (#{response.code}): #{response.body}")
       nil

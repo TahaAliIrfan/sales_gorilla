@@ -6,7 +6,7 @@ class CampaignPolicy < ApplicationPolicy
       elsif user.manager?
         # Managers can see their own campaigns and campaigns from their associates
         associate_ids = user.associates.pluck(:id)
-        scope.where(user_id: [user.id] + associate_ids)
+        scope.where(user_id: [ user.id ] + associate_ids)
       else
         scope.where(user: user)
       end

@@ -10,7 +10,7 @@
 #   GET    /api/v2/whatsapp_us/templates                  — list approved templates
 #   POST   /api/v2/whatsapp_us/templates/sync             — admin-only: pull from Twilio
 class Api::V2::WhatsappUsController < Api::V2::BaseController
-  before_action :set_customer, only: [:messages, :send_message, :send_template, :mark_read]
+  before_action :set_customer, only: [ :messages, :send_message, :send_template, :mark_read ]
 
   # GET /api/v2/whatsapp_us/conversations
   # Customers the caller can see who have at least one WhatsApp message,
@@ -19,23 +19,23 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   def conversations
     base = accessible_customers
              .joins(:whatsapp_messages)
-             .select('customers.*, MAX(whatsapp_messages.timestamp) AS last_message_at')
-             .group('customers.id')
-             .order('MAX(whatsapp_messages.timestamp) DESC')
+             .select("customers.*, MAX(whatsapp_messages.timestamp) AS last_message_at")
+             .group("customers.id")
+             .order("MAX(whatsapp_messages.timestamp) DESC")
 
     total = accessible_customers.joins(:whatsapp_messages).distinct.count
     scoped, pagination = paginate(base, total)
 
     render_success(
       { conversations: scoped.map { |c| conversation_summary(c) }, pagination: pagination },
-      'Conversations retrieved'
+      "Conversations retrieved"
     )
   end
 
   # GET /api/v2/whatsapp_us/customers/:id/messages
   def messages
     base = @customer.whatsapp_messages.order(:timestamp, :created_at)
-    base = base.where('id > ?', params[:after_id].to_i) if params[:after_id].present?
+    base = base.where("id > ?", params[:after_id].to_i) if params[:after_id].present?
     total = base.count
     scoped, pagination = paginate(base, total)
 
@@ -45,7 +45,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
       last_inbound_at: @customer.whatsapp_us_last_inbound_at&.iso8601,
       messages: scoped.map { |m| serialize_message(m) },
       pagination: pagination
-    }, 'Messages retrieved')
+    }, "Messages retrieved")
   end
 
   # POST /api/v2/whatsapp_us/customers/:id/send
@@ -53,12 +53,12 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   def send_message
     body = params[:body].to_s.strip
     file = params[:file]
-    return render_error('Customer has no phone number', nil, :unprocessable_entity) if @customer.phone.blank?
-    return render_error('Message cannot be blank', nil, :unprocessable_entity) if body.blank? && file.blank?
+    return render_error("Customer has no phone number", nil, :unprocessable_entity) if @customer.phone.blank?
+    return render_error("Message cannot be blank", nil, :unprocessable_entity) if body.blank? && file.blank?
 
     unless @customer.whatsapp_us_window_open?
       return render_error(
-        'The 24-hour reply window has closed. The customer must message first, or use an approved template.',
+        "The 24-hour reply window has closed. The customer must message first, or use an approved template.",
         nil, :forbidden
       )
     end
@@ -75,15 +75,15 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   #            WhatsappMediaController (`https://crm.tecaudex.com/wa/media/{{1}}`).
   def send_template
     template = WhatsappTemplate.approved.find_by(content_sid: params[:content_sid])
-    return render_error('Template not found or not approved', nil, :not_found) unless template
-    return render_error('Customer has no phone number', nil, :unprocessable_entity) if @customer.phone.blank?
+    return render_error("Template not found or not approved", nil, :not_found) unless template
+    return render_error("Customer has no phone number", nil, :unprocessable_entity) if @customer.phone.blank?
 
     variables  = sanitize_variables(template, params[:variables])
     file       = params[:file]
     media_blob = nil
 
     if template.requires_media_upload?
-      return render_error('This template requires a file attachment', nil, :unprocessable_entity) if file.blank?
+      return render_error("This template requires a file attachment", nil, :unprocessable_entity) if file.blank?
 
       validation = validate_media(file)
       return render_error(validation[:error], nil, :unprocessable_entity) unless validation[:valid]
@@ -106,7 +106,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     unless result[:success]
       media_blob&.purge_later
-      return render_error(result[:error] || 'Failed to send template', nil, :unprocessable_entity)
+      return render_error(result[:error] || "Failed to send template", nil, :unprocessable_entity)
     end
 
     message = persist_outbound(
@@ -119,7 +119,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)
-    render_success({ message: serialize_message(message) }, 'Template sent')
+    render_success({ message: serialize_message(message) }, "Template sent")
   end
 
   # POST /api/v2/whatsapp_us/customers/:customer_id/mark_read
@@ -129,22 +129,22 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   # If neither is given, marks every inbound unread for this customer.
   # Returns { marked, remaining_unread }.
   def mark_read
-    scope = @customer.whatsapp_messages.where(direction: 'inbound', status: 'received')
+    scope = @customer.whatsapp_messages.where(direction: "inbound", status: "received")
 
     if params[:up_to_message_id].present?
-      scope = scope.where('id <= ?', params[:up_to_message_id].to_i)
+      scope = scope.where("id <= ?", params[:up_to_message_id].to_i)
     elsif params[:up_to_timestamp].present?
       cutoff = Time.iso8601(params[:up_to_timestamp]) rescue nil
-      return render_error('Invalid up_to_timestamp', nil, :unprocessable_entity) unless cutoff
-      scope = scope.where('timestamp <= ?', cutoff)
+      return render_error("Invalid up_to_timestamp", nil, :unprocessable_entity) unless cutoff
+      scope = scope.where("timestamp <= ?", cutoff)
     end
 
-    marked = scope.update_all(status: 'read', updated_at: Time.current)
+    marked = scope.update_all(status: "read", updated_at: Time.current)
     remaining = @customer.whatsapp_messages
-                          .where(direction: 'inbound', status: 'received')
+                          .where(direction: "inbound", status: "received")
                           .count
 
-    render_success({ marked: marked, remaining_unread: remaining }, 'Marked as read')
+    render_success({ marked: marked, remaining_unread: remaining }, "Marked as read")
   end
 
   # GET /api/v2/whatsapp_us/latest?after_id=N
@@ -158,27 +158,27 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     visible_customer_ids = accessible_customers.select(:id)
 
     base = WhatsappMessage.where(customer_id: visible_customer_ids).order(:id)
-    base = base.where('whatsapp_messages.id > ?', after_id) if after_id.positive?
+    base = base.where("whatsapp_messages.id > ?", after_id) if after_id.positive?
     base = base.limit(50) unless after_id.positive?
 
     render_success({
       messages:  base.map { |m| serialize_message(m) },
       latest_id: base.last&.id || after_id
-    }, 'Latest messages retrieved')
+    }, "Latest messages retrieved")
   end
 
   # GET /api/v2/whatsapp_us/templates
   def templates
     list = WhatsappTemplate.approved.ordered.map { |t| serialize_template(t) }
-    render_success({ templates: list }, 'Templates retrieved')
+    render_success({ templates: list }, "Templates retrieved")
   end
 
   # POST /api/v2/whatsapp_us/templates/sync — admin only
   def sync_templates
-    return render_error('Admins only', nil, :forbidden) unless current_user_admin?
+    return render_error("Admins only", nil, :forbidden) unless current_user_admin?
 
     result = TwilioWhatsappTemplatesService.new.sync!
-    return render_error(result[:error] || 'Sync failed', nil, :unprocessable_entity) unless result[:success]
+    return render_error(result[:error] || "Sync failed", nil, :unprocessable_entity) unless result[:success]
 
     render_success(
       {
@@ -186,7 +186,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
         skipped: result[:skipped],
         templates: WhatsappTemplate.approved.ordered.map { |t| serialize_template(t) }
       },
-      'Templates synced'
+      "Templates synced"
     )
   end
 
@@ -205,13 +205,13 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   # Returns [scoped_relation, pagination_meta_or_nil].
   def paginate(relation, total)
     per_page = params[:per_page].to_i
-    return [relation, nil] unless per_page.positive?
+    return [ relation, nil ] unless per_page.positive?
 
-    page  = [params[:page].to_i, 1].max
+    page  = [ params[:page].to_i, 1 ].max
     pages = (total.to_f / per_page).ceil
     scoped = relation.limit(per_page).offset((page - 1) * per_page)
 
-    [scoped, { page: page, per_page: per_page, total: total, total_pages: pages }]
+    [ scoped, { page: page, per_page: per_page, total: total, total_pages: pages } ]
   end
 
   # Role-based scope mirroring Api::V2::WhatsappController#accessible_customers
@@ -220,10 +220,10 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     return Customer.none unless current_user
 
     case current_user.highest_role&.key
-    when 'admin'
+    when "admin"
       Customer.all
-    when 'manager'
-      user_ids = [current_user.id] + current_user.associates.pluck(:id)
+    when "manager"
+      user_ids = [ current_user.id ] + current_user.associates.pluck(:id)
       Customer.where(user_id: user_ids)
     else
       current_user.customers
@@ -237,12 +237,12 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
   def send_text_via_twilio(body)
     result = TwilioWhatsappService.new.send_text(to_phone: @customer.phone, body: body)
-    return render_error(result[:error] || 'Failed to send message', nil, :unprocessable_entity) unless result[:success]
+    return render_error(result[:error] || "Failed to send message", nil, :unprocessable_entity) unless result[:success]
 
     message = persist_outbound(sid: result[:sid], status: result[:status], body: body)
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)
-    render_success({ message: serialize_message(message) }, 'Message sent')
+    render_success({ message: serialize_message(message) }, "Message sent")
   end
 
   def send_media_via_twilio(file, caption)
@@ -264,7 +264,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     unless result[:success]
       blob.purge_later
-      return render_error(result[:error] || 'Failed to send file', nil, :unprocessable_entity)
+      return render_error(result[:error] || "Failed to send file", nil, :unprocessable_entity)
     end
 
     message = persist_outbound(
@@ -276,12 +276,12 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)
-    render_success({ message: serialize_message(message) }, 'Message sent')
+    render_success({ message: serialize_message(message) }, "Message sent")
   end
 
   def persist_outbound(sid:, status:, body:, extra: {})
     metadata = {
-      provider: 'twilio',
+      provider: "twilio",
       to:       "whatsapp:#{@customer.phone}",
       from:     TwilioWhatsappService::FROM,
       sent_by_user_id: current_user&.id
@@ -291,8 +291,8 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
       message_id: sid,
       remote_id:  @customer.phone,
       body:       body,
-      direction:  'outbound',
-      status:     status || 'queued',
+      direction:  "outbound",
+      status:     status || "queued",
       timestamp:  Time.current,
       metadata:   metadata
     )
@@ -322,7 +322,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   MAX_MEDIA_BYTES = 16.megabytes
 
   def validate_media(file)
-    return { valid: false, error: 'No file provided' } unless file.respond_to?(:content_type)
+    return { valid: false, error: "No file provided" } unless file.respond_to?(:content_type)
 
     bare = bare_content_type(file.content_type)
     unless ALLOWED_MEDIA_TYPES.include?(bare)
@@ -338,7 +338,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   # Strip parameters like "audio/mp4; codecs=mp4a.40.2" → "audio/mp4" so the
   # allow-list comparison isn't defeated by a benign codec hint.
   def bare_content_type(ct)
-    ct.to_s.split(';').first.to_s.strip.downcase
+    ct.to_s.split(";").first.to_s.strip.downcase
   end
 
   # ---- serializers --------------------------------------------------------
@@ -350,7 +350,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
       last_message:    last && serialize_message(last),
       last_message_at: (last&.timestamp || last&.created_at)&.iso8601,
       window_open:     customer.whatsapp_us_window_open?,
-      unread:          customer.whatsapp_messages.where(direction: 'inbound').where(status: 'received').count
+      unread:          customer.whatsapp_messages.where(direction: "inbound").where(status: "received").count
     }
   end
 
@@ -376,8 +376,8 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
       media_url:        attached ? Rails.application.routes.url_helpers.rails_blob_url(attached, only_path: false, host: host_for_blob) : nil,
       media_filename:   attached&.filename.to_s.presence,
       media_content_type: attached&.content_type,
-      template_sid:     message.metadata&.dig('template_sid'),
-      template_name:    message.metadata&.dig('template_name')
+      template_sid:     message.metadata&.dig("template_sid"),
+      template_name:    message.metadata&.dig("template_name")
     }
   end
 

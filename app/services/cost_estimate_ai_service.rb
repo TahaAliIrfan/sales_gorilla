@@ -1,11 +1,11 @@
-require 'net/http'
-require 'json'
+require "net/http"
+require "json"
 
 class CostEstimateAiService
   attr_reader :api_key, :model
 
   def initialize
-    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
+    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV["ANTHROPIC_API_KEY"]
     @model = "claude-sonnet-4-20250514"
 
     if @api_key.blank?
@@ -33,8 +33,8 @@ class CostEstimateAiService
     return nil if app_types.empty?
 
     # Determine if we need web or mobile mockups
-    needs_web = app_types.any? { |type| type.downcase.include?('web') }
-    needs_mobile = app_types.any? { |type| type.downcase.include?('mobile') || type.downcase.include?('ios') || type.downcase.include?('android') }
+    needs_web = app_types.any? { |type| type.downcase.include?("web") }
+    needs_mobile = app_types.any? { |type| type.downcase.include?("mobile") || type.downcase.include?("ios") || type.downcase.include?("android") }
 
     mockups_html = ""
 
@@ -54,7 +54,7 @@ class CostEstimateAiService
   def build_analysis_prompt(cost_estimate)
     app_types = cost_estimate.application_types_array.join(", ")
     features = cost_estimate.proposed_features_array.presence || cost_estimate.features
-    features_text = features.map { |f| f['name'] || f[:name] }.join(", ")
+    features_text = features.map { |f| f["name"] || f[:name] }.join(", ")
 
     <<~PROMPT
       You are an enthusiastic business development consultant and technical product analyst with a passion for encouraging innovation. Your goal is to make clients EXCITED about building their product by highlighting opportunities, market potential, and the value of their vision.
@@ -141,19 +141,19 @@ class CostEstimateAiService
     return nil if @api_key.blank?
 
     begin
-      uri = URI('https://api.anthropic.com/v1/messages')
+      uri = URI("https://api.anthropic.com/v1/messages")
 
       request = Net::HTTP::Post.new(uri)
-      request['Content-Type'] = 'application/json'
-      request['x-api-key'] = @api_key
-      request['anthropic-version'] = '2023-06-01'
+      request["Content-Type"] = "application/json"
+      request["x-api-key"] = @api_key
+      request["anthropic-version"] = "2023-06-01"
 
       request.body = {
         model: @model,
         max_tokens: max_tokens,
         messages: [
           {
-            role: 'user',
+            role: "user",
             content: prompt
           }
         ]
@@ -163,18 +163,18 @@ class CostEstimateAiService
         http.request(request)
       end
 
-      if response.code == '200'
+      if response.code == "200"
         parsed = JSON.parse(response.body)
-        text = parsed.dig('content', 0, 'text')
-        return text
+        text = parsed.dig("content", 0, "text")
+        text
       else
         Rails.logger.error("Anthropic API error: #{response.code} - #{response.body}")
-        return nil
+        nil
       end
     rescue => e
       Rails.logger.error("Claude analysis error: #{e.message}")
       Rails.logger.error(e.backtrace.join("\n"))
-      return nil
+      nil
     end
   end
 
@@ -193,7 +193,7 @@ class CostEstimateAiService
 
   def generate_web_mockup_html(cost_estimate, app_name)
     features = cost_estimate.proposed_features_array.presence || cost_estimate.features
-    feature_names = features.first(4).map { |f| f['name'] || f[:name] }
+    feature_names = features.first(4).map { |f| f["name"] || f[:name] }
 
     <<~HTML
       <div class="mockup-container" style="margin: 40px 0; page-break-inside: avoid;">
@@ -245,7 +245,7 @@ class CostEstimateAiService
 
   def generate_mobile_mockup_html(cost_estimate, app_name)
     features = cost_estimate.proposed_features_array.presence || cost_estimate.features
-    feature_names = features.first(3).map { |f| f['name'] || f[:name] }
+    feature_names = features.first(3).map { |f| f["name"] || f[:name] }
 
     <<~HTML
       <div class="mockup-container" style="margin: 40px 0; page-break-inside: avoid;">

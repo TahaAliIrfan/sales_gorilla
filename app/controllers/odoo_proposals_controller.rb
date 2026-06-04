@@ -1,7 +1,7 @@
 class OdooProposalsController < ApplicationController
   layout "tenant"
   before_action :require_login
-  before_action :set_proposal, only: [:show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative]
+  before_action :set_proposal, only: [ :show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative ]
 
   def index
     @proposals = current_user.odoo_proposals.includes(:customer).order(created_at: :desc)
@@ -23,9 +23,9 @@ class OdooProposalsController < ApplicationController
       flash_key = status == :ok ? :notice : :alert
       message =
         case status
-        when :ok     then 'Proposal saved and Claude narrative generated.'
-        when :no_key then 'Proposal saved. AI narrative skipped — Anthropic API key not configured.'
-        else              'Proposal saved. AI narrative failed to generate — open the proposal and click Generate to retry.'
+        when :ok     then "Proposal saved and Claude narrative generated."
+        when :no_key then "Proposal saved. AI narrative skipped — Anthropic API key not configured."
+        else              "Proposal saved. AI narrative failed to generate — open the proposal and click Generate to retry."
         end
       redirect_to odoo_proposal_path(@proposal), flash_key => message
     else
@@ -49,9 +49,9 @@ class OdooProposalsController < ApplicationController
       flash_key = status == :ok ? :notice : :alert
       message =
         case status
-        when :ok     then 'Proposal updated and Claude narrative regenerated.'
-        when :no_key then 'Proposal updated. AI narrative skipped — Anthropic API key not configured.'
-        else              'Proposal updated. AI narrative failed to regenerate — click Regenerate on the proposal to retry.'
+        when :ok     then "Proposal updated and Claude narrative regenerated."
+        when :no_key then "Proposal updated. AI narrative skipped — Anthropic API key not configured."
+        else              "Proposal updated. AI narrative failed to regenerate — click Regenerate on the proposal to retry."
         end
       redirect_to odoo_proposal_path(@proposal), flash_key => message
     else
@@ -68,7 +68,7 @@ class OdooProposalsController < ApplicationController
     file  = params[:file]
 
     if text.blank? && file.blank?
-      return render json: { error: 'Provide text or upload a file.' }, status: :unprocessable_entity
+      return render json: { error: "Provide text or upload a file." }, status: :unprocessable_entity
     end
 
     service = OdooProposalDetectionService.new(text: text, file: file)
@@ -77,7 +77,7 @@ class OdooProposalsController < ApplicationController
     if result
       render json: result
     else
-      render json: { error: service.error || 'AI analysis failed. Try again.' }, status: :unprocessable_entity
+      render json: { error: service.error || "AI analysis failed. Try again." }, status: :unprocessable_entity
     end
   end
 
@@ -86,19 +86,19 @@ class OdooProposalsController < ApplicationController
 
   def destroy
     @proposal.destroy
-    redirect_to odoo_proposals_path, notice: 'Proposal deleted.'
+    redirect_to odoo_proposals_path, notice: "Proposal deleted."
   end
 
   def download_pdf
     pdf_bytes = OdooProposalHtmlPdfService.new(@proposal).generate
 
-    client_name = @proposal.display_name.gsub(/[^a-zA-Z0-9\s]/, '').strip.gsub(/\s+/, '_')
+    client_name = @proposal.display_name.gsub(/[^a-zA-Z0-9\s]/, "").strip.gsub(/\s+/, "_")
     filename = "Odoo_Proposal_#{client_name}_#{Date.current.strftime('%Y%m%d')}.pdf"
 
     send_data pdf_bytes,
       filename: filename,
-      type: 'application/pdf',
-      disposition: 'attachment'
+      type: "application/pdf",
+      disposition: "attachment"
   end
 
   # AJAX endpoint for live cost calculation
@@ -110,7 +110,7 @@ class OdooProposalsController < ApplicationController
     all_mods = OdooProposal::MODULES.values.flatten
     impl_fee = modules.sum { |k| all_mods.find { |m| m[:key] == k }&.dig(:impl_cost).to_i }
 
-    hosting = if deployment == 'online'
+    hosting = if deployment == "online"
       0
     else
       OdooProposal::HOSTING_TIERS[tier]&.dig(:annual_pkr).to_i
@@ -129,16 +129,16 @@ class OdooProposalsController < ApplicationController
 
     if result
       @proposal.update(
-        claude_summary: result['summary'],
-        claude_rationale: result['rationale'],
-        claude_module_justifications: result['module_justifications'],
-        claude_next_steps: result['next_steps'],
+        claude_summary: result["summary"],
+        claude_rationale: result["rationale"],
+        claude_module_justifications: result["module_justifications"],
+        claude_next_steps: result["next_steps"],
         narrative_generated_at: Time.current
       )
-      redirect_to odoo_proposal_path(@proposal), notice: 'AI narrative generated.'
+      redirect_to odoo_proposal_path(@proposal), notice: "AI narrative generated."
     else
       redirect_to odoo_proposal_path(@proposal),
-        alert: 'Could not generate narrative. Check the Anthropic API key and try again.'
+        alert: "Could not generate narrative. Check the Anthropic API key and try again."
     end
   end
 
@@ -146,22 +146,22 @@ class OdooProposalsController < ApplicationController
   def regenerate_section
     section = params[:section].to_s
     unless OdooProposalNarrativeService::SECTIONS.include?(section)
-      redirect_to odoo_proposal_path(@proposal), alert: 'Unknown section.' and return
+      redirect_to odoo_proposal_path(@proposal), alert: "Unknown section." and return
     end
 
     result = OdooProposalNarrativeService.new(@proposal).regenerate_section(section)
 
     if result
       column = case section
-      when 'summary'               then :claude_summary
-      when 'rationale'             then :claude_rationale
-      when 'module_justifications' then :claude_module_justifications
-      when 'next_steps'            then :claude_next_steps
+      when "summary"               then :claude_summary
+      when "rationale"             then :claude_rationale
+      when "module_justifications" then :claude_module_justifications
+      when "next_steps"            then :claude_next_steps
       end
       @proposal.update(column => result, narrative_generated_at: Time.current)
       redirect_to odoo_proposal_path(@proposal), notice: "#{section.humanize} regenerated."
     else
-      redirect_to odoo_proposal_path(@proposal), alert: 'Regeneration failed. Try again.'
+      redirect_to odoo_proposal_path(@proposal), alert: "Regeneration failed. Try again."
     end
   end
 
@@ -174,26 +174,26 @@ class OdooProposalsController < ApplicationController
     permitted[:claude_module_justifications] = justifications.to_unsafe_h if justifications.respond_to?(:to_unsafe_h)
 
     if @proposal.update(permitted)
-      redirect_to odoo_proposal_path(@proposal), notice: 'Narrative saved.'
+      redirect_to odoo_proposal_path(@proposal), notice: "Narrative saved."
     else
-      redirect_to odoo_proposal_path(@proposal), alert: 'Could not save narrative.'
+      redirect_to odoo_proposal_path(@proposal), alert: "Could not save narrative."
     end
   end
 
   private
 
   def generate_narrative_for(proposal)
-    api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
+    api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV["ANTHROPIC_API_KEY"]
     return :no_key if api_key.blank?
 
     result = OdooProposalNarrativeService.new(proposal).generate_all
     return :failed unless result
 
     proposal.update(
-      claude_summary: result['summary'],
-      claude_rationale: result['rationale'],
-      claude_module_justifications: result['module_justifications'],
-      claude_next_steps: result['next_steps'],
+      claude_summary: result["summary"],
+      claude_rationale: result["rationale"],
+      claude_module_justifications: result["module_justifications"],
+      claude_next_steps: result["next_steps"],
       narrative_generated_at: Time.current
     )
     :ok
@@ -207,7 +207,7 @@ class OdooProposalsController < ApplicationController
     if current_user.admin?
       Customer.order(:name)
     elsif current_user.manager?
-      associate_ids = current_user.associates.pluck(:id) + [current_user.id]
+      associate_ids = current_user.associates.pluck(:id) + [ current_user.id ]
       Customer.where(user_id: associate_ids).order(:name)
     else
       current_user.customers.order(:name)
@@ -235,15 +235,15 @@ class OdooProposalsController < ApplicationController
     entries.filter_map do |entry|
       h = entry.respond_to?(:to_unsafe_h) ? entry.to_unsafe_h : entry
       next nil unless h.is_a?(Hash)
-      label = h['label'].to_s.strip
+      label = h["label"].to_s.strip
       next nil if label.empty?
       record = {
-        'label'       => label,
-        'description' => h['description'].to_s.strip,
-        'impl_cost'   => h['impl_cost'].to_i
+        "label"       => label,
+        "description" => h["description"].to_s.strip,
+        "impl_cost"   => h["impl_cost"].to_i
       }
-      hours = h['hours'].to_i
-      record['hours'] = hours if hours.positive?
+      hours = h["hours"].to_i
+      record["hours"] = hours if hours.positive?
       record
     end
   end

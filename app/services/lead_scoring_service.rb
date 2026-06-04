@@ -10,9 +10,9 @@ class LeadScoringService
       base_score = response["total_score"]
       call_bonus = calculate_historical_call_bonus
       ai_analysis_bonus = calculate_historical_ai_analysis_bonus
-      
-      final_score = [base_score + call_bonus + ai_analysis_bonus, 100].min
-      
+
+      final_score = [ base_score + call_bonus + ai_analysis_bonus, 100 ].min
+
       @customer.update(lead_score: final_score,
                        geographic_score: response["location_score"] + response["name_score"],
                        description_score: response["idea_description_score"])
@@ -23,8 +23,8 @@ class LeadScoringService
 
   def calculate_historical_call_bonus
     # Count successful calls (duration >= 90 seconds)
-    successful_calls = @customer.recordings.where('duration >= ?', 150).count
-    
+    successful_calls = @customer.recordings.where("duration >= ?", 150).count
+
     # Each successful call adds 10 points
     successful_calls * 10
   end
@@ -33,11 +33,11 @@ class LeadScoringService
     # Get all AI analyses for this customer through recordings
     ai_analyses = AiAnalysis.joins(:recording)
                            .where(recordings: { customer: @customer })
-                           .where('interest_score >= ?', 3)
-    
+                           .where("interest_score >= ?", 3)
+
     total_bonus = 0
     base_score_for_percentage = @customer.lead_score || 0
-    
+
     ai_analyses.each do |analysis|
       case analysis.interest_score
       when 3
@@ -47,7 +47,7 @@ class LeadScoringService
         total_bonus += (base_score_for_percentage * 0.30).round
       end
     end
-    
+
     total_bonus
   end
 
@@ -65,17 +65,17 @@ class LeadScoringService
   end
 
   def analyze_with_deepseek(customer)
-    require 'net/http'
-    require 'json'
+    require "net/http"
+    require "json"
 
-    api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY) || ENV['DEEPSEEK_API_KEY']
+    api_key = Rails.application.credentials.dig(:DEEPSEEK_API_KEY) || ENV["DEEPSEEK_API_KEY"]
     return nil unless api_key
 
     country_name = if customer.customer_location.present?
                      customer.customer_location.country_name
-                   else
+    else
                      customer.country
-                   end
+    end
 
     prompt = build_ai_prompt(customer.idea_description, country_name, customer.name, customer.lead_source, customer.preferred_calling_time)
 
@@ -85,8 +85,8 @@ class LeadScoringService
     http.use_ssl = true
 
     request = Net::HTTP::Post.new(uri.path, {
-      'Content-Type' => 'application/json',
-      'Authorization' => "Bearer #{api_key}"
+      "Content-Type" => "application/json",
+      "Authorization" => "Bearer #{api_key}"
     })
 
     request.body = {
@@ -101,9 +101,9 @@ class LeadScoringService
 
     response = http.request(request)
 
-    if response.code == '200'
+    if response.code == "200"
       data = JSON.parse(response.body)
-      content = data.dig('choices', 0, 'message', 'content')
+      content = data.dig("choices", 0, "message", "content")
       extract_json_from_response(content)
     else
       Rails.logger.error("DeepSeek API error: #{response.code} - #{response.body}")

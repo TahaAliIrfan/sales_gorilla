@@ -11,7 +11,7 @@ class CreateUserKpiRecords < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :user_kpi_records, [:user_id, :record_date], unique: true
+    add_index :user_kpi_records, [ :user_id, :record_date ], unique: true
     add_index :user_kpi_records, :record_date
   end
 end

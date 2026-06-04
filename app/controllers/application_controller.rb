@@ -45,7 +45,7 @@ class ApplicationController < ActionController::Base
   end
 
   def set_tasks_notification_counts
-    @pending_tasks_count = Task.where(user_id: current_user.id, status: 'pending').count
+    @pending_tasks_count = Task.where(user_id: current_user.id, status: "pending").count
 
     @urgent_tasks_count = Task.where(user_id: current_user.id)
                               .where("(status = 'pending' AND due_date < ?) OR (status = 'pending' AND priority = 'high')",
@@ -69,7 +69,7 @@ class ApplicationController < ActionController::Base
     return @current_membership if defined?(@current_membership)
     @current_membership = if current_user && current_organization
                             current_user.membership_for(current_organization)
-                          end
+    end
   end
 
   def pundit_user

@@ -1,6 +1,6 @@
 class CustomerEmailFetchWorker
   include Sidekiq::Worker
-  sidekiq_options retry: 2, queue: 'emails'
+  sidekiq_options retry: 2, queue: "emails"
 
   SYNC_COOLDOWN = 5.minutes
 

@@ -55,8 +55,8 @@ class WhatsappUsChannel < ApplicationCable::Channel
   def find_accessible_customer(id)
     scope =
       case current_user.highest_role&.key
-      when 'admin'   then Customer.all
-      when 'manager' then Customer.where(user_id: [current_user.id] + current_user.associates.pluck(:id))
+      when "admin"   then Customer.all
+      when "manager" then Customer.where(user_id: [ current_user.id ] + current_user.associates.pluck(:id))
       else                current_user.customers
       end
     scope.find_by(id: id)

@@ -21,12 +21,12 @@ module ApplicationHelper
   # wash + bright text; resting items are muted, hover lifts toward white.
   def nav_link(label, path, icon:, active: nil)
     active = current_page?(path) if active.nil?
-    classes = ["group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition"]
+    classes = [ "group relative flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition" ]
     classes << (active ? "bg-[var(--color-line-2)] text-ink" : "text-ink-soft hover:bg-[var(--color-line)] hover:text-ink")
     link_to path, class: classes.join(" ") do
       rule = active ? content_tag(:span, "", class: "absolute left-0 top-2 bottom-2 w-[3px] rounded-full",
                                     style: "background: var(--brand-accent, var(--color-accent))") : "".html_safe
-      safe_join([rule, nav_icon(icon), content_tag(:span, label)])
+      safe_join([ rule, nav_icon(icon), content_tag(:span, label) ])
     end
   end
 
@@ -82,27 +82,27 @@ module ApplicationHelper
 
   def format_activity_action(action)
     case action
-    when 'created' then 'Deal Created'
-    when 'updated' then 'Deal Updated'
-    when 'stage_changed' then 'Stage Changed'
-    when 'user_assigned' then 'User Assigned'
-    when 'marked_won' then 'Marked as Won'
-    when 'marked_lost' then 'Marked as Lost'
-    when 'deleted' then 'Deal Deleted'
+    when "created" then "Deal Created"
+    when "updated" then "Deal Updated"
+    when "stage_changed" then "Stage Changed"
+    when "user_assigned" then "User Assigned"
+    when "marked_won" then "Marked as Won"
+    when "marked_lost" then "Marked as Lost"
+    when "deleted" then "Deal Deleted"
     else action.humanize
     end
   end
-  
+
   def activity_color_class(action)
     case action
-    when 'created' then 'bg-blue-500'
-    when 'updated' then 'bg-yellow-500'
-    when 'stage_changed' then 'bg-purple-500'
-    when 'user_assigned' then 'bg-indigo-500'
-    when 'marked_won' then 'bg-green-500'
-    when 'marked_lost' then 'bg-red-500'
-    when 'deleted' then 'bg-gray-500'
-    else 'bg-gray-400'
+    when "created" then "bg-blue-500"
+    when "updated" then "bg-yellow-500"
+    when "stage_changed" then "bg-purple-500"
+    when "user_assigned" then "bg-indigo-500"
+    when "marked_won" then "bg-green-500"
+    when "marked_lost" then "bg-red-500"
+    when "deleted" then "bg-gray-500"
+    else "bg-gray-400"
     end
   end
 
@@ -110,16 +110,16 @@ module ApplicationHelper
     title ||= column.titleize
     direction = (column == params[:sort] && params[:direction] == "asc") ? "desc" : "asc"
     icon = column == params[:sort] ? (params[:direction] == "asc" ? "↑" : "↓") : ""
-    
-    link_to "#{title} #{icon}".html_safe, 
+
+    link_to "#{title} #{icon}".html_safe,
             { sort: column, direction: direction, search: params[:search], user_id: params[:user_id] },
             class: "hover:text-gray-900"
   end
-  
+
   # Determine country label based on phone number prefix
   def get_country_label(phone_number)
     case phone_number
-    when /^\+1/ 
+    when /^\+1/
       "US Number"
     when /^\+44/
       "UK Number"
@@ -129,17 +129,17 @@ module ApplicationHelper
       "Other Number"
     end
   end
-  
+
   # Helper for complexity color classes in cost estimates
   def complexity_color(complexity)
     case complexity&.downcase
-    when 'low'
-      'bg-green-100 text-green-800'
-    when 'high'
-      'bg-red-100 text-red-800'
-    when 'medium'
+    when "low"
+      "bg-green-100 text-green-800"
+    when "high"
+      "bg-red-100 text-red-800"
+    when "medium"
     else
-      'bg-yellow-100 text-yellow-800'
+      "bg-yellow-100 text-yellow-800"
     end
   end
 end

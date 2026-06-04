@@ -14,31 +14,31 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
           user: user_payload(user),
           organizations: organizations_payload(user)
         },
-        'Login successful'
+        "Login successful"
       )
     else
-      render_error('Invalid credentials', nil, :unauthorized)
+      render_error("Invalid credentials", nil, :unauthorized)
     end
   end
 
   def google_sign_in
     id_token = params[:id_token]
-    return render_error('Google ID token is required', nil, :bad_request) if id_token.blank?
+    return render_error("Google ID token is required", nil, :bad_request) if id_token.blank?
 
     begin
       payload = verify_google_token(id_token)
-      return render_error('Invalid Google token', nil, :unauthorized) if payload.nil?
+      return render_error("Invalid Google token", nil, :unauthorized) if payload.nil?
 
-      user = User.find_or_create_by(provider: 'google_oauth2', uid: payload['sub']) do |u|
-        u.name  = payload['name']
-        u.email = payload['email']
+      user = User.find_or_create_by(provider: "google_oauth2", uid: payload["sub"]) do |u|
+        u.name  = payload["name"]
+        u.email = payload["email"]
       end
 
-      admin_emails   = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
-      allowed_emails = ['ifrah.khurram97@gmail.com', 'tahairfan1993@gmail.com']
+      admin_emails   = [ "sarmad.mansoor@tecaudex.com", "taha.irfan@tecaudex.com", "arham.anwaar@tecaudex.com" ]
+      allowed_emails = [ "ifrah.khurram97@gmail.com", "tahairfan1993@gmail.com" ]
 
-      unless user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
-        return render_error('Access restricted to authorized email addresses', nil, :forbidden)
+      unless user.email.ends_with?("@tecaudex.com") || allowed_emails.include?(user.email.downcase)
+        return render_error("Access restricted to authorized email addresses", nil, :forbidden)
       end
 
       if admin_emails.include?(user.email.downcase) && !user.admin?
@@ -54,16 +54,16 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
           user: user_payload(user),
           organizations: organizations_payload(user)
         },
-        'Google sign-in successful'
+        "Google sign-in successful"
       )
     rescue => e
       Rails.logger.error "Google sign-in error: #{e.message}"
-      render_error('Authentication failed', e.message, :unauthorized)
+      render_error("Authentication failed", e.message, :unauthorized)
     end
   end
 
   def logout
-    render_success(nil, 'Logged out successfully')
+    render_success(nil, "Logged out successfully")
   end
 
   def profile
@@ -82,7 +82,7 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
       id:    user.id,
       name:  user.name,
       email: user.email,
-      role:  user.highest_role&.key || 'associate',
+      role:  user.highest_role&.key || "associate",
       phone: user.phone_number
     }
   end
@@ -109,17 +109,17 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
   # Mobile users created via OAuth need a default-org membership so the
   # back-compat "first org" fallback in BaseController has something to find.
   def ensure_membership_in_default_org(user)
-    default_org = Organization.find_by(subdomain: 'tecaudex')
+    default_org = Organization.find_by(subdomain: "tecaudex")
     return unless default_org
     return if user.member_of?(default_org)
 
-    role = user.admin? ? 'owner' : 'admin'
+    role = user.admin? ? "owner" : "admin"
     user.memberships.create(organization: default_org, role: role)
   end
 
   def verify_google_token(id_token)
-    require 'net/http'
-    require 'json'
+    require "net/http"
+    require "json"
 
     uri = URI("https://oauth2.googleapis.com/tokeninfo?id_token=#{id_token}")
     response = Net::HTTP.get_response(uri)
@@ -128,21 +128,21 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
       payload = JSON.parse(response.body)
 
       valid_client_ids = FirebaseConfig.all_client_ids
-      token_audience = payload['aud']
+      token_audience = payload["aud"]
 
       if FirebaseConfig.valid_client_id?(token_audience)
         Rails.logger.info "Google token verified for client: #{token_audience}"
-        return payload
+        payload
       else
         Rails.logger.error "Token audience mismatch: expected one of #{valid_client_ids}, got #{token_audience}"
-        return nil
+        nil
       end
     else
       Rails.logger.error "Google token verification failed: #{response.body}"
-      return nil
+      nil
     end
   rescue => e
     Rails.logger.error "Error verifying Google token: #{e.message}"
-    return nil
+    nil
   end
 end

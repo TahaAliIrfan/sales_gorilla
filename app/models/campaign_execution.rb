@@ -10,15 +10,15 @@ class CampaignExecution < ApplicationRecord
   validates :scheduled_at, presence: true
   validates :customer_id, uniqueness: { scope: :campaign_id }
 
-  scope :pending, -> { where(status: 'pending') }
-  scope :processing, -> { where(status: 'processing') }
-  scope :completed, -> { where(status: 'completed') }
-  scope :failed, -> { where(status: 'failed') }
+  scope :pending, -> { where(status: "pending") }
+  scope :processing, -> { where(status: "processing") }
+  scope :completed, -> { where(status: "completed") }
+  scope :failed, -> { where(status: "failed") }
 
   def execute!
     return unless pending?
 
-    update(status: 'processing')
+    update(status: "processing")
 
     begin
       # Check if customer has WhatsApp chat ID
@@ -39,15 +39,15 @@ class CampaignExecution < ApplicationRecord
 
       if result[:success]
         update(
-          status: 'completed',
+          status: "completed",
           executed_at: Time.current
         )
       else
-        raise result[:error] || 'Unknown error occurred'
+        raise result[:error] || "Unknown error occurred"
       end
     rescue StandardError => e
       update(
-        status: 'failed',
+        status: "failed",
         error_message: e.message,
         executed_at: Time.current
       )
@@ -58,19 +58,19 @@ class CampaignExecution < ApplicationRecord
   end
 
   def pending?
-    status == 'pending'
+    status == "pending"
   end
 
   def processing?
-    status == 'processing'
+    status == "processing"
   end
 
   def completed?
-    status == 'completed'
+    status == "completed"
   end
 
   def failed?
-    status == 'failed'
+    status == "failed"
   end
 
   private
@@ -80,13 +80,13 @@ class CampaignExecution < ApplicationRecord
 
     # Define available template variables and their values
     variables = {
-      'customer_name' => customer.name || '',
-      'name' => customer.name || '',
-      'email' => customer.email || '',
-      'phone' => customer.phone || '',
-      'company' => customer.company || '',
-      'lead_source' => customer.lead_source || '',
-      'status' => customer.status || ''
+      "customer_name" => customer.name || "",
+      "name" => customer.name || "",
+      "email" => customer.email || "",
+      "phone" => customer.phone || "",
+      "company" => customer.company || "",
+      "lead_source" => customer.lead_source || "",
+      "status" => customer.status || ""
     }
 
     # Replace all {{variable}} patterns with actual values

@@ -8,7 +8,7 @@ class WhatsappTemplatesController < ApplicationController
 
   def index
     @templates       = WhatsappTemplate.ordered
-    @approved_count  = @templates.count { |t| t.approval_status.to_s.downcase == 'approved' }
+    @approved_count  = @templates.count { |t| t.approval_status.to_s.downcase == "approved" }
     @last_synced_at  = @templates.map(&:last_synced_at).compact.max
   end
 

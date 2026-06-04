@@ -1,7 +1,6 @@
 module Api
   module V1
     class WebsiteLeadController < Api::V1::BaseController
-
       def create
         if params[:email].present?
           existing = Customer.find_by(email: params[:email])
@@ -16,8 +15,8 @@ module Api
             email: params[:email],
             phone: params[:phone_number],
             country: params[:country],
-            lead_source: 'Website',
-            status: 'Pending',
+            lead_source: "Website",
+            status: "Pending",
             idea_description: params[:description] || params[:message],
             # Meta-specific fields
             meta_lead_id: params[:meta_lead_id],
@@ -50,7 +49,6 @@ module Api
           render json: { success: false, errors: "Unable to add" }, status: :unprocessable_entity
         end
       end
-
     end
   end
 end

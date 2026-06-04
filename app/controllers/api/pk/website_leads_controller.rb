@@ -1,17 +1,15 @@
 module Api
   module Pk
     class WebsiteLeadsController < Api::Pk::BaseController
-
       def create
-
         if params[:preferred_time].present?
           preferred_calling_time = parse_preferred_time(params[:preferred_time])
         else
-          preferred_calling_time = 'Not Applicable'
+          preferred_calling_time = "Not Applicable"
         end
 
         if params[:email].blank? && params[:phone].blank?
-          render json: { success: false, error: 'Email or phone is required' }, status: :unprocessable_entity
+          render json: { success: false, error: "Email or phone is required" }, status: :unprocessable_entity
           return
         end
 
@@ -19,7 +17,7 @@ module Api
           existing = Customer.find_by(email: params[:email])
           if existing
             existing.update!(updated_at: Time.current, repeat_lead: true)
-            render json: { success: true, message: 'Lead already exists, marked as repeat' }, status: :ok
+            render json: { success: true, message: "Lead already exists, marked as repeat" }, status: :ok
             return
           end
         end
@@ -35,8 +33,8 @@ module Api
           email: params[:email],
           phone: phone,
           idea_description: params[:message],
-          lead_source: 'ODOO_PK',
-          status: 'Pending',
+          lead_source: "ODOO_PK",
+          status: "Pending",
           # Meta-specific fields
           meta_lead_id: params[:meta_lead_id],
           facebook_click_id: params[:facebook_click_id] || params[:fbclid],
@@ -49,7 +47,7 @@ module Api
         )
 
         if customer.save
-          render json: { success: true, message: 'Lead created successfully' }, status: :created
+          render json: { success: true, message: "Lead created successfully" }, status: :created
         else
           render json: { success: false, errors: customer.errors.full_messages }, status: :unprocessable_entity
         end
@@ -70,11 +68,11 @@ module Api
           timezone_offset = parsed_time.strftime("%z")
           formatted_offset = "#{timezone_offset[0]}#{timezone_offset[1..2]}:#{timezone_offset[3..4]}"
 
-          return "#{formatted_time} (#{formatted_offset})"
+          "#{formatted_time} (#{formatted_offset})"
         rescue => e
           Rails.logger.warn("Failed to parse preferred_time '#{timestamp}': #{e.message}")
           # Return the original value if parsing fails
-          return timestamp
+          timestamp
         end
       end
     end

@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require 'prawn'
-require 'prawn/table'
+require "prawn"
+require "prawn/table"
 begin
-  require 'prawn-svg'
+  require "prawn-svg"
   PRAWN_SVG_AVAILABLE = true
 rescue LoadError
   PRAWN_SVG_AVAILABLE = false
@@ -23,7 +23,7 @@ class InvoicePdfService
   end
 
   def generate_pdf
-    Prawn::Document.new(page_size: 'A4', margin: [40, 60]) do |pdf|
+    Prawn::Document.new(page_size: "A4", margin: [ 40, 60 ]) do |pdf|
       add_header(pdf)
       add_customer_section(pdf)
       add_line_items_table(pdf)
@@ -36,7 +36,7 @@ class InvoicePdfService
 
   def add_header(pdf)
     # Logo and title row
-    logo_path = Rails.root.join('public', 'tecaudex.svg')
+    logo_path = Rails.root.join("public", "tecaudex.svg")
     if PRAWN_SVG_AVAILABLE && File.exist?(logo_path) && pdf.respond_to?(:svg)
       begin
         pdf.svg File.read(logo_path), width: 60, height: 60
@@ -79,17 +79,17 @@ class InvoicePdfService
     pdf.font_size 10
     pdf.fill_color BLACK_COLOR
 
-    table_data = [["Description", "Amount"]]
+    table_data = [ [ "Description", "Amount" ] ]
     @invoice.invoice_line_items.each do |item|
-      table_data << [sanitize(item.description), number_to_currency(item.amount)]
+      table_data << [ sanitize(item.description), number_to_currency(item.amount) ]
     end
 
     pdf.table(
       table_data,
       header: true,
-      row_colors: ["FFFFFF", "F9FAFB"],
+      row_colors: [ "FFFFFF", "F9FAFB" ],
       cell_style: { padding: 8 },
-      column_widths: [pdf.bounds.width - 120, 100]
+      column_widths: [ pdf.bounds.width - 120, 100 ]
     ) do
       row(0).font_style = :bold
       row(0).background_color = "1F2937"
@@ -109,20 +109,20 @@ class InvoicePdfService
 
     pdf.font_size 10
     pdf.fill_color GRAY_COLOR
-    pdf.text_box "Subtotal:", at: [totals_x - 80, pdf.cursor], width: 80
-    pdf.text_box number_to_currency(subtotal), at: [totals_x, pdf.cursor], width: totals_width, align: :right
+    pdf.text_box "Subtotal:", at: [ totals_x - 80, pdf.cursor ], width: 80
+    pdf.text_box number_to_currency(subtotal), at: [ totals_x, pdf.cursor ], width: totals_width, align: :right
     pdf.move_down 20
 
     if tax_amount.to_f > 0
-      pdf.text_box "Tax (#{@invoice.tax_rate}%):", at: [totals_x - 80, pdf.cursor], width: 80
-      pdf.text_box number_to_currency(tax_amount), at: [totals_x, pdf.cursor], width: totals_width, align: :right
+      pdf.text_box "Tax (#{@invoice.tax_rate}%):", at: [ totals_x - 80, pdf.cursor ], width: 80
+      pdf.text_box number_to_currency(tax_amount), at: [ totals_x, pdf.cursor ], width: totals_width, align: :right
       pdf.move_down 20
     end
 
     pdf.font_size 12
     pdf.fill_color BLACK_COLOR
-    pdf.text_box "Total:", at: [totals_x - 80, pdf.cursor], width: 80, style: :bold
-    pdf.text_box number_to_currency(total), at: [totals_x, pdf.cursor], width: totals_width, align: :right, style: :bold
+    pdf.text_box "Total:", at: [ totals_x - 80, pdf.cursor ], width: 80, style: :bold
+    pdf.text_box number_to_currency(total), at: [ totals_x, pdf.cursor ], width: totals_width, align: :right, style: :bold
     pdf.move_down 30
   end
 
@@ -143,7 +143,7 @@ class InvoicePdfService
   end
 
   def sanitize(text)
-    text.to_s.gsub(/[^\x20-\x7E]/, '')
+    text.to_s.gsub(/[^\x20-\x7E]/, "")
   end
 
   def number_to_currency(amount)

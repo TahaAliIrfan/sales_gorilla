@@ -21,7 +21,7 @@ class RemoveAiCallingTables < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
-    
+
     add_index :ai_conversations, :status
     add_index :ai_conversations, :conversation_date
 

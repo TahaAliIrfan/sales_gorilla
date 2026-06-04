@@ -22,7 +22,7 @@ class WhatsappUsBroadcaster
     return unless @message && @customer
 
     payload = {
-      type:        'whatsapp_us.message',
+      type:        "whatsapp_us.message",
       direction:   @message.direction,
       customer_id: @customer.id,
       message:     serialize
@@ -49,8 +49,8 @@ class WhatsappUsBroadcaster
       media_url:          attached ? Rails.application.routes.url_helpers.rails_blob_path(attached, only_path: true) : nil,
       media_filename:     attached&.filename.to_s.presence,
       media_content_type: attached&.content_type,
-      template_sid:       @message.metadata&.dig('template_sid'),
-      template_name:      @message.metadata&.dig('template_name')
+      template_sid:       @message.metadata&.dig("template_sid"),
+      template_name:      @message.metadata&.dig("template_name")
     }
   end
 end

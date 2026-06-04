@@ -4,7 +4,7 @@ class InvoicesController < ApplicationController
   layout "tenant"
   before_action :require_login
   before_action :set_customer
-  before_action :set_invoice, only: [:show, :edit, :update, :download_pdf, :mark_paid]
+  before_action :set_invoice, only: [ :show, :edit, :update, :download_pdf, :mark_paid ]
 
   def index
     @invoices = @customer.invoices.includes(:milestone, :user).order(created_at: :desc)
@@ -73,7 +73,7 @@ class InvoicesController < ApplicationController
 
   def mark_paid
     authorize @invoice
-    @invoice.update!(status: 'paid')
+    @invoice.update!(status: "paid")
     redirect_back fallback_location: customer_invoice_path(@customer, @invoice), notice: "Invoice marked as paid."
   end
 
@@ -87,13 +87,13 @@ class InvoicesController < ApplicationController
     @invoice.pdf_file.attach(
       io: StringIO.new(pdf.render),
       filename: filename,
-      content_type: 'application/pdf'
+      content_type: "application/pdf"
     ) unless @invoice.pdf_file.attached?
 
     send_data pdf.render,
       filename: filename,
-      type: 'application/pdf',
-      disposition: 'attachment'
+      type: "application/pdf",
+      disposition: "attachment"
   end
 
   private
@@ -109,7 +109,7 @@ class InvoicesController < ApplicationController
   def invoice_params
     params.require(:invoice).permit(
       :project_name, :description, :issue_date, :due_date, :tax_rate, :payment_link, :payment_link_label, :status,
-      invoice_line_items_attributes: [:id, :description, :amount, :position, :_destroy]
+      invoice_line_items_attributes: [ :id, :description, :amount, :position, :_destroy ]
     )
   end
 end

@@ -13,11 +13,11 @@ set :branch, "master"
 set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
-  user: 'ubuntu',
+  user: "ubuntu",
   keys: %w[~/Desktop/crm_real.pem],
   keys_only: true
 }
-server '54.91.79.118', port: 22, roles: [:web, :app, :db], primary: true
+server "54.91.79.118", port: 22, roles: [ :web, :app, :db ], primary: true
 
 # role-based syntax
 # ==================

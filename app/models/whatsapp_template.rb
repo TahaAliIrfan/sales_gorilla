@@ -5,8 +5,8 @@ class WhatsappTemplate < ApplicationRecord
 
   validates :content_sid, presence: true, uniqueness: true
 
-  scope :approved, -> { where(approval_status: 'approved') }
-  scope :ordered,  -> { order(Arel.sql('LOWER(friendly_name) ASC')) }
+  scope :approved, -> { where(approval_status: "approved") }
+  scope :ordered,  -> { order(Arel.sql("LOWER(friendly_name) ASC")) }
 
   # Variable placeholder names declared in the template. Twilio stores them as
   # a Hash like { "1" => "default", "name" => "Customer" }. Numeric keys are
@@ -50,7 +50,7 @@ class WhatsappTemplate < ApplicationRecord
   # defines `"media": ["{{1}}"]` this returns ["1"]. Those variable slots must
   # be filled with a publicly-fetchable file URL when sending.
   def media_variable_keys
-    urls = Array(media_definition&.dig('media'))
+    urls = Array(media_definition&.dig("media"))
     return [] if urls.empty?
 
     urls.flat_map { |u| u.to_s.scan(/\{\{(\w+)\}\}/).flatten }.uniq
@@ -66,6 +66,6 @@ class WhatsappTemplate < ApplicationRecord
 
   def media_definition
     return nil if types.blank?
-    types['twilio/media'].is_a?(Hash) ? types['twilio/media'] : nil
+    types["twilio/media"].is_a?(Hash) ? types["twilio/media"] : nil
   end
 end

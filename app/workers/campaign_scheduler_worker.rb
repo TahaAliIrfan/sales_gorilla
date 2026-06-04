@@ -1,6 +1,6 @@
 class CampaignSchedulerWorker
   include Sidekiq::Worker
-  sidekiq_options queue: 'campaigns', retry: 3
+  sidekiq_options queue: "campaigns", retry: 3
 
   def perform(campaign_id)
     puts "=" * 80

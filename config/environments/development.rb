@@ -55,16 +55,16 @@ Rails.application.configure do
   # Configure mail delivery for development
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    address:              'smtp.mailersend.net',
+    address:              "smtp.mailersend.net",
     port:                 587,
     user_name:            Rails.application.credentials.dig(:MAIL_API_USER),
     password:             Rails.application.credentials.dig(:MAIL_API_KEY),
-    authentication:       'plain',
+    authentication:       "plain",
     enable_starttls_auto: true
   }
 
 
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
   config.action_mailer.perform_deliveries = true
 
   # Print deprecation notices to the Rails logger.

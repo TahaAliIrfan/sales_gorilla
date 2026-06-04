@@ -12,7 +12,7 @@ class CreateTasks < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
-    
+
     add_index :tasks, :status
     add_index :tasks, :due_date
     add_index :tasks, :completed

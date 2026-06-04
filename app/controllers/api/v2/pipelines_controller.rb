@@ -8,6 +8,6 @@ class Api::V2::PipelinesController < Api::V2::BaseController
   private
 
   def require_authentication
-    render_error('Authentication required', [], :unauthorized) unless current_user
+    render_error("Authentication required", [], :unauthorized) unless current_user
   end
 end

@@ -1,11 +1,11 @@
-require 'net/http'
-require 'uri'
-require 'json'
+require "net/http"
+require "uri"
+require "json"
 
 module Whatsapp
   class ApiService
     attr_reader :instance_id, :api_token
-    
+
     def initialize(instance_id = nil, api_token = nil)
       @URL = "https://utils.tecaudex.com"
     end
@@ -16,7 +16,7 @@ module Whatsapp
     end
 
     # Get all chats from WhatsApp instance
-    def get_chats()
+    def get_chats
       response = get_request("#{@URL}/api/chats")
       handle_response(response)
     end
@@ -27,7 +27,7 @@ module Whatsapp
     end
 
     def send_text_message(chat_id, content)
-      response = post_request("#{@URL}/api/send", { number: chat_id, message: content})
+      response = post_request("#{@URL}/api/send", { number: chat_id, message: content })
       handle_response(response)
     end
 
@@ -43,38 +43,38 @@ module Whatsapp
 
 
     def get_whatsapp_chat_id(phone_number)
-      phone_without_plus = phone_number.gsub(/\A\+/, '')
+      phone_without_plus = phone_number.gsub(/\A\+/, "")
       "#{phone_without_plus}@c.us"
     end
 
     private
-    
+
     def post_request(endpoint, params = {})
       uri = URI.parse("#{endpoint}")
 
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       request = Net::HTTP::Post.new(uri)
-      request["content-type"] = 'application/json'
+      request["content-type"] = "application/json"
       request.body = JSON.generate(params)
 
 
       http.request(request)
     end
 
-    
+
     def get_request(endpoint)
       uri = URI.parse("#{endpoint}")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      
+
       request = Net::HTTP::Get.new(uri)
-      request["accept"] = 'application/json'
-      request['authorization'] = "Bearer #{@api_token}"
+      request["accept"] = "application/json"
+      request["authorization"] = "Bearer #{@api_token}"
 
       http.request(request)
     end
-    
+
     def handle_response(response)
       Rails.logger.info("WhatsApp API Response Code: #{response.code}")
       Rails.logger.info("WhatsApp API Response Body: #{response.body[0, 500]}") if response.body.present?
@@ -97,4 +97,4 @@ module Whatsapp
       { success: false, error: e.message }
     end
   end
-end 
+end

@@ -12,52 +12,52 @@ class Task < ApplicationRecord
   scope :in_progress, -> { where(status: :in_progress) }
   scope :completed, -> { where(status: :completed) }
   scope :cancelled, -> { where(status: :cancelled) }
-  scope :upcoming, -> { where('due_date >= ?', Date.today) }
-  scope :overdue, -> { where('due_date < ?', Date.today).pending }
-  scope :for_today, -> { where('due_date >= ? AND due_date <= ?', Date.today.beginning_of_day, Date.today.end_of_day) }
+  scope :upcoming, -> { where("due_date >= ?", Date.today) }
+  scope :overdue, -> { where("due_date < ?", Date.today).pending }
+  scope :for_today, -> { where("due_date >= ? AND due_date <= ?", Date.today.beginning_of_day, Date.today.end_of_day) }
   scope :assigned_to, ->(user) { where(user_id: user.id) }
 
   PRIORITIES = {
-    'Low' => 'Low',
-    'Medium' => 'Medium',
-    'High' => 'High'
+    "Low" => "Low",
+    "Medium" => "Medium",
+    "High" => "High"
   }.freeze
 
   STATUSES = {
-    'pending' => 'Pending',
-    'in_progress' => 'In Progress',
-    'completed' => 'Completed',
-    'cancelled' => 'Cancelled'
+    "pending" => "Pending",
+    "in_progress" => "In Progress",
+    "completed" => "Completed",
+    "cancelled" => "Cancelled"
   }.freeze
 
   def complete!
     update(status: :completed)
   end
-  
+
   def pending?
-    status == 'pending'
+    status == "pending"
   end
-  
+
   def in_progress?
-    status == 'in_progress'
+    status == "in_progress"
   end
-  
+
   def completed?
-    status == 'completed'
+    status == "completed"
   end
-  
+
   def overdue?
     due_date.to_date < Date.today && !completed? && !cancelled?
   end
-  
+
   def due_today?
     due_date.to_date == Date.today
   end
-  
+
   def cancelled?
-    status == 'cancelled'
+    status == "cancelled"
   end
-  
+
   # Get formatted status for display
   def status_display
     STATUSES[status]

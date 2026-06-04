@@ -11,6 +11,6 @@ class CreateMetaConversionLogs < ActiveRecord::Migration[7.1]
       t.timestamps
     end
 
-    add_index :meta_conversion_logs, [:customer_id, :created_at]
+    add_index :meta_conversion_logs, [ :customer_id, :created_at ]
   end
 end

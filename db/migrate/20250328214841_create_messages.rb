@@ -13,7 +13,7 @@ class CreateMessages < ActiveRecord::Migration[7.1]
 
       t.timestamps
     end
-    
+
     add_index :messages, :message_id
     add_index :messages, :whatsapp_chat_id
     add_index :messages, :direction

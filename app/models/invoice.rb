@@ -8,7 +8,7 @@ class Invoice < ApplicationRecord
   has_one_attached :pdf_file
   has_one_attached :payment_proof
 
-  enum status: { pending: 'pending', paid: 'paid' }
+  enum status: { pending: "pending", paid: "paid" }
 
   validates :invoice_number, presence: true, uniqueness: true
   validates :issue_date, presence: true
