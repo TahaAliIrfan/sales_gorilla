@@ -1,10 +1,10 @@
 # Sends push notifications via Firebase Cloud Messaging (FCM HTTP v1 API).
 #
-# Requires a Firebase service-account JSON stored in credentials at
-# `:firebase -> :service_account` (a Hash with the usual service-account fields:
-# project_id, client_email, private_key, etc.). If the credentials aren't
-# configured, send! returns { success: false, error: "..." } and the caller
-# is expected to no-op — push is a best-effort side channel.
+# Requires a Firebase service-account JSON stored in credentials under the
+# top-level `:firebase` key (a Hash with the standard service-account fields:
+# type, project_id, private_key, client_email, etc.). If the credentials
+# aren't configured, send! returns { success: false, error: "..." } and the
+# caller is expected to no-op — push is a best-effort side channel.
 #
 # Usage:
 #   FirebasePushService.new.send_to_token(
@@ -22,7 +22,7 @@ class FirebasePushService
   FCM_SCOPE = 'https://www.googleapis.com/auth/firebase.messaging'.freeze
 
   def initialize
-    @service_account = Rails.application.credentials.dig(:firebase, :service_account)
+    @service_account = Rails.application.credentials.dig(:firebase)
   end
 
   def configured?
