@@ -1,0 +1,30 @@
+<%#
+  Status pill — small rounded badge with a dot. Tone is derived from the label
+  so callers don't have to map colors manually.
+
+  locals:
+    label - text shown in the pill
+    tone  - optional explicit tone: "ok" | "warn" | "bad" | "info" | "muted"
+%>
+<%
+  text = label.to_s
+  tone ||= case text.downcase
+           when /converted|won|completed|active|connected|paid|approved|verified|ok|success/ then "ok"
+           when /pending|in.progress|scheduled|warning|moderate/                              then "warn"
+           when /lost|failed|not.interested|overdue|error|alert|critical|rejected/            then "bad"
+           when /contact.established|contacted|info/                                          then "info"
+           else "muted"
+           end
+  dot, fg, bg = case tone
+                when "ok"   then [ "var(--color-accent-bright)", "var(--color-accent)",        "rgba(16,148,104,0.10)" ]
+                when "warn" then [ "#d97706",                    "#92400e",                    "rgba(245,158,11,0.12)" ]
+                when "bad"  then [ "#dc2626",                    "#991b1b",                    "rgba(220,38,38,0.10)" ]
+                when "info" then [ "#2563eb",                    "#1e40af",                    "rgba(59,130,246,0.10)" ]
+                else            [ "var(--color-ink-soft)",       "var(--color-ink-soft)",      "var(--color-line)" ]
+                end
+%>
+<span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium"
+      style="background: <%= bg %>; color: <%= fg %>;">
+  <span class="h-1.5 w-1.5 rounded-full" style="background: <%= dot %>"></span>
+  <%= text %>
+</span>

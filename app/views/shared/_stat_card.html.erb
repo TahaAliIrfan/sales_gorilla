@@ -1,0 +1,43 @@
+<%#
+  Compact stat tile used on dashboards. Numbers in mono so columns of figures
+  line up.
+
+  locals:
+    label    - small uppercase label
+    value    - main figure (number or string)
+    sub      - optional secondary text (e.g. "+3 this month")
+    sub_tone - optional: "accent" | "alert" | nil
+    href     - optional click-through path
+    icon     - optional icon key for nav_icon helper
+    delay    - optional animation-delay ms (for stagger)
+%>
+<% sub_tone ||= "muted" %>
+<% wrapper_class = "block p-5 transition motion-safe:animate-rise" %>
+<% wrapper_class += " hover:bg-[var(--color-line)]" if local_assigns[:href].present? %>
+
+<% body = capture do %>
+  <div class="flex items-start justify-between">
+    <span class="micro"><%= label %></span>
+    <% if local_assigns[:icon].present? %>
+      <span style="color: var(--brand-primary)"><%= nav_icon(icon) %></span>
+    <% end %>
+  </div>
+  <p class="mono mt-4 text-3xl font-semibold leading-none text-ink"><%= value %></p>
+  <% if local_assigns[:sub].present? %>
+    <p class="mt-2 text-xs <%= sub_tone == 'accent' ? 'text-accent-bright' : sub_tone == 'alert' ? 'text-[#c0492f]' : 'text-ink-soft' %>">
+      <%= sub %>
+    </p>
+  <% end %>
+<% end %>
+
+<% style_attr = local_assigns[:delay].present? ? "animation-delay: #{delay}ms" : nil %>
+
+<% if local_assigns[:href].present? %>
+  <%= link_to href, class: wrapper_class, style: style_attr do %>
+    <%= body %>
+  <% end %>
+<% else %>
+  <div class="<%= wrapper_class %>" style="<%= style_attr %>">
+    <%= body %>
+  </div>
+<% end %>

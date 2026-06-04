@@ -1,0 +1,149 @@
+<%# locals: customer %>
+<div data-tabs-target="content" data-tab-id="emails" class="tab-content hidden">
+  <%# Header + actions === %>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-baseline gap-3">
+      <p class="font-display text-lg font-bold text-ink">Emails</p>
+      <p class="mono text-xs text-ink-soft">
+        <span data-email-inbox-target="totalCount"><%= customer.emails.count %></span> total
+      </p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button type="button" data-action="click->email-inbox#syncEmails" data-email-inbox-target="syncBtn"
+              class="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+        <svg class="h-4 w-4" data-email-inbox-target="syncIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span data-email-inbox-target="syncText">Sync</span>
+      </button>
+      <button type="button" data-action="click->email-inbox#openCompose"
+              class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5"
+              style="background: var(--brand-primary)">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        Compose
+      </button>
+    </div>
+  </div>
+
+  <%# Filter chips + search === %>
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="inline-flex items-center gap-1 rounded-lg bg-[var(--color-line)] p-1">
+      <% [
+        [ "all",      "All",    customer.emails.count,           "filterAll"    ],
+        [ "received", "Inbox",  customer.emails.received.count,  "filterInbox"  ],
+        [ "sent",     "Sent",   customer.emails.sent.count,      "filterSent"   ]
+      ].each_with_index do |(filter, label, count, action), i| %>
+        <button type="button"
+                data-action="click->email-inbox#<%= action %>"
+                data-email-inbox-target="filterBtn"
+                data-filter="<%= filter %>"
+                class="mono rounded-md px-3 py-1.5 text-xs font-semibold transition <%= i.zero? ? 'bg-panel text-ink shadow-card' : 'text-ink-soft hover:text-ink' %>">
+          <%= label %>
+          <span class="ml-1 text-[10px] text-ink-soft" data-email-inbox-target="<%= filter == 'received' ? 'inboxCount' : (filter == 'all' ? 'allCount' : 'sentCount') %>">(<%= count %>)</span>
+        </button>
+      <% end %>
+      <% unread_count = customer.emails.unread.count %>
+      <button type="button"
+              data-action="click->email-inbox#filterUnread"
+              data-email-inbox-target="filterBtn"
+              data-filter="unread"
+              class="mono relative rounded-md px-3 py-1.5 text-xs font-semibold text-ink-soft transition hover:text-ink">
+        Unread
+        <% if unread_count > 0 %>
+          <span class="ml-1 inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                style="background: #c0492f"
+                data-email-inbox-target="unreadBadge"><%= unread_count %></span>
+        <% else %>
+          <span class="ml-1 text-[10px] text-ink-soft" data-email-inbox-target="unreadBadge">(0)</span>
+        <% end %>
+      </button>
+    </div>
+
+    <div class="relative w-full sm:w-72">
+      <span class="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-ink-soft">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </span>
+      <input type="text"
+             data-action="input->email-inbox#search"
+             data-email-inbox-target="searchInput"
+             placeholder="Search emails…"
+             class="block w-full rounded-md border-0 bg-paper py-2 pl-9 pr-3 text-sm text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]">
+    </div>
+  </div>
+
+  <%# List === %>
+  <div data-email-inbox-target="emailList" class="space-y-2">
+    <% if customer.emails.any? %>
+      <% customer.emails.with_attached_attachments.recent.each do |email| %>
+        <% unread = email.received? && email.read_at.nil? %>
+        <div class="email-item cursor-pointer rounded-lg bg-panel p-4 ring-1 transition hover:bg-[var(--color-line)] hover:shadow-card <%= unread ? 'ring-[var(--brand-primary)]/30' : 'ring-[var(--color-line-2)]' %>"
+             style="<%= 'background: var(--brand-primary-soft);' if unread %>"
+             data-action="click->email-modal#open"
+             data-email-id="<%= email.id %>"
+             data-status="<%= email.status %>"
+             data-subject="<%= email.subject&.downcase %>"
+             data-from="<%= email.from_email&.downcase %>"
+             data-unread="<%= unread %>">
+          <div class="flex items-start gap-3">
+            <% name = email.received? ? email.sender_name : email.receiver_name %>
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
+                  style="background: <%= email.received? ? 'var(--brand-primary)' : 'var(--brand-accent)' %>">
+              <%= (name.presence || "?").first.upcase %>
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex min-w-0 items-center gap-2">
+                  <p class="truncate text-sm <%= unread ? 'font-bold text-ink' : 'font-semibold text-ink' %>">
+                    <%= email.received? ? (email.sender_name.presence || email.from_email) : "To: #{email.receiver_name.presence || email.to_email}" %>
+                  </p>
+                  <% if unread %>
+                    <span class="inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
+                          style="background: var(--brand-primary-soft); color: var(--brand-primary)">New</span>
+                  <% end %>
+                  <% if email.has_downloadable_attachments? %>
+                    <span class="mono text-[10px] text-ink-soft" title="<%= email.attachments_count %> attachment(s)">
+                      📎<%= email.attachments_count %>
+                    </span>
+                  <% end %>
+                </div>
+                <time class="mono whitespace-nowrap text-[10px] text-ink-soft">
+                  <%= time_ago_in_words(email.sent_at || email.received_at || email.created_at) %> ago
+                </time>
+              </div>
+              <p class="mt-1 truncate text-sm <%= unread ? 'font-semibold text-ink' : 'text-ink' %>"><%= email.display_subject %></p>
+              <% if email.snippet.present? %>
+                <p class="mt-1 truncate text-xs text-ink-soft"><%= email.snippet %></p>
+              <% end %>
+              <div class="mt-2">
+                <% if email.sent? %>
+                  <%= render "shared/status_pill", label: "Sent", tone: "ok" %>
+                <% elsif email.received? %>
+                  <%= render "shared/status_pill", label: "Inbox", tone: "info" %>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="rounded-xl py-16 text-center ring-1 ring-[var(--color-line-2)]" style="background: var(--brand-primary-soft)">
+        <p class="font-display text-lg font-semibold text-ink">No emails yet</p>
+        <p class="mt-1 text-sm text-ink-soft">Compose an email or sync your Gmail inbox.</p>
+        <div class="mt-5 flex flex-wrap justify-center gap-2">
+          <button type="button" data-action="click->email-inbox#openCompose"
+                  class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5"
+                  style="background: var(--brand-primary)">
+            Compose email
+          </button>
+          <button type="button" data-action="click->email-inbox#syncEmails"
+                  class="inline-flex items-center gap-2 rounded-md bg-paper px-4 py-2 text-sm font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+            Sync emails
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <div data-email-inbox-target="emptyState" class="mt-4 hidden py-10 text-center">
+    <p class="font-display text-sm font-semibold text-ink">No emails found</p>
+    <p class="mt-1 text-xs text-ink-soft">Try changing your filter or search.</p>
+  </div>
+</div>

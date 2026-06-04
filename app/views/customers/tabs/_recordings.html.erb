@@ -1,0 +1,112 @@
+<%# locals: customer, recordings %>
+<div data-tabs-target="content" data-tab-id="recordings" class="tab-content hidden">
+  <div class="mb-5 flex items-center justify-between">
+    <p class="font-display text-lg font-bold text-ink">Call recordings</p>
+    <% if recordings.any? %>
+      <p class="mono text-xs text-ink-soft"><%= pluralize(recordings.count, "recording") %></p>
+    <% end %>
+  </div>
+
+  <% if recordings.any? %>
+    <div class="space-y-3">
+      <% recordings.each do |recording| %>
+        <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]"
+             data-controller="recording-player"
+             data-recording-player-recording-id-value="<%= recording.id %>">
+          <div class="cursor-pointer p-4 transition hover:bg-[var(--color-line)]" data-action="click->recording-player#toggle">
+            <div class="flex items-center justify-between">
+              <div class="flex min-w-0 items-center gap-3">
+                <span class="grid h-10 w-10 shrink-0 place-items-center rounded-full text-white shadow-card"
+                      style="background: var(--brand-primary)">
+                  <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+                </span>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-ink">
+                    <%= recording.date.strftime("%b %-d, %Y") %>
+                    <span class="mono ml-2 text-xs text-ink-soft"><%= recording.date.strftime("%-I:%M %p") %></span>
+                  </p>
+                  <div class="mt-1 flex flex-wrap items-center gap-2">
+                    <span class="mono inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+                          style="background: var(--brand-primary-soft); color: var(--brand-primary)">
+                      <%= recording.duration %>s
+                    </span>
+                    <% if recording.user.present? %>
+                      <span class="mono text-[11px] text-ink-soft">by <%= recording.user.name %></span>
+                    <% end %>
+                    <% if recording.transcribed? %>
+                      <%= render "shared/status_pill", label: "Transcribed", tone: "ok" %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+              <div class="shrink-0 text-ink-soft">
+                <svg data-recording-player-target="expandIcon" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m6 9 6 6 6-6"/></svg>
+                <svg data-recording-player-target="collapseIcon" class="hidden h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m18 15-6-6-6 6"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <div data-recording-player-target="content" class="hidden border-t border-[var(--color-line)]" style="background: var(--brand-primary-soft)">
+            <div class="grid gap-4 p-5 lg:grid-cols-2">
+              <div class="rounded-lg bg-panel p-4 ring-1 ring-[var(--color-line-2)]">
+                <p class="micro mb-3">Audio player</p>
+                <% if recording.audio_file.attached? %>
+                  <audio controls class="w-full" controlsList="nodownload">
+                    <source src="<%= rails_blob_url(recording.audio_file) %>" type="audio/mpeg">
+                  </audio>
+                  <div class="mt-3">
+                    <%= link_to download_recording_path(recording),
+                          class: "inline-flex items-center gap-1.5 text-xs font-semibold transition hover:underline",
+                          style: "color: var(--brand-primary)" do %>
+                      ↓ Download recording
+                    <% end %>
+                  </div>
+                <% else %>
+                  <p class="py-4 text-center text-sm text-ink-soft">Audio not available</p>
+                <% end %>
+              </div>
+              <div class="rounded-lg bg-panel p-4 ring-1 ring-[var(--color-line-2)]">
+                <p class="micro mb-3">Recording details</p>
+                <dl class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <dt class="text-ink-soft">Duration</dt>
+                    <dd class="mono font-medium text-ink"><%= (recording.duration.to_i / 60).to_s.rjust(2, "0") %>:<%= (recording.duration.to_i % 60).to_s.rjust(2, "0") %></dd>
+                  </div>
+                  <% if recording.user.present? %>
+                    <div class="flex justify-between">
+                      <dt class="text-ink-soft">Caller</dt>
+                      <dd class="font-medium text-ink"><%= recording.user.name %></dd>
+                    </div>
+                  <% end %>
+                  <div class="flex justify-between">
+                    <dt class="text-ink-soft">Date & time</dt>
+                    <dd class="mono font-medium text-ink"><%= recording.date.strftime("%b %-d, %Y %I:%M %p") %></dd>
+                  </div>
+                </dl>
+                <div class="mt-3 border-t border-[var(--color-line)] pt-3">
+                  <%= link_to recording_path(recording), target: "_blank",
+                        class: "inline-flex items-center gap-1.5 text-xs font-semibold transition hover:underline",
+                        style: "color: var(--brand-primary)" do %>
+                    ↗ View full details
+                  <% end %>
+                </div>
+              </div>
+            </div>
+
+            <% if recording.transcribed? %>
+              <div class="mx-5 mb-5 rounded-lg bg-panel p-4 ring-1 ring-[var(--color-line-2)]">
+                <p class="micro mb-3">Transcript</p>
+                <div class="max-h-96 overflow-y-auto" data-recording-player-target="transcriptContainer"></div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border-2 border-dashed border-[var(--color-line-2)] py-12 text-center">
+      <p class="font-display text-base font-semibold text-ink">No call recordings</p>
+      <p class="mt-1 text-sm text-ink-soft">Recordings will appear here after phone calls with this customer.</p>
+    </div>
+  <% end %>
+</div>

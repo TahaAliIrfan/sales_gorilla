@@ -1,287 +1,244 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
+<% content_for :title, (action_name == "my_deals" ? "My deals" : "All deals") + " — #{current_organization&.name}" %>
+
+<div>
+  <%# === Header === %>
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-6">
     <div>
-      <h1 class="text-2xl font-bold">
-        <%= action_name == 'my_deals' ? 'My Deals' : 'All Deals' %>
+      <p class="micro mb-2">Pipeline</p>
+      <h1 class="font-display text-4xl font-bold tracking-tight text-ink">
+        <%= action_name == "my_deals" ? "My deals" : "All deals" %>
         <% if current_user.admin? && @selected_pipeline %>
-          · <span class="text-blue-600"><%= @selected_pipeline.name %></span>
+          <span class="mono text-2xl font-medium" style="color: var(--brand-primary)"> · <%= @selected_pipeline.name %></span>
         <% end %>
       </h1>
-      <p class="text-gray-600 mt-1">
-        <% if current_user.admin? && @selected_pipeline %>
-          Viewing deals from <%= @selected_pipeline.name %>
-        <% else %>
-          Manage your sales pipeline
-        <% end %>
+      <p class="mt-2 text-ink-soft">
+        <%= current_user.admin? && @selected_pipeline ? "Viewing deals from #{@selected_pipeline.name}" : "Manage your sales pipeline" %>
       </p>
     </div>
-    <div class="flex space-x-4">
-      <% if action_name != 'my_deals' %>
-        <%= link_to "My Deals", 
-            current_user.admin? && @selected_pipeline ? my_deals_deals_path(pipeline_id: @selected_pipeline.id) : my_deals_deals_path, 
-            class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
-      <% else %>
-        <%= link_to "All Deals", 
-            current_user.admin? && @selected_pipeline ? deals_path(pipeline_id: @selected_pipeline.id) : deals_path, 
-            class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
+    <div class="flex flex-wrap items-center gap-2">
+      <% other_view_path = if action_name == "my_deals"
+           current_user.admin? && @selected_pipeline ? deals_path(pipeline_id: @selected_pipeline.id) : deals_path
+         else
+           current_user.admin? && @selected_pipeline ? my_deals_deals_path(pipeline_id: @selected_pipeline.id) : my_deals_deals_path
+         end %>
+      <%= link_to (action_name == "my_deals" ? "All deals" : "My deals"), other_view_path,
+            class: "inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
+      <%= link_to (current_user.admin? && @selected_pipeline ? new_deal_path(pipeline_id: @selected_pipeline.id) : new_deal_path),
+            class: "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
+            style: "background: var(--brand-primary)" do %>
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        New deal
       <% end %>
-      <%= link_to "New Deal", 
-          current_user.admin? && @selected_pipeline ? new_deal_path(pipeline_id: @selected_pipeline.id) : new_deal_path, 
-          class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   </div>
-  
-  <!-- Filters Section -->
-  <div class="bg-white shadow rounded-lg p-6 mb-6">
-    <%= form_with url: action_name == 'my_deals' ? my_deals_deals_path : deals_path, method: :get, class: "space-y-6" do |form| %>
+
+  <%# === Filters === %>
+  <div class="mb-6 rounded-xl bg-panel p-5 shadow-card ring-1 ring-[var(--color-line-2)]">
+    <%= form_with url: (action_name == "my_deals" ? my_deals_deals_path : deals_path),
+                  method: :get, class: "space-y-4", local: true do |form| %>
       <% if current_user.admin? && @selected_pipeline %>
         <%= form.hidden_field :pipeline_id, value: @selected_pipeline.id %>
       <% end %>
-      <!-- Required Filters Section -->
-      <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <h3 class="text-md font-medium mb-3">Filters</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <!-- Pipeline Selector -->
-          <% if @pipelines.count > 1 %>
-            <div>
-              <label for="pipeline_id" class="block text-sm font-medium text-gray-700 mb-1">Pipeline</label>
-              <% 
-                options = []
-                options << ["All Pipelines", ""] if current_user.admin?
-                options += @pipelines.map { |p| [p.name, p.id] }
-              %>
-              <%= form.select :pipeline_id, 
-                  options_for_select(options, @selected_pipeline&.id || @selected_pipeline_id), 
-                  {}, 
-                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "pipeline_id", onchange: "this.form.submit();" } 
-              %>
-            </div>
-          <% end %>
-          
-          <!-- Filter by User -->
-          <% if (current_user.admin? || current_user.manager?) && action_name != 'my_deals' %>
-            <div>
-              <label for="user_id" class="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-              <%= form.select :user_id, 
-                  options_for_select([['All Users', '']] + @users.map { |u| [u.name, u.id] }, params[:user_id]), 
-                  {}, 
-                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "user_id" } 
-              %>
-            </div>
-          <% end %>
-          
-          <!-- Filter by Deal Stage -->
+
+      <p class="micro">Filters</p>
+
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <% if @pipelines.count > 1 %>
           <div>
-            <label for="deal_stage_id" class="block text-sm font-medium text-gray-700 mb-1">Deal Stage</label>
-            <%= form.select :deal_stage_id, 
-                options_for_select([['All Stages', '']] + @deal_stages.map { |s| [s.name, s.id] }, params[:deal_stage_id]), 
-                {}, 
-                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "deal_stage_id" } 
+            <label for="pipeline_id" class="micro mb-1 block">Pipeline</label>
+            <%
+              options = []
+              options << [ "All pipelines", "" ] if current_user.admin?
+              options += @pipelines.map { |p| [ p.name, p.id ] }
             %>
+            <%= form.select :pipeline_id,
+                  options_for_select(options, @selected_pipeline&.id || @selected_pipeline_id),
+                  {},
+                  { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                    id: "pipeline_id", onchange: "this.form.submit();" } %>
           </div>
-          
-          <!-- Filter by Closing Date (only for Won/Lost deals) -->
-          <div>
-            <label for="filter_range" class="block text-sm font-medium text-gray-700 mb-1">Closing Date <span class="text-xs text-gray-500">(for Won/Lost deals)</span></label>
-            <%= form.select :filter_range, 
-                options_for_select([
-                  ['Last 30 Days', '30'], 
-                  ['Last 90 Days', '90'], 
-                  ['Custom Range', 'custom'],
-                  ['All Dates', 'all']
-                ], params[:filter_range] || '30'), 
-                {}, 
-                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
-                  id: "filter_range",
-                  onchange: "toggleCustomDateFields(this.value)" } 
-            %>
-          </div>
-          
-          <!-- Hidden field to maintain filtering for won/lost status when needed -->
-          <%= form.hidden_field :status, value: params[:status] %>
-        </div>
-      </div>
-      
-      <!-- Custom date fields - only shown when custom range is selected -->
-      <div id="custom_date_fields" class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> bg-blue-50 rounded-lg p-4 border border-blue-200">
-        <h3 class="text-md font-medium mb-3 text-blue-800">Custom Date Range</h3>
-        <div class="flex items-center space-x-3">
-          <div class="flex-1">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-            <%= form.date_field :start_date, value: @custom_start_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-          </div>
-          <div class="flex-1">
-            <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-            <%= form.date_field :end_date, value: @custom_end_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-          </div>
-        </div>
-      </div>
-      
-      <div class="flex justify-end space-x-3 pt-4">
-        <%= link_to action_name == 'my_deals' ? my_deals_deals_path : deals_path, class: "px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" do %>
-          Clear Filters
         <% end %>
-        <%= form.submit "Apply Filters", class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" %>
+
+        <% if (current_user.admin? || current_user.manager?) && action_name != "my_deals" %>
+          <div>
+            <label for="user_id" class="micro mb-1 block">Assigned to</label>
+            <%= form.select :user_id,
+                  options_for_select([ [ "All users", "" ] ] + @users.map { |u| [ u.name, u.id ] }, params[:user_id]),
+                  {},
+                  { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                    id: "user_id" } %>
+          </div>
+        <% end %>
+
+        <div>
+          <label for="deal_stage_id" class="micro mb-1 block">Stage</label>
+          <%= form.select :deal_stage_id,
+                options_for_select([ [ "All stages", "" ] ] + @deal_stages.map { |s| [ s.name, s.id ] }, params[:deal_stage_id]),
+                {},
+                { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                  id: "deal_stage_id" } %>
+        </div>
+
+        <div>
+          <label for="filter_range" class="micro mb-1 block">Closing date <span class="text-[10px] text-ink-soft/70">(won/lost only)</span></label>
+          <%= form.select :filter_range,
+                options_for_select([
+                  [ "Last 30 days", "30" ],
+                  [ "Last 90 days", "90" ],
+                  [ "Custom range", "custom" ],
+                  [ "All dates",    "all" ]
+                ], params[:filter_range] || "30"),
+                {},
+                { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                  id: "filter_range", onchange: "toggleCustomDateFields(this.value)" } %>
+        </div>
+
+        <%= form.hidden_field :status, value: params[:status] %>
+      </div>
+
+      <%# Custom date range %>
+      <div id="custom_date_fields"
+           class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> rounded-lg p-4"
+           style="background: var(--brand-primary-soft)">
+        <p class="micro mb-3" style="color: var(--brand-primary)">Custom date range</p>
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label class="micro mb-1 block">Start date</label>
+            <%= form.date_field :start_date, value: @custom_start_date&.strftime("%Y-%m-%d"),
+                  class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+          </div>
+          <div>
+            <label class="micro mb-1 block">End date</label>
+            <%= form.date_field :end_date, value: @custom_end_date&.strftime("%Y-%m-%d"),
+                  class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-1">
+        <%= link_to "Clear filters", (action_name == "my_deals" ? my_deals_deals_path : deals_path),
+              class: "rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
+        <%= form.submit "Apply filters",
+              class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 cursor-pointer",
+              style: "background: var(--brand-primary)" %>
       </div>
     <% end %>
-    
-    <% if !params.except(:controller, :action).empty? %>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <span class="text-sm text-gray-600">Active filters:</span>
-        <% params.except(:controller, :action).each do |key, value| %>
+
+    <% if (params.to_unsafe_h.except("controller", "action").reject { |_, v| v.blank? }).any? %>
+      <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
+        <span class="micro">Active</span>
+        <% params.to_unsafe_h.except("controller", "action").each do |key, value| %>
           <% next if value.blank? %>
-          <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-            <% if key == 'filter_range' && value != 'custom' %>
-              <% case value 
-                 when '30' %> Last 30 Days
-              <% when '90' %> Last 90 Days
-              <% when 'all' %> All Dates
-              <% end %>
-            <% elsif key.include?('_id') %>
-              <%= key.humanize %>: <%= key == 'deal_stage_id' ? DealStage.find_by(id: value)&.name : User.find_by(id: value)&.name %>
-            <% elsif key == 'start_date' || key == 'end_date' %>
-              <%= key.humanize %>: <%= value %>
+          <span class="inline-flex items-center rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-ink">
+            <% if key == "filter_range" && value != "custom" %>
+              <%= { "30" => "Last 30 days", "90" => "Last 90 days", "all" => "All dates" }[value] %>
+            <% elsif key.to_s.end_with?("_id") %>
+              <%= key.humanize %>: <%= key == "deal_stage_id" ? DealStage.find_by(id: value)&.name : User.find_by(id: value)&.name %>
             <% else %>
               <%= key.humanize %>: <%= value %>
             <% end %>
           </span>
         <% end %>
-        <%= link_to action_name == 'my_deals' ? my_deals_deals_path : deals_path, class: "text-xs text-red-600 hover:text-red-800 ml-2" do %>
-          Clear All
-        <% end %>
+        <%= link_to "Clear all", (action_name == "my_deals" ? my_deals_deals_path : deals_path),
+              class: "ml-auto text-xs font-medium text-ink-soft underline transition hover:text-ink" %>
       </div>
     <% end %>
   </div>
 
+  <%# === Kanban === %>
   <% if @deal_stages.any? %>
-    <div class="flex overflow-x-auto pb-4 space-x-4" data-controller="drag">
+    <div class="flex gap-4 overflow-x-auto pb-4" data-controller="drag">
       <% @deal_stages.each do |stage| %>
-        <div class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow">
-          <div class="p-4 border-b border-gray-200 bg-gray-200 rounded-t-lg" data-stage-id="<%= stage.id %>">
-            <h3 class="font-semibold text-gray-700"><%= stage.name %></h3>
-            <% stage_deals = @deals.by_stage(stage).active %>
-            <p class="text-sm text-gray-500"><span class="deal-count"><%= stage_deals.count %></span> deals - <%= number_to_currency(stage_deals.sum(:amount)) %></p>
+        <% stage_deals = @deals.by_stage(stage).active %>
+        <div class="w-80 shrink-0">
+          <div class="rounded-t-xl border-b border-[var(--color-line)] bg-panel-2 px-4 py-3" data-stage-id="<%= stage.id %>">
+            <p class="font-display text-sm font-bold text-ink"><%= stage.name %></p>
+            <p class="mono mt-0.5 text-xs text-ink-soft">
+              <span class="deal-count"><%= stage_deals.count %></span> deals · <%= number_to_currency(stage_deals.sum(:amount), precision: 0) %>
+            </p>
           </div>
-          <div class="p-2 min-h-[300px]" data-drag-target="stage" data-stage-id="<%= stage.id %>">
+          <div class="min-h-[300px] space-y-2 rounded-b-xl bg-[var(--color-line)] p-2"
+               data-drag-target="stage" data-stage-id="<%= stage.id %>">
             <% if stage_deals.any? %>
               <% stage_deals.each do |deal| %>
-                <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow" data-drag-target="deal" data-deal-id="<%= deal.id %>">
-                  <div class="flex justify-between items-start">
-                    <h4 class="font-medium text-blue-600 flex items-center">
-                      <span class="drag-handle cursor-move mr-2 text-gray-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        </svg>
+                <div class="rounded-lg bg-panel p-3 shadow-card ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5 hover:shadow-lift"
+                     data-drag-target="deal" data-deal-id="<%= deal.id %>">
+                  <div class="flex items-start justify-between gap-2">
+                    <p class="flex min-w-0 items-start gap-1.5 text-sm font-semibold text-ink">
+                      <span class="drag-handle mt-0.5 shrink-0 cursor-move text-ink-soft/60">
+                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
                       </span>
-                      <%= link_to deal.title, deal_path(deal) %>
-                    </h4>
-                    <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
+                      <%= link_to (deal.title.presence || "Untitled"), deal_path(deal), class: "truncate transition hover:text-accent" %>
+                    </p>
+                    <span class="mono shrink-0 text-sm font-semibold" style="color: var(--brand-accent)">
+                      <%= number_to_currency(deal.amount, precision: 0) %>
+                    </span>
                   </div>
-                  <p class="text-sm text-gray-600 mt-1 truncate">
-                    <% if deal.customer.present? %>
-                      <%= deal.customer.name %>
-                    <% else %>
-                      <span class="text-gray-500">No customer</span>
-                    <% end %>
+                  <p class="mt-1 truncate text-xs text-ink-soft">
+                    <%= deal.customer&.name.presence || "No customer" %>
                   </p>
-                  <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                    <span>Assigned to: <%= deal.user.name %></span>
+                  <div class="mt-3 flex items-center justify-between text-[10px] text-ink-soft/80">
+                    <span class="mono">@<%= deal.user.name.split.first %></span>
                     <% if deal.expected_close_date %>
-                      <span>Close: <%= deal.expected_close_date.strftime("%b %d") %></span>
+                      <span class="mono">close <%= deal.expected_close_date.strftime("%b %-d") %></span>
                     <% end %>
                   </div>
                 </div>
               <% end %>
             <% else %>
-              <div class="text-center py-8 text-gray-500 text-sm">
-                No deals in this stage
-              </div>
+              <p class="py-8 text-center text-xs text-ink-soft">No deals in this stage</p>
             <% end %>
           </div>
         </div>
       <% end %>
-      
-      <!-- Won Deals Column -->
-      <div class="flex-shrink-0 w-80 bg-green-50 rounded-lg shadow">
-        <div class="p-4 border-b border-green-200 bg-green-100 rounded-t-lg">
-          <h3 class="font-semibold text-green-700">Won Deals</h3>
-          <% won_deals = @deals.won %>
-          <p class="text-sm text-green-600"><%= won_deals.count %> deals - <%= number_to_currency(won_deals.sum(:amount)) %></p>
-        </div>
-        <div class="p-2 min-h-[300px]">
-          <% if won_deals.any? %>
-            <% won_deals.each do |deal| %>
-              <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-green-500">
-                <div class="flex justify-between items-start">
-                  <h4 class="font-medium text-green-600">
-                    <%= link_to deal.title, deal_path(deal) %>
-                  </h4>
-                  <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
+
+      <%# Won + Lost columns %>
+      <% [
+        [ "Won deals",  :won,  "var(--color-accent)",        "var(--color-accent-bright)"  ],
+        [ "Lost deals", :lost, "#dc2626",                    "#ef4444"                     ]
+      ].each do |label, scope, header_fg, dot| %>
+        <% column_deals = @deals.public_send(scope) %>
+        <div class="w-80 shrink-0">
+          <div class="rounded-t-xl border-b border-[var(--color-line)] bg-panel-2 px-4 py-3">
+            <p class="flex items-center gap-2 font-display text-sm font-bold text-ink">
+              <span class="h-1.5 w-1.5 rounded-full" style="background: <%= dot %>"></span>
+              <%= label %>
+            </p>
+            <p class="mono mt-0.5 text-xs text-ink-soft">
+              <%= column_deals.count %> deals · <%= number_to_currency(column_deals.sum(:amount), precision: 0) %>
+            </p>
+          </div>
+          <div class="min-h-[300px] space-y-2 rounded-b-xl bg-[var(--color-line)] p-2">
+            <% if column_deals.any? %>
+              <% column_deals.each do |deal| %>
+                <div class="rounded-lg bg-panel p-3 shadow-card ring-1 ring-[var(--color-line-2)]" style="border-left: 3px solid <%= dot %>">
+                  <div class="flex items-start justify-between gap-2">
+                    <%= link_to (deal.title.presence || "Untitled"), deal_path(deal),
+                          class: "truncate text-sm font-semibold text-ink transition hover:text-accent" %>
+                    <span class="mono shrink-0 text-sm font-semibold" style="color: <%= header_fg %>">
+                      <%= number_to_currency(deal.amount, precision: 0) %>
+                    </span>
+                  </div>
+                  <p class="mt-1 truncate text-xs text-ink-soft"><%= deal.customer&.name.presence || "No customer" %></p>
+                  <p class="mono mt-2 text-[10px] text-ink-soft/80">@<%= deal.user.name.split.first %></p>
                 </div>
-                <p class="text-sm text-gray-600 mt-1 truncate">
-                  <% if deal.customer.present? %>
-                    <%= deal.customer.name %>
-                  <% else %>
-                    <span class="text-gray-500">No customer</span>
-                  <% end %>
-                </p>
-                <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                  <span>Assigned to: <%= deal.user.name %></span>
-                </div>
-              </div>
+              <% end %>
+            <% else %>
+              <p class="py-8 text-center text-xs text-ink-soft">No <%= scope %> deals</p>
             <% end %>
-          <% else %>
-            <div class="text-center py-8 text-gray-500 text-sm">
-              No won deals yet
-            </div>
-          <% end %>
+          </div>
         </div>
-      </div>
-      
-      <!-- Lost Deals Column -->
-      <div class="flex-shrink-0 w-80 bg-red-50 rounded-lg shadow">
-        <div class="p-4 border-b border-red-200 bg-red-100 rounded-t-lg">
-          <h3 class="font-semibold text-red-700">Lost Deals</h3>
-          <% lost_deals = @deals.lost %>
-          <p class="text-sm text-red-600"><%= lost_deals.count %> deals - <%= number_to_currency(lost_deals.sum(:amount)) %></p>
-        </div>
-        <div class="p-2 min-h-[300px]">
-          <% if lost_deals.any? %>
-            <% lost_deals.each do |deal| %>
-              <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-red-500">
-                <div class="flex justify-between items-start">
-                  <h4 class="font-medium text-red-600">
-                    <%= link_to deal.title, deal_path(deal) %>
-                  </h4>
-                  <span class="text-sm font-semibold text-red-600"><%= number_to_currency(deal.amount) %></span>
-                </div>
-                <p class="text-sm text-gray-600 mt-1 truncate">
-                  <% if deal.customer.present? %>
-                    <%= deal.customer.name %>
-                  <% else %>
-                    <span class="text-gray-500">No customer</span>
-                  <% end %>
-                </p>
-                <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                  <span>Assigned to: <%= deal.user.name %></span>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-8 text-gray-500 text-sm">
-              No lost deals
-            </div>
-          <% end %>
-        </div>
-      </div>
+      <% end %>
     </div>
   <% else %>
-    <div class="bg-white shadow-md rounded p-8 my-6">
-      <p class="text-gray-600">
+    <div class="rounded-xl bg-panel p-10 text-center shadow-card ring-1 ring-[var(--color-line-2)]">
+      <p class="font-display text-lg font-semibold text-ink">No deal stages yet</p>
+      <p class="mt-1 text-sm text-ink-soft">
         <% if current_user.admin? %>
-          No deal stages found for this pipeline. <%= link_to "Create pipeline stages", pipelines_path, class: "text-blue-600 hover:text-blue-900" %> to get started.
+          <%= link_to "Create pipeline stages", pipelines_path,
+                class: "underline transition hover:text-ink", style: "color: var(--brand-primary)" %> to get started.
         <% else %>
-          No deal stages available. Contact your administrator to set up pipelines and stages.
+          Contact your administrator to set up pipelines and stages.
         <% end %>
       </p>
     </div>
@@ -289,26 +246,15 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Get the filter range select element
-    const filterRangeSelect = document.getElementById('filter_range');
-    
-    // Set initial state for custom date fields
-    toggleCustomDateFields(filterRangeSelect.value);
-    
-    // Add event listener for changes
-    filterRangeSelect.addEventListener('change', function() {
-      toggleCustomDateFields(this.value);
-    });
+  document.addEventListener("DOMContentLoaded", function () {
+    const select = document.getElementById("filter_range");
+    if (!select) return;
+    toggleCustomDateFields(select.value);
+    select.addEventListener("change", function () { toggleCustomDateFields(this.value); });
   });
-  
-  // Toggle custom date fields visibility
   function toggleCustomDateFields(value) {
-    const customFields = document.getElementById('custom_date_fields');
-    if (value === 'custom') {
-      customFields.classList.remove('hidden');
-    } else {
-      customFields.classList.add('hidden');
-    }
+    const el = document.getElementById("custom_date_fields");
+    if (!el) return;
+    el.classList.toggle("hidden", value !== "custom");
   }
 </script>

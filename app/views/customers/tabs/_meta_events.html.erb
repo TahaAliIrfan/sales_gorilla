@@ -1,0 +1,65 @@
+<%# locals: customer, meta_conversion_logs %>
+<div data-tabs-target="content" data-tab-id="meta-events" class="tab-content hidden">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <p class="font-display text-lg font-bold text-ink">Meta Conversions API events</p>
+    <div class="flex gap-2">
+      <%= render "shared/status_pill", label: "#{meta_conversion_logs.successful.count} sent",   tone: "ok"  %>
+      <%= render "shared/status_pill", label: "#{meta_conversion_logs.failed.count} failed",     tone: "bad" %>
+    </div>
+  </div>
+
+  <% if meta_conversion_logs.any? %>
+    <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+      <table class="min-w-full">
+        <thead class="border-b border-[var(--color-line)] bg-panel-2">
+          <tr>
+            <% %w[Event Status Payload Code Response Sent].each do |h| %>
+              <th class="micro px-4 py-3 text-left"><%= h %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-line)]">
+          <% meta_conversion_logs.each do |log| %>
+            <tr class="transition hover:bg-[var(--color-line)]">
+              <td class="px-4 py-3 text-sm font-medium text-ink"><%= log.event_name %></td>
+              <td class="px-4 py-3">
+                <% if log.success? %>
+                  <%= render "shared/status_pill", label: "Success", tone: "ok" %>
+                <% else %>
+                  <%= render "shared/status_pill", label: "Failed",  tone: "bad" %>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-xs text-ink-soft">
+                <% if log.request_payload.present? %>
+                  <details>
+                    <summary class="cursor-pointer font-semibold transition hover:underline" style="color: var(--brand-primary)">View</summary>
+                    <pre class="mt-1 max-w-xs overflow-x-auto whitespace-pre-wrap break-all text-[10px] text-ink"><%= JSON.pretty_generate(log.request_payload) rescue log.request_payload %></pre>
+                  </details>
+                <% else %>—<% end %>
+              </td>
+              <td class="px-4 py-3 text-sm text-ink-soft"><%= log.response_code.presence || "—" %></td>
+              <td class="px-4 py-3 text-xs text-ink-soft">
+                <% if log.error_message.present? %>
+                  <span class="text-[#c0492f]"><%= log.error_message %></span>
+                <% elsif log.response_body.present? %>
+                  <details>
+                    <summary class="cursor-pointer font-semibold transition hover:underline" style="color: var(--brand-primary)">View</summary>
+                    <pre class="mt-1 max-w-xs overflow-x-auto whitespace-pre-wrap break-all text-[10px] text-ink"><%= JSON.pretty_generate(log.response_body) rescue log.response_body %></pre>
+                  </details>
+                <% else %>—<% end %>
+              </td>
+              <td class="mono whitespace-nowrap px-4 py-3 text-sm text-ink-soft">
+                <%= log.created_at.strftime("%b %-d, %Y %H:%M") %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="rounded-xl border-2 border-dashed border-[var(--color-line-2)] py-12 text-center">
+      <p class="font-display text-base font-semibold text-ink">No Meta events</p>
+      <p class="mt-1 text-sm text-ink-soft">Events appear here when this customer triggers Meta Conversions API calls.</p>
+    </div>
+  <% end %>
+</div>

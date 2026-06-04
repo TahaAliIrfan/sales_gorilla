@@ -1,0 +1,57 @@
+<%# locals: customer %>
+<div data-tabs-target="content" data-tab-id="milestones" class="tab-content hidden">
+  <div class="mb-5 flex items-center justify-between">
+    <p class="font-display text-lg font-bold text-ink">Milestones</p>
+    <%= link_to new_customer_milestone_path(customer),
+          class: "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
+          style: "background: var(--brand-primary)" do %>
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      New milestone
+    <% end %>
+  </div>
+
+  <% if customer.milestones.any? %>
+    <div class="space-y-3">
+      <% customer.milestones.order(created_at: :desc).each do |milestone| %>
+        <div class="rounded-lg bg-panel p-4 shadow-card ring-1 ring-[var(--color-line-2)]">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-ink"><%= milestone.name %></p>
+              <p class="mono mt-0.5 text-xs text-ink-soft">
+                <span style="color: var(--brand-accent)"><%= number_to_currency(milestone.total_amount) %></span>
+                · <%= milestone.schedule_type.titleize %>
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <%= render "shared/status_pill", label: milestone.status.titleize, tone: (milestone.paid? ? "ok" : "warn") %>
+              <% if milestone.paid? %>
+                <%= button_to "Mark unpaid", mark_unpaid_customer_milestone_path(customer, milestone), method: :patch,
+                      form: { class: "inline-block" },
+                      class: "mono inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
+              <% else %>
+                <%= button_to "Mark paid", mark_paid_customer_milestone_path(customer, milestone), method: :patch,
+                      form: { class: "inline-block" },
+                      class: "mono inline-flex items-center rounded-md px-2.5 py-1 text-[11px] font-semibold text-white shadow-card transition hover:-translate-y-0.5",
+                      style: "background: var(--color-accent)" %>
+              <% end %>
+              <%= link_to "Edit", edit_customer_milestone_path(customer, milestone),
+                    class: "text-xs font-semibold transition hover:underline",
+                    style: "color: var(--brand-primary)" %>
+              <%= link_to "Invoice", new_customer_invoice_path(customer, milestone_id: milestone.id),
+                    class: "text-xs font-semibold transition hover:underline",
+                    style: "color: var(--brand-accent)" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="rounded-xl border-2 border-dashed border-[var(--color-line-2)] py-12 text-center">
+      <p class="font-display text-base font-semibold text-ink">No milestones yet</p>
+      <p class="mt-1 text-sm text-ink-soft">Create a milestone to track payments.</p>
+      <%= link_to "New milestone", new_customer_milestone_path(customer),
+            class: "mt-5 inline-flex items-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
+            style: "background: var(--brand-primary)" %>
+    </div>
+  <% end %>
+</div>

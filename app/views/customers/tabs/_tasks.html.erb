@@ -1,0 +1,48 @@
+<%# locals: customer %>
+<div data-tabs-target="content" data-tab-id="tasks" class="tab-content hidden">
+  <div class="mb-5 flex items-center justify-between">
+    <p class="font-display text-lg font-bold text-ink">Tasks</p>
+    <%= link_to new_task_path(customer_id: customer.id),
+          class: "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
+          style: "background: var(--brand-primary)" do %>
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+      New task
+    <% end %>
+  </div>
+
+  <% if customer.tasks.any? %>
+    <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+      <ul class="divide-y divide-[var(--color-line)]">
+        <% customer.tasks.order(due_date: :asc).each do |task| %>
+          <li class="flex items-start justify-between gap-3 p-4">
+            <div class="flex items-start gap-3">
+              <input type="checkbox" <%= "checked" if task.completed? %> disabled
+                     class="mt-1 h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]">
+              <div>
+                <p class="text-sm font-medium text-ink <%= 'line-through opacity-60' if task.completed? %>"><%= task.title %></p>
+                <% if task.due_date %>
+                  <p class="mono mt-0.5 text-xs text-ink-soft">Due <%= task.due_date.strftime("%b %-d, %Y · %-I:%M %p") %></p>
+                <% end %>
+                <div class="mt-2">
+                  <% if task.completed? %>
+                    <%= render "shared/status_pill", label: "Completed", tone: "ok" %>
+                  <% elsif task.pending? %>
+                    <%= render "shared/status_pill", label: "Pending", tone: "warn" %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            <%= link_to "View", task_path(task),
+                  class: "text-xs font-semibold transition hover:underline",
+                  style: "color: var(--brand-primary)" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% else %>
+    <div class="rounded-xl border-2 border-dashed border-[var(--color-line-2)] py-12 text-center">
+      <p class="font-display text-base font-semibold text-ink">No tasks</p>
+      <p class="mt-1 text-sm text-ink-soft">Create a task to keep track of follow-ups.</p>
+    </div>
+  <% end %>
+</div>

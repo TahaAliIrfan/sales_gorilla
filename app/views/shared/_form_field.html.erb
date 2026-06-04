@@ -1,0 +1,76 @@
+<%#
+  Shared form field wrapper. Use for any input on a tenant form so all forms
+  share styling and error display.
+
+  locals:
+    f     - the form builder
+    field - attribute symbol (e.g. :name)
+    label - display label (defaults to field.to_s.humanize)
+    type  - "text" (default), "email", "tel", "url", "textarea", "select", "number", "date", "datetime-local", "password", "checkbox"
+    placeholder - optional
+    hint  - small helper text shown under the field
+    required - bool
+    options - for type: "select", an array of [label, value] pairs or a hash
+    include_blank - for select
+    rows  - for textarea
+    value - explicit value override
+    autofocus - bool
+    disabled  - bool
+%>
+<%
+  type ||= "text"
+  label ||= field.to_s.humanize
+  show_errors = f.object && f.object.errors[field].any?
+  field_classes = "block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 transition placeholder:text-ink-soft/50 focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
+  ring_class = show_errors ? "ring-[#c0492f]" : "ring-[var(--color-line-2)]"
+  field_classes = "#{field_classes} #{ring_class}"
+  input_opts = { class: field_classes }
+  input_opts[:placeholder] = placeholder if local_assigns[:placeholder].present?
+  input_opts[:value]       = value       if local_assigns[:value].present?
+  input_opts[:autofocus]   = true        if local_assigns[:autofocus]
+  input_opts[:disabled]    = true        if local_assigns[:disabled]
+  input_opts[:required]    = true        if local_assigns[:required]
+%>
+
+<% if type == "checkbox" %>
+  <label class="flex cursor-pointer items-start gap-2.5">
+    <%= f.check_box field, class: "mt-0.5 h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]" %>
+    <span>
+      <span class="text-sm font-medium text-ink"><%= label %></span>
+      <% if local_assigns[:hint].present? %><span class="block text-xs text-ink-soft mt-0.5"><%= hint %></span><% end %>
+    </span>
+  </label>
+<% else %>
+  <div>
+    <%= f.label field, label, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+
+    <% case type
+       when "textarea" %>
+      <%= f.text_area field, **input_opts.merge(rows: local_assigns[:rows] || 4) %>
+    <% when "select" %>
+      <%= f.select field, options, { include_blank: local_assigns[:include_blank] }, class: field_classes %>
+    <% when "email" %>
+      <%= f.email_field field, **input_opts %>
+    <% when "tel" %>
+      <%= f.telephone_field field, **input_opts %>
+    <% when "url" %>
+      <%= f.url_field field, **input_opts %>
+    <% when "number" %>
+      <%= f.number_field field, **input_opts %>
+    <% when "date" %>
+      <%= f.date_field field, **input_opts %>
+    <% when "datetime-local" %>
+      <%= f.datetime_local_field field, **input_opts %>
+    <% when "password" %>
+      <%= f.password_field field, **input_opts %>
+    <% else %>
+      <%= f.text_field field, **input_opts %>
+    <% end %>
+
+    <% if show_errors %>
+      <p class="mt-1 text-xs text-[#c0492f]"><%= f.object.errors[field].first %></p>
+    <% elsif local_assigns[:hint].present? %>
+      <p class="mt-1 text-xs text-ink-soft"><%= hint %></p>
+    <% end %>
+  </div>
+<% end %>

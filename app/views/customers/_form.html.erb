@@ -1,345 +1,204 @@
 <%= form_with(model: customer, class: "space-y-6") do |form| %>
-  <div class="mb-6 text-center">
-    <h1 class="text-2xl font-bold text-gray-900 mb-2"><%= customer.new_record? ? "New Customer" : "Edit Customer" %></h1>
-    <p class="text-gray-600">Fill in the details below to <%= customer.new_record? ? "create a new" : "update the" %> customer record</p>
+  <div class="mb-2">
+    <p class="micro mb-2"><%= customer.new_record? ? "Create" : "Edit" %></p>
+    <h1 class="font-display text-3xl font-bold tracking-tight text-ink">
+      <%= customer.new_record? ? "New customer" : customer.name %>
+    </h1>
+    <p class="mt-2 text-sm text-ink-soft">
+      Fill in the details below to <%= customer.new_record? ? "create a new" : "update this" %> customer record.
+    </p>
   </div>
 
-  <% if customer.errors.any? %>
-    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 animate-fade-in">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">
-            <%= pluralize(customer.errors.count, "error") %> prohibited this customer from being saved:
-          </h3>
-          <div class="mt-2 text-sm text-red-700">
-            <ul class="list-disc pl-5 space-y-1">
-              <% customer.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
-              <% end %>
-            </ul>
+  <%= render "shared/form_errors", record: customer %>
+
+  <%# ============================== Basic info ============================ %>
+  <%= render "shared/panel", eyebrow: "Basic information" do %>
+    <div class="grid gap-5 md:grid-cols-2">
+      <%= render "shared/form_field", f: form, field: :name, autofocus: customer.new_record?, required: true %>
+      <%= render "shared/form_field", f: form, field: :email, type: "email" %>
+      <%= render "shared/form_field", f: form, field: :phone, type: "tel", label: "Phone number",
+            placeholder: "+923001234567",
+            hint: "Include country code with + sign." %>
+      <%= render "shared/form_field", f: form, field: :company %>
+
+      <%# Country dropdown (Stimulus) — kept as-is functionally, restyled === %>
+      <div data-controller="country">
+        <%= form.label :country, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+        <%= form.hidden_field :country, data: { country_target: "select" } %>
+        <div class="relative">
+          <button type="button"
+                  data-action="click->country#toggleDropdown"
+                  class="flex w-full items-center rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]">
+            <span data-country-target="selectedFlag" class="flex-grow text-left">
+              <%= customer.country.presence || "Select a country" %>
+            </span>
+            <svg class="h-4 w-4 text-ink-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <div data-country-target="dropdown"
+               class="hidden absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-panel py-1 text-sm shadow-lift ring-1 ring-[var(--color-line-2)]">
+            <div class="sticky top-0 bg-panel p-2">
+              <input type="text"
+                     placeholder="Search countries…"
+                     data-country-target="searchInput"
+                     data-action="input->country#search"
+                     class="block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]">
+            </div>
+            <ul class="py-1"></ul>
           </div>
         </div>
+      </div>
+
+      <div>
+        <%= form.label :timezone, "Timezone", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+        <%= form.select :timezone,
+              [
+                [ "Auto-detect from country", "" ],
+                [ "Common Timezones", [
+                  [ "US Eastern (New York)",    "America/New_York" ],
+                  [ "US Central (Chicago)",     "America/Chicago" ],
+                  [ "US Mountain (Denver)",     "America/Denver" ],
+                  [ "US Pacific (Los Angeles)", "America/Los_Angeles" ],
+                  [ "UK (London)",              "Europe/London" ],
+                  [ "Central European",         "Europe/Paris" ],
+                  [ "India (New Delhi)",        "Asia/Kolkata" ],
+                  [ "China (Beijing)",          "Asia/Shanghai" ],
+                  [ "Japan (Tokyo)",            "Asia/Tokyo" ],
+                  [ "Australia (Sydney)",       "Australia/Sydney" ]
+                ] ],
+                [ "All Timezones", ActiveSupport::TimeZone.all.map { |tz| [ "#{tz.formatted_offset} #{tz.name.tr('_', ' ')}", tz.name ] } ]
+              ],
+              {},
+              class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+        <p class="mt-1 text-xs text-ink-soft">If not set, the timezone falls back to the country.</p>
+      </div>
+
+      <div class="md:col-span-2">
+        <%= render "shared/form_field", f: form, field: :address, type: "textarea", rows: 2 %>
+      </div>
+
+      <%# Documents === %>
+      <div class="md:col-span-2">
+        <%= form.label :documents, "Attachment (PDF, DOC, or image)", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+        <div class="flex items-center gap-3">
+          <% if form.object.documents.attached? %>
+            <% doc = form.object.documents.first %>
+            <div>
+              <% if doc&.content_type&.start_with?("image/") %>
+                <%= image_tag doc.variant(resize_to_limit: [ 96, 96 ]), class: "h-16 w-auto rounded-md object-cover ring-1 ring-[var(--color-line-2)]" %>
+              <% else %>
+                <div class="mono inline-flex items-center gap-1.5 rounded-md bg-[var(--color-line)] px-3 py-2 text-xs font-medium text-ink">
+                  📎 <%= doc&.filename || "Document" %>
+                </div>
+              <% end %>
+            </div>
+            <label class="cursor-pointer rounded-md bg-paper px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+              Change file
+              <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
+            </label>
+          <% else %>
+            <label class="inline-flex cursor-pointer items-center gap-2 rounded-md bg-paper px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+              Choose file
+              <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
+            </label>
+          <% end %>
+        </div>
+        <p class="mt-1 text-xs text-ink-soft">PDF, DOC, DOCX, JPG, PNG, GIF (max 10MB).</p>
       </div>
     </div>
   <% end %>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
-    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
-      </svg>
-      Basic Information
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :email, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.email_field :email, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :phone, "Phone Number", class: "block text-sm font-medium text-gray-700" %>
-        <div class="mt-1">
-          <%= form.telephone_field :phone, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Include country code (e.g. +923001234567)" %>
-          <p class="mt-1 text-xs text-gray-500">Include country code with + sign (e.g. +923001234567)</p>
+  <%# ========================= Source & Project ========================== %>
+  <div data-controller="lead-source">
+    <%= render "shared/panel", eyebrow: "Source & project details" do %>
+      <div class="grid gap-5 md:grid-cols-2">
+        <div>
+          <%= form.label :lead_source, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+          <%= form.select :lead_source, Customer::LEAD_SOURCES.keys,
+                { include_blank: "Select source" },
+                class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                data: { action: "change->lead-source#toggleCcrFields", "lead-source-target": "select" } %>
         </div>
-      </div>
+        <%= render "shared/form_field", f: form, field: :linkedin_url, type: "url", label: "LinkedIn URL" %>
+        <%= render "shared/form_field", f: form, field: :meta_lead_id, label: "Meta lead ID",
+              placeholder: "e.g. 1234567890123456" %>
 
-      <div>
-        <%= form.label :company, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :company, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
+        <div data-lead-source-target="ccrFields" class="<%= 'hidden' unless customer.lead_source == 'CCR' %>">
+          <%= render "shared/form_field", f: form, field: :ccr_link, type: "url",
+                label: "CCR link", placeholder: "Google Drive link" %>
+        </div>
 
-      <div data-controller="country">
-        <%= form.label :country, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.hidden_field :country, data: { country_target: "select" } %>
-        
-        <div class="mt-1 relative">
-          <button type="button" 
-                  class="flex items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  data-action="click->country#toggleDropdown">
-            <span data-country-target="selectedFlag" class="flex-grow text-left"><%= customer.country.present? ? "#{customer.country}" : "Select a country" %></span>
-            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </button>
-          
-          <div data-country-target="dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-            <div class="sticky top-0 z-10 bg-white p-2">
-              <input type="text" 
-                     class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
-                     placeholder="Search countries..." 
-                     data-country-target="searchInput"
-                     data-action="input->country#search">
-            </div>
-            <ul class="py-1">
-              <% # The list will be dynamically populated by the JavaScript controller %>
-            </ul>
+        <div data-lead-source-target="ccrCost" class="<%= 'hidden' unless customer.lead_source == 'CCR' %>">
+          <%= form.label :project_estimated_cost, "Project estimated cost",
+                class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+          <div class="relative">
+            <span class="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-sm text-ink-soft">$</span>
+            <%= form.number_field :project_estimated_cost, step: "0.01",
+                  class: "mono block w-full rounded-md border-0 bg-paper py-2.5 pl-7 pr-3.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
           </div>
         </div>
-      </div>
 
-      <div>
-        <%= form.label :timezone, "Timezone", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :timezone, 
-          [
-            ["Auto-detect from country", ""],
-            ["Common Timezones", [
-              ["US Eastern Time (New York)", "America/New_York"],
-              ["US Central Time (Chicago)", "America/Chicago"],
-              ["US Mountain Time (Denver)", "America/Denver"],
-              ["US Pacific Time (Los Angeles)", "America/Los_Angeles"],
-              ["UK (London)", "Europe/London"],
-              ["Central European Time (Paris, Berlin)", "Europe/Paris"],
-              ["India (New Delhi)", "Asia/Kolkata"],
-              ["China (Beijing)", "Asia/Shanghai"],
-              ["Japan (Tokyo)", "Asia/Tokyo"],
-              ["Australia (Sydney)", "Australia/Sydney"]
-            ]],
-            ["All Timezones", ActiveSupport::TimeZone.all.map { |tz| ["#{tz.formatted_offset} #{tz.name.gsub('_', ' ')}", tz.name] }]
-          ], 
-          {}, 
-          class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-        %>
-        <p class="mt-1 text-xs text-gray-500">If not selected, timezone will be determined based on country</p>
-      </div>
+        <%= render "shared/form_field", f: form, field: :project_type, type: "select",
+              options: Customer::PROJECT_TYPES.keys.zip(Customer::PROJECT_TYPES.values) %>
+        <%= render "shared/form_field", f: form, field: :platform, type: "select",
+              options: Customer::PLATFORMS.keys.zip(Customer::PLATFORMS.values) %>
+        <%= render "shared/form_field", f: form, field: :project_scope, type: "select",
+              options: Customer::PROJECT_SCOPES.keys.zip(Customer::PROJECT_SCOPES.values) %>
 
-      <div>
-        <%= form.label :address, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :address, rows: 2, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-      
-      <div class="md:col-span-2">
-        <%= form.label :documents, "Attachment (PDF, DOC, or Image)", class: "block text-sm font-medium text-gray-700" %>
-        <div class="mt-1 flex items-center">
-          <% if form.object.documents.attached? %>
-            <div class="mr-3">
-              <% if form.object.documents.first&.content_type&.start_with?('image/') %>
-                <%= image_tag form.object.documents.first.variant(resize_to_limit: [100, 100]), class: "h-16 w-auto object-cover rounded border border-gray-200" %>
-              <% else %>
-                <div class="flex items-center px-3 py-2 rounded-md text-sm font-medium bg-gray-100 text-gray-700">
-                  <svg class="mr-1.5 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M8 4a3 3 0 00-3 3v4a5 5 0 0010 0V7a1 1 0 112 0v4a7 7 0 11-14 0V7a5 5 0 0110 0v4a3 3 0 11-6 0V7a1 1 0 012 0v4a1 1 0 102 0V7a3 3 0 00-3-3z" clip-rule="evenodd" />
-                  </svg>
-                  <%= form.object.documents.first&.filename || "Document" %>
-                </div>
-              <% end %>
-            </div>
-            <div>
-              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Change
-                <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
-              </label>
-            </div>
-          <% else %>
-            <div>
-              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                <svg class="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                </svg>
-                Choose File
-                <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
-              </label>
-            </div>
-          <% end %>
-        </div>
-        <p class="mt-1 text-xs text-gray-500">Accepted file types: PDF, DOC, DOCX, JPG, PNG, GIF (max 10MB)</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300" data-controller="lead-source">
-    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clip-rule="evenodd" />
-      </svg>
-      Source & Project Details
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <%= form.label :lead_source, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :lead_source, Customer::LEAD_SOURCES.keys, { include_blank: "Select Source" },
-            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
-            data: { action: "change->lead-source#toggleCcrFields", "lead-source-target": "select" } %>
-      </div>
-
-      <div>
-        <%= form.label :linkedin_url, "LinkedIn URL", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.url_field :linkedin_url, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :meta_lead_id, "Meta Lead ID", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :meta_lead_id, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "e.g. 1234567890123456" %>
-      </div>
-
-      <div data-lead-source-target="ccrFields" class="<%= customer.lead_source == 'CCR' ? '' : 'hidden' %> space-y-4">
-        <%= form.label :ccr_link, "CCR Link", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.url_field :ccr_link, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Google Drive Link" %>
-      </div>
-
-      <div data-lead-source-target="ccrCost" class="<%= customer.lead_source == 'CCR' ? '' : 'hidden' %>">
-        <%= form.label :project_estimated_cost, "Project Estimated Cost", class: "block text-sm font-medium text-gray-700" %>
-        <div class="mt-1 flex rounded-md shadow-sm">
-          <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">$</span>
-          <%= form.number_field :project_estimated_cost, class: "flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:border-blue-500 focus:ring-blue-500", step: "0.01" %>
+        <div class="md:col-span-2">
+          <%= render "shared/form_field", f: form, field: :idea_description, type: "textarea", rows: 4 %>
         </div>
       </div>
-
-      <div>
-        <%= form.label :project_type, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :project_type, Customer::PROJECT_TYPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :platform, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :platform, Customer::PLATFORMS.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :project_scope, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :project_scope, Customer::PROJECT_SCOPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div class="md:col-span-2">
-        <%= form.label :idea_description, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :idea_description, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-    </div>
+    <% end %>
   </div>
 
-  <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
-    <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-      </svg>
-      Status & Communication
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <%= form.label :status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :status, Customer::STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
+  <%# ====================== Status & Communication ======================= %>
+  <%= render "shared/panel", eyebrow: "Status & communication" do %>
+    <div class="grid gap-5 md:grid-cols-2">
+      <%= render "shared/form_field", f: form, field: :status, type: "select",
+            options: Customer::STATUSES.keys.zip(Customer::STATUSES.values) %>
 
       <% if current_user&.admin? %>
         <div>
-          <%= form.label :user_id, "Assigned To", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.collection_select :user_id, User.all, :id, :name, { include_blank: "Unassigned" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= form.label :user_id, "Assigned to",
+                class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+          <%= form.collection_select :user_id, User.all, :id, :name,
+                { include_blank: "Unassigned" },
+                class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
         </div>
       <% end %>
 
-      <div>
-        <%= form.label :call_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :call_status, Customer::CALL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
+      <%= render "shared/form_field", f: form, field: :call_status, type: "select",
+            options: Customer::CALL_STATUSES.keys.zip(Customer::CALL_STATUSES.values) %>
+      <%= render "shared/form_field", f: form, field: :preferred_calling_time,
+            label: "Preferred calling time" %>
+      <%= render "shared/form_field", f: form, field: :email_status, type: "select",
+            options: Customer::EMAIL_STATUSES.keys.zip(Customer::EMAIL_STATUSES.values) %>
+      <%= render "shared/form_field", f: form, field: :whatsapp_status, type: "select",
+            options: Customer::WHATSAPP_STATUSES.keys.zip(Customer::WHATSAPP_STATUSES.values) %>
+      <%= render "shared/form_field", f: form, field: :linkedin_status, type: "select",
+            options: Customer::LINKEDIN_STATUSES.keys.zip(Customer::LINKEDIN_STATUSES.values) %>
+      <%= render "shared/form_field", f: form, field: :upwork_profile, type: "select",
+            options: Customer::UPWORK_PROFILES.keys.zip(Customer::UPWORK_PROFILES.values) %>
+      <%= render "shared/form_field", f: form, field: :exhaust_status, type: "select",
+            options: Customer::EXHAUST_STATUSES.keys.zip(Customer::EXHAUST_STATUSES.values) %>
 
-      <div>
-        <%= form.label :preferred_calling_time, "Preferred Calling Time", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :preferred_calling_time, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :email_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :email_status, Customer::EMAIL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :whatsapp_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :whatsapp_status, Customer::WHATSAPP_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :linkedin_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :linkedin_status, Customer::LINKEDIN_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :upwork_profile, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :upwork_profile, Customer::UPWORK_PROFILES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div>
-        <%= form.label :exhaust_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :exhaust_status, Customer::EXHAUST_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-      </div>
-
-      <div class="flex items-center">
-        <%= form.check_box :repeat_lead, class: "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" %>
-        <%= form.label :repeat_lead, "Mark as Repeat Lead", class: "ml-2 block text-sm font-medium text-gray-700" %>
-        <div class="ml-2 group relative">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div class="opacity-0 group-hover:opacity-100 absolute z-10 w-64 p-2 mt-1 text-xs text-white bg-gray-900 rounded-md shadow-lg transition-opacity duration-300 pointer-events-none">
-            Mark this checkbox if this customer has contacted us before with a different email/phone or is returning after a long time.
-          </div>
-        </div>
+      <div class="md:col-span-2">
+        <%= render "shared/form_field", f: form, field: :repeat_lead, type: "checkbox",
+              label: "Mark as repeat lead",
+              hint: "Tick if this customer has contacted us before with a different email/phone, or is returning after a long time." %>
       </div>
 
       <div class="md:col-span-2">
-        <%= form.label :notes, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :notes, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= render "shared/form_field", f: form, field: :notes, type: "textarea", rows: 4 %>
       </div>
     </div>
-  </div>
+  <% end %>
 
-  <div class="flex justify-end space-x-3 pt-5">
-    <%= link_to "Cancel", customers_path, class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150" %>
-    <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 transform hover:scale-105" %>
+  <div class="flex items-center justify-end gap-2 border-t border-[var(--color-line)] pt-5">
+    <%= link_to "Cancel", customers_path,
+          class: "rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
+    <%= form.submit class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 cursor-pointer",
+                    style: "background: var(--brand-primary)" %>
   </div>
 <% end %>
-
-<style>
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out forwards;
-  }
-  
-  input:focus, select:focus, textarea:focus {
-    transition: all 0.2s ease-in-out;
-    transform: translateY(-1px);
-  }
-  
-  /* Enhanced dropdown styling */
-  [data-country-target="dropdown"] {
-    animation: fadeIn 0.2s ease-out;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-  
-  /* Flag animations */
-  [data-country-item]:hover .mr-2 {
-    transform: scale(1.2);
-    transition: transform 0.2s ease;
-  }
-  
-  /* Improved section transitions */
-  .hover\:shadow-md {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  
-  .hover\:shadow-md:hover {
-    transform: translateY(-2px);
-  }
-  
-  /* Button enhancements */
-  .bg-blue-600 {
-    background-image: linear-gradient(to right, #3b82f6, #2563eb);
-  }
-  
-  .bg-blue-600:hover {
-    background-image: linear-gradient(to right, #2563eb, #1d4ed8);
-  }
-</style> 

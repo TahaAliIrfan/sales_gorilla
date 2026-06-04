@@ -1,0 +1,30 @@
+<%# locals: customer, activities %>
+<div data-tabs-target="content" data-tab-id="activities" class="tab-content hidden">
+  <p class="mb-5 font-display text-lg font-bold text-ink">Recent activities</p>
+
+  <% if activities.any? %>
+    <ol class="relative space-y-5 border-l-2 border-[var(--color-line)] pl-6">
+      <% activities.each do |activity| %>
+        <li class="relative">
+          <span class="absolute -left-[34px] grid h-6 w-6 place-items-center rounded-full bg-panel ring-2 ring-[var(--color-line-2)]"
+                style="color: var(--brand-primary)">
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4"/></svg>
+          </span>
+          <p class="text-sm font-semibold text-ink"><%= activity.action %></p>
+          <% if activity.details.present? %>
+            <p class="mt-1 text-sm text-ink-soft"><%= activity.details %></p>
+          <% end %>
+          <p class="mono mt-1 text-[11px] text-ink-soft/80">
+            <%= time_ago_in_words(activity.created_at) %> ago
+            <% if activity.user.present? %>· by <%= activity.user.name %><% end %>
+          </p>
+        </li>
+      <% end %>
+    </ol>
+  <% else %>
+    <div class="rounded-xl border-2 border-dashed border-[var(--color-line-2)] py-12 text-center">
+      <p class="font-display text-base font-semibold text-ink">No activity yet</p>
+      <p class="mt-1 text-sm text-ink-soft">Customer activity will appear here.</p>
+    </div>
+  <% end %>
+</div>

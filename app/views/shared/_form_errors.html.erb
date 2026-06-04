@@ -1,0 +1,11 @@
+<%# locals: record %>
+<% if record.errors.any? %>
+  <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
+    <p class="micro mb-1" style="color: #a83a22">
+      <%= pluralize(record.errors.count, "error") %> prevented this from saving
+    </p>
+    <ul class="list-inside list-disc space-y-1">
+      <% record.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+    </ul>
+  </div>
+<% end %>

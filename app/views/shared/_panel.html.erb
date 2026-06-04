@@ -1,0 +1,30 @@
+<%#
+  Card / panel wrapper used everywhere. Pass an `eyebrow` for the micro label
+  at the top, and a body block.
+
+  locals:
+    eyebrow  - optional micro label
+    title    - optional title shown alongside eyebrow
+    actions  - optional html shown on the right (e.g. "View all" link)
+    padding  - optional padding class, defaults to "p-6"
+%>
+<% padding ||= "p-6" %>
+
+<div class="rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+  <% if local_assigns[:eyebrow].present? || local_assigns[:title].present? || local_assigns[:actions].present? %>
+    <div class="flex items-end justify-between gap-3 border-b border-[var(--color-line)] px-6 py-4">
+      <div class="min-w-0">
+        <% if local_assigns[:eyebrow].present? %><p class="micro"><%= eyebrow %></p><% end %>
+        <% if local_assigns[:title].present? %>
+          <p class="mt-1 font-display text-base font-bold text-ink"><%= title %></p>
+        <% end %>
+      </div>
+      <% if local_assigns[:actions].present? %>
+        <div class="shrink-0 text-sm font-medium"><%= actions %></div>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="<%= padding %>">
+    <%= yield %>
+  </div>
+</div>

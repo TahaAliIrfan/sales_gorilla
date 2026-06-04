@@ -6,6 +6,7 @@ AllCops:
   NewCops: enable
   SuggestExtensions: false
   Exclude:
+    - "**/*.erb"               # Rubocop doesn't understand ERB; lint .rb only
     - "bin/**/*"
     - "db/schema.rb"
     - "db/migrate/2020*.rb"     # auto-generated, pre-existing legacy
