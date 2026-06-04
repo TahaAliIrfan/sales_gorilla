@@ -1,21 +1,19 @@
 class Api::V2::AuthenticationController < Api::V2::BaseController
-  skip_before_action :authenticate_request, only: [:login, :google_sign_in]
+  skip_before_action :authenticate_request,    only: %i[login google_sign_in]
+  skip_before_action :resolve_current_tenant,  only: %i[login google_sign_in logout]
 
   def login
     user = User.find_by(email: params[:email])
-    
+
     if user
+      ensure_membership_in_default_org(user)
       token = JsonWebToken.encode(user_id: user.id)
       render_success(
-        { 
-          token: token, 
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.highest_role&.key || 'associate'
-          }
-        }, 
+        {
+          token: token,
+          user: user_payload(user),
+          organizations: organizations_payload(user)
+        },
         'Login successful'
       )
     else
@@ -24,54 +22,38 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
   end
 
   def google_sign_in
-    # Verify Google ID token
     id_token = params[:id_token]
-    
-    if id_token.blank?
-      return render_error('Google ID token is required', nil, :bad_request)
-    end
+    return render_error('Google ID token is required', nil, :bad_request) if id_token.blank?
 
     begin
-      # Verify the Google ID token
       payload = verify_google_token(id_token)
-      
-      if payload.nil?
-        return render_error('Invalid Google token', nil, :unauthorized)
-      end
+      return render_error('Invalid Google token', nil, :unauthorized) if payload.nil?
 
-      # Find or create user based on Google info
       user = User.find_or_create_by(provider: 'google_oauth2', uid: payload['sub']) do |u|
-        u.name = payload['name']
+        u.name  = payload['name']
         u.email = payload['email']
       end
 
-      # Check if user email is authorized
-      admin_emails = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
+      admin_emails   = ['sarmad.mansoor@tecaudex.com', 'taha.irfan@tecaudex.com', 'arham.anwaar@tecaudex.com']
       allowed_emails = ['ifrah.khurram97@gmail.com', 'tahairfan1993@gmail.com']
-      
+
       unless user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
         return render_error('Access restricted to authorized email addresses', nil, :forbidden)
       end
 
-      # Assign admin role to specific users if not already assigned
       if admin_emails.include?(user.email.downcase) && !user.admin?
         user.make_admin!
       end
 
-      # Generate JWT token for mobile app
+      ensure_membership_in_default_org(user)
       token = JsonWebToken.encode(user_id: user.id)
-      
+
       render_success(
-        { 
-          token: token, 
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            role: user.highest_role&.key || 'associate',
-            phone: user.phone_number
-          }
-        }, 
+        {
+          token: token,
+          user: user_payload(user),
+          organizations: organizations_payload(user)
+        },
         'Google sign-in successful'
       )
     rescue => e
@@ -85,33 +67,69 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
   end
 
   def profile
-    render_success({
-      id: current_user.id,
-      name: current_user.name,
-      email: current_user.email,
-      role: current_user.highest_role&.key || 'associate',
-      phone: current_user.phone_number
-    })
+    render_success(
+      user_payload(current_user).merge(
+        organization: organization_payload(current_organization),
+        membership_role: current_membership&.role
+      )
+    )
   end
 
   private
 
+  def user_payload(user)
+    {
+      id:    user.id,
+      name:  user.name,
+      email: user.email,
+      role:  user.highest_role&.key || 'associate',
+      phone: user.phone_number
+    }
+  end
+
+  def organizations_payload(user)
+    user.organizations.order(:name).map { |org| organization_payload(org) }
+  end
+
+  def organization_payload(org)
+    return nil unless org
+    {
+      id:             org.id,
+      name:           org.name,
+      subdomain:      org.subdomain,
+      primary_color:  org.primary_color,
+      accent_color:   org.accent_color,
+      logo_url:       (org.logo.attached? ? Rails.application.routes.url_helpers.url_for(org.logo) : nil),
+      role:           current_user&.membership_for(org)&.role
+    }
+  rescue
+    { id: org.id, name: org.name, subdomain: org.subdomain, primary_color: org.primary_color, accent_color: org.accent_color, logo_url: nil }
+  end
+
+  # Mobile users created via OAuth need a default-org membership so the
+  # back-compat "first org" fallback in BaseController has something to find.
+  def ensure_membership_in_default_org(user)
+    default_org = Organization.find_by(subdomain: 'tecaudex')
+    return unless default_org
+    return if user.member_of?(default_org)
+
+    role = user.admin? ? 'owner' : 'admin'
+    user.memberships.create(organization: default_org, role: role)
+  end
+
   def verify_google_token(id_token)
     require 'net/http'
     require 'json'
-    
-    # Use Google's tokeninfo endpoint to verify the token
+
     uri = URI("https://oauth2.googleapis.com/tokeninfo?id_token=#{id_token}")
     response = Net::HTTP.get_response(uri)
-    
+
     if response.is_a?(Net::HTTPSuccess)
       payload = JSON.parse(response.body)
-      
-      # Get valid client IDs for current environment
+
       valid_client_ids = FirebaseConfig.all_client_ids
-      
-      # Verify the token is for one of our apps
       token_audience = payload['aud']
+
       if FirebaseConfig.valid_client_id?(token_audience)
         Rails.logger.info "Google token verified for client: #{token_audience}"
         return payload

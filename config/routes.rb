@@ -70,6 +70,15 @@ Rails.application.routes.draw do
         delete 'auth/logout',         to: 'authentication#logout'
         get    'auth/profile',        to: 'authentication#profile'
 
+        # Multi-tenant: list the user's organizations, switch into one (returns
+        # a new JWT carrying the org claim), and inspect the current org.
+        resources :organizations, only: %i[index] do
+          collection do
+            post 'switch',  to: 'organizations#switch'
+            get  'current', to: 'organizations#show'
+          end
+        end
+
         resources :customers do
           member do
             patch 'update_status'

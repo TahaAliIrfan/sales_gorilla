@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   include SetsCurrentTenant
   include Pundit::Authorization
 
-  helper_method :current_user, :current_user_admin?, :current_organization, :current_membership
+  helper_method :current_user, :current_user_admin?, :current_organization, :current_membership, :current_user_in_org?
 
   # Rescue from common exceptions
   rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
