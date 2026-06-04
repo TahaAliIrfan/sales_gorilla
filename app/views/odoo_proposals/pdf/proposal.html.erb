@@ -587,7 +587,7 @@
 <% end %>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-     SELECTED MODULES (list only — pricing lives on the final breakdown)
+     SELECTED MODULES (with per-module implementation pricing)
      ═══════════════════════════════════════════════════════════════════ -->
 <section class="page">
   <%= page_bar.call %>
@@ -595,14 +595,15 @@
   <div class="section-title">
     <div class="eyebrow"><%= next_section.call %> · Selected Modules</div>
     <h2><%= mods.size %> module<%= mods.size == 1 ? '' : 's' %> in scope.</h2>
-    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee. The detailed cost breakdown is on the Investment page.</p>
+    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee.</p>
   </div>
 
   <table class="table">
     <thead>
       <tr>
-        <th style="width:75%">Module / Component</th>
-        <th style="width:25%">Type</th>
+        <th style="width:58%">Module / Component</th>
+        <th style="width:17%">Type</th>
+        <th class="r" style="width:25%">Implementation Fee</th>
       </tr>
     </thead>
     <tbody>
@@ -614,9 +615,16 @@
               <%= m[:custom] ? 'Custom Dev' : 'Standard' %>
             </span>
           </td>
+          <td class="r">PKR <%= fmt.call(m[:impl_cost].to_i) %></td>
         </tr>
       <% end %>
     </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">Total Implementation Fee (one-time)</td>
+        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
+      </tr>
+    </tfoot>
   </table>
 
 </section>
@@ -774,7 +782,7 @@
   <div class="cta">
     <h3>Ready to get started?</h3>
     <p>Reach out and we'll set up a 30-minute call to walk through scope, timeline, and any open questions.</p>
-    <div class="contact">info@tecaudex.pk<span>·</span>www.tecaudex.pk<span>·</span>Tecaudex, Pakistan</div>
+    <div class="contact">sales@tecaudex.com<span>·</span>www.tecaudex.pk<span>·</span>Tecaudex, Pakistan</div>
   </div>
 
 </section>
