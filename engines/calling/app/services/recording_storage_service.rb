@@ -33,10 +33,16 @@ class RecordingStorageService
 
         Rails.logger.info "Recording #{recording.sid} successfully stored in S3 as #{filename}"
 
-        # After successfully storing the recording, transcribe it using Deepgram
+        # After successfully storing the recording, transcribe it via the
+        # organization's configured transcription provider. Skip silently if
+        # transcription is disabled or no API key is configured — the recording
+        # is still usable; it just won't have a transcript.
         if recording.audio_file.attached?
-          # Call the Deepgram service to transcribe the audio
-          DeepgramService.new.transcribe(recording)
+          begin
+            DeepgramService.new(organization: recording.organization).transcribe(recording)
+          rescue DeepgramService::NotConfigured => e
+            Rails.logger.info "Skipping transcription for recording #{recording.sid}: #{e.message}"
+          end
         end
       else
         Rails.logger.error "Failed to download recording #{recording.sid} from Twilio: #{response.code}"

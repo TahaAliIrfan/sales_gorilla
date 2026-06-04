@@ -1,0 +1,23 @@
+<%# Deepgram credentials for the Transcription module. Same secrecy pattern as
+    the Twilio fields: existing values are masked, blank submits keep them. %>
+<% s = feature.settings_hash %>
+
+<div class="space-y-4 rounded-lg bg-paper/40 p-4 ring-1 ring-[var(--color-line-2)]">
+  <p class="micro" style="color: var(--color-ink-soft)">Deepgram credentials</p>
+
+  <div>
+    <%= label_tag "organization_feature_settings_api_key", "API key",
+          class: "micro", style: "color: var(--color-ink-soft)" %>
+    <%= password_field_tag "organization_feature[settings][api_key]", "",
+          id: "organization_feature_settings_api_key",
+          autocomplete: "new-password",
+          placeholder: s["api_key"].present? ? "•••••• (saved)" : "Required",
+          class: input_classes %>
+  </div>
+
+  <p class="mono text-xs text-ink-soft/70">
+    Find or create a Deepgram API key at
+    <a href="https://console.deepgram.com/" target="_blank" rel="noopener" class="underline hover:text-ink">console.deepgram.com</a>.
+    Leave blank to keep the saved value.
+  </p>
+</div>

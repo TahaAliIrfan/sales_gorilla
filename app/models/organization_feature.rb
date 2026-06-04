@@ -1,8 +1,9 @@
 class OrganizationFeature < ApplicationRecord
-  KEYS = %w[calling].freeze
+  KEYS = %w[calling transcription].freeze
 
   PROVIDERS = {
-    "calling" => %w[twilio].freeze
+    "calling" => %w[twilio].freeze,
+    "transcription" => %w[deepgram].freeze
   }.freeze
 
   belongs_to :organization

@@ -1,65 +1,139 @@
-<%# Renders one feature module (e.g. Calling) with on/off toggle, provider
-    selector, and the provider-specific credentials form. %>
+<%# One feature module (Calling, Transcription, …). Two states managed by the
+    `feature-card` Stimulus controller:
+      summary: provider + status + Edit button (default)
+      form:    full toggle/provider/credentials editor (after clicking Edit) %>
 <%
   meta = {
     "calling" => {
       title: "Calling",
-      blurb: "Browser-based phone calls, recordings, and transcription."
+      blurb: "Browser-based phone calls and call recording.",
+      icon:  "phone"
+    },
+    "transcription" => {
+      title: "Transcription",
+      blurb: "Automatic speaker-diarized transcripts for every call recording.",
+      icon:  "rec"
     }
-  }[feature.key]
+  }.fetch(feature.key, { title: feature.key.titleize, blurb: "", icon: "grid" })
+
+  configured_credentials = feature.settings_hash.reject { |_, v| v.blank? }.keys
+  status_label =
+    if feature.enabled? && configured_credentials.any?
+      [ "Active", "var(--brand-accent)" ]
+    elsif feature.enabled?
+      [ "Needs credentials", "#a83a22" ]
+    else
+      [ "Disabled", "var(--color-ink-soft)" ]
+    end
+  has_errors = feature.errors.any?
 %>
 
-<div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
-  <%= form_with model: feature,
-        url: settings_feature_path(key: feature.key),
-        method: :patch,
-        class: "space-y-6" do |f| %>
+<div data-controller="feature-card"
+     class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
 
-    <% if feature.errors.any? %>
-      <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
-        <ul class="list-inside list-disc space-y-1">
-          <% feature.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-        </ul>
+  <%# ─── SUMMARY VIEW (default) ─────────────────────────────────────────── %>
+  <div data-feature-card-target="summary"
+       class="<%= "hidden" if has_errors %> flex flex-wrap items-center gap-4 p-6">
+    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-paper ring-1 ring-[var(--color-line-2)] text-ink-soft">
+      <%= nav_icon(meta[:icon]) %>
+    </span>
+
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-2">
+        <h3 class="font-display text-lg font-semibold text-ink"><%= meta[:title] %></h3>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium tracking-wide ring-1"
+              style="color: <%= status_label[1] %>; background: color-mix(in srgb, <%= status_label[1] %> 12%, transparent); --tw-ring-color: color-mix(in srgb, <%= status_label[1] %> 30%, transparent);">
+          <span class="h-1.5 w-1.5 rounded-full" style="background: <%= status_label[1] %>"></span>
+          <%= status_label[0] %>
+        </span>
       </div>
-    <% end %>
+      <p class="mt-1 text-sm text-ink-soft"><%= meta[:blurb] %></p>
 
-    <div class="flex items-start justify-between gap-6">
+      <% if feature.provider.present? || configured_credentials.any? %>
+        <dl class="mono mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+          <% if feature.provider.present? %>
+            <div class="flex items-center gap-1.5">
+              <dt class="text-ink-soft/70">Provider</dt>
+              <dd class="text-ink"><%= feature.provider.titleize %></dd>
+            </div>
+          <% end %>
+          <% if configured_credentials.any? %>
+            <div class="flex items-center gap-1.5">
+              <dt class="text-ink-soft/70">Configured</dt>
+              <dd class="text-ink"><%= pluralize(configured_credentials.size, "field") %></dd>
+            </div>
+          <% end %>
+        </dl>
+      <% end %>
+    </div>
+
+    <button type="button" data-action="feature-card#edit"
+            class="shrink-0 rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+      Edit
+    </button>
+  </div>
+
+  <%# ─── EDIT FORM ──────────────────────────────────────────────────────── %>
+  <div data-feature-card-target="form"
+       class="<%= "hidden" unless has_errors %> border-t border-[var(--color-line-2)] p-6">
+    <%= form_with model: feature,
+          url: settings_feature_path(key: feature.key),
+          method: :patch,
+          class: "space-y-6" do |f| %>
+
+      <% if has_errors %>
+        <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
+          <ul class="list-inside list-disc space-y-1">
+            <% feature.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <div class="flex items-start justify-between gap-6">
+        <div>
+          <h3 class="font-display text-lg font-semibold text-ink"><%= meta[:title] %></h3>
+          <p class="mt-1 text-sm text-ink-soft"><%= meta[:blurb] %></p>
+        </div>
+
+        <label class="inline-flex cursor-pointer items-center gap-3">
+          <span class="micro" style="color: var(--color-ink-soft)">
+            <%= feature.enabled? ? "Enabled" : "Disabled" %>
+          </span>
+          <%= f.hidden_field :enabled, value: "0" %>
+          <%= f.check_box :enabled,
+                { class: "peer sr-only", checked: feature.enabled? },
+                "1", "0" %>
+          <span class="relative h-6 w-11 rounded-full bg-[var(--color-line-2)] transition peer-checked:bg-[var(--brand-primary)]">
+            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+          </span>
+        </label>
+      </div>
+
       <div>
-        <h3 class="text-lg font-semibold text-ink"><%= meta[:title] %></h3>
-        <p class="mt-1 text-sm text-ink-soft"><%= meta[:blurb] %></p>
+        <%= f.label :provider, class: "micro", style: "color: var(--color-ink-soft)" %>
+        <%= f.select :provider,
+              OrganizationFeature::PROVIDERS[feature.key].map { |p| [ p.titleize, p ] },
+              { include_blank: "Select a provider" },
+              class: input_classes %>
       </div>
 
-      <label class="inline-flex cursor-pointer items-center gap-3">
-        <span class="micro" style="color: var(--color-ink-soft)">
-          <%= feature.enabled? ? "Enabled" : "Disabled" %>
-        </span>
-        <%= f.hidden_field :enabled, value: "0" %>
-        <%= f.check_box :enabled,
-              { class: "peer sr-only", checked: feature.enabled? },
-              "1", "0" %>
-        <span class="relative h-6 w-11 rounded-full bg-[var(--color-line-2)] transition peer-checked:bg-[var(--brand-primary)]">
-          <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
-        </span>
-      </label>
-    </div>
+      <% case feature.key %>
+      <% when "calling" %>
+        <%= render "settings/features/twilio_fields", f: f, feature: feature %>
+      <% when "transcription" %>
+        <%= render "settings/features/deepgram_fields", f: f, feature: feature %>
+      <% end %>
 
-    <div>
-      <%= f.label :provider, class: "micro", style: "color: var(--color-ink-soft)" %>
-      <%= f.select :provider,
-            OrganizationFeature::PROVIDERS[feature.key].map { |p| [ p.titleize, p ] },
-            { include_blank: "Select a provider" },
-            class: input_classes %>
-    </div>
-
-    <% if feature.key == "calling" %>
-      <%= render "settings/features/twilio_fields", f: f, feature: feature %>
+      <div class="flex items-center justify-end gap-3 border-t border-[var(--color-line-2)] pt-4">
+        <button type="button" data-action="feature-card#cancel"
+                class="rounded-md px-4 py-2 text-sm font-medium text-ink-soft transition hover:text-ink">
+          Cancel
+        </button>
+        <%= f.submit "Save changes",
+              data: { turbo_submits_with: "Saving…" },
+              class: "rounded-md px-5 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer",
+              style: "background: var(--brand-primary)" %>
+      </div>
     <% end %>
-
-    <div class="flex items-center gap-3">
-      <%= f.submit "Save #{meta[:title]}",
-            data: { turbo_submits_with: "Saving…" },
-            class: "rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer",
-            style: "background: var(--brand-primary)" %>
-    </div>
-  <% end %>
+  </div>
 </div>

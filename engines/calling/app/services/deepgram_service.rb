@@ -1,6 +1,21 @@
 class DeepgramService
   BASE_URL = "https://api.deepgram.com"
 
+  class NotConfigured < StandardError; end
+
+  # Caller may pass `organization:` explicitly (workers should), otherwise we
+  # fall back to ActsAsTenant.current_tenant.
+  def initialize(organization: nil)
+    @organization = organization || ActsAsTenant.current_tenant ||
+                    raise(ArgumentError, "DeepgramService needs an organization (ActsAsTenant.current_tenant or `organization:` arg)")
+
+    feature = @organization.feature(:transcription)
+    raise NotConfigured, "Transcription not enabled for #{@organization.subdomain}" unless feature&.enabled?
+
+    @api_key = feature.settings_hash["api_key"].presence ||
+               raise(NotConfigured, "Transcription provider has no API key for #{@organization.subdomain}")
+  end
+
   def transcribe(recording)
     response = api_connection.post("/v1/listen") do |req|
       req.params["tier"] = "nova"
@@ -21,7 +36,6 @@ class DeepgramService
   end
 
   private
-
 
   def utterance_mapping(utterance)
     { speaker: utterance["speaker"] || utterance["channel"], transcript: utterance["transcript"],
@@ -44,14 +58,12 @@ class DeepgramService
     end
   end
 
-
-
   def api_connection
     @api_connection ||= Faraday.new(
       url: BASE_URL,
       headers: {
         "Content-Type" => "application/json",
-        "Authorization" => "Token #{Rails.application.credentials.dig(:DEEPGRAM_API)}"
+        "Authorization" => "Token #{@api_key}"
       }
     )
   end
