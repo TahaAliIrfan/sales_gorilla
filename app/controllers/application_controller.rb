@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   include SetsCurrentTenant
   include Pundit::Authorization
 
-  helper_method :current_user, :current_user_admin?, :current_organization, :current_membership, :current_user_in_org?
+  helper_method :current_user, :current_user_admin?, :current_organization, :current_membership, :current_user_in_org?, :feature_enabled?
 
   # Rescue from common exceptions
   rescue_from ActiveRecord::RecordInvalid, with: :handle_validation_error
@@ -23,6 +23,12 @@ class ApplicationController < ActionController::Base
   # request is inside an organization (i.e. on a tenant subdomain).
   def current_user_in_org?
     current_user.present? && current_organization.present?
+  end
+
+  # True if the named feature module is turned on for the current org (settings
+  # at /settings/features). Off-by-default outside a tenant context.
+  def feature_enabled?(key)
+    current_organization&.feature_enabled?(key) || false
   end
 
   # True when the request came in on an organization subdomain (e.g. acme.).

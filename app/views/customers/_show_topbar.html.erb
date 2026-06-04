@@ -14,7 +14,7 @@
       Edit
     <% end %>
 
-    <% if customer.phone.present? %>
+    <% if customer.phone.present? && feature_enabled?(:calling) %>
       <%= link_to calling_path(customer_id: customer.id, phone: customer.phone),
             class: "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
             style: "background: var(--color-accent)" do %>

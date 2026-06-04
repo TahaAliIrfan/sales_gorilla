@@ -56,11 +56,13 @@
           <% if current_user&.admin? %>
             <%= nav_link "All Tasks", tasks_path, icon: "task" %>
           <% end %>
-          <%= nav_link "My Recordings", my_recordings_recordings_path, icon: "rec" %>
-          <% if current_user&.admin? %>
-            <%= nav_link "All Recordings", recordings_path, icon: "rec" %>
+          <% if feature_enabled?(:calling) %>
+            <%= nav_link "My Recordings", my_recordings_recordings_path, icon: "rec" %>
+            <% if current_user&.admin? %>
+              <%= nav_link "All Recordings", recordings_path, icon: "rec" %>
+            <% end %>
+            <%= nav_link "Calling", calling_path, icon: "phone" %>
           <% end %>
-          <%= nav_link "Calling",    calling_path,              icon: "phone" %>
           <%= nav_link "Invoices",   invoices_path,             icon: "doc" %>
 
           <p class="micro px-3 pt-5 pb-2">Outreach</p>

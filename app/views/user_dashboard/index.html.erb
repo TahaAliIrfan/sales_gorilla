@@ -6,13 +6,17 @@
       subtitle: "#{current_organization&.name} at a glance." %>
 
 <%# === Headline stats: figures in mono, hairline dividers, no busy chrome === %>
-<div class="grid grid-cols-2 overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)] lg:grid-cols-4">
-  <% [
+<%
+  stat_tiles = [
     [ "Customers",      @total_customers,                                      "#{@customers_this_month} new this month", :accent, customers_path,           "users",     0   ],
     [ "Active deals",   number_to_currency(@active_deal_value, precision: 0),  "#{@active_deals} open",                    :muted,  my_deals_deals_path,      "deal",      80  ],
     [ "Pending tasks",  @pending_tasks_count,                                  (@overdue_tasks_count.to_i > 0 ? "#{@overdue_tasks_count} overdue" : "On track"), (@overdue_tasks_count.to_i > 0 ? :alert : :accent), my_tasks_tasks_path(status: 'pending'), "task", 160 ],
-    [ "Call success",   "#{@call_success_rate}%",                              "#{@calls_this_month} calls this month",    :muted,  my_recordings_recordings_path, "phone", 240 ]
-  ].each_with_index do |(label, value, sub, sub_tone, href, icon, delay), i| %>
+    (feature_enabled?(:calling) ? [ "Call success",   "#{@call_success_rate}%",                              "#{@calls_this_month} calls this month",    :muted,  my_recordings_recordings_path, "phone", 240 ] : nil)
+  ].compact
+  grid_cols_lg = stat_tiles.size == 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
+%>
+<div class="grid grid-cols-2 overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)] <%= grid_cols_lg %>">
+  <% stat_tiles.each_with_index do |(label, value, sub, sub_tone, href, icon, delay), i| %>
     <div class="border-[var(--color-line)] <%= 'border-l' if i.positive? %>">
       <%= render "shared/stat_card",
             label: label, value: value, sub: sub, sub_tone: sub_tone,

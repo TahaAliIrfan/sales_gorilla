@@ -2,6 +2,8 @@ require "json"
 
 class RecordingsController < ApplicationController
   before_action :require_login
+  before_action :require_calling_enabled
+  before_action :require_transcription_enabled, only: :transcript
   layout "tenant"
   before_action :set_recording, only: [ :show, :transcript, :download ]
 
@@ -87,6 +89,25 @@ class RecordingsController < ApplicationController
   end
 
   private
+
+  def require_calling_enabled
+    return if feature_enabled?(:calling)
+
+    respond_to do |format|
+      format.html do
+        flash[:error] = "Calling is disabled for this organization."
+        redirect_to safe_root_path
+      end
+      format.json { render json: { error: "Calling is disabled" }, status: :forbidden }
+      format.any  { head :forbidden }
+    end
+  end
+
+  def require_transcription_enabled
+    return if feature_enabled?(:transcription)
+
+    render json: { error: "Transcription is disabled" }, status: :forbidden
+  end
 
   def set_recording
     @recording = Recording.find(params[:id])
