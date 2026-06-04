@@ -1,222 +1,215 @@
-<% content_for :title, "Dashboard — #{current_organization&.name}" %>
-
-<%= render "shared/page_header",
-      eyebrow: "Overview",
-      title: "Good to see you, #{current_user.name.presence || current_user.email.split('@').first}.",
-      subtitle: "#{current_organization&.name} at a glance." %>
-
-<%# === Headline stats: figures in mono, hairline dividers, no busy chrome === %>
+<%# Relay "Today" — role-aware rep cockpit. Mirrors docs/design/relay-app/project/app/view-today.jsx %>
+<% content_for :title, "Today — #{current_organization&.name}" %>
 <%
-  stat_tiles = [
-    [ "Customers",      @total_customers,                                      "#{@customers_this_month} new this month", :accent, customers_path,           "users",     0   ],
-    [ "Active deals",   number_to_currency(@active_deal_value, precision: 0),  "#{@active_deals} open",                    :muted,  my_deals_deals_path,      "deal",      80  ],
-    [ "Pending tasks",  @pending_tasks_count,                                  (@overdue_tasks_count.to_i > 0 ? "#{@overdue_tasks_count} overdue" : "On track"), (@overdue_tasks_count.to_i > 0 ? :alert : :accent), my_tasks_tasks_path(status: 'pending'), "task", 160 ],
-    (feature_enabled?(:calling) ? [ "Call success",   "#{@call_success_rate}%",                              "#{@calls_this_month} calls this month",    :muted,  my_recordings_recordings_path, "phone", 240 ] : nil)
-  ].compact
-  grid_cols_lg = stat_tiles.size == 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
+  hour = Time.current.hour
+  greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening"
+  first_name = (current_user.name.presence || current_user.email.split("@").first).split(/\s+/).first
 %>
-<div class="grid grid-cols-2 overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)] <%= grid_cols_lg %>">
-  <% stat_tiles.each_with_index do |(label, value, sub, sub_tone, href, icon, delay), i| %>
-    <div class="border-[var(--color-line)] <%= 'border-l' if i.positive? %>">
-      <%= render "shared/stat_card",
-            label: label, value: value, sub: sub, sub_tone: sub_tone,
-            href: href, icon: icon, delay: delay %>
-    </div>
-  <% end %>
-</div>
 
-<%# === Three-column row: deal performance · customer status · weekly activity === %>
-<div class="mt-6 grid gap-6 lg:grid-cols-3">
-  <%= render "shared/panel", eyebrow: "Deal performance" do %>
-    <dl class="space-y-3 text-sm">
-      <div class="flex items-center justify-between">
-        <dt class="text-ink-soft">Won</dt>
-        <dd class="flex items-baseline gap-2">
-          <span class="mono text-lg font-semibold text-ink"><%= @won_deals %></span>
-          <span class="mono text-xs text-ink-soft"><%= number_to_currency(@won_deal_value, precision: 0) %></span>
-        </dd>
-      </div>
-      <div class="flex items-center justify-between">
-        <dt class="text-ink-soft">Lost</dt>
-        <dd class="flex items-baseline gap-2">
-          <span class="mono text-lg font-semibold text-ink"><%= @lost_deals %></span>
-          <span class="mono text-xs text-ink-soft"><%= number_to_currency(@lost_deal_value, precision: 0) %></span>
-        </dd>
-      </div>
-    </dl>
-
-    <div class="mt-5 border-t border-dashed border-[var(--color-line-2)] pt-4">
-      <div class="flex items-center justify-between">
-        <span class="micro">Win rate</span>
-        <span class="mono text-2xl font-semibold text-ink"><%= @win_rate %>%</span>
-      </div>
-      <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--color-line)]">
-        <div class="h-full rounded-full" style="width: <%= @win_rate %>%; background: var(--brand-accent)"></div>
-      </div>
-    </div>
-
-    <div class="mt-5 border-t border-dashed border-[var(--color-line-2)] pt-4">
-      <p class="micro">Revenue this month</p>
-      <p class="mono mt-1 text-xl font-semibold text-ink"><%= number_to_currency(@revenue_this_month) %></p>
-    </div>
-  <% end %>
-
-  <%= render "shared/panel", eyebrow: "Customer status" do %>
-    <ul class="space-y-2.5 text-sm">
-      <% [
-        [ "Pending",             :pending,             "warn" ],
-        [ "Contact established", :contact_established, "info" ],
-        [ "Converted",           :converted,           "ok"   ],
-        [ "Not interested",      :not_interested,      "bad"  ],
-        [ "Exhausted",           :exhausted,           "muted" ]
-      ].each do |label, key, tone| %>
-        <li class="flex items-center justify-between">
-          <span class="flex items-center gap-2 text-ink-soft">
-            <span class="h-1.5 w-1.5 rounded-full" style="background: <%= { ok: '#10B981', warn: '#d97706', bad: '#dc2626', info: '#2563eb', muted: '#9ca3af' }[tone.to_sym] %>"></span>
-            <%= label %>
-          </span>
-          <span class="mono text-base font-semibold text-ink"><%= @customer_status_counts[key] || 0 %></span>
-        </li>
-      <% end %>
-    </ul>
-    <div class="mt-4 border-t border-dashed border-[var(--color-line-2)] pt-4">
-      <div class="flex items-center justify-between">
-        <span class="micro">Total customers</span>
-        <span class="mono text-2xl font-semibold text-ink"><%= @total_customers %></span>
-      </div>
-    </div>
-  <% end %>
-
-  <%= render "shared/panel", eyebrow: "This month" do %>
-    <ul class="divide-y divide-[var(--color-line)] text-sm">
-      <% [
-        [ "New customers",      @customers_this_month        ],
-        [ "Deals created",      @deals_created_this_month    ],
-        [ "Tasks completed",    @completed_tasks_this_month  ],
-        [ "Calls made",         @calls_this_month            ]
-      ].each do |label, value| %>
-        <li class="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-          <span class="text-ink-soft"><%= label %></span>
-          <span class="mono text-lg font-semibold text-ink"><%= value %></span>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
-</div>
-
-<%# === Pipeline overview === %>
-<% if @deal_stages.any? %>
-  <div class="mt-6">
-    <%= render "shared/panel", eyebrow: "Pipeline", title: "My pipeline overview",
-          actions: link_to("View deals →", my_deals_deals_path, class: "text-ink-soft transition hover:text-ink", style: "color: var(--brand-primary)") do %>
-      <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-        <% @deal_stages.each do |stage| %>
-          <div class="rounded-lg p-3 ring-1 ring-[var(--color-line-2)]">
-            <p class="micro truncate" title="<%= stage.name %>"><%= stage.name %></p>
-            <p class="mono mt-2 text-2xl font-semibold text-ink"><%= @deals_by_stage[stage.id] || 0 %></p>
-            <p class="mono text-[10px] text-ink-soft/70">deals</p>
-          </div>
+<div class="page">
+  <%# === Header === %>
+  <div class="pagehead">
+    <div>
+      <div class="rl-eyebrow" style="margin-bottom:6px"><%= Date.current.strftime("%A, %B %-d") %></div>
+      <div class="pagehead__title"><%= greeting %>, <%= first_name %>.</div>
+      <div class="pagehead__sub">
+        <% if @is_manager %>
+          Your team has <b><%= @team_open_followups %> open follow-ups</b> and <b><%= relay_money_compact(@open_pipeline_value) %></b> in active pipeline.
+        <% elsif @overdue_tasks.any? %>
+          You have <b style="color:var(--color-danger-text)"><%= @overdue_tasks.size %> overdue</b> and <%= @today_tasks.size %> due today. Let's clear them.
+        <% else %>
+          You're on track — <%= @today_tasks.size %> follow-ups due today and <%= @queue_count %> leads in your queue.
         <% end %>
       </div>
-    <% end %>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to reports_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("bar-chart-3", size: 15) %>My numbers
+      <% end %>
+      <%= link_to customers_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("zap", size: 15) %>Work my list
+      <% end %>
+    </div>
   </div>
-<% end %>
 
-<%# === Task triage: today · overdue · upcoming === %>
-<div class="mt-6 grid gap-6 lg:grid-cols-3">
-  <% [
-    [ "Today's tasks", @today_tasks,    @today_tasks_count,    "ok",   "Nothing due today." ],
-    [ "Overdue",        @overdue_tasks, @overdue_tasks_count, "bad",  "All clear — nothing overdue." ],
-    [ "Upcoming",       @pending_tasks,  @pending_tasks_count,  "warn", "No upcoming tasks." ]
-  ].each do |title, tasks, count, tone, empty_label| %>
-    <%= render "shared/panel",
-          eyebrow: title,
-          title: nil,
-          actions: tag.span(count.to_s, class: "mono inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold",
-                            style: "background: var(--color-line); color: var(--color-ink)") do %>
-      <% if tasks.any? %>
-        <ul class="divide-y divide-[var(--color-line)]">
-          <% tasks.each do |task| %>
-            <li class="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-medium text-ink">
-                  <%= link_to task.title, task_path(task), class: "transition hover:text-accent" %>
-                </p>
-                <p class="mono mt-1 text-xs text-ink-soft">
-                  <%= task.due_date&.strftime("%b %-d, %-I:%M %p") %>
-                  <% if task.customer %>· <%= task.customer.name %><% end %>
-                  <% if task.priority.present? %>
-                    · <span style="color: <%= task.priority == 'High' ? '#dc2626' : task.priority == 'Medium' ? '#d97706' : 'var(--color-ink-soft)' %>"><%= task.priority %></span>
-                  <% end %>
-                </p>
-              </div>
-              <%= button_to complete_task_path(task), method: :patch,
-                    form: { class: "shrink-0" },
-                    class: "grid h-7 w-7 place-items-center rounded-md ring-1 ring-[var(--color-line-2)] text-ink-soft transition hover:text-ink hover:bg-[var(--color-line)]",
-                    title: "Mark complete" do %>
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              <% end %>
-            </li>
+  <%# === KPI row === %>
+  <div class="grid <%= feature_enabled?(:calling) ? "grid-4" : "grid-3" %>" style="margin-bottom:var(--space-6)">
+    <% if feature_enabled?(:calling) %>
+      <%= render "user_dashboard/stat", label: "Calls today", value: @calls_today,
+            sub: "#{@connected_today} connected", icon: "phone" %>
+    <% end %>
+    <%= render "user_dashboard/stat", label: "Leads worked", value: @leads_worked,
+          sub: "this month", icon: "users" %>
+    <%= render "user_dashboard/stat", label: "Deals won (mo)", value: relay_money_compact(@deals_won_value),
+          sub: "#{@deals_won_count} closed", icon: "trophy" %>
+    <%= render "user_dashboard/stat", label: "Conversion", value: "#{@conversion}%",
+          sub: "win rate, all time", icon: "target" %>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1.55fr 1fr;align-items:start">
+    <%# === Left column === %>
+    <div class="col" style="gap:var(--space-5)">
+      <%# Today's follow-ups === %>
+      <div class="sect">
+        <div class="sect__head">
+          <div class="sect__title"><%= relay_icon("list-checks", size: 19) %>Today's follow-ups</div>
+          <div class="row" style="gap:8px">
+            <span class="muted rl-sm"><%= @done_today %> done</span>
+            <%= link_to "View all", my_tasks_tasks_path(status: "pending"), class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+          </div>
+        </div>
+        <div class="sect__body--flush">
+          <% if @open_followups.zero? %>
+            <div class="empty">
+              <span class="empty__ic"><%= relay_icon("check-circle-2", size: 26) %></span>
+              <div class="rl-h4" style="margin-bottom:4px">Inbox zero on tasks</div>
+              <div class="muted rl-sm" style="max-width:360px">You've cleared every follow-up. Nice work — go work some fresh leads.</div>
+              <div style="margin-top:16px"><%= link_to "Work my list", customers_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+            </div>
+          <% else %>
+            <% if @overdue_tasks.any? %>
+              <div style="padding:10px 16px 4px"><span class="rl-eyebrow" style="color:var(--color-danger-text)">Overdue · <%= @overdue_tasks.size %></span></div>
+              <%= render partial: "user_dashboard/task_row", collection: @overdue_tasks, as: :task, locals: { overdue: true } %>
+            <% end %>
+            <div style="padding:12px 16px 4px"><span class="rl-eyebrow">Today · <%= @today_tasks.size %></span></div>
+            <% if @today_tasks.any? %>
+              <%= render partial: "user_dashboard/task_row", collection: @today_tasks, as: :task, locals: { overdue: false } %>
+            <% else %>
+              <div style="padding:8px 16px 12px" class="muted rl-sm">Nothing due today.</div>
+            <% end %>
+            <div style="padding:12px 16px 4px"><span class="rl-eyebrow">Upcoming · <%= @upcoming_tasks.size %></span></div>
+            <% if @upcoming_tasks.any? %>
+              <%= render partial: "user_dashboard/task_row", collection: @upcoming_tasks, as: :task, locals: { overdue: false } %>
+            <% else %>
+              <div style="padding:8px 16px 12px" class="muted rl-sm">No upcoming follow-ups.</div>
+            <% end %>
           <% end %>
-        </ul>
-      <% else %>
-        <p class="py-6 text-center text-sm text-ink-soft"><%= empty_label %></p>
+        </div>
+      </div>
+
+      <%# Your queue === %>
+      <div class="sect">
+        <div class="sect__head">
+          <div class="sect__title"><%= relay_icon("users", size: 19) %>Your queue</div>
+          <div class="row" style="gap:8px">
+            <span class="muted rl-sm"><%= @queue_count %> active</span>
+            <%= link_to "View all", customers_path, class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+          </div>
+        </div>
+        <div class="sect__body--flush">
+          <% if @queue.empty? %>
+            <div style="padding:20px 16px;text-align:center" class="muted rl-sm">No active leads in your queue.</div>
+          <% else %>
+            <% @queue.each do |lead| %>
+              <%= link_to customer_path(lead), class: "rl-convo" do %>
+                <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(lead.name) %>"><%= relay_initials(lead.name) %></span>
+                <div class="rl-convo__main">
+                  <div class="rl-convo__row">
+                    <span class="rl-convo__name"><%= lead.name %></span>
+                    <span class="rl-convo__time"><%= time_ago_in_words(lead.updated_at) %> ago</span>
+                  </div>
+                  <div class="rl-convo__preview">
+                    <%= lead.company.presence || "No company" %>
+                  </div>
+                </div>
+                <span class="rl-pill rl-pill--brand"><i class="rl-dot"></i><%= lead.status %></span>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Manager/admin: team attainment === %>
+      <% if @is_manager %>
+        <div class="sect">
+          <div class="sect__head">
+            <div class="sect__title"><%= relay_icon("users-2", size: 19) %>Team today</div>
+            <%= link_to "Full report", manager_dashboard_path, class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+          </div>
+          <div class="sect__body--flush">
+            <% if @team.empty? %>
+              <div style="padding:20px 16px;text-align:center" class="muted rl-sm">No reps assigned to you yet.</div>
+            <% else %>
+              <% @team.each do |row| %>
+                <% rep = row[:user]; rep_name = rep.name.presence || rep.email %>
+                <div class="rl-listitem">
+                  <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(rep_name) %>"><%= relay_initials(rep_name) %></span>
+                  <div class="rl-listitem__main">
+                    <div class="rl-listitem__title"><%= rep_name %></div>
+                    <div class="rl-listitem__sub"><%= row[:calls] %> calls · <%= row[:leads] %> leads · <%= relay_money_compact(row[:won_value]) %> won</div>
+                  </div>
+                  <div style="width:130px">
+                    <div class="spread" style="margin-bottom:4px">
+                      <span class="muted" style="font-size:11px">Target</span>
+                      <span class="mono" style="font-size:11px;font-weight:700;color:<%= relay_attainment_text_color(row[:attainment]) %>"><%= row[:attainment] %>%</span>
+                    </div>
+                    <div class="targetbar"><i style="width:<%= row[:attainment] %>%;background:<%= relay_attainment_color(row[:attainment]) %>"></i></div>
+                  </div>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
       <% end %>
-    <% end %>
-  <% end %>
-</div>
+    </div>
 
-<%# === Recent deals & customers === %>
-<div class="mt-6 grid gap-6 lg:grid-cols-2">
-  <%= render "shared/panel",
-        eyebrow: "Recent",
-        title: "My active deals",
-        actions: link_to("View all →", my_deals_deals_path, class: "transition hover:text-ink", style: "color: var(--brand-primary)") do %>
-    <% if @recent_deals.any? %>
-      <ul class="divide-y divide-[var(--color-line)]">
-        <% @recent_deals.each do |deal| %>
-          <li class="flex items-center justify-between py-3 first:pt-0 last:pb-0">
-            <div class="min-w-0 flex-1 pr-3">
-              <p class="truncate text-sm font-medium text-ink">
-                <%= link_to deal.title.presence || "Untitled deal", deal_path(deal), class: "transition hover:text-accent" %>
-              </p>
-              <p class="mono mt-1 truncate text-xs text-ink-soft">
-                <%= deal.customer&.name.presence || "No customer" %> · <%= deal.deal_stage.name %>
-              </p>
-            </div>
-            <span class="mono shrink-0 text-sm font-semibold text-ink">
-              <%= number_to_currency(deal.amount, precision: 0) %>
-            </span>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="py-6 text-center text-sm text-ink-soft">No recent deals.</p>
-    <% end %>
-  <% end %>
+    <%# === Right column === %>
+    <div class="col" style="gap:var(--space-5)">
+      <%# Unassigned leads === %>
+      <div class="sect">
+        <div class="sect__head">
+          <div class="sect__title"><%= relay_icon("inbox", size: 18) %>Unassigned leads</div>
+          <span class="rl-badge rl-badge--warning"><%= @unassigned_count %> new</span>
+        </div>
+        <div class="sect__body--flush">
+          <% if @unassigned.empty? %>
+            <div style="padding:20px 16px;text-align:center" class="muted rl-sm">All caught up — nothing waiting.</div>
+          <% else %>
+            <% @unassigned.each do |lead| %>
+              <div class="rl-listitem">
+                <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(lead.name) %>"><%= relay_initials(lead.name) %></span>
+                <div class="rl-listitem__main">
+                  <div class="rl-listitem__title"><%= lead.name %></div>
+                  <div class="rl-listitem__sub row" style="gap:6px">
+                    <span><%= lead.company.presence || "No company" %></span>
+                    <% if lead.lead_source.present? %>
+                      <i style="width:3px;height:3px;border-radius:9px;background:var(--color-fg-4)"></i>
+                      <span><%= lead.lead_source %></span>
+                    <% end %>
+                  </div>
+                </div>
+                <%= button_to assign_to_self_customer_path(lead), method: :post,
+                      form: {},
+                      class: "rl-btn rl-btn--brand-soft rl-btn--sm" do %>
+                  Assign to me
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
 
-  <%= render "shared/panel",
-        eyebrow: "Recent",
-        title: "Recent customers",
-        actions: link_to("View all →", customers_path, class: "transition hover:text-ink", style: "color: var(--brand-primary)") do %>
-    <% if @recent_customers.any? %>
-      <ul class="divide-y divide-[var(--color-line)]">
-        <% @recent_customers.each do |customer| %>
-          <li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-sm font-medium text-ink">
-                <%= link_to customer.name, customer_path(customer), class: "transition hover:text-accent" %>
-              </p>
-              <p class="mono mt-1 truncate text-xs text-ink-soft">
-                <%= customer.email.presence || customer.phone.presence || "—" %>
-              </p>
+      <%# Pipeline snapshot === %>
+      <div class="sect">
+        <div class="sect__head">
+          <div class="sect__title"><%= relay_icon("trending-up", size: 18) %>Pipeline</div>
+          <%= link_to "Open board", deals_path, class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+        </div>
+        <div class="sect__body">
+          <div class="spread" style="align-items:center">
+            <div>
+              <div class="rl-eyebrow">Open pipeline</div>
+              <div style="font-family:var(--font-display);font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1.1" class="mono"><%= relay_money_compact(@open_pipeline_value) %></div>
+              <div class="muted rl-sm" style="margin-top:2px"><%= @open_pipeline_count %> active deals</div>
             </div>
-            <%= render "shared/status_pill", label: customer.status %>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="py-6 text-center text-sm text-ink-soft">No recent customers.</p>
-    <% end %>
-  <% end %>
+            <div class="score" style="flex-direction:column;align-items:flex-end;gap:6px">
+              <span class="mono" style="font-family:var(--font-display);font-weight:800;font-size:22px"><%= @win_rate %>%</span>
+              <span class="muted" style="font-size:11px">win rate</span>
+              <span class="score__bar" style="width:84px"><i style="width:<%= @win_rate %>%;background:var(--color-primary)"></i></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

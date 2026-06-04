@@ -1,0 +1,137 @@
+<%# Branding tab (white-label) — product name, logo, brand colour, with a LIVE
+    preview that reskins instantly. Form posts to the existing
+    BrandingController#update (organization[name|primary_color|accent_color|logo]).
+    The preview wrapper carries the recomputed --brand-* ramp only on itself, so
+    the real app does NOT change until the form is saved. The ramp math (L curve
+    + chroma multipliers) is the SAME source of truth as
+    Relay::ThemeHelper — emitted into data attributes the JS reads. %>
+<div class="col" style="gap:var(--space-5);max-width:920px"
+     data-controller="relay--branding-preview"
+     data-relay--branding-preview-l-value="<%= Relay::ThemeHelper::BRAND_L.to_json %>"
+     data-relay--branding-preview-cmul-value="<%= Relay::ThemeHelper::BRAND_CMUL.to_json %>"
+     data-relay--branding-preview-steps-value="<%= Relay::ThemeHelper::BRAND_STEPS.to_json %>"
+     data-relay--branding-preview-chroma-min-value="<%= Relay::ThemeHelper::CHROMA_RANGE.min %>"
+     data-relay--branding-preview-chroma-max-value="<%= Relay::ThemeHelper::CHROMA_RANGE.max %>">
+
+  <div style="background:var(--color-primary-subtle);border:1px solid var(--color-primary-border);border-radius:var(--radius-lg);padding:14px 16px" class="row">
+    <%= relay_icon("sparkles", size: 18, css: nil) %>
+    <div class="rl-sm" style="color:var(--color-primary-text)">
+      <b>White-label.</b> Set your product name, logo and brand colour — the whole interface reskins from one colour. Changes apply across the app once you save.
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns:1fr 1fr;gap:var(--space-5);align-items:start">
+    <%# ---- controls ---- %>
+    <div class="col" style="gap:var(--space-5)">
+      <%= form_with model: @organization, url: branding_path, method: :patch, class: "col", html: { style: "gap:var(--space-5)" } do |f| %>
+        <% if @organization.errors.any? %>
+          <%= render "settings/errors", record: @organization %>
+        <% end %>
+
+        <div class="sect">
+          <div class="sect__head"><div class="sect__title">Identity</div></div>
+          <div class="sect__body">
+            <div class="rl-field" style="margin-bottom:16px">
+              <%= f.label :name, "Product name", class: "rl-label" %>
+              <%= f.text_field :name, class: "rl-input",
+                    data: { "relay--branding-preview-target": "name",
+                            action: "input->relay--branding-preview#syncName" } %>
+            </div>
+
+            <label class="rl-label" style="margin-bottom:8px">Logo</label>
+            <div class="row" style="gap:12px">
+              <% if @organization.logo.attached? %>
+                <%= image_tag @organization.logo, alt: @organization.name,
+                      style: "width:48px;height:48px;border-radius:10px;object-fit:cover" %>
+              <% else %>
+                <span class="rl-avatar rl-avatar--lg rl-avatar--c1" style="border-radius:10px">
+                  <%= @organization.name.to_s.first.to_s.upcase %>
+                </span>
+              <% end %>
+              <%= f.file_field :logo, accept: "image/png,image/jpeg,image/svg+xml,image/webp",
+                    class: "rl-sm",
+                    style: "max-width:240px" %>
+            </div>
+            <span class="muted" style="font-size:12px">PNG, JPEG, SVG or WebP, square.</span>
+          </div>
+        </div>
+
+        <div class="sect">
+          <div class="sect__head"><div class="sect__title">Brand colour</div></div>
+          <div class="sect__body">
+            <div class="rl-field" style="margin-bottom:16px">
+              <%= f.label :primary_color, "Primary", class: "rl-label" %>
+              <div class="row" style="gap:10px">
+                <input type="color" value="<%= @organization.primary_color.presence || Relay::ThemeHelper::DEFAULT_BRAND_HEX %>"
+                       data-action="input->relay--branding-preview#syncPrimary"
+                       style="width:44px;height:44px;border:none;border-radius:10px;background:none;cursor:pointer">
+                <%= f.text_field :primary_color, class: "rl-input", style: "max-width:160px",
+                      data: { "relay--branding-preview-target": "primary",
+                              action: "input->relay--branding-preview#syncPrimaryHex" } %>
+              </div>
+            </div>
+
+            <div class="rl-field">
+              <%= f.label :accent_color, "Accent", class: "rl-label" %>
+              <div class="row" style="gap:10px">
+                <input type="color" value="<%= @organization.accent_color.presence || Relay::ThemeHelper::DEFAULT_BRAND_HEX %>"
+                       data-action="input->relay--branding-preview#syncAccent"
+                       style="width:44px;height:44px;border:none;border-radius:10px;background:none;cursor:pointer">
+                <%= f.text_field :accent_color, class: "rl-input", style: "max-width:160px",
+                      data: { "relay--branding-preview-target": "accent",
+                              action: "input->relay--branding-preview#syncAccentHex" } %>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <%= f.submit "Save branding", class: "rl-btn rl-btn--primary",
+                data: { turbo_submits_with: "Saving…" } %>
+        </div>
+      <% end %>
+    </div>
+
+    <%# ---- live preview (scoped --brand-* override on this wrapper only) ---- %>
+    <div class="sect brandprev-scope" style="position:sticky;top:0"
+         data-relay--branding-preview-target="preview">
+      <div class="sect__head"><div class="sect__title"><%= relay_icon("eye", size: 18) %>Live preview</div></div>
+      <div class="sect__body" style="background:var(--color-bg)">
+        <div style="display:grid;grid-template-columns:84px 1fr;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--color-border);box-shadow:var(--shadow-sm);margin-bottom:16px">
+          <div style="background:var(--color-sidebar);padding:10px">
+            <div class="row" style="gap:6px;margin-bottom:14px">
+              <span style="width:22px;height:22px;border-radius:6px;background:var(--color-primary);display:grid;place-items:center">
+                <svg viewBox="0 0 32 32" width="13" height="13" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="#fff" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <b style="color:#fff;font-size:11px;font-family:var(--font-display)" data-relay--branding-preview-target="logoLabel"><%= (@organization.name.presence || "Relay")[0, 7] %></b>
+            </div>
+            <div style="height:20px;border-radius:6px;background:var(--color-primary);margin-bottom:6px"></div>
+            <% 3.times do %><div style="height:16px;border-radius:6px;background:rgba(255,255,255,.06);margin-bottom:6px"></div><% end %>
+          </div>
+          <div style="background:var(--color-surface);padding:12px">
+            <div style="height:10px;width:90px;background:var(--color-fg);border-radius:3px;margin-bottom:10px;opacity:.85"></div>
+            <div class="row" style="gap:6px;margin-bottom:10px">
+              <span class="rl-pill rl-pill--brand"><i class="rl-dot"></i>Qualified</span>
+              <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Won</span>
+            </div>
+            <div class="rl-msgrow rl-msgrow--out" style="max-width:100%">
+              <div class="rl-bubble rl-bubble--out" style="font-size:11px">On for Thursday 👍</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button type="button" class="rl-btn rl-btn--primary rl-btn--sm">Primary</button>
+          <button type="button" class="rl-btn rl-btn--brand-soft rl-btn--sm">Soft</button>
+          <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm">Secondary</button>
+        </div>
+
+        <div class="rl-stat" style="padding:14px">
+          <div class="rl-stat__label">Conversion</div>
+          <div class="rl-stat__value" style="font-size:24px">24%</div>
+          <div class="rl-stat__delta rl-delta-up"><%= relay_icon("trending-up", size: 12) %>+3pt</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

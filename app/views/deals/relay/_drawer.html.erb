@@ -1,0 +1,171 @@
+<%# Deal drawer — lazy-loaded into the "deal_drawer" turbo-frame by deals#show.
+    Honest to the DB: value/stage/status, owner + assign (admins), linked lead,
+    linked call recordings (DealRecording), and the audit trail (DealActivity).
+    Stage moves happen by dragging cards on the board; here we expose the
+    high-intent money actions (won/lost) + reassign via the existing endpoints. %>
+<%= turbo_frame_tag "deal_drawer" do %>
+  <%
+    stage   = deal.deal_stage
+    owner   = deal.user
+    color   = relay_stage_color(stage)
+    age     = relay_deal_age(deal)
+    can_assign = current_user&.admin?
+  %>
+
+  <div class="drawer__head">
+    <span class="iccircle" style="background:var(--color-primary-subtle);color:var(--color-primary-text)">
+      <%= relay_icon("circle-dollar-sign", size: 18) %>
+    </span>
+    <div class="grow">
+      <div class="rl-h4" style="line-height:1.2"><%= deal.title.presence || "Untitled deal" %></div>
+      <div class="muted rl-sm"><%= [deal.customer&.company.presence || deal.customer&.name, "DEAL-#{deal.id}"].compact.join(" · ") %></div>
+    </div>
+    <button class="rl-iconbtn" data-action="click->relay--overlay#close"><%= relay_icon("x", size: 18) %></button>
+  </div>
+
+  <div class="drawer__body">
+    <%# Value / stage / status %>
+    <div class="row" style="gap:16px;margin-bottom:18px;flex-wrap:wrap">
+      <div>
+        <span class="rl-eyebrow">Value</span>
+        <div class="mono" style="font-weight:800;font-size:26px"><%= relay_money(deal.amount) %></div>
+      </div>
+      <div>
+        <span class="rl-eyebrow">Stage</span>
+        <div style="margin-top:4px">
+          <span class="rl-pill"><i class="rl-dot" style="background:<%= color %>"></i><%= stage&.name || "—" %></span>
+        </div>
+      </div>
+      <div>
+        <span class="rl-eyebrow">Status</span>
+        <div style="margin-top:4px">
+          <span class="rl-pill <%= relay_deal_status_pill(deal.status) %>"><i class="rl-dot"></i><%= deal.status %></span>
+        </div>
+      </div>
+    </div>
+
+    <%# Owner / lead / dates %>
+    <div class="sect" style="margin-bottom:16px"><div class="sect__body" style="padding:16px">
+      <div class="kvline">
+        <dt>Owner</dt>
+        <dd>
+          <% if can_assign %>
+            <div data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+              <button type="button" class="rl-chip" style="height:30px"
+                      data-action="relay--dropdown#toggle" data-relay--dropdown-target="trigger">
+                <% if owner %><span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(owner.name) %>"><%= relay_initials(owner.name) %></span><% end %>
+                <%= owner&.name || "Unassigned" %><%= relay_icon("chevron-down", size: 13) %>
+              </button>
+              <div class="menu-float pop" data-relay--dropdown-target="menu" hidden style="top:calc(100% + 6px);right:0">
+                <div class="rl-menu" style="min-width:220px">
+                  <div class="rl-menu__label">Assign to</div>
+                  <% @assignable_users.each do |u| %>
+                    <%= button_to assign_user_deal_path(deal), method: :patch,
+                          params: { user_id: u.id }, form: { data: { turbo_frame: "_top" } },
+                          class: "rl-menuitem", style: "width:100%" do %>
+                      <span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(u.name) %>"><%= relay_initials(u.name) %></span><%= u.name %>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          <% elsif owner %>
+            <div class="row" style="gap:8px;justify-content:flex-end">
+              <span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(owner.name) %>"><%= relay_initials(owner.name) %></span><%= owner.name %>
+            </div>
+          <% else %>
+            <span class="rl-badge rl-badge--warning">Unassigned</span>
+          <% end %>
+        </dd>
+      </div>
+      <div class="kvline">
+        <dt>Linked lead</dt>
+        <dd>
+          <% if deal.customer %>
+            <%= link_to deal.customer.name, customer_path(deal.customer),
+                  style: "color:var(--color-primary-text)", data: { turbo_frame: "_top" } %>
+          <% else %>—<% end %>
+        </dd>
+      </div>
+      <div class="kvline"><dt>Pipeline</dt><dd><%= deal.pipeline&.name || "—" %></dd></div>
+      <div class="kvline"><dt>Expected close</dt><dd><%= deal.expected_close_date&.strftime("%b %-d, %Y") || "—" %></dd></div>
+      <div class="kvline"><dt>Age</dt><dd><%= age %> days</dd></div>
+      <% if deal.closing_date.present? %>
+        <div class="kvline"><dt>Closed</dt><dd><%= deal.closing_date.strftime("%b %-d, %Y") %></dd></div>
+      <% end %>
+    </div></div>
+
+    <%# Linked recordings — DealRecording rows (sid + notes + stage + who). %>
+    <% if @recordings.present? %>
+      <div style="margin-bottom:16px">
+        <div class="rl-eyebrow" style="margin-bottom:8px">Linked recordings</div>
+        <div class="col" style="gap:8px">
+          <% @recordings.each do |rec| %>
+            <div class="sect"><div class="sect__body row" style="padding:12px;gap:10px;align-items:center">
+              <span class="iccircle" style="width:30px;height:30px;background:var(--color-surface-3);color:var(--color-fg-2)"><%= relay_icon("phone", size: 15) %></span>
+              <div class="grow" style="min-width:0">
+                <div class="rl-sm" style="font-weight:600"><%= rec.notes.presence || "Call recording" %></div>
+                <div class="muted" style="font-size:11px">
+                  <%= rec.user&.name %> · <%= rec.created_at.strftime("%b %-d, %Y") %><%= " · #{rec.recording_sid}" if rec.recording_sid.present? %>
+                </div>
+              </div>
+              <% if rec.recording_sid.present? %>
+                <%= link_to recordings_path(search: rec.recording_sid), class: "rl-iconbtn rl-iconbtn--sm",
+                      data: { turbo_frame: "_top" }, title: "Open in recordings" do %>
+                  <%= relay_icon("square-arrow-out-up-right", size: 15) %>
+                <% end %>
+              <% end %>
+            </div></div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+
+    <%# Audit trail — DealActivity records. %>
+    <div class="rl-eyebrow" style="margin-bottom:12px">Audit trail</div>
+    <% if @activities.present? %>
+      <div class="rl-timeline">
+        <% @activities.each do |act| %>
+          <% icon, dot = relay_activity_icon(act.action) %>
+          <div class="rl-tl-item">
+            <div class="rl-tl-dot <%= "rl-tl-dot--#{dot}" if dot.present? %>"><%= relay_icon(icon, size: 14) %></div>
+            <div class="rl-tl-body">
+              <div class="rl-tl-title"><b><%= act.details.presence || act.action.to_s.humanize %></b></div>
+              <div class="rl-tl-time"><%= act.user&.name || "System" %> · <%= act.created_at.strftime("%b %-d · %H:%M") %></div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="muted rl-sm">No activity recorded yet.</div>
+    <% end %>
+  </div>
+
+  <%# Money actions — existing mark_as_won / mark_as_lost endpoints. %>
+  <div class="drawer__foot" style="justify-content:space-between">
+    <% if policy(deal).mark_as_lost? %>
+      <%= button_to mark_as_lost_deal_path(deal), method: :patch,
+            form: { data: { turbo_frame: "_top", turbo_confirm: "Mark this deal as lost?" } },
+            class: "rl-btn rl-btn--destructive-ghost" do %>
+        <%= relay_icon("x-circle", size: 15) %>Mark lost
+      <% end %>
+    <% else %>
+      <span></span>
+    <% end %>
+    <div class="row" style="gap:8px">
+      <% if deal.customer %>
+        <%= link_to customer_path(deal.customer), class: "rl-btn rl-btn--secondary", data: { turbo_frame: "_top" } do %>
+          <%= relay_icon("messages-square", size: 15) %>Open conversation
+        <% end %>
+      <% end %>
+      <% if policy(deal).mark_as_won? %>
+        <%= button_to mark_as_won_deal_path(deal), method: :patch,
+              form: { data: { turbo_frame: "_top", turbo_confirm: "Mark this deal as won?" } },
+              class: "rl-btn rl-btn--primary",
+              style: "background:var(--color-success);border-color:var(--color-success)" do %>
+          <%= relay_icon("trophy", size: 15) %>Mark won
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+<% end %>

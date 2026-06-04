@@ -1,99 +1,116 @@
 class UserDashboardController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
 
+  ACTIVE_CUSTOMER_STATUSES = [ "Pending", "Lead", "Contact Established", "Proposal Sent", "Retarget" ].freeze
+  WORKED_STATUSES = [ "Contact Established", "Converted", "Proposal Sent", "Not Interested" ].freeze
+
   def index
-    # Date ranges
     @today = Date.current
-    @this_week_start = @today.beginning_of_week
-    @this_month_start = @today.beginning_of_month
+    @month_start = @today.beginning_of_month
+    @is_manager = current_user.admin? || current_user.manager?
 
-    # === CUSTOMER STATS ===
-    @total_customers = current_user.customers.count
-    @customers_this_month = current_user.customers.where(created_at: @this_month_start..Time.current).count
-
-    # Customer status breakdown
-    @customer_status_counts = {
-      pending: current_user.customers.where(status: "Pending").count,
-      contact_established: current_user.customers.where(status: "Contact Established").count,
-      contact_not_established: current_user.customers.where(status: [ "Contact Not Established", "Unresponsive" ]).count,
-      not_interested: current_user.customers.where(status: "Not Interested").count,
-      converted: current_user.customers.where(status: "Converted").count,
-      exhausted: current_user.customers.where(status: "Exhausted").count
-    }
-
-    # === DEAL STATS ===
-    @total_deals = current_user.deals.count
-    @active_deals = current_user.deals.active.count
-    @won_deals = current_user.deals.won.count
-    @lost_deals = current_user.deals.lost.count
-    @total_deal_value = current_user.deals.sum(:amount)
-    @won_deal_value = current_user.deals.won.sum(:amount)
-    @active_deal_value = current_user.deals.active.sum(:amount)
-
-    # Deals this month
-    @deals_created_this_month = current_user.deals.where(created_at: @this_month_start..Time.current).count
-    @deals_won_this_month = current_user.deals.won.where(closing_date: @this_month_start..@today).count
-    @revenue_this_month = current_user.deals.won.where(closing_date: @this_month_start..@today).sum(:amount)
-
-    # Win rate calculation
-    closed_deals = @won_deals + @lost_deals
-    @win_rate = closed_deals > 0 ? ((@won_deals.to_f / closed_deals) * 100).round(1) : 0
-
-    # Deal stages for pipeline
-    @deal_stages = DealStage.all
-    @deals_by_stage = {}
-    @deal_stages.each do |stage|
-      @deals_by_stage[stage.id] = current_user.deals.active.by_stage(stage).count
-    end
-
-    # === CALL STATS ===
-    my_recordings = Recording.where(user: current_user)
-    my_recordings_today = my_recordings.where(date: @today.beginning_of_day..@today.end_of_day)
-    my_recordings_this_week = my_recordings.where(date: @this_week_start..@today.end_of_day)
-    my_recordings_this_month = my_recordings.where(date: @this_month_start..@today.end_of_day)
-
-    # Today's calls
-    @calls_today = my_recordings_today.count
-    @connected_calls_today = my_recordings_today.where("duration >= ?", 120).count
-    @attempted_calls_today = my_recordings_today.where("duration >= ? AND duration < ?", 40, 120).count
-    @failed_calls_today = my_recordings_today.where("duration < ?", 40).count
-
-    # This week's calls
-    @calls_this_week = my_recordings_this_week.count
-    @connected_calls_this_week = my_recordings_this_week.where("duration >= ?", 120).count
-
-    # This month's calls
-    @calls_this_month = my_recordings_this_month.count
-    @connected_calls_this_month = my_recordings_this_month.where("duration >= ?", 120).count
-    @attempted_calls_this_month = my_recordings_this_month.where("duration >= ? AND duration < ?", 40, 120).count
-    @failed_calls_this_month = my_recordings_this_month.where("duration < ?", 40).count
-
-    # Call success rate
-    @call_success_rate = @calls_this_month > 0 ? ((@connected_calls_this_month.to_f / @calls_this_month) * 100).round(1) : 0
-
-    # === TASK STATS ===
-    @pending_tasks_count = current_user.tasks.pending.count
-    @today_tasks_count = current_user.tasks.for_today.count
-    @overdue_tasks_count = current_user.tasks.overdue.count
-    @completed_tasks_this_month = current_user.tasks.where(status: "completed", updated_at: @this_month_start..Time.current).count
-
-    # Task lists
-    @today_tasks = current_user.tasks.for_today.order(due_date: :asc).limit(5)
-    @overdue_tasks = current_user.tasks.overdue.order(due_date: :asc).limit(5)
-    @pending_tasks = current_user.tasks.pending.order(due_date: :asc).limit(5)
-
-    # === ITEMS NEEDING ATTENTION ===
-    @deals_needing_attention = deals_needing_attention
-    @customers_needing_attention = customers_needing_attention
-    @needs_attention = @deals_needing_attention.any? || @customers_needing_attention.any?
-
-    # === RECENT ACTIVITY ===
-    @recent_customers = current_user.customers.order(updated_at: :desc).limit(5)
-    @recent_deals = current_user.deals.order(updated_at: :desc).limit(5)
+    load_kpis
+    load_followups
+    load_queue
+    load_unassigned
+    load_pipeline
+    load_team if @is_manager
   end
 
   private
+
+  # === KPI stat tiles ===
+  def load_kpis
+    recordings_today = Recording.where(user: current_user)
+                                .where(date: @today.beginning_of_day..@today.end_of_day)
+    @calls_today = recordings_today.count
+    @connected_today = recordings_today.where("duration >= ?", 120).count
+
+    # Leads worked this month: customers this rep moved past the initial pending state.
+    @leads_worked = current_user.customers
+                                .where(status: WORKED_STATUSES)
+                                .where(updated_at: @month_start..Time.current)
+                                .count
+
+    won_this_month = current_user.deals.won.where(closing_date: @month_start..@today)
+    @deals_won_value = won_this_month.sum(:amount)
+    @deals_won_count = won_this_month.count
+
+    won = current_user.deals.won.count
+    lost = current_user.deals.lost.count
+    closed = won + lost
+    @conversion = closed.positive? ? ((won.to_f / closed) * 100).round : 0
+  end
+
+  # === Today's follow-ups (Tasks bucketed) ===
+  def load_followups
+    base = current_user.tasks.includes(:customer)
+    @overdue_tasks  = base.overdue.order(due_date: :asc).to_a
+    @today_tasks    = base.for_today.pending.order(due_date: :asc).to_a
+    @upcoming_tasks = base.pending.where("due_date > ?", @today.end_of_day)
+                          .order(due_date: :asc).limit(10).to_a
+    @open_followups = @overdue_tasks.size + @today_tasks.size + @upcoming_tasks.size
+    # The manager/admin subhead speaks about the team, so count the team's
+    # open follow-ups (admins: whole org via tenant scoping; managers: their
+    # associates + themselves), not just the viewer's own tasks.
+    @team_open_followups =
+      if current_user.admin?
+        Task.pending.count
+      elsif current_user.manager?
+        Task.pending.where(user_id: [current_user.id, *current_user.associates.ids]).count
+      end
+    @done_today = current_user.tasks.completed
+                              .where(updated_at: @today.beginning_of_day..@today.end_of_day)
+                              .count
+  end
+
+  # === Your queue: this rep's active leads ===
+  def load_queue
+    @queue = current_user.customers
+                         .where(status: ACTIVE_CUSTOMER_STATUSES)
+                         .order(updated_at: :desc)
+                         .limit(5)
+                         .to_a
+    @queue_count = current_user.customers.where(status: ACTIVE_CUSTOMER_STATUSES).count
+  end
+
+  # === Unassigned leads (assign to me) ===
+  def load_unassigned
+    @unassigned = Customer.where(user_id: nil)
+                          .order(created_at: :desc)
+                          .limit(6)
+                          .to_a
+    @unassigned_count = Customer.where(user_id: nil).count
+  end
+
+  # === Pipeline snapshot ===
+  def load_pipeline
+    open = current_user.deals.active
+    @open_pipeline_value = open.sum(:amount)
+    @open_pipeline_count = open.count
+
+    won = current_user.deals.won.count
+    lost = current_user.deals.lost.count
+    closed = won + lost
+    @win_rate = closed.positive? ? ((won.to_f / closed) * 100).round : 0
+  end
+
+  # === Manager / admin: team attainment ===
+  def load_team
+    associates = current_user.admin? ? User.all.to_a : current_user.associates.to_a
+    associates = associates.reject { |u| u.id == current_user.id }
+
+    start = @month_start
+    @team = associates.map do |rep|
+      calls = Recording.where(user_id: rep.id, date: start..Time.current).count
+      leads = rep.customers.where(updated_at: start..Time.current).count
+      won_value = rep.deals.won.where(closing_date: start..@today).sum(:amount)
+      target = helpers.relay_monthly_target(@target_memo ||= {})
+      attainment = helpers.relay_attainment_pct(won_value, target)
+      { user: rep, calls: calls, leads: leads, won_value: won_value, attainment: attainment }
+    end.sort_by { |r| -r[:attainment] }
+  end
 
   def require_login
     unless session[:user_id]
@@ -104,30 +121,5 @@ class UserDashboardController < ApplicationController
 
   def current_user
     @current_user ||= User.find_by(id: session[:user_id])
-  end
-
-  def deals_needing_attention
-    return [] unless current_user
-
-    Deal.assigned_to(current_user)
-        .active
-        .where("expected_close_date <= ?", Date.today + 7.days)
-        .where(
-          "NOT EXISTS (SELECT 1 FROM deal_activities WHERE deal_activities.deal_id = deals.id AND deal_activities.created_at >= ?)",
-          3.days.ago
-        )
-        .limit(10)
-  end
-
-  def customers_needing_attention
-    return [] unless current_user
-
-    Customer.where(user_id: current_user.id)
-            .where(status: [ "Pending", "Contact Established" ])
-            .where(
-              "NOT EXISTS (SELECT 1 FROM customer_activities WHERE customer_activities.customer_id = customers.id AND customer_activities.created_at >= ?)",
-              5.days.ago
-            )
-            .limit(10)
   end
 end

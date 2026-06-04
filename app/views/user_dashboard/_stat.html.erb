@@ -1,0 +1,10 @@
+<%# KPI stat tile. Ports the prototype Stat primitive (ui.jsx) to DS .rl-stat.
+    locals: label, value, sub, icon %>
+<div class="rl-stat">
+  <div class="spread">
+    <span class="rl-stat__label"><%= label %></span>
+    <span style="color:var(--color-fg-4)"><%= relay_icon(icon, size: 16) %></span>
+  </div>
+  <div class="rl-stat__value mono"><%= value %></div>
+  <div class="muted rl-sm" style="margin-top:var(--space-2)"><%= sub %></div>
+</div>

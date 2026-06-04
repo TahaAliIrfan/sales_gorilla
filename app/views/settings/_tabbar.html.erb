@@ -1,0 +1,33 @@
+<%# Shared Relay settings tab bar. Used by both the settings workspace
+    (settings#edit, server-side ?tab=…) and the features page (its own route,
+    /settings/features). `active` is the id of the current tab. Branding, team
+    and features are admin-only (admin_tabs?). %>
+<div class="rl-tabs" style="margin-bottom:var(--space-5)">
+  <%= link_to settings_path(tab: "profile"),
+        class: class_names("rl-tab", "is-active" => active == "profile") do %>
+    <%= relay_icon("user-cog", size: 15) %>Profile
+  <% end %>
+
+  <% if admin_tabs? %>
+    <%= link_to settings_path(tab: "branding"),
+          class: class_names("rl-tab", "is-active" => active == "branding") do %>
+      <%= relay_icon("palette", size: 15) %>Branding &amp; theme
+    <% end %>
+    <%= link_to settings_path(tab: "team"),
+          class: class_names("rl-tab", "is-active" => active == "team") do %>
+      <%= relay_icon("users-2", size: 15) %>Team &amp; roles
+    <% end %>
+  <% end %>
+
+  <%= link_to settings_path(tab: "integrations"),
+        class: class_names("rl-tab", "is-active" => active == "integrations") do %>
+    <%= relay_icon("plug", size: 15) %>Integrations
+  <% end %>
+
+  <% if admin_tabs? %>
+    <%= link_to settings_features_path,
+          class: class_names("rl-tab", "is-active" => active == "features") do %>
+      <%= relay_icon("hammer", size: 15) %>Features
+    <% end %>
+  <% end %>
+</div>

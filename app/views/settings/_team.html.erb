@@ -1,0 +1,78 @@
+<%# Team & roles tab — user list with role badge, active status, inline role
+    change and activate/deactivate. Role/active changes POST to the existing
+    UsersController#update_role / #toggle_active JSON endpoints via the
+    relay--user-admin Stimulus controller (same contract as users/index). %>
+<div class="col" style="gap:var(--space-5);max-width:920px"
+     data-controller="relay--user-admin">
+  <div class="spread">
+    <div>
+      <b style="font-size:var(--text-h4);font-weight:700">Team &amp; roles</b>
+      <div class="muted rl-sm">Admin → manager → associate. Managers oversee their assigned associates.</div>
+    </div>
+    <%= link_to managers_users_path, class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+      <%= relay_icon("git-fork", size: 14) %>Manage associates
+    <% end %>
+  </div>
+
+  <div class="rl-table-wrap">
+    <table class="rl-table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th style="text-align:right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each_with_index do |user, i| %>
+          <% role_key = user.highest_role&.key || "associate" %>
+          <tr>
+            <td>
+              <div class="row" style="gap:10px">
+                <span class="rl-avatar rl-avatar--sm rl-avatar--c<%= (i % 6) + 1 %>">
+                  <%= user.name.to_s.split.map(&:first).join[0, 2].upcase %>
+                </span>
+                <div>
+                  <div class="rl-cell-strong"><%= user.name %></div>
+                  <div class="muted" style="font-size:11px"><%= user.email %></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <% if user == current_user %>
+                <span class="rl-badge <%= settings_role_badge(role_key) %>" style="text-transform:capitalize"><%= role_key %></span>
+              <% else %>
+                <select class="rl-select" style="width:auto;height:32px;padding-top:0;padding-bottom:0"
+                        data-action="change->relay--user-admin#changeRole"
+                        data-relay--user-admin-id-param="<%= user.id %>"
+                        data-current="<%= role_key %>">
+                  <% @roles.each do |r| %>
+                    <option value="<%= r[:key] %>" <%= "selected" if r[:key] == role_key %>><%= r[:name] %></option>
+                  <% end %>
+                </select>
+              <% end %>
+            </td>
+            <td>
+              <% if user.active? %>
+                <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Active</span>
+              <% else %>
+                <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Inactive</span>
+              <% end %>
+            </td>
+            <td style="text-align:right">
+              <% unless user == current_user %>
+                <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm"
+                        data-action="relay--user-admin#toggleActive"
+                        data-relay--user-admin-id-param="<%= user.id %>"
+                        data-active="<%= user.active? %>">
+                  <%= user.active? ? "Deactivate" : "Activate" %>
+                </button>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

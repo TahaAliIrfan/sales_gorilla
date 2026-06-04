@@ -1,0 +1,58 @@
+<%# Call card (recordings table): outcome, native audio player, transcript.
+    The prototype's faux waveform is replaced by a real <audio> element so the
+    player actually plays the recorded call. locals: recording %>
+<% out = true # browser-based calling logs outbound calls %>
+<div class="cevent">
+  <div class="callcard">
+    <div class="callcard__head">
+      <span class="iccircle" style="background:color-mix(in oklch, var(--channel-call) 16%, transparent);color:var(--channel-call)">
+        <%= relay_icon(out ? "phone-outgoing" : "phone-incoming", size: 18) %>
+      </span>
+      <div class="grow">
+        <div class="row" style="gap:8px">
+          <b class="rl-sm"><%= out ? "Outbound call" : "Inbound call" %></b>
+          <span class="rl-badge <%= relay_call_outcome_variant(recording) %>"><%= relay_call_outcome(recording) %></span>
+        </div>
+        <div class="muted" style="font-size:12px">
+          <%= relay_conv_time(recording.date || recording.created_at) %> · <%= relay_call_duration(recording.duration) %> · auto-recorded
+        </div>
+      </div>
+      <% if recording.audio_file.attached? %>
+        <%= link_to download_recording_path(recording), class: "rl-iconbtn rl-iconbtn--sm", title: "Download" do %>
+          <%= relay_icon("download", size: 16) %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if recording.audio_file.attached? %>
+      <div style="padding:12px 16px 4px">
+        <audio controls preload="none" style="width:100%;height:38px" src="<%= rails_blob_path(recording.audio_file) %>"></audio>
+      </div>
+    <% elsif recording.url.present? %>
+      <div style="padding:12px 16px 4px">
+        <audio controls preload="none" style="width:100%;height:38px" src="<%= recording.url %>"></audio>
+      </div>
+    <% end %>
+
+    <% if recording.transcribed? %>
+      <details class="callcard__transcript">
+        <summary class="rl-btn rl-btn--ghost rl-btn--sm" style="margin:4px 16px;list-style:none;cursor:pointer">
+          <%= relay_icon("file-text", size: 14) %>Transcript
+        </summary>
+        <div style="padding:4px 16px 16px">
+          <div class="rl-transcript">
+            <div class="rl-tx">
+              <span class="rl-tx__time">00:00</span>
+              <div>
+                <div class="rl-tx__who rl-tx__who--lead">Call transcript</div>
+                <div class="rl-tx__text" style="white-space:pre-wrap"><%= recording.transcription %></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </details>
+    <% elsif recording.transcription_status.present? && recording.transcription_status != "completed" %>
+      <div class="muted rl-sm" style="padding:4px 16px 16px"><%= relay_icon("clock", size: 13) %> Transcription <%= recording.transcription_status %>…</div>
+    <% end %>
+  </div>
+</div>

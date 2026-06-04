@@ -2,6 +2,7 @@
 # Messaging/Email coming later) and configure the provider credentials for
 # each enabled module.
 class Settings::FeaturesController < TenantController
+  layout "relay"
   before_action :require_login
   before_action :load_features, only: %i[index]
   before_action :load_feature,  only: %i[update test verify]

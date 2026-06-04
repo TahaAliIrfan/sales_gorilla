@@ -1,0 +1,69 @@
+<%# Estimates tab — the current user's AI cost estimates (mirrors
+    CostEstimatesController#index). Per docs/design/relay-app/project/app/billing.jsx:
+    customer, project, total (mono), status pill, date, with view / resend /
+    generate-proposal actions wired to the existing cost_estimates endpoints. %>
+<% if @cost_estimates.empty? %>
+  <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+    <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("calculator", size: 22) %></span>
+    <div class="rl-h4">No estimates yet</div>
+    <div class="muted rl-sm" style="margin-top:6px">Price a project from its scope and turn it into a branded proposal.</div>
+    <div style="margin-top:16px"><%= link_to "New estimate", cost_estimates_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+  </div></div>
+<% else %>
+  <div class="sect">
+    <div class="sect__body--flush">
+      <div class="rl-table-scroll">
+        <table class="rl-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Project</th>
+              <th>Created</th>
+              <th style="text-align:right">Total</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @cost_estimates.each do |estimate| %>
+              <tr>
+                <td class="rl-cell-strong"><%= estimate.customer_display_name %></td>
+                <td class="muted"><%= estimate.project_name.presence || estimate.app_type_display %></td>
+                <td class="mono rl-sm"><%= estimate.created_at.strftime("%b %-d, %Y") %></td>
+                <td class="rl-cell-num"><%= relay_money(estimate.total_cost) %></td>
+                <td>
+                  <% if estimate.final_status? %>
+                    <span class="rl-badge rl-badge--success">Final</span>
+                  <% else %>
+                    <span class="rl-badge rl-badge--info">Draft</span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="row" style="gap:4px;justify-content:flex-end;flex-wrap:wrap">
+                    <%= link_to cost_estimate_path(estimate), class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                      <%= relay_icon("eye", size: 14) %>View
+                    <% end %>
+                    <% if estimate.customer&.email.present? %>
+                      <%= button_to resend_cost_estimate_path(estimate), method: :post,
+                            class: "rl-btn rl-btn--ghost rl-btn--sm",
+                            form: { data: { turbo_confirm: "Resend this estimate to #{estimate.customer.email}?" } } do %>
+                        <%= relay_icon("send", size: 14) %>Resend
+                      <% end %>
+                    <% end %>
+                    <%= link_to generate_proposal_cost_estimate_path(estimate),
+                          class: "rl-iconbtn rl-iconbtn--sm", title: "Generate proposal PDF" do %>
+                      <%= relay_icon("file-text", size: 15) %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <% if @cost_estimates.total_pages > 1 %>
+    <div class="rl-pagebtns" style="margin-top:var(--space-4)"><%= paginate @cost_estimates, theme: "relay" %></div>
+  <% end %>
+<% end %>

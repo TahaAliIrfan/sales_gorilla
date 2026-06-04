@@ -1,354 +1,171 @@
-<div class="min-h-screen bg-gray-50 py-8">
-  <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-      <p class="mt-2 text-sm text-gray-600">
-        <%= @filter_range == 'today' ? "Today's" : @filter_range == 'yesterday' ? "Yesterday's" : @filter_range.titleize %>
-        performance overview
-        <% unless current_user.admin? %>
-          <span class="text-blue-600 font-medium">&mdash; Your team</span>
+<%# Relay Insights (Phase 8) — KPI dashboard, trend, funnel, per-rep, sources.
+    Mirrors docs/design/relay-app/project/app/view-insights.jsx. Shared by
+    #index (admins/managers, with per-rep table) and #my_reports (self, no
+    per-rep table) via @show_per_rep. %>
+<% content_for :title, "Insights — #{current_organization&.name}" %>
+<%
+  cur  = @kpis[:current]
+  prev = @kpis[:previous]
+  range_labels = { "7d" => "7 days", "30d" => "30 days", "90d" => "90 days" }
+  range_caption = range_labels[@filter_range] || "#{@start_date.strftime('%b %-d')}–#{@end_date.strftime('%b %-d')}"
+%>
+
+<div class="page page--wide">
+  <%# === Header + range filter === %>
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Insights</div>
+      <div class="pagehead__sub"><%= @scope_label %> · <%= range_caption %></div>
+    </div>
+    <div class="pagehead__actions">
+      <div class="rl-segmented">
+        <% { "7d" => "7 days", "30d" => "30 days", "90d" => "90 days" }.each do |value, label| %>
+          <%= link_to label, (@show_per_rep ? reports_path(filter_range: value) : my_reports_path(filter_range: value)),
+                class: ("is-active" if @filter_range == value) %>
         <% end %>
-        <span class="text-gray-400">&mdash; <%= @start_date.strftime('%b %d, %Y') %> to <%= @end_date.strftime('%b %d, %Y') %></span>
-      </p>
+      </div>
+    </div>
+  </div>
+
+  <%# === KPI row (current window + real delta vs previous equal window) === %>
+  <div class="grid grid-4" style="margin-bottom:var(--space-6)">
+    <%= render "reports/kpi", label: "Calls", value: number_with_delimiter(cur[:calls]),
+          icon: "phone", delta: relay_pct_delta(cur[:calls], prev[:calls]), delta_suffix: "%" %>
+    <%= render "reports/kpi", label: "Leads worked", value: number_with_delimiter(cur[:leads_worked]),
+          icon: "users", delta: relay_pct_delta(cur[:leads_worked], prev[:leads_worked]), delta_suffix: "%" %>
+    <%= render "reports/kpi", label: "Won value", value: relay_money_compact(cur[:won_value]),
+          icon: "trophy", delta: relay_pct_delta(cur[:won_value], prev[:won_value]), delta_suffix: "%" %>
+    <%= render "reports/kpi", label: "Conversion", value: "#{cur[:conversion]}%",
+          icon: "target", delta: relay_point_delta(cur[:conversion], prev[:conversion]), delta_suffix: "pt" %>
+  </div>
+
+  <%# === Trend + funnel === %>
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;margin-bottom:var(--space-6);align-items:start">
+    <div class="sect">
+      <div class="sect__head">
+        <div class="sect__title"><%= relay_icon("bar-chart-3", size: 19) %>Calls over time</div>
+        <span class="muted rl-sm"><%= @show_per_rep ? "Team" : "You" %> · <%= number_with_delimiter(@trend_total) %> total</span>
+      </div>
+      <div class="sect__body">
+        <% if @trend_total.zero? %>
+          <div style="padding:24px 8px;text-align:center" class="muted rl-sm">No calls logged in this range.</div>
+        <% else %>
+          <%= render "reports/bars", labels: @trend_labels, values: @trend_values,
+                height: 180, label_every: (@trend_labels.size > 16 ? (@trend_labels.size / 8.0).ceil : 1) %>
+        <% end %>
+      </div>
     </div>
 
-    <!-- ═══════════════════════════════════════ -->
-    <!-- FILTER BAR                              -->
-    <!-- ═══════════════════════════════════════ -->
-    <div class="bg-white shadow-sm rounded-lg border border-gray-200 p-5 mb-8">
-      <%= form_tag reports_path, method: :get, class: "flex flex-wrap items-end gap-4", id: "report-filter-form" do %>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Time Period</label>
-          <div class="flex rounded-lg border border-gray-300 overflow-hidden">
-            <% [['Today', 'today'], ['Yesterday', 'yesterday'], ['Last Week', 'last_week'], ['This Month', 'month'], ['Custom', 'custom']].each do |label, value| %>
-              <label class="relative cursor-pointer">
-                <input type="radio" name="filter_range" value="<%= value %>"
-                       class="sr-only peer"
-                       <%= 'checked' if @filter_range == value %>
-                       onchange="document.getElementById('custom-date-fields').style.display = this.value === 'custom' ? 'flex' : 'none'; if(this.value !== 'custom') this.form.submit();">
-                <div class="px-4 py-2 text-sm font-medium border-r border-gray-300 last:border-r-0
-                            peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600
-                            text-gray-700 hover:bg-gray-50 transition-colors">
-                  <%= label %>
+    <div class="sect">
+      <div class="sect__head">
+        <div class="sect__title"><%= relay_icon("filter", size: 19) %>Conversion funnel</div>
+        <span class="muted rl-sm">leads created in range</span>
+      </div>
+      <div class="sect__body">
+        <% if @funnel.first[:value].zero? %>
+          <div style="padding:24px 8px;text-align:center" class="muted rl-sm">No leads created in this range.</div>
+        <% else %>
+          <div class="col" style="gap:10px">
+            <% @funnel.each_with_index do |f, i| %>
+              <div>
+                <div class="spread" style="margin-bottom:4px">
+                  <span class="rl-sm" style="font-weight:600"><%= f[:stage] %></span>
+                  <span class="row" style="gap:8px">
+                    <b class="tnum mono"><%= number_with_delimiter(f[:value]) %></b>
+                    <span class="muted tnum mono" style="font-size:12px;width:38px;text-align:right"><%= f[:pct] %>%</span>
+                  </span>
                 </div>
-              </label>
+                <div style="height:26px;border-radius:6px;background:var(--color-surface-3);overflow:hidden">
+                  <div style="width:<%= f[:pct] %>%;height:100%;border-radius:6px;background:color-mix(in oklch, var(--color-primary) <%= 100 - i * 14 %>%, var(--color-surface-3))"></div>
+                </div>
+              </div>
             <% end %>
           </div>
-        </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
 
-        <div id="custom-date-fields" class="<%= @filter_range == 'custom' ? 'flex' : 'hidden' %> items-end gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Start Date</label>
-            <%= date_field_tag :start_date, @custom_start_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+  <%# === Per-rep performance (admins/managers only) === %>
+  <% if @show_per_rep %>
+    <div class="sect" style="margin-bottom:var(--space-6)">
+      <div class="sect__head">
+        <div class="sect__title"><%= relay_icon("users-2", size: 19) %>Per-rep performance</div>
+        <span class="muted rl-sm">vs derived monthly target</span>
+      </div>
+      <div class="sect__body--flush">
+        <% if @per_rep.empty? %>
+          <div style="padding:24px 16px;text-align:center" class="muted rl-sm">No reps in scope yet.</div>
+        <% else %>
+          <div class="rl-table-scroll">
+            <table class="rl-table">
+              <thead>
+                <tr>
+                  <th>Rep</th>
+                  <th style="text-align:right">Calls</th>
+                  <th style="text-align:right">Leads</th>
+                  <th style="text-align:right">Won</th>
+                  <th style="text-align:right">Won value</th>
+                  <th style="text-align:right">Conv.</th>
+                  <th style="width:200px">Target attainment</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @per_rep.each do |r| %>
+                  <% rep = r[:user]; rep_name = rep.name.presence || rep.email %>
+                  <tr>
+                    <td>
+                      <div class="row" style="gap:10px">
+                        <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(rep_name) %>"><%= relay_initials(rep_name) %></span>
+                        <span class="rl-cell-strong"><%= rep_name %></span>
+                      </div>
+                    </td>
+                    <td class="rl-cell-num"><%= number_with_delimiter(r[:calls]) %></td>
+                    <td class="rl-cell-num"><%= number_with_delimiter(r[:leads]) %></td>
+                    <td class="rl-cell-num"><%= r[:won_count] %></td>
+                    <td class="rl-cell-num"><%= relay_money_compact(r[:won_value]) %></td>
+                    <td class="rl-cell-num"><%= r[:conversion] %>%</td>
+                    <td>
+                      <div class="row" style="gap:10px">
+                        <div class="targetbar" style="flex:1">
+                          <i style="width:<%= r[:attainment] %>%;background:<%= relay_attainment_color(r[:attainment]) %>"></i>
+                        </div>
+                        <b class="tnum mono" style="font-size:13px;width:38px;text-align:right;color:<%= relay_attainment_text_color(r[:attainment]) %>"><%= r[:attainment] %>%</b>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
           </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">End Date</label>
-            <%= date_field_tag :end_date, @custom_end_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" %>
-          </div>
-          <%= submit_tag "Apply", class: "px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm text-sm cursor-pointer" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# === Lead source performance (real attribution, won deals) === %>
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title"><%= relay_icon("git-fork", size: 19) %>Lead source performance</div>
+      <span class="muted rl-sm">won deals by attribution</span>
+    </div>
+    <div class="sect__body">
+      <% if @lead_sources.empty? %>
+        <div style="padding:24px 8px;text-align:center" class="muted rl-sm">No won deals with attribution in this range.</div>
+      <% else %>
+        <div class="grid grid-4">
+          <% @lead_sources.each_with_index do |s, i| %>
+            <div>
+              <div class="row" style="gap:6px;margin-bottom:6px">
+                <i style="width:9px;height:9px;border-radius:2px;background:color-mix(in oklch, var(--color-primary) <%= 100 - i * 16 %>%, var(--color-surface-3))"></i>
+                <span class="rl-sm" style="font-weight:600"><%= s[:source] %></span>
+              </div>
+              <div class="mono" style="font-family:var(--font-display);font-weight:800;font-size:24px"><%= s[:pct] %>%</div>
+              <div class="muted" style="font-size:12px"><%= s[:won_count] %> won · <%= relay_money_compact(s[:won_value]) %></div>
+            </div>
+          <% end %>
         </div>
       <% end %>
     </div>
-
-    <!-- ═══════════════════════════════════════ -->
-    <!-- 1) USER PERFORMANCE TABLE               -->
-    <!-- ═══════════════════════════════════════ -->
-    <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-8 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-          </svg>
-          User Performance
-        </h2>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr class="bg-gray-50">
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Leads Assigned</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Calls Attempted</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Connected Calls</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Emails Sent</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp Sent</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">WhatsApp Replies</th>
-              <th class="px-6 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Deals</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <% @user_performance.each do |perf| %>
-              <tr class="hover:bg-blue-50/30 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center gap-3">
-                    <div class="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-                      <%= perf[:user].name&.first&.upcase || '?' %>
-                    </div>
-                    <div class="text-sm font-semibold text-gray-900"><%= perf[:user].name || 'Unknown' %></div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-blue-50 text-blue-700">
-                    <%= perf[:leads_assigned] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold bg-gray-100 text-gray-700">
-                    <%= perf[:calls_attempted] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:connected_calls] > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400' %>">
-                    <%= perf[:connected_calls] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:emails_sent] > 0 ? 'bg-purple-50 text-purple-700' : 'bg-gray-100 text-gray-400' %>">
-                    <%= perf[:emails_sent] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:whatsapp_sent] > 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-400' %>">
-                    <%= perf[:whatsapp_sent] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:whatsapp_replies] > 0 ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400' %>">
-                    <%= perf[:whatsapp_replies] %>
-                  </span>
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="inline-flex items-center px-2.5 py-1 rounded-full text-sm font-bold <%= perf[:deals] > 0 ? 'bg-amber-50 text-amber-700' : 'bg-gray-100 text-gray-400' %>">
-                    <%= perf[:deals] %>
-                  </span>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-          <!-- Totals row -->
-          <tfoot>
-            <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
-              <td class="px-6 py-3 text-sm text-gray-900">Total</td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:leads_assigned] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:calls_attempted] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:connected_calls] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:emails_sent] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:whatsapp_sent] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-green-700"><%= @user_performance.sum { |p| p[:whatsapp_replies] } %></td>
-              <td class="px-6 py-3 text-center text-sm text-gray-900"><%= @user_performance.sum { |p| p[:deals] } %></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════ -->
-    <!-- 1b) KPI TRACKER                          -->
-    <!-- ═══════════════════════════════════════ -->
-    <% if @kpi_targets.present? %>
-      <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-8 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <svg class="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            KPI Tracker
-            <span class="text-sm font-normal text-gray-500">&mdash; Daily targets vs actuals</span>
-          </h2>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr class="bg-gray-50">
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Calls<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:calls_attempted] %></span>
-                </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Connected<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:connected_calls] %></span>
-                </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  WhatsApp<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:whatsapp_messages_sent] %></span>
-                </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Emails<br><span class="text-[10px] text-gray-400 normal-case">target: <%= @kpi_targets[:emails_sent] %></span>
-                </th>
-                <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-100">
-              <% @user_performance.each do |perf| %>
-                <%
-                  calls_met = perf[:calls_attempted] >= @kpi_targets[:calls_attempted]
-                  connected_met = perf[:connected_calls] >= @kpi_targets[:connected_calls]
-                  whatsapp_met = perf[:whatsapp_sent] >= @kpi_targets[:whatsapp_messages_sent]
-                  emails_met = perf[:emails_sent] >= @kpi_targets[:emails_sent]
-                  all_met = calls_met && connected_met && whatsapp_met && emails_met
-                  met_count = [calls_met, connected_met, whatsapp_met, emails_met].count(true)
-                %>
-                <tr class="hover:bg-gray-50/50 transition-colors">
-                  <td class="px-6 py-3 whitespace-nowrap">
-                    <div class="flex items-center gap-3">
-                      <div class="h-8 w-8 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white text-xs font-bold">
-                        <%= perf[:user].name&.first&.upcase || '?' %>
-                      </div>
-                      <span class="text-sm font-medium text-gray-900"><%= perf[:user].name || 'Unknown' %></span>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-center">
-                    <div class="flex flex-col items-center gap-1">
-                      <span class="text-sm font-bold <%= calls_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:calls_attempted] %></span>
-                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full <%= calls_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:calls_attempted].to_f / [@kpi_targets[:calls_attempted], 1].max) * 100), 100].min %>%"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-center">
-                    <div class="flex flex-col items-center gap-1">
-                      <span class="text-sm font-bold <%= connected_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:connected_calls] %></span>
-                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full <%= connected_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:connected_calls].to_f / [@kpi_targets[:connected_calls], 1].max) * 100), 100].min %>%"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-center">
-                    <div class="flex flex-col items-center gap-1">
-                      <span class="text-sm font-bold <%= whatsapp_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:whatsapp_sent] %></span>
-                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full <%= whatsapp_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:whatsapp_sent].to_f / [@kpi_targets[:whatsapp_messages_sent], 1].max) * 100), 100].min %>%"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-center">
-                    <div class="flex flex-col items-center gap-1">
-                      <span class="text-sm font-bold <%= emails_met ? 'text-green-600' : 'text-red-500' %>"><%= perf[:emails_sent] %></span>
-                      <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                        <div class="h-1.5 rounded-full <%= emails_met ? 'bg-green-500' : 'bg-red-400' %>" style="width: <%= [((perf[:emails_sent].to_f / [@kpi_targets[:emails_sent], 1].max) * 100), 100].min %>%"></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-center">
-                    <% if all_met %>
-                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
-                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                        All Met
-                      </span>
-                    <% elsif met_count >= 2 %>
-                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700">
-                        <%= met_count %>/4 Met
-                      </span>
-                    <% else %>
-                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
-                        <%= met_count %>/4 Met
-                      </span>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    <% end %>
-
-    <!-- ═══════════════════════════════════════ -->
-    <!-- 3) CUSTOMER STATUS OVERVIEW (BOTTOM)    -->
-    <!-- ═══════════════════════════════════════ -->
-    <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
-      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-        <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Customer Status Overview
-        </h2>
-      </div>
-
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr class="bg-gray-50">
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">User</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wider">Pending</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-green-600 uppercase tracking-wider">Contact Est.</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-yellow-600 uppercase tracking-wider">No Contact</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-purple-600 uppercase tracking-wider">Proposal Sent</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-blue-600 uppercase tracking-wider">Converted</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-red-600 uppercase tracking-wider">Not Interested</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-red-500 uppercase tracking-wider">Exhausted</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-gray-400 uppercase tracking-wider">Invalid</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-orange-600 uppercase tracking-wider">Retarget</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-indigo-600 uppercase tracking-wider">Deals</th>
-              <th class="px-4 py-3 text-center text-xs font-semibold text-green-700 uppercase tracking-wider">Won</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <% @user_status_overview.each do |overview| %>
-              <tr class="hover:bg-gray-50/50 transition-colors">
-                <td class="px-6 py-3 whitespace-nowrap">
-                  <div class="flex items-center gap-3">
-                    <div class="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold">
-                      <%= overview[:user].name&.first&.upcase || '?' %>
-                    </div>
-                    <span class="text-sm font-medium text-gray-900"><%= overview[:user].name || 'Unknown' %></span>
-                  </div>
-                </td>
-                <td class="px-4 py-3 text-center text-sm font-medium text-gray-600"><%= overview[:pending] %></td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:contact_established] > 0 ? 'text-green-600' : 'text-gray-300' %>"><%= overview[:contact_established] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:contact_not_established] > 0 ? 'text-yellow-600' : 'text-gray-300' %>"><%= overview[:contact_not_established] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:proposal_sent] > 0 ? 'text-purple-600' : 'text-gray-300' %>"><%= overview[:proposal_sent] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:converted] > 0 ? 'text-blue-600' : 'text-gray-300' %>"><%= overview[:converted] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:not_interested] > 0 ? 'text-red-600' : 'text-gray-300' %>"><%= overview[:not_interested] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:exhausted] > 0 ? 'text-red-500' : 'text-gray-300' %>"><%= overview[:exhausted] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:invalid] > 0 ? 'text-gray-500' : 'text-gray-300' %>"><%= overview[:invalid] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:retarget] > 0 ? 'text-orange-600' : 'text-gray-300' %>"><%= overview[:retarget] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:deals_created] > 0 ? 'text-indigo-600' : 'text-gray-300' %>"><%= overview[:deals_created] %></span>
-                </td>
-                <td class="px-4 py-3 text-center">
-                  <span class="text-sm font-bold <%= overview[:deals_won] > 0 ? 'text-green-700' : 'text-gray-300' %>"><%= overview[:deals_won] %></span>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-          <!-- Totals -->
-          <tfoot>
-            <tr class="bg-gray-50 font-bold border-t-2 border-gray-200">
-              <td class="px-6 py-3 text-sm text-gray-900">Total</td>
-              <td class="px-4 py-3 text-center text-sm text-gray-900"><%= @user_status_overview.sum { |o| o[:pending] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-green-700"><%= @user_status_overview.sum { |o| o[:contact_established] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-yellow-700"><%= @user_status_overview.sum { |o| o[:contact_not_established] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-purple-700"><%= @user_status_overview.sum { |o| o[:proposal_sent] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-blue-700"><%= @user_status_overview.sum { |o| o[:converted] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-red-700"><%= @user_status_overview.sum { |o| o[:not_interested] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-red-600"><%= @user_status_overview.sum { |o| o[:exhausted] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-gray-600"><%= @user_status_overview.sum { |o| o[:invalid] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-orange-700"><%= @user_status_overview.sum { |o| o[:retarget] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-indigo-700"><%= @user_status_overview.sum { |o| o[:deals_created] } %></td>
-              <td class="px-4 py-3 text-center text-sm text-green-800"><%= @user_status_overview.sum { |o| o[:deals_won] } %></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
   </div>
 </div>

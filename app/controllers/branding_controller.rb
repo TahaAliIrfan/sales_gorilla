@@ -10,7 +10,9 @@ class BrandingController < TenantController
   def update
     authorize @organization, :update_branding?
     if @organization.update(branding_params)
-      redirect_to edit_branding_path, notice: "Branding updated."
+      # Branding now lives in the Relay settings workspace; send the admin back
+      # to its tab. (The legacy /branding edit page still renders if reached.)
+      redirect_to settings_path(tab: "branding"), notice: "Branding updated."
     else
       render :edit, status: :unprocessable_entity
     end

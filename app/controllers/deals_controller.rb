@@ -2,7 +2,7 @@ class DealsController < ApplicationController
   include ActionView::Helpers::NumberHelper
   include ActionView::Helpers::DateHelper
 
-  layout "tenant"
+  layout :choose_layout
   before_action :require_login
   before_action :set_deal, only: [ :show, :edit, :update, :destroy, :update_stage, :mark_as_won, :mark_as_lost, :assign_user ]
   skip_before_action :verify_authenticity_token, only: [ :update_stage ], if: -> { request.format.json? }
@@ -10,7 +10,7 @@ class DealsController < ApplicationController
   after_action :verify_policy_scoped, only: [ :index, :my_deals ]
 
   def index
-    @deals = policy_scope(Deal)
+    @deals = policy_scope(Deal).includes(:user, :customer) # board cards render owner + customer per deal
 
     # Get user's accessible pipelines
     @pipelines = current_user.admin? ? Pipeline.active.order(:name) : current_user.assigned_pipelines.active.order(:name)
@@ -81,7 +81,7 @@ class DealsController < ApplicationController
   end
 
   def my_deals
-    @deals = policy_scope(Deal).assigned_to(current_user)
+    @deals = policy_scope(Deal).assigned_to(current_user).includes(:user, :customer)
 
     # Get user's accessible pipelines
     @pipelines = current_user.admin? ? Pipeline.active.order(:name) : current_user.assigned_pipelines.active.order(:name)
@@ -162,8 +162,19 @@ class DealsController < ApplicationController
     @time_since_last_activity = @last_activity ? time_ago_in_words(@last_activity.created_at) : "never"
 
     # Get activities for this deal
-    @activities = @deal.deal_activities.order(created_at: :desc)
-    @recordings = @deal.deal_recordings.order(created_at: :desc)
+    @activities = @deal.deal_activities.includes(:user).order(created_at: :desc)
+    @recordings = @deal.deal_recordings.includes(:user).order(created_at: :desc)
+
+    # Assignable owners for the in-drawer reassign control (admins only — mirrors
+    # DealPolicy#assign_user?). Managers/associates just see the current owner.
+    @assignable_users = current_user&.admin? ? User.order(:name) : []
+
+    # When the relay board lazy-loads the deal drawer it requests this action
+    # inside the "deal_drawer" turbo-frame. Render only the drawer partial,
+    # without the surrounding relay shell.
+    if turbo_frame_request_id == "deal_drawer"
+      render partial: "deals/relay/drawer", locals: { deal: @deal }, layout: false
+    end
   end
 
   def new
@@ -599,6 +610,16 @@ class DealsController < ApplicationController
   end
 
   private
+
+  # Relay shell adoption (Phase 5): the pipeline board (index/my_deals) uses the
+  # relay layout. show serves the deal drawer as a turbo-frame partial
+  # (layout:false); its full-page HTML and the new/edit/create/update forms keep
+  # the legacy tenant layout until a later phase ports them.
+  RELAY_ACTIONS = %w[index my_deals].freeze
+
+  def choose_layout
+    RELAY_ACTIONS.include?(action_name) ? "relay" : "tenant"
+  end
 
   def set_deal
     @deal = Deal.find(params[:id])

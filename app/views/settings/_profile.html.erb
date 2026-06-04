@@ -1,0 +1,65 @@
+<%# Profile tab — user info + phone (the only editable field the existing
+    settings#update endpoint permits), Google connection, admin export. %>
+<div class="col" style="gap:var(--space-5);max-width:720px">
+  <div class="sect">
+    <div class="sect__head"><div class="sect__title">Profile</div></div>
+    <div class="sect__body">
+      <div class="row" style="gap:16px;margin-bottom:20px">
+        <span class="rl-avatar rl-avatar--lg rl-avatar--c1">
+          <%= current_user&.name.to_s.split.map(&:first).join[0, 2].upcase %>
+        </span>
+        <div>
+          <div class="rl-cell-strong"><%= @user.name %></div>
+          <div class="muted" style="font-size:13px"><%= @user.email %></div>
+        </div>
+      </div>
+
+      <%= form_with model: @user, url: update_settings_path, method: :patch, class: "col", html: { style: "gap:14px" } do |f| %>
+        <% if @user.errors.any? %>
+          <%= render "settings/errors", record: @user %>
+        <% end %>
+
+        <div class="grid grid-2" style="gap:14px">
+          <div class="rl-field">
+            <label class="rl-label">Full name</label>
+            <input class="rl-input" value="<%= @user.name %>" disabled>
+          </div>
+          <div class="rl-field">
+            <label class="rl-label">Email</label>
+            <input class="rl-input" value="<%= @user.email %>" disabled>
+          </div>
+          <div class="rl-field">
+            <%= f.label :phone_number, "Phone number", class: "rl-label" %>
+            <%= f.telephone_field :phone_number, class: "rl-input",
+                  placeholder: "+923001234567" %>
+            <p class="muted" style="font-size:12px;margin-top:6px">Include the country code with a + sign.</p>
+          </div>
+        </div>
+
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <%= f.submit "Save changes", class: "rl-btn rl-btn--primary",
+                data: { turbo_submits_with: "Saving…" } %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "settings/google_card" %>
+
+  <% if current_user.admin? %>
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Data export</div></div>
+      <div class="sect__body">
+        <div class="spread">
+          <div>
+            <b class="rl-sm">Customers with deals</b>
+            <div class="muted" style="font-size:12px">CSV of every customer with a won or lost deal, including amounts and statuses.</div>
+          </div>
+          <%= link_to export_customers_with_deals_path, class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+            <%= relay_icon("download", size: 14) %>Download CSV
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -1,6 +1,7 @@
 <%# Meta Conversions API editor: credentials, test event code, event toggles,
     eligible lead sources, status/stage→event mapping, source→action_source
-    mapping with match quality preview, plus a "Send test event" diagnostic. %>
+    mapping with match quality preview, plus a "Send test event" diagnostic.
+    Restyled with the Relay DS — field names, ids and params are unchanged. %>
 <%
   s = feature.settings_hash
   service = MetaConversionsApiService.new(organization: current_organization)
@@ -24,9 +25,9 @@
   pipelines = Pipeline.includes(:deal_stages).order(:name)
 
   quality_palette = {
-    "Great" => [ "var(--brand-accent)", "Strong match" ],
-    "Good"  => [ "#b07300",             "Decent match" ],
-    "Poor"  => [ "#a83a22",             "Weak match" ]
+    "Great" => [ "var(--color-success-text)", "Strong match" ],
+    "Good"  => [ "var(--color-warning-text)", "Decent match" ],
+    "Poor"  => [ "var(--color-danger-text)",  "Weak match" ]
   }
 %>
 
@@ -34,96 +35,92 @@
      data-meta-test-url-value="<%= test_settings_feature_path(key: feature.key) %>"
      data-meta-test-verify-url-value="<%= verify_settings_feature_path(key: feature.key) %>"
      data-meta-test-events-manager-url-value="<%= service.events_manager_url.to_s %>"
-     class="space-y-5 rounded-lg bg-paper/40 p-4 ring-1 ring-[var(--color-line-2)]">
+     class="col" style="gap:var(--space-5);background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px">
 
   <%# ── Credentials ─────────────────────────────────────────────────────── %>
-  <div class="space-y-3">
-    <p class="micro" style="color: var(--color-ink-soft)">Credentials</p>
+  <div class="col" style="gap:12px">
+    <p class="rl-label" style="margin:0">Credentials</p>
 
-    <div>
-      <%= label_tag "organization_feature_settings_pixel_id", "Pixel ID",
-            class: "micro", style: "color: var(--color-ink-soft)" %>
+    <div class="rl-field">
+      <%= label_tag "organization_feature_settings_pixel_id", "Pixel ID", class: "rl-label" %>
       <%= text_field_tag "organization_feature[settings][pixel_id]", s["pixel_id"],
             id: "organization_feature_settings_pixel_id",
             placeholder: "e.g. 123456789012345",
-            class: input_classes %>
+            class: "rl-input" %>
     </div>
 
-    <div>
-      <%= label_tag "organization_feature_settings_access_token", "Access token",
-            class: "micro", style: "color: var(--color-ink-soft)" %>
+    <div class="rl-field">
+      <%= label_tag "organization_feature_settings_access_token", "Access token", class: "rl-label" %>
       <%= password_field_tag "organization_feature[settings][access_token]", "",
             id: "organization_feature_settings_access_token",
             autocomplete: "new-password",
             placeholder: s["access_token"].present? ? "•••••• (saved)" : "Required",
-            class: input_classes %>
-      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+            class: "rl-input" %>
+      <p class="muted" style="font-size:11px;margin-top:4px">
         Generate a system-user token in Meta Business Manager. Leave blank to keep the saved value.
       </p>
     </div>
   </div>
 
   <%# ── Test event code ────────────────────────────────────────────────── %>
-  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
-    <p class="micro" style="color: var(--color-ink-soft)">Test event code <span class="text-ink-soft/60">(optional)</span></p>
+  <div class="col" style="gap:8px;border-top:1px solid var(--color-border);padding-top:16px">
+    <p class="rl-label" style="margin:0">Test event code <span class="muted">(optional)</span></p>
     <%= text_field_tag "organization_feature[settings][test_event_code]", s["test_event_code"],
           id: "organization_feature_settings_test_event_code",
           placeholder: "e.g. TEST12345",
-          class: input_classes %>
-    <p class="mono text-[11px] text-ink-soft/70">
+          class: "rl-input" %>
+    <p class="muted" style="font-size:11px;margin:0">
       While set, events are routed to Meta's <b>Events Manager → Test events</b> tab instead of going live.
       Remove this value when ready to ship.
     </p>
   </div>
 
   <%# ── Events to fire ─────────────────────────────────────────────────── %>
-  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
-    <p class="micro" style="color: var(--color-ink-soft)">Events to fire</p>
+  <div class="col" style="gap:8px;border-top:1px solid var(--color-border);padding-top:16px">
+    <p class="rl-label" style="margin:0">Events to fire</p>
     <%= hidden_field_tag "organization_feature[settings][events_enabled][]", "" %>
-    <div class="grid grid-cols-2 gap-2">
+    <div class="grid grid-2" style="gap:8px">
       <% enabled_events = Array(s["events_enabled"]).presence || OrganizationFeature::META_DEFAULT_EVENTS %>
       <% OrganizationFeature::META_DEFAULT_EVENTS.each do |evt| %>
-        <label class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+        <label class="row" style="gap:8px;cursor:pointer;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px">
           <%= check_box_tag "organization_feature[settings][events_enabled][]", evt,
                 enabled_events.include?(evt),
-                class: "h-4 w-4 rounded border-[var(--color-line-2)]",
-                style: "accent-color: var(--brand-primary)" %>
-          <span class="text-sm text-ink"><%= evt %></span>
+                style: "accent-color: var(--color-primary); width:16px; height:16px" %>
+          <span class="rl-sm"><%= evt %></span>
         </label>
       <% end %>
     </div>
-    <p class="mono text-[11px] text-ink-soft/70">
+    <p class="muted" style="font-size:11px;margin:0">
       Unchecked events won't be sent to Meta regardless of customer activity.
     </p>
   </div>
 
   <%# ── Eligible lead sources ───────────────────────────────────────────── %>
-  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
-    <p class="micro" style="color: var(--color-ink-soft)">Eligible lead sources</p>
+  <div class="col" style="gap:8px;border-top:1px solid var(--color-border);padding-top:16px">
+    <p class="rl-label" style="margin:0">Eligible lead sources</p>
     <%= hidden_field_tag "organization_feature[settings][eligible_sources][]", "" %>
-    <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+    <div class="grid grid-3" style="gap:8px">
       <% enabled_sources = Array(s["eligible_sources"]).presence || OrganizationFeature::META_DEFAULT_ELIGIBLE_SOURCES %>
       <% current_organization.taxonomy_values("lead_source").each do |src| %>
-        <label class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+        <label class="row" style="gap:8px;cursor:pointer;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px">
           <%= check_box_tag "organization_feature[settings][eligible_sources][]", src,
                 enabled_sources.include?(src),
-                class: "h-4 w-4 rounded border-[var(--color-line-2)]",
-                style: "accent-color: var(--brand-primary)" %>
-          <span class="text-sm text-ink"><%= src %></span>
+                style: "accent-color: var(--color-primary); width:16px; height:16px" %>
+          <span class="rl-sm"><%= src %></span>
         </label>
       <% end %>
     </div>
-    <p class="mono text-[11px] text-ink-soft/70">
+    <p class="muted" style="font-size:11px;margin:0">
       Only customers with a checked lead source can trigger Meta events.
       Inbound sources also require a <code>meta_lead_id</code> (set by the Meta Lead Ads webhook).
     </p>
   </div>
 
   <%# ── Source → action_source + match quality ──────────────────────────── %>
-  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+  <div class="col" style="gap:12px;border-top:1px solid var(--color-border);padding-top:16px">
     <div>
-      <p class="micro" style="color: var(--color-ink-soft)">Source routing &amp; match quality</p>
-      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+      <p class="rl-label" style="margin:0">Source routing &amp; match quality</p>
+      <p class="muted" style="font-size:11px;margin-top:4px">
         For each eligible source, pick the Meta <code>action_source</code> that matches the ad type
         (Lead Ads webhook → <code>system_generated</code>, click-to-call → <code>phone_call</code>,
         Messenger/WA → <code>business_messaging</code>, etc.). Require <code>lead_id</code> for
@@ -134,17 +131,17 @@
     <%# One blank hidden field anchors the hash key in params even if no rows render. %>
     <%= hidden_field_tag "organization_feature[settings][source_action_sources][__anchor__][action_source]", "" %>
 
-    <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
-      <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
-        <thead class="bg-paper/40 text-left">
+    <div class="rl-table-wrap">
+      <table class="rl-table">
+        <thead>
           <tr>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Lead source</th>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">action_source</th>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Requires lead_id</th>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Match quality (recent)</th>
+            <th>Lead source</th>
+            <th>action_source</th>
+            <th>Requires lead_id</th>
+            <th>Match quality (recent)</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[var(--color-line-2)]">
+        <tbody>
           <% enabled_sources_for_preview.each do |src| %>
             <%
               config = source_actions[src] || {}
@@ -154,32 +151,30 @@
               quality = service.match_quality_summary(sample_customer: sample)
               q_color, q_label = quality_palette[quality[:quality]] || quality_palette["Poor"]
             %>
-            <tr class="bg-panel">
-              <td class="px-3 py-2 align-middle font-medium text-ink"><%= src %></td>
-              <td class="px-3 py-2 align-middle">
+            <tr>
+              <td style="font-weight:500"><%= src %></td>
+              <td>
                 <%= select_tag "organization_feature[settings][source_action_sources][#{src}][action_source]",
                       options_for_select(OrganizationFeature::META_ACTION_SOURCES.map { |a| [ a, a ] }, current_as),
                       include_blank: "—",
-                      class: "#{input_classes} !py-1.5 !text-xs" %>
+                      class: "rl-select" %>
               </td>
-              <td class="px-3 py-2 align-middle">
+              <td>
                 <%= hidden_field_tag "organization_feature[settings][source_action_sources][#{src}][require_lead_id]", "0" %>
                 <%= check_box_tag "organization_feature[settings][source_action_sources][#{src}][require_lead_id]", "1",
                       current_lead_id_required,
-                      class: "h-4 w-4 rounded border-[var(--color-line-2)]",
-                      style: "accent-color: var(--brand-primary)" %>
+                      style: "accent-color: var(--color-primary); width:16px; height:16px" %>
               </td>
-              <td class="px-3 py-2 align-middle">
-                <div class="flex flex-wrap items-center gap-1.5">
-                  <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-                        style="color: <%= q_color %>; background: color-mix(in srgb, <%= q_color %> 12%, transparent);"
+              <td>
+                <div class="row" style="gap:6px;flex-wrap:wrap">
+                  <span class="row" style="gap:5px;border-radius:var(--radius-pill);padding:1px 8px;font-size:11px;font-weight:500;color:<%= q_color %>;background:color-mix(in srgb, <%= q_color %> 12%, transparent)"
                         title="<%= q_label %> · sample: <%= sample ? "customer ##{sample.id}" : "no recent customers" %>">
-                    <span class="h-1.5 w-1.5 rounded-full" style="background: <%= q_color %>"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:<%= q_color %>"></span>
                     <%= quality[:quality] %>
                   </span>
                   <% quality[:identifiers].each do |id, present| %>
-                    <span class="mono text-[10px]" style="color: <%= present ? "var(--color-ink-soft)" : "var(--color-ink-soft) 70%" %>">
-                      <span style="color: <%= present ? "var(--brand-accent)" : "var(--color-ink-soft)" %>"><%= present ? "✓" : "·" %></span>
+                    <span class="mono" style="font-size:10px;color:var(--color-fg-2)">
+                      <span style="color:<%= present ? "var(--color-success-text)" : "var(--color-fg-2)" %>"><%= present ? "✓" : "·" %></span>
                       <%= id %>
                     </span>
                   <% end %>
@@ -193,10 +188,10 @@
   </div>
 
   <%# ── Customer status → event mapping ─────────────────────────────────── %>
-  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+  <div class="col" style="gap:12px;border-top:1px solid var(--color-border);padding-top:16px">
     <div>
-      <p class="micro" style="color: var(--color-ink-soft)">Customer status → Meta event</p>
-      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+      <p class="rl-label" style="margin:0">Customer status → Meta event</p>
+      <p class="muted" style="font-size:11px;margin-top:4px">
         When a customer transitions to a status, fire the mapped Meta event.
         Leave <em>None</em> to skip. Events also need to be checked in <strong>Events to fire</strong> above.
       </p>
@@ -204,23 +199,23 @@
 
     <%= hidden_field_tag "organization_feature[settings][customer_status_mappings][__anchor__]", "" %>
 
-    <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
-      <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
-        <thead class="bg-paper/40 text-left">
+    <div class="rl-table-wrap">
+      <table class="rl-table">
+        <thead>
           <tr>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Customer status</th>
-            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Meta event</th>
+            <th>Customer status</th>
+            <th>Meta event</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[var(--color-line-2)]">
+        <tbody>
           <% current_organization.taxonomy_values("customer_status").each do |status| %>
             <% current = status_mappings[status] %>
-            <tr class="bg-panel">
-              <td class="px-3 py-2 align-middle font-medium text-ink"><%= status %></td>
-              <td class="px-3 py-2 align-middle">
+            <tr>
+              <td style="font-weight:500"><%= status %></td>
+              <td>
                 <%= select_tag "organization_feature[settings][customer_status_mappings][#{status}]",
                       options_for_select([ [ "None", "" ] ] + OrganizationFeature::META_AVAILABLE_EVENTS.map { |e| [ e, e ] }, current),
-                      class: "#{input_classes} !py-1.5 !text-xs max-w-xs" %>
+                      class: "rl-select" %>
               </td>
             </tr>
           <% end %>
@@ -230,10 +225,10 @@
   </div>
 
   <%# ── Deal stage → event mapping (grouped by pipeline) ────────────────── %>
-  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+  <div class="col" style="gap:12px;border-top:1px solid var(--color-border);padding-top:16px">
     <div>
-      <p class="micro" style="color: var(--color-ink-soft)">Deal stage → Meta event</p>
-      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+      <p class="rl-label" style="margin:0">Deal stage → Meta event</p>
+      <p class="muted" style="font-size:11px;margin-top:4px">
         When a deal moves into a stage, fire the mapped Meta event. <code>Purchase</code> events
         automatically include the deal's <code>amount</code> as the conversion value.
       </p>
@@ -242,34 +237,34 @@
     <%= hidden_field_tag "organization_feature[settings][deal_stage_mappings][__anchor__]", "" %>
 
     <% if pipelines.empty? %>
-      <div class="rounded-md bg-paper/40 p-4 text-sm text-ink-soft ring-1 ring-[var(--color-line-2)]">
-        No pipelines configured yet. Create one in <%= link_to "Pipelines", pipelines_path, class: "underline hover:text-ink" %> to map deal stages.
+      <div class="muted rl-sm" style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:16px">
+        No pipelines configured yet. Create one in <%= link_to "Pipelines", pipelines_path %> to map deal stages.
       </div>
     <% else %>
-      <div class="space-y-3">
+      <div class="col" style="gap:12px">
         <% pipelines.each do |pipeline| %>
           <% stages = pipeline.deal_stages.ordered %>
           <% next if stages.empty? %>
 
-          <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
-            <div class="bg-paper/40 px-3 py-2">
-              <p class="font-display text-sm font-semibold text-ink"><%= pipeline.name %></p>
+          <div class="rl-table-wrap">
+            <div style="background:var(--color-surface-2);padding:8px 12px">
+              <p style="font-weight:600;font-size:var(--text-sm)"><%= pipeline.name %></p>
             </div>
-            <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
-              <tbody class="divide-y divide-[var(--color-line-2)]">
+            <table class="rl-table">
+              <tbody>
                 <% stages.each do |stage| %>
                   <% current = stage_mappings[stage.id.to_s] %>
-                  <tr class="bg-panel">
-                    <td class="px-3 py-2 align-middle text-ink">
-                      <span class="inline-flex items-center gap-2">
-                        <span class="mono text-[11px] text-ink-soft">#<%= stage.position %></span>
+                  <tr>
+                    <td>
+                      <span class="row" style="gap:8px">
+                        <span class="mono muted" style="font-size:11px">#<%= stage.position %></span>
                         <%= stage.name %>
                       </span>
                     </td>
-                    <td class="px-3 py-2 align-middle">
+                    <td>
                       <%= select_tag "organization_feature[settings][deal_stage_mappings][#{stage.id}]",
                             options_for_select([ [ "None", "" ] ] + OrganizationFeature::META_AVAILABLE_EVENTS.map { |e| [ e, e ] }, current),
-                            class: "#{input_classes} !py-1.5 !text-xs max-w-xs" %>
+                            class: "rl-select" %>
                     </td>
                   </tr>
                 <% end %>
@@ -282,15 +277,15 @@
   </div>
 
   <%# ── Diagnostics ─────────────────────────────────────────────────────── %>
-  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
-    <p class="micro" style="color: var(--color-ink-soft)">Diagnostics</p>
+  <div class="col" style="gap:12px;border-top:1px solid var(--color-border);padding-top:16px">
+    <p class="rl-label" style="margin:0">Diagnostics</p>
 
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="row" style="gap:8px;flex-wrap:wrap">
       <button type="button"
               data-action="meta-test#verify"
               data-meta-test-target="verifyButton"
-              class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] disabled:opacity-60 disabled:cursor-not-allowed">
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              class="rl-btn rl-btn--secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
         Verify pixel
@@ -299,8 +294,8 @@
       <button type="button"
               data-action="meta-test#send"
               data-meta-test-target="button"
-              class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] disabled:opacity-60 disabled:cursor-not-allowed">
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              class="rl-btn rl-btn--secondary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>
         </svg>
         Send test event
@@ -308,8 +303,8 @@
 
       <% if service.credentials_configured? && service.events_manager_url.present? %>
         <a href="<%= service.events_manager_url %>" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink-soft transition hover:text-ink">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+           class="rl-btn rl-btn--ghost">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
           </svg>
           Open in Events Manager
@@ -319,10 +314,10 @@
 
     <%# Result panel — populated by the meta-test Stimulus controller. %>
     <div data-meta-test-target="result"
-         class="hidden rounded-md bg-paper/40 p-3 text-sm ring-1 ring-[var(--color-line-2)]">
+         class="hidden rl-sm" style="border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px">
     </div>
 
-    <p class="mono text-[11px] text-ink-soft/70">
+    <p class="muted" style="font-size:11px;margin:0">
       <b>Verify pixel</b> confirms the access token actually owns this pixel ID.
       <b>Send test event</b> posts a synthetic <code>Lead</code> with dummy user data —
       if a <em>Test event code</em> is set, watch the event arrive in Events Manager's

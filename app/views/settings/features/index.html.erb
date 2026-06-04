@@ -1,10 +1,21 @@
-<% content_for :title, "Features" %>
+<%# Features tab — per-organization module toggles + provider credentials.
+    Restyled with the Relay DS to sit inside the Settings workspace (same tab
+    bar on top). The form fields, params and controller contract are unchanged. %>
+<% content_for :title, "Features — #{current_organization&.name}" %>
 
-<%= render "shared/page_header", eyebrow: "Settings", title: "Features",
-      subtitle: "Enable modules for #{current_organization.name} and configure each module's provider." %>
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Settings</div>
+      <div class="pagehead__sub">Enable modules for <%= current_organization&.name %> and configure each module's provider.</div>
+    </div>
+  </div>
 
-<div class="grid gap-6 lg:grid-cols-1">
-  <% @features.each do |feature| %>
-    <%= render "settings/features/feature_card", feature: feature %>
-  <% end %>
+  <%= render "settings/tabbar", active: "features" %>
+
+  <div class="col" style="gap:var(--space-5);max-width:720px">
+    <% @features.each do |feature| %>
+      <%= render "settings/features/feature_card", feature: feature %>
+    <% end %>
+  </div>
 </div>

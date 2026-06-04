@@ -1,0 +1,6 @@
+<%# Relay page link %>
+<% if page.current? %>
+  <span class="rl-pagebtn is-active"><%= page %></span>
+<% else %>
+  <%= link_to page, url, remote: remote, rel: page.rel, class: "rl-pagebtn" %>
+<% end %>

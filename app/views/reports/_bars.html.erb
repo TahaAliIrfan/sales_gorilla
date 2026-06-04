@@ -1,0 +1,30 @@
+<%# Reusable bar chart — ports the prototype's <Bars> primitive (ui.jsx) to
+    flexbox + inline styles using DS tokens. No JS, no fabricated data.
+    locals:
+      labels  – array of x-axis labels (strings)
+      values  – array of numeric values, parallel to labels
+      height  – chart height in px (default 180)
+      color   – CSS color for the bars (default --color-primary)
+      label_every – render every Nth label to avoid crowding (default 1) %>
+<%
+  height ||= 180
+  color  ||= "var(--color-primary)"
+  label_every ||= 1
+  max = (values.max || 0)
+  max = 1 if max <= 0
+%>
+<div class="row" style="align-items:flex-end;gap:6px;height:<%= height %>px" role="img"
+     aria-label="Bar chart, <%= values.sum %> total across <%= values.size %> buckets">
+  <% labels.each_with_index do |lbl, i| %>
+    <% v = values[i].to_i %>
+    <div class="col" style="flex:1;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0">
+      <div title="<%= lbl %>: <%= v %>"
+           style="width:100%;max-width:30px;height:<%= ((v.to_f / max) * (height - 24)).round %>px;background:<%= v.zero? ? 'var(--color-surface-3)' : color %>;border-radius:5px 5px 2px 2px"></div>
+      <% if (i % label_every).zero? %>
+        <span class="mono" style="font-size:10px;color:var(--color-fg-3);font-weight:600;white-space:nowrap"><%= lbl %></span>
+      <% else %>
+        <span style="font-size:10px">&nbsp;</span>
+      <% end %>
+    </div>
+  <% end %>
+</div>

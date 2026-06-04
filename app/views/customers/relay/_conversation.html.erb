@@ -1,0 +1,54 @@
+<%# Shared conversation canvas + composer for a single lead. Used by the lead
+    workspace (customers#show) and the Inbox right pane (inbox#index) so both
+    render an identical thread off Relay::ConversationBuilder.
+    locals:
+      customer       — the lead
+      conversation   — Array of ConversationBuilder::Event (ascending by time)
+      header_actions — optional captured HTML for the top-right of the header
+                       (defaults to a "back to all leads" link) %>
+<% header_actions ||= capture do %>
+  <%= link_to customers_path, class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+    <%= relay_icon("arrow-left", size: 14) %>All leads
+  <% end %>
+<% end %>
+
+<div class="lead__conv">
+  <%# Conversation header %>
+  <div class="row spread" style="padding:12px 20px;border-bottom:1px solid var(--color-border);background:var(--color-surface);flex:none">
+    <div class="row" style="gap:10px">
+      <span class="rl-avatar <%= relay_avatar_class(customer.name) %>"><%= relay_initials(customer.name) %></span>
+      <div>
+        <div class="row" style="gap:8px">
+          <b class="rl-sm"><%= customer.name %></b>
+          <span class="rl-badge"><%= conversation.size %> events</span>
+        </div>
+        <div class="muted" style="font-size:12px">Continuous conversation · all channels in one thread</div>
+      </div>
+    </div>
+    <div class="row" style="gap:4px"><%= header_actions %></div>
+  </div>
+
+  <%# Conversation body — chronological, grouped by day %>
+  <div class="lead__convbody" data-relay--composer-target="canvas">
+    <% if conversation.empty? %>
+      <div style="max-width:420px;margin:48px auto;text-align:center" class="col">
+        <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("message-square", size: 22) %></span>
+        <div class="rl-h4">No conversation yet</div>
+        <div class="muted rl-sm" style="margin-top:6px">You haven't reached out to <%= customer.name.to_s.split.first %> yet. Start with a call or a WhatsApp message below.</div>
+      </div>
+    <% else %>
+      <% last_day = nil %>
+      <% conversation.each do |event| %>
+        <% day = event.at.to_date %>
+        <% if day != last_day %>
+          <div class="cdate"><span><%= relay_conv_day_label(day) %></span></div>
+          <% last_day = day %>
+        <% end %>
+        <%= render "customers/relay/event", event: event, customer: customer %>
+      <% end %>
+    <% end %>
+    <div id="conversation_tail"></div>
+  </div>
+
+  <%= render "customers/relay/composer", customer: customer %>
+</div>

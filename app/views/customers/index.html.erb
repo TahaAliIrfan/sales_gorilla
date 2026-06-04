@@ -1,414 +1,272 @@
-<% content_for :title, "Customers — #{current_organization&.name}" %>
+<%# Relay "Leads" — dense filterable list with bulk actions + CSV import.
+    Mirrors docs/design/relay-app/project/app/view-leads.jsx, honest to the DB. %>
+<% content_for :title, "Leads — #{current_organization&.name}" %>
+<%
+  can_manage  = current_user&.admin? || current_user&.manager?
+  total_count = @customers.respond_to?(:total_count) ? @customers.total_count : @customers.size
+%>
 
-<div data-controller="customer-filter bulk-assign">
-  <div class="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-6">
+<div class="page page--wide"
+     data-controller="relay--bulk-select"
+     data-relay--bulk-select-assign-url-value="<%= bulk_assign_customers_path %>"
+     data-relay--bulk-select-status-url-value="<%= bulk_status_change_customers_path %>">
+  <%# === Header === %>
+  <div class="pagehead">
     <div>
-      <p class="micro mb-2">CRM</p>
-      <h1 class="font-display text-4xl font-bold tracking-tight text-ink">Customers</h1>
-      <p class="mt-2 text-ink-soft">Manage and track every customer relationship.</p>
+      <div class="pagehead__title">Leads</div>
+      <div class="pagehead__sub">
+        <b><%= number_with_delimiter(total_count) %></b> <%= "lead".pluralize(total_count) %> · color-coded by status, scored, multi-channel.
+      </div>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <% if current_user&.admin? || current_user&.manager? %>
-        <%= link_to new_csv_import_path,
-              class: "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" do %>
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-          Import CSV
+    <div class="pagehead__actions">
+      <% if can_manage %>
+        <%= link_to new_csv_import_path, class: "rl-btn rl-btn--secondary" do %>
+          <%= relay_icon("upload", size: 15) %>Import CSV
         <% end %>
       <% end %>
       <% if current_user&.admin? %>
-        <%= link_to export_csv_customers_path,
-              "data-customer-filter-target": "exportLink",
-              class: "inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" do %>
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Export CSV
+        <%= link_to export_csv_customers_path(request.query_parameters), class: "rl-btn rl-btn--secondary" do %>
+          <%= relay_icon("download", size: 15) %>Export CSV
         <% end %>
       <% end %>
-      <%= link_to new_customer_path,
-            class: "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
-            style: "background: var(--brand-primary)" do %>
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        New customer
+      <%= link_to new_customer_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("user-plus", size: 15) %>Add lead
       <% end %>
     </div>
   </div>
 
-  <%# === Filters bar === %>
-  <div class="rounded-xl bg-panel p-4 shadow-card ring-1 ring-[var(--color-line-2)]">
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-      <%# Search %>
-      <div class="relative flex-1">
-        <span class="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-ink-soft">
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-        </span>
-        <input type="text" placeholder="Search by name, email, phone, company…"
-               class="mono block w-full rounded-md border-0 bg-paper py-2.5 pl-9 pr-3 text-sm text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-               data-customer-filter-target="search"
-               data-action="input->customer-filter#debouncedFilter">
+  <%# === Filter bar (reuses existing query params: search/status/lead_source/user_id) === %>
+  <%= form_with url: customers_path, method: :get, data: { turbo_frame: "_top" } do %>
+    <div class="filterbar">
+      <div class="rl-inputwrap" style="width:280px">
+        <span class="rl-affix"><%= relay_icon("search", size: 16) %></span>
+        <%= text_field_tag :search, params[:search],
+              class: "rl-input", placeholder: "Search name, company, email, phone…",
+              onchange: "this.form.requestSubmit()" %>
       </div>
 
-      <%# Filter dropdowns %>
-      <div class="flex flex-wrap items-center gap-2">
-        <select class="mono rounded-md border-0 bg-paper px-3 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                data-customer-filter-target="status"
-                data-action="change->customer-filter#filter">
-          <option value="">All statuses</option>
-          <% current_organization.taxonomy_values("customer_status").each do |value| %>
-            <option value="<%= value %>" <%= "selected" if params[:status] == value %>><%= value %></option>
-          <% end %>
-        </select>
+      <%= select_tag :status,
+            options_for_select([["All statuses", ""]] + current_organization.taxonomy_options("customer_status"), params[:status]),
+            class: "rl-select", style: "width:170px", onchange: "this.form.requestSubmit()" %>
 
-        <% if current_user&.admin? || current_user&.manager? %>
-          <select class="mono rounded-md border-0 bg-paper px-3 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                  data-customer-filter-target="user"
-                  data-action="change->customer-filter#filter">
-            <option value="">All users</option>
-            <option value="unassigned">Unassigned</option>
-            <% @users.each do |user| %>
-              <option value="<%= user.id %>"><%= user.name %></option>
-            <% end %>
-          </select>
-        <% else %>
-          <select data-customer-filter-target="user" class="hidden">
-            <option value=""></option>
-          </select>
-        <% end %>
+      <%= select_tag :lead_source,
+            options_for_select([["All sources", ""]] + current_organization.taxonomy_options("lead_source"), params[:lead_source]),
+            class: "rl-select", style: "width:170px", onchange: "this.form.requestSubmit()" %>
 
-        <div class="relative" data-controller="multiselect-dropdown" data-customer-filter-target="leadSourceContainer">
-          <button type="button"
-                  class="mono inline-flex items-center gap-2 rounded-md bg-paper px-3 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]"
-                  data-multiselect-dropdown-target="button"
-                  data-action="click->multiselect-dropdown#toggle">
-            <span data-multiselect-dropdown-target="buttonText">Lead source</span>
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
-          <div data-multiselect-dropdown-target="menu"
-               class="hidden absolute right-0 z-30 mt-2 max-h-64 w-64 overflow-y-auto rounded-lg bg-panel p-1 shadow-lift ring-1 ring-[var(--color-line-2)]">
-            <% current_organization.taxonomy_values("lead_source").each do |value| %>
-              <label class="flex cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-sm hover:bg-[var(--color-line)]">
-                <input type="checkbox" value="<%= value %>" data-label="<%= value %>"
-                       data-multiselect-dropdown-target="checkbox"
-                       data-customer-filter-target="leadSourceCheckbox"
-                       data-action="change->multiselect-dropdown#checkboxChanged change->customer-filter#filter"
-                       class="h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]">
-                <span class="text-ink"><%= value %></span>
-              </label>
-            <% end %>
-          </div>
-        </div>
-
-        <select class="mono rounded-md border-0 bg-paper px-3 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                data-customer-filter-target="customerType"
-                data-action="change->customer-filter#filter">
-          <option value="">All types</option>
-          <% Customer::CUSTOMER_TYPES.each do |_, value| %>
-            <option value="<%= value %>"><%= value %></option>
-          <% end %>
-        </select>
-
-        <div class="flex items-center gap-1.5">
-          <input type="date" title="From"
-                 class="mono rounded-md border-0 bg-paper px-2.5 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                 data-customer-filter-target="startDate"
-                 data-action="change->customer-filter#filter"
-                 value="<%= params[:start_date] %>">
-          <span class="text-xs text-ink-soft">→</span>
-          <input type="date" title="To"
-                 class="mono rounded-md border-0 bg-paper px-2.5 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                 data-customer-filter-target="endDate"
-                 data-action="change->customer-filter#filter"
-                 value="<%= params[:end_date] %>">
-        </div>
-
-        <select class="mono rounded-md border-0 bg-paper px-3 py-2 text-xs text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]"
-                data-customer-filter-target="direction"
-                data-action="change->customer-filter#filter">
-          <option value="desc">Newest first</option>
-          <option value="asc">Oldest first</option>
-        </select>
-      </div>
-    </div>
-
-    <%# Active filter chips %>
-    <div data-customer-filter-target="activeFilters" class="hidden mt-3 flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
-      <span class="micro">Active</span>
-      <% [
-        ["search",      "searchBadge",      "searchText",      "clearSearch"],
-        ["user",        "userBadge",        "userText",        "clearUser"],
-        ["status",      "statusBadge",      "statusText",      "clearStatus"],
-        ["lead source", "leadSourceBadge",  "leadSourceText",  "clearLeadSource"],
-        ["date range",  "dateRangeBadge",   "dateRangeText",   "clearDateRange"],
-        ["type",        "customerTypeBadge","customerTypeText","clearCustomerType"]
-      ].each do |label, badge, text, clear| %>
-        <span data-customer-filter-target="<%= badge %>"
-              class="hidden inline-flex items-center gap-2 rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-ink">
-          <span data-customer-filter-target="<%= text %>"></span>
-          <button type="button" data-action="click->customer-filter#<%= clear %>" class="text-ink-soft transition hover:text-ink">
-            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 18 18 6M6 6l12 12"/></svg>
-          </button>
-        </span>
+      <% if can_manage %>
+        <%= select_tag :user_id,
+              options_for_select(
+                [["All owners", ""], ["Unassigned", "unassigned"]] + @users.to_a.map { |u| [u.name, u.id.to_s] },
+                params[:user_id]
+              ),
+              class: "rl-select", style: "width:170px", onchange: "this.form.requestSubmit()" %>
       <% end %>
-      <button type="button" data-action="click->customer-filter#clearAll" class="ml-auto text-xs font-medium text-ink-soft underline transition hover:text-ink">
-        Clear all
-      </button>
-    </div>
-  </div>
 
-  <%# === Bulk actions bar === %>
-  <% if current_user&.admin? || current_user&.manager? %>
-    <div id="bulk-actions-bar" class="mt-4 hidden rounded-lg px-4 py-3 ring-1 ring-[var(--color-line-2)]" style="background: var(--brand-primary-soft)">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-4 text-sm">
-          <span class="mono font-semibold text-ink" id="selected-count">0 selected</span>
-          <button id="select-all" class="text-xs font-medium text-ink-soft underline transition hover:text-ink">Select all</button>
-          <button id="clear-selection" class="text-xs font-medium text-ink-soft underline transition hover:text-ink">Clear</button>
-        </div>
-        <div class="flex gap-2">
-          <button id="bulk-assign-btn" class="inline-flex items-center gap-2 rounded-md px-3.5 py-2 text-xs font-semibold text-white shadow-card transition hover:-translate-y-0.5"
-                  style="background: var(--brand-primary)">
-            Bulk assign
-          </button>
-          <button id="bulk-status-change-btn" class="inline-flex items-center gap-2 rounded-md bg-paper px-3.5 py-2 text-xs font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
-            Change status
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <%# Bulk assign modal %>
-    <div id="bulk-assign-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div class="w-full max-w-md rounded-xl bg-panel p-6 shadow-lift ring-1 ring-[var(--color-line-2)]">
-        <div class="mb-5 flex items-center justify-between">
-          <h3 class="font-display text-lg font-bold text-ink">Bulk assign customers</h3>
-          <button id="close-modal" class="text-ink-soft transition hover:text-ink" aria-label="Close">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <%= form_tag bulk_assign_customers_path, method: :post, id: "bulk-assign-form" do %>
-          <input type="hidden" name="customer_ids" id="bulk-customer-ids">
-          <label for="user_id" class="micro mb-1 block">Assign to</label>
-          <% if @users.present? %>
-            <%= select_tag "user_id", options_from_collection_for_select(@users, "id", "name"),
-                  class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
-          <% else %>
-            <p class="text-sm text-[#c0492f]">No users available for assignment.</p>
-          <% end %>
-          <div class="mt-5 flex justify-end gap-2">
-            <button type="button" id="cancel-bulk-assign" class="rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">Cancel</button>
-            <button type="submit" class="rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5" style="background: var(--brand-primary)">Assign</button>
-          </div>
-        <% end %>
-      </div>
-    </div>
-
-    <%# Bulk status modal %>
-    <div id="bulk-status-change-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div class="w-full max-w-md rounded-xl bg-panel p-6 shadow-lift ring-1 ring-[var(--color-line-2)]">
-        <div class="mb-5 flex items-center justify-between">
-          <h3 class="font-display text-lg font-bold text-ink">Change status</h3>
-          <button id="close-status-modal" class="text-ink-soft transition hover:text-ink" aria-label="Close">
-            <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18 18 6M6 6l12 12"/></svg>
-          </button>
-        </div>
-        <%= form_tag bulk_status_change_customers_path, method: :post, id: "bulk-status-change-form" do %>
-          <input type="hidden" name="customer_ids" id="bulk-status-customer-ids">
-          <label for="status" class="micro mb-1 block">Set status to</label>
-          <%= select_tag "status", options_for_select(current_organization.taxonomy_options("customer_status")),
-                class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
-          <div class="mt-5 flex justify-end gap-2">
-            <button type="button" id="cancel-bulk-status-change" class="rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">Cancel</button>
-            <button type="submit" class="rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5" style="background: var(--brand-primary)">Update status</button>
-          </div>
-        <% end %>
-      </div>
+      <div class="grow"></div>
+      <span class="muted rl-sm nowrap"><%= number_with_delimiter(total_count) %> <%= "lead".pluralize(total_count) %></span>
+      <% if params[:search].present? || params[:status].present? || params[:lead_source].present? || params[:user_id].present? %>
+        <%= link_to "Clear filters", customers_path, class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+      <% end %>
     </div>
   <% end %>
 
-  <%# === Main table === %>
-  <div class="mt-4 overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+  <div class="rl-table-wrap">
+    <% if can_manage %>
+      <%# Bulk bar — hidden until rows are selected (driven by relay--bulk-select) %>
+      <div class="rl-bulkbar" data-relay--bulk-select-target="bar" hidden>
+        <span><b data-relay--bulk-select-target="count">0</b> selected</span>
+        <div class="row" style="gap:6px">
+          <div data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+            <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                    data-action="relay--dropdown#toggle" data-relay--dropdown-target="trigger">
+              <%= relay_icon("user-check", size: 14) %>Assign
+            </button>
+            <div class="menu-float pop" data-relay--dropdown-target="menu" hidden style="top:calc(100% + 6px);left:0">
+              <div class="rl-menu" style="min-width:220px">
+                <% @users.to_a.each do |u| %>
+                  <button type="button" class="rl-menuitem"
+                          data-action="relay--bulk-select#assign" data-user-id="<%= u.id %>">
+                    <%= relay_icon("user", size: 15) %><%= u.name %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <div data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+            <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                    data-action="relay--dropdown#toggle" data-relay--dropdown-target="trigger">
+              <%= relay_icon("tag", size: 14) %>Set status
+            </button>
+            <div class="menu-float pop" data-relay--dropdown-target="menu" hidden style="top:calc(100% + 6px);left:0">
+              <div class="rl-menu" style="min-width:200px">
+                <% current_organization.taxonomy_values("customer_status").each do |v| %>
+                  <button type="button" class="rl-menuitem"
+                          data-action="relay--bulk-select#changeStatus" data-status="<%= v %>">
+                    <i class="rl-dot" style="background:currentColor"></i><%= v %>
+                  </button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+
+          <% if current_user&.admin? %>
+            <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                    data-action="relay--bulk-select#exportSelected">
+              <%= relay_icon("download", size: 14) %>Export
+            </button>
+          <% end %>
+          <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" data-action="relay--bulk-select#clear">Clear</button>
+        </div>
+      </div>
+    <% end %>
+
     <% if @customers.any? %>
-      <%# Desktop table %>
-      <div class="hidden overflow-x-auto md:block">
-        <table class="min-w-full">
+      <div class="rl-table-scroll">
+        <table class="rl-table">
           <thead>
-            <tr class="border-b border-[var(--color-line)] bg-panel-2">
-              <% if current_user&.admin? || current_user&.manager? %>
-                <th scope="col" class="w-10 px-4 py-3">
-                  <input type="checkbox" id="select-all-checkbox"
-                         class="h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]">
+            <tr>
+              <% if can_manage %>
+                <th style="width:40px">
+                  <label class="rl-check">
+                    <input type="checkbox" data-relay--bulk-select-target="all" data-action="relay--bulk-select#toggleAll">
+                    <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+                  </label>
                 </th>
               <% end %>
-              <% [ "Customer", "Contact", "Lead", "Calls", "Messages", "Assigned", "" ].each do |h| %>
-                <th scope="col" class="micro px-5 py-3 text-left"><%= h %></th>
-              <% end %>
+              <th>Lead</th>
+              <th>Channels</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Source</th>
+              <th>Owner</th>
+              <th>Local time</th>
+              <th style="width:44px"></th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[var(--color-line)]" data-customer-filter-target="customersList">
+          <tbody>
             <% @customers.each do |customer| %>
-              <tr class="customer-row transition hover:bg-[var(--color-line)]"
-                  data-name="<%= customer.name.downcase %>"
-                  data-email="<%= customer.email&.downcase %>"
-                  data-company="<%= customer.company&.downcase %>"
-                  data-phone="<%= customer.phone %>"
-                  data-user-id="<%= customer.user_id %>"
-                  data-lead-source="<%= customer.lead_source %>"
-                  data-status="<%= customer.status %>"
-                  data-customer-type="<%= customer.customer_type %>"
-                  data-created-at="<%= customer.created_at.to_i %>"
-                  data-updated-at="<%= customer.updated_at.to_i %>"
-                  data-customer-id="<%= customer.id %>">
-                <% if current_user&.admin? || current_user&.manager? %>
-                  <td class="px-4 py-4">
-                    <input type="checkbox"
-                           class="customer-checkbox h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
-                           data-id="<%= customer.id %>">
+              <% local_time = customer.current_location_time %>
+              <tr data-relay--bulk-select-target="row">
+                <% if can_manage %>
+                  <td>
+                    <label class="rl-check">
+                      <input type="checkbox" value="<%= customer.id %>"
+                             data-relay--bulk-select-target="checkbox"
+                             data-action="relay--bulk-select#toggleRow">
+                      <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+                    </label>
                   </td>
                 <% end %>
 
-                <%# Customer %>
-                <td class="px-5 py-4">
-                  <div class="flex items-center gap-3">
-                    <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full font-display text-sm font-bold text-white"
-                          style="background: var(--brand-primary)">
-                      <%= customer.name.first&.upcase %>
-                    </span>
-                    <div class="min-w-0">
-                      <p class="truncate text-sm font-medium text-ink">
-                        <%= link_to customer.name, customer_path(customer), class: "transition hover:text-accent" %>
-                        <% if customer.customer_type == "High Value" %>
-                          <span class="mono ml-1 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-semibold"
-                                style="background: var(--brand-accent-soft); color: var(--brand-accent)">
-                            HV
-                          </span>
-                        <% end %>
-                      </p>
-                      <% if customer.company.present? %>
-                        <p class="truncate text-xs text-ink-soft"><%= customer.company %></p>
-                      <% end %>
-                      <p class="mono text-[10px] text-ink-soft/70">Added <%= customer.created_at.strftime("%b %-d, %Y") %></p>
+                <%# Lead — avatar + name + title/company %>
+                <td class="clickable" onclick="window.location='<%= customer_path(customer) %>'">
+                  <div class="row" style="gap:10px">
+                    <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(customer.name) %>"><%= relay_initials(customer.name) %></span>
+                    <div style="min-width:0">
+                      <div class="rl-cell-strong"><%= customer.name %></div>
+                      <div class="muted" style="font-size:12px">
+                        <%= [customer.project_type.presence, customer.company.presence].compact.reject { |v| v == "Not Applicable" }.join(" · ").presence || "No company" %>
+                      </div>
                     </div>
                   </div>
                 </td>
 
-                <%# Contact %>
-                <td class="px-5 py-4">
-                  <div class="space-y-1 text-sm">
-                    <% if customer.email.present? %>
-                      <p class="flex items-center gap-1.5 truncate text-ink">
-                        <svg class="h-3.5 w-3.5 shrink-0 text-ink-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
-                        <span class="truncate"><%= customer.email %></span>
-                      </p>
-                    <% end %>
-                    <% if customer.phone.present? %>
-                      <p class="mono flex items-center gap-1.5 text-ink">
-                        <svg class="h-3.5 w-3.5 shrink-0 text-ink-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
-                        <span><%= customer.phone %></span>
-                        <% if feature_enabled?(:calling) %>
-                          <%= link_to calling_path(customer_id: customer.id, phone: customer.phone),
-                                title: "Call",
-                                class: "transition hover:text-accent" do %>
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
-                          <% end %>
-                        <% end %>
-                      </p>
-                    <% end %>
-                    <% if customer.preferred_calling_time.present? && customer.preferred_calling_time != "Not Applicable" %>
-                      <p class="mono flex items-center gap-1.5 text-[10px] text-ink-soft">
-                        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-                        <%= customer.preferred_calling_time %>
-                      </p>
-                    <% end %>
+                <%# Channels — pips for channels the lead actually has %>
+                <td>
+                  <div class="row" style="gap:4px">
+                    <% if customer.phone.present? %><span class="chan chan--call"><%= relay_icon("phone", size: 14) %></span><% end %>
+                    <% if customer.email.present? %><span class="chan chan--email"><%= relay_icon("mail", size: 14) %></span><% end %>
+                    <% if customer.whatsapp_chat_id.present? %><span class="chan chan--whatsapp"><%= relay_icon("message-circle", size: 14) %></span><% end %>
+                    <% if customer.linkedin_url.present? %><span class="chan chan--linkedin"><%= relay_icon("linkedin", size: 14) %></span><% end %>
                   </div>
                 </td>
 
-                <%# Lead %>
-                <td class="px-5 py-4">
-                  <div class="flex flex-wrap gap-1.5">
-                    <%= render "shared/status_pill", label: customer.status %>
-                    <% if customer.lead_source.present? %>
-                      <span class="inline-flex items-center rounded-full bg-[var(--color-line)] px-2 py-0.5 text-[11px] font-medium text-ink-soft">
-                        <%= customer.lead_source %>
-                      </span>
-                    <% end %>
-                    <% if customer.repeat_lead? %>
-                      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium" style="background: rgba(245,158,11,0.15); color: #92400e">
-                        Repeat
-                      </span>
-                    <% end %>
-                    <% if customer.utm_campaign.present? %>
-                      <span class="mono inline-flex items-center rounded-full px-2 py-0.5 text-[11px]" style="background: var(--brand-primary-soft); color: var(--brand-primary)" title="UTM Campaign">
-                        <%= customer.utm_campaign %>
-                      </span>
-                    <% end %>
-                    <% if customer.utm_term.present? %>
-                      <span class="mono inline-flex items-center rounded-full px-2 py-0.5 text-[11px]" style="background: var(--color-line); color: var(--color-ink-soft)" title="UTM Term">
-                        <%= customer.utm_term %>
-                      </span>
-                    <% end %>
-                  </div>
+                <%# Status pill %>
+                <td>
+                  <span class="rl-pill <%= relay_status_pill_class(customer.status) %>"><i class="rl-dot"></i><%= customer.status %></span>
                 </td>
 
-                <%# Calls %>
-                <td class="px-5 py-4">
-                  <p class="mono text-sm font-semibold text-ink">
-                    <%= customer.total_call_attempts %><span class="text-xs text-ink-soft"> attempts</span>
-                  </p>
-                  <p class="mono text-xs" style="color: var(--brand-accent)">
-                    <%= customer.successful_call_attempts %> connected
-                  </p>
-                </td>
-
-                <%# Messages %>
-                <td class="px-5 py-4">
-                  <%
-                    sent_msgs = customer.messages.where(direction: "outbound").count
-                    in_msgs   = customer.messages.where(direction: "inbound").count
-                  %>
-                  <p class="mono text-sm font-semibold text-ink">
-                    <%= sent_msgs %><span class="text-xs text-ink-soft"> sent</span>
-                  </p>
-                  <p class="mono text-xs" style="color: var(--brand-accent)">
-                    <%= in_msgs %> replies
-                  </p>
-                </td>
-
-                <%# Assigned %>
-                <td class="px-5 py-4">
-                  <% if customer.user %>
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-ink">
-                      <span class="h-1.5 w-1.5 rounded-full" style="background: var(--brand-accent)"></span>
-                      <%= customer.user.name %>
+                <%# Score meter %>
+                <td>
+                  <% if customer.lead_score.present? %>
+                    <span class="score">
+                      <span class="score__bar"><i style="width:<%= customer.lead_score.to_i.clamp(0, 100) %>%;background:<%= relay_score_color(customer.lead_score) %>"></i></span>
+                      <span class="score__num"><%= customer.lead_score %></span>
                     </span>
                   <% else %>
-                    <div class="space-y-1.5">
-                      <p class="text-xs text-ink-soft">Unassigned</p>
-                      <% if policy(customer).assign_to_self? %>
-                        <%= link_to "Assign to me", assign_to_self_customer_path(customer),
-                              data: { turbo_method: :post, turbo_confirm: "Assign this customer to yourself?" },
-                              class: "mono inline-flex items-center rounded px-2 py-1 text-[11px] font-semibold text-white transition hover:-translate-y-0.5",
-                              style: "background: var(--brand-primary)" %>
-                      <% end %>
-                    </div>
+                    <span class="muted rl-sm">—</span>
                   <% end %>
                 </td>
 
-                <%# Actions %>
-                <td class="px-5 py-4 text-right">
-                  <div class="inline-flex items-center gap-1">
-                    <%= link_to edit_customer_path(customer),
-                          class: "grid h-8 w-8 place-items-center rounded-md text-ink-soft ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] hover:text-ink",
-                          title: "Edit" do %>
-                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/></svg>
+                <%# Source tag %>
+                <td>
+                  <% if customer.lead_source.present? %>
+                    <span class="rl-tag"><i class="rl-tag-dot" style="background:<%= relay_source_color(customer.lead_source) %>"></i><%= customer.lead_source %></span>
+                  <% else %>
+                    <span class="muted rl-sm">—</span>
+                  <% end %>
+                </td>
+
+                <%# Owner %>
+                <td>
+                  <% if customer.user %>
+                    <div class="row" style="gap:8px">
+                      <span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(customer.user.name) %>"><%= relay_initials(customer.user.name) %></span>
+                      <span class="rl-sm"><%= customer.user.name %></span>
+                    </div>
+                  <% elsif policy(customer).assign_to_self? %>
+                    <%= button_to assign_to_self_customer_path(customer), method: :post,
+                          form: { class: "shrink-0" }, class: "rl-btn rl-btn--brand-soft rl-btn--sm" do %>
+                      Assign to me
                     <% end %>
-                    <% if current_user.admin? %>
-                      <%= button_to customer_path(customer),
-                            method: :delete,
-                            data: { confirm: "Delete this customer?" },
-                            form: { class: "inline-block" },
-                            class: "grid h-8 w-8 place-items-center rounded-md text-ink-soft ring-1 ring-[var(--color-line-2)] transition hover:bg-[#c0492f]/10 hover:text-[#c0492f]",
-                            title: "Delete" do %>
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
-                      <% end %>
-                    <% end %>
+                  <% else %>
+                    <span class="rl-badge rl-badge--warning">Unassigned</span>
+                  <% end %>
+                </td>
+
+                <%# Local time %>
+                <td>
+                  <% if local_time %>
+                    <div class="row" style="gap:6px">
+                      <span class="mono" style="font-size:12px"><%= local_time.strftime("%H:%M") %></span>
+                      <span class="muted" style="font-size:11px"><%= local_time.zone %></span>
+                    </div>
+                  <% else %>
+                    <span class="muted rl-sm">—</span>
+                  <% end %>
+                </td>
+
+                <%# Row actions %>
+                <td onclick="event.stopPropagation()">
+                  <div data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+                    <button type="button" class="rl-iconbtn rl-iconbtn--sm"
+                            data-action="relay--dropdown#toggle" data-relay--dropdown-target="trigger">
+                      <%= relay_icon("more-horizontal", size: 16) %>
+                    </button>
+                    <div class="menu-float pop" data-relay--dropdown-target="menu" hidden style="top:calc(100% + 6px);right:0">
+                      <div class="rl-menu" style="min-width:200px">
+                        <%= link_to customer_path(customer), class: "rl-menuitem" do %>
+                          <%= relay_icon("square-arrow-out-up-right", size: 15) %>Open workspace
+                        <% end %>
+                        <% if customer.phone.present? && feature_enabled?(:calling) %>
+                          <%= link_to calling_path(customer_id: customer.id, phone: customer.phone), class: "rl-menuitem" do %>
+                            <%= relay_icon("phone", size: 15) %>Call now
+                          <% end %>
+                        <% end %>
+                        <%= link_to edit_customer_path(customer), class: "rl-menuitem" do %>
+                          <%= relay_icon("user-check", size: 15) %>Edit lead
+                        <% end %>
+                        <% if current_user&.admin? %>
+                          <div class="rl-menu__sep"></div>
+                          <%= button_to customer_path(customer), method: :delete,
+                                form: { data: { turbo_confirm: "Delete this lead?" } },
+                                class: "rl-menuitem is-danger", style: "width:100%" do %>
+                            <%= relay_icon("archive", size: 15) %>Delete
+                          <% end %>
+                        <% end %>
+                      </div>
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -417,122 +275,38 @@
         </table>
       </div>
 
-      <%# Mobile cards %>
-      <div class="md:hidden">
-        <div class="divide-y divide-[var(--color-line)]" data-customer-filter-target="customersList">
-          <% @customers.each do |customer| %>
-            <div class="customer-row p-5"
-                 data-name="<%= customer.name.downcase %>"
-                 data-email="<%= customer.email&.downcase %>"
-                 data-company="<%= customer.company&.downcase %>"
-                 data-phone="<%= customer.phone %>"
-                 data-user-id="<%= customer.user_id %>"
-                 data-lead-source="<%= customer.lead_source %>"
-                 data-status="<%= customer.status %>"
-                 data-customer-type="<%= customer.customer_type %>"
-                 data-created-at="<%= customer.created_at.to_i %>"
-                 data-updated-at="<%= customer.updated_at.to_i %>"
-                 data-customer-id="<%= customer.id %>">
-              <div class="mb-3 flex items-start justify-between gap-3">
-                <div class="flex min-w-0 items-center gap-3">
-                  <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full font-display text-base font-bold text-white"
-                        style="background: var(--brand-primary)">
-                    <%= customer.name.first&.upcase %>
-                  </span>
-                  <div class="min-w-0">
-                    <p class="truncate text-base font-semibold text-ink">
-                      <%= link_to customer.name, customer_path(customer), class: "transition hover:text-accent" %>
-                    </p>
-                    <% if customer.company.present? %>
-                      <p class="truncate text-xs text-ink-soft"><%= customer.company %></p>
-                    <% end %>
-                  </div>
-                </div>
-                <% if current_user&.admin? || current_user&.manager? %>
-                  <input type="checkbox"
-                         class="customer-checkbox mt-1 h-4 w-4 rounded border-[var(--color-line-2)] text-[var(--brand-primary)] focus:ring-[var(--brand-primary)]"
-                         data-id="<%= customer.id %>">
-                <% end %>
-              </div>
-
-              <div class="space-y-2 text-sm">
-                <% if customer.email.present? %>
-                  <p class="truncate text-ink-soft"><%= customer.email %></p>
-                <% end %>
-                <% if customer.phone.present? %>
-                  <p class="mono text-ink-soft"><%= customer.phone %></p>
-                <% end %>
-                <div class="flex flex-wrap gap-1.5">
-                  <%= render "shared/status_pill", label: customer.status %>
-                  <% if customer.lead_source.present? %>
-                    <span class="inline-flex items-center rounded-full bg-[var(--color-line)] px-2 py-0.5 text-[11px] font-medium text-ink-soft">
-                      <%= customer.lead_source %>
-                    </span>
-                  <% end %>
-                  <% if customer.repeat_lead? %>
-                    <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium" style="background: rgba(245,158,11,0.15); color: #92400e">Repeat</span>
-                  <% end %>
-                </div>
-                <div class="flex items-center justify-between border-t border-[var(--color-line)] pt-2.5 text-xs">
-                  <span class="text-ink-soft">
-                    <span class="mono font-semibold text-ink"><%= customer.total_call_attempts %></span> calls,
-                    <span class="mono font-semibold" style="color: var(--brand-accent)"><%= customer.successful_call_attempts %></span> connected
-                  </span>
-                  <%= link_to "Edit", edit_customer_path(customer),
-                        class: "rounded-md px-2.5 py-1 text-xs font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
-                </div>
-              </div>
-            </div>
-          <% end %>
-        </div>
-      </div>
-
-      <%# No-results / pagination %>
-      <div data-customer-filter-target="noResults" class="hidden px-6 py-16 text-center">
-        <p class="font-display text-lg font-semibold text-ink">No matching customers</p>
-        <p class="mt-1 text-sm text-ink-soft">Try adjusting your search or filters.</p>
-        <button type="button" data-action="click->customer-filter#clearAll"
-                class="mt-5 inline-flex items-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5"
-                style="background: var(--brand-primary)">
-          Clear all filters
-        </button>
-      </div>
-
       <% if @customers.respond_to?(:total_pages) && @customers.total_pages > 1 %>
-        <div class="flex items-center justify-between border-t border-[var(--color-line)] px-6 py-3">
-          <p class="mono text-xs text-ink-soft">
-            Showing <span class="font-semibold text-ink"><%= @customers.offset_value + 1 %></span>–<span class="font-semibold text-ink"><%= @customers.offset_value + @customers.size %></span> of <span class="font-semibold text-ink"><%= @customers.total_count %></span>
-          </p>
-          <nav aria-label="Pagination"><%= paginate @customers %></nav>
+        <div class="rl-pagination">
+          <span>
+            Showing <%= @customers.offset_value + 1 %>–<%= @customers.offset_value + @customers.size %> of <%= number_with_delimiter(total_count) %>
+          </span>
+          <div class="rl-pagebtns"><%= paginate @customers, theme: "relay" %></div>
         </div>
       <% end %>
     <% else %>
-      <div class="px-6 py-20 text-center">
-        <p class="font-display text-xl font-bold text-ink">No customers yet.</p>
-        <p class="mt-1 text-sm text-ink-soft">Add your first customer to get started.</p>
-        <%= link_to new_customer_path,
-              class: "mt-6 inline-flex items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
-              style: "background: var(--brand-primary)" do %>
-          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-          Add your first customer
-        <% end %>
+      <div class="empty">
+        <div class="empty__ic"><%= relay_icon("users", size: 26) %></div>
+        <div class="rl-h4" style="margin-bottom:4px">No leads match</div>
+        <div class="muted rl-sm" style="max-width:360px">Try clearing filters, or import a fresh list to get started.</div>
+        <div class="row" style="margin-top:16px;gap:8px">
+          <% if can_manage %>
+            <%= link_to "Import CSV", new_csv_import_path, class: "rl-btn rl-btn--primary rl-btn--sm" %>
+          <% end %>
+          <%= link_to "Add lead", new_customer_path, class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+        </div>
       </div>
     <% end %>
   </div>
-</div>
 
-<script>
-  function calculateLeadScore(customerId) {
-    if (!confirm("Calculate lead score for this customer?")) return;
-    fetch(`/customers/${customerId}/calculate_lead_score`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
-      }
-    })
-      .then(r => r.json())
-      .then(d => d.success ? window.location.reload() : alert("Failed: " + (d.error || "Unknown error")))
-      .catch(() => alert("Failed to calculate lead score"));
-  }
-</script>
+  <% if can_manage %>
+    <%# Hidden forms posted by relay--bulk-select for the bulk endpoints. %>
+    <%= form_tag bulk_assign_customers_path, method: :post, data: { relay__bulk_select_target: "assignForm" }, style: "display:none" do %>
+      <%= hidden_field_tag :customer_ids, "", data: { relay__bulk_select_target: "assignIds" } %>
+      <%= hidden_field_tag :user_id, "", data: { relay__bulk_select_target: "assignUser" } %>
+    <% end %>
+    <%= form_tag bulk_status_change_customers_path, method: :post, data: { relay__bulk_select_target: "statusForm" }, style: "display:none" do %>
+      <%= hidden_field_tag :customer_ids, "", data: { relay__bulk_select_target: "statusIds" } %>
+      <%= hidden_field_tag :status, "", data: { relay__bulk_select_target: "statusValue" } %>
+    <% end %>
+  <% end %>
+</div>

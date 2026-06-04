@@ -244,6 +244,7 @@ Rails.application.routes.draw do
         post  "assign_to_self"
         post  "upload_documents"
         post  "mark_lead_quality"
+        post  "add_note"
       end
 
       resources :invoices do
@@ -319,6 +320,22 @@ Rails.application.routes.draw do
       member     { post "mark_as_read" }
       collection { post "mark_all_as_read" }
     end
+
+    # Relay Inbox (Phase 6): cross-lead conversation triage. The optional
+    # :customer_id selects which thread shows in the right pane, so inbox_path
+    # works both bare and with a lead id.
+    get "inbox(/:customer_id)", to: "inbox#index", as: :inbox
+
+    # Relay Outreach (Phase 7): one workspace over campaigns, audiences
+    # (customer groups) and WhatsApp templates. ?tab=campaigns|audiences|templates
+    # picks the active tab so each is linkable. The legacy CRUD routes above stay.
+    get "outreach", to: "outreach#index", as: :outreach
+
+    # Relay Billing (Phase 9): one Quotes & invoices workspace over invoices
+    # (across customers), cost estimates and Odoo proposals.
+    # ?tab=invoices|estimates|proposals picks the active tab so each is linkable.
+    # The legacy all_invoices / cost_estimates / odoo_proposals pages stay.
+    get "billing", to: "billing#index", as: :billing
 
     get "reports",             to: "reports#index",      as: :reports
     get "reports/my_reports",  to: "reports#my_reports", as: :my_reports

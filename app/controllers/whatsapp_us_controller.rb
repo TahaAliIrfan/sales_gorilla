@@ -222,7 +222,7 @@ class WhatsappUsController < ApplicationController
     message = persist_outbound(sid: result[:sid], status: result[:status], body: body)
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)
-    render json: { success: true, message: serialize(message) }
+    respond_with_sent(message)
   end
 
   # Outbound message with an uploaded document/image/voice note. The file is
@@ -260,7 +260,23 @@ class WhatsappUsController < ApplicationController
 
     UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
     WhatsappUsBroadcaster.broadcast(message)
-    render json: { success: true, message: serialize(message) }
+    respond_with_sent(message)
+  end
+
+  # Existing callers expect JSON (chat panel / mobile API). The Relay lead
+  # workspace composer requests turbo_stream so the new bubble appends to the
+  # conversation canvas in place. Both share the same persisted message.
+  def respond_with_sent(message)
+    respond_to do |format|
+      format.json { render json: { success: true, message: serialize(message) } }
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.before(
+          "conversation_tail",
+          partial: "customers/relay/whatsapp_bubble",
+          locals: { message: message }
+        )
+      end
+    end
   end
 
   def persist_outbound(sid:, status:, body:)
@@ -444,6 +460,12 @@ class WhatsappUsController < ApplicationController
 
 
   def render_error(message, status = :unprocessable_entity)
-    render json: { success: false, error: message }, status: status
+    respond_to do |format|
+      format.json { render json: { success: false, error: message }, status: status }
+      # Relay composer (turbo_stream) — surface the reason as a flash redirect
+      # back to the workspace rather than a raw JSON body Turbo can't render.
+      format.turbo_stream { redirect_to customer_path(@customer), alert: message }
+      format.html { redirect_to customer_path(@customer), alert: message }
+    end
   end
 end

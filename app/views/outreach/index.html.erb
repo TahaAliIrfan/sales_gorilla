@@ -1,0 +1,49 @@
+<%# Relay Outreach — one workspace over campaigns, audiences and templates.
+    Ports docs/design/relay-app/project/app/view-outreach.jsx. Tabs are
+    server-side links (?tab=…) so each is bookmarkable; the active tab carries
+    .is-active. The legacy CRUD pages stay reachable behind New/Edit/View. %>
+<% content_for :title, "Outreach — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Outreach</div>
+      <div class="pagehead__sub">Build audiences, run bulk WhatsApp campaigns, manage approved templates.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to new_customer_group_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("users-round", size: 15) %>New audience
+      <% end %>
+      <%= link_to new_campaign_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("megaphone", size: 15) %>New campaign
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rl-tabs" style="margin-bottom:var(--space-5)">
+    <%= link_to outreach_path(tab: "campaigns"),
+          class: class_names("rl-tab", "is-active" => @tab == "campaigns") do %>
+      <%= relay_icon("megaphone", size: 15) %>Campaigns
+      <span class="rl-tab-count tnum"><%= @campaigns.size %></span>
+    <% end %>
+    <%= link_to outreach_path(tab: "audiences"),
+          class: class_names("rl-tab", "is-active" => @tab == "audiences") do %>
+      <%= relay_icon("users-round", size: 15) %>Audiences
+      <%# .length, not .size: the grouped COUNT select makes .size return a hash %>
+      <span class="rl-tab-count tnum"><%= @customer_groups.length %></span>
+    <% end %>
+    <% if @show_templates_tab %>
+      <%= link_to outreach_path(tab: "templates"),
+            class: class_names("rl-tab", "is-active" => @tab == "templates") do %>
+        <%= relay_icon("message-circle", size: 15) %>Templates
+        <span class="rl-tab-count tnum"><%= @templates.size %></span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% case @tab
+     when "campaigns" %><%= render "outreach/campaigns" %>
+  <% when "audiences" %><%= render "outreach/audiences" %>
+  <% when "templates" %><%= render "outreach/templates" %>
+  <% end %>
+</div>

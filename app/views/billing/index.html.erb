@@ -1,0 +1,46 @@
+<%# Relay Billing — the Quotes & invoices workspace over invoices, cost estimates
+    and Odoo proposals. Ports docs/design/relay-app/project/app/billing.jsx. Tabs
+    are server-side links (?tab=…) so each is bookmarkable; the active tab carries
+    .is-active. The legacy CRUD pages stay reachable behind View / New / actions. %>
+<% content_for :title, "Quotes & invoices — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Quotes &amp; invoices</div>
+      <div class="pagehead__sub">Estimates, proposals and invoices — money actions across your book.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to cost_estimates_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("calculator", size: 15) %>New estimate
+      <% end %>
+      <%= link_to new_odoo_proposal_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("file-text", size: 15) %>New proposal
+      <% end %>
+    </div>
+  </div>
+
+  <div class="rl-tabs" style="margin-bottom:var(--space-5)">
+    <%= link_to billing_path(tab: "invoices"),
+          class: class_names("rl-tab", "is-active" => @tab == "invoices") do %>
+      <%= relay_icon("receipt", size: 15) %>Invoices
+      <span class="rl-tab-count tnum"><%= @invoices_count %></span>
+    <% end %>
+    <%= link_to billing_path(tab: "estimates"),
+          class: class_names("rl-tab", "is-active" => @tab == "estimates") do %>
+      <%= relay_icon("calculator", size: 15) %>Estimates
+      <span class="rl-tab-count tnum"><%= @estimates_count %></span>
+    <% end %>
+    <%= link_to billing_path(tab: "proposals"),
+          class: class_names("rl-tab", "is-active" => @tab == "proposals") do %>
+      <%= relay_icon("file-text", size: 15) %>Proposals
+      <span class="rl-tab-count tnum"><%= @proposals_count %></span>
+    <% end %>
+  </div>
+
+  <% case @tab
+     when "invoices"  %><%= render "billing/invoices" %>
+  <% when "estimates" %><%= render "billing/estimates" %>
+  <% when "proposals" %><%= render "billing/proposals" %>
+  <% end %>
+</div>

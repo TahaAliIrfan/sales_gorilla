@@ -20,7 +20,7 @@
       <%= render "relay/shared/sidebar" %>
       <div class="app__main">
         <%= render "relay/shared/topbar" %>
-        <main class="app__body" id="relay_body"><%= yield %></main>
+        <main class="app__body <%= yield :body_class %>" id="relay_body"><%= yield %></main>
       </div>
     </div>
 

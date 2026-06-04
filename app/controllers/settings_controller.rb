@@ -1,19 +1,25 @@
 require "csv"
 
 class SettingsController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
 
+  # Workspace tabs, ported from docs/design/relay-app/project/app/view-settings.jsx.
+  # Branding/team/features are admin-gated (see #admin_tabs?); associates only see
+  # profile + integrations. "features" is its own controller (Settings::Features)
+  # reached via its route, but we render its tab link here for a unified bar.
+  TABS = %w[profile branding team integrations features].freeze
+
+  # GET /settings?tab=profile|branding|team|integrations
   def edit
     @user = current_user
+    @tab  = TABS.include?(params[:tab]) ? params[:tab] : "profile"
+    # Non-admins can't reach branding/team — fall back to profile.
+    @tab = "profile" if %w[branding team].include?(@tab) && !helpers.admin_tabs?
 
-    # Check if Google Calendar is actually accessible
-    if @user.google_auth_configured?
-      calendar_service = GoogleCalendarService.new(@user)
-      @calendar_connected = calendar_service.check_connection
-    else
-      @calendar_connected = false
-    end
+    load_integration_state
+    load_branding if @tab == "branding"
+    load_team     if @tab == "team"
   end
 
   def update
@@ -88,6 +94,28 @@ class SettingsController < ApplicationController
 
   private
 
+  # Google Calendar connection state for the Integrations tab (and shown on
+  # Profile too). Mirrors the original #edit logic.
+  def load_integration_state
+    if @user.google_auth_configured?
+      @calendar_connected = GoogleCalendarService.new(@user).check_connection
+    else
+      @calendar_connected = false
+    end
+  end
+
+  # Organization for the Branding tab form (posts to the existing
+  # BrandingController#update endpoint).
+  def load_branding
+    @organization = current_organization
+  end
+
+  # User list for the Team & roles tab. Mirrors UsersController#index.
+  def load_team
+    @users = User.all.order(:name)
+    @roles = UsersController::ROLES
+  end
+
   def user_params
     params.require(:user).permit(:phone_number)
   end
@@ -104,12 +132,5 @@ class SettingsController < ApplicationController
 
     # Add the plus sign back if it was there, or add it if it wasn't
     "+" + digits_only
-  end
-
-  def require_login
-    unless session[:user_id]
-      flash[:error] = "You must be logged in to access this section"
-      redirect_to root_path
-    end
   end
 end

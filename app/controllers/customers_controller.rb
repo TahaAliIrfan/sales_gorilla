@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
-  layout "tenant"
+  layout :choose_layout
   before_action :require_login
-  before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality ]
+  before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality, :add_note ]
   after_action :verify_authorized, except: [ :index, :export_csv ]
   after_action :verify_policy_scoped, only: [ :index, :export_csv ]
 
@@ -49,6 +49,12 @@ class CustomersController < ApplicationController
     customers = apply_filters(policy_scope(Customer))
       .includes(:user)
       .order(created_at: :desc)
+
+    # "Export selected" passes the chosen ids; narrow the set when present.
+    if params[:ids].present?
+      ids = params[:ids].to_s.split(",").map(&:strip).reject(&:blank?).map(&:to_i).reject(&:zero?)
+      customers = customers.where(id: ids) if ids.any?
+    end
 
     require "csv"
 
@@ -104,16 +110,38 @@ class CustomersController < ApplicationController
 
   def show
     authorize @customer
-    @deals = @customer.deals
-    @activities = @customer.customer_activities.recent.limit(10)
-    @meta_conversion_logs = @customer.meta_conversion_logs.recent
-    @recordings = @customer.recordings.recent.limit(20)
-    @tasks = @customer.tasks.order(due_date: :asc)
-    # Eager load attachments to prevent N+1 queries
-    @emails = @customer.emails.with_attached_attachments.recent.limit(5)
+
+    # Rail context (the workspace's 340px left column).
+    @deals      = @customer.deals.includes(:user)
+    @open_tasks = @customer.tasks.where(completed: [ false, nil ]).order(due_date: :asc)
+
+    # Conversation canvas: one chronological multi-channel stream.
+    @conversation = Relay::ConversationBuilder.new(@customer).events
 
     if @customer.email.present? && current_user.google_auth_configured?
       CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
+    end
+  end
+
+  # Composer "Note" tab: records an internal note as a customer activity so it
+  # threads into the conversation alongside calls/emails/WhatsApp.
+  def add_note
+    authorize @customer, :update?
+
+    text = params[:body].to_s.strip
+    if text.blank?
+      respond_to do |format|
+        format.turbo_stream { head :unprocessable_entity }
+        format.html { redirect_to @customer, alert: "Note can't be blank." }
+      end
+      return
+    end
+
+    @note = @customer.customer_activities.create!(action: "note", details: text, user: current_user)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @customer, notice: "Note saved." }
     end
   end
 
@@ -642,6 +670,15 @@ class CustomersController < ApplicationController
   end
 
   private
+
+  # Relay shell adoption: the Leads list (Phase 3) and the lead workspace
+  # show/add_note (Phase 4) use the relay layout. Edit/new keep the legacy
+  # tenant form until a later phase ports them.
+  RELAY_ACTIONS = %w[index show add_note].freeze
+
+  def choose_layout
+    RELAY_ACTIONS.include?(action_name) ? "relay" : "tenant"
+  end
 
   def set_customer
     @customer = Customer.find(params[:id])

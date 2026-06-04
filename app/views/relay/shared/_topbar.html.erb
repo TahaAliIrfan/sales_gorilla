@@ -24,8 +24,10 @@
     </div>
   </span>
 
-  <%= link_to "/calling", class: "rl-iconbtn rl-iconbtn--bordered", title: "Dialer" do %>
-    <%= relay_icon("phone", size: 17) %>
+  <% if feature_enabled?(:calling) %>
+    <%= link_to "/calling", class: "rl-iconbtn rl-iconbtn--bordered", title: "Dialer" do %>
+      <%= relay_icon("phone", size: 17) %>
+    <% end %>
   <% end %>
 
   <%# Notifications %>

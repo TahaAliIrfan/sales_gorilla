@@ -1,39 +1,11 @@
+<%# Relay lead workspace — the hero view. A 340px context rail beside one
+    continuous, multi-channel conversation canvas + composer.
+    Ports docs/design/relay-app/project/app/view-lead.jsx, honest to the DB. %>
 <% content_for :title, "#{@customer.name} — #{current_organization&.name}" %>
+<% content_for :body_class, "app__body--full" %>
 
-<div data-controller="email-modal email-inbox"
-     data-email-modal-customer-id-value="<%= @customer.id %>"
-     data-email-inbox-customer-id-value="<%= @customer.id %>"
-     class="space-y-6">
+<div class="lead" data-controller="relay--composer">
+  <%= render "customers/relay/rail", customer: @customer %>
 
-  <%= render "customers/show_topbar", customer: @customer %>
-  <%= render "customers/show_profile", customer: @customer %>
-
-  <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]" data-controller="tabs">
-    <%= render "customers/show_tabs", customer: @customer, recordings: @recordings %>
-
-    <div class="p-6">
-      <%= render "customers/tabs/overview",       customer: @customer %>
-      <%= render "customers/tabs/emails",         customer: @customer %>
-      <%= render "customers/tabs/communications", customer: @customer %>
-      <div data-tabs-target="content" data-tab-id="whatsapp-us" class="tab-content hidden">
-        <%= render "customers/whatsapp_us", customer: @customer %>
-      </div>
-      <%= render "customers/tabs/recordings",   customer: @customer, recordings: @recordings %>
-      <%= render "customers/tabs/deals",        customer: @customer %>
-      <%= render "customers/tabs/tasks",        customer: @customer %>
-      <%= render "customers/tabs/activities",   customer: @customer, activities: @activities %>
-      <%= render "customers/tabs/meta_events",  customer: @customer, meta_conversion_logs: @meta_conversion_logs %>
-      <%= render "customers/tabs/documents",    customer: @customer %>
-      <%= render "customers/tabs/invoices",     customer: @customer %>
-      <%= render "customers/tabs/milestones",   customer: @customer %>
-    </div>
-  </div>
-
-  <%= render "customers/email_view_modal",    customer: @customer %>
-  <%= render "customers/email_compose_modal", customer: @customer %>
+  <%= render "customers/relay/conversation", customer: @customer, conversation: @conversation %>
 </div>
-
-<style>
-  .tab-content { animation: tabFadeIn 0.25s ease-out both; }
-  @keyframes tabFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-</style>

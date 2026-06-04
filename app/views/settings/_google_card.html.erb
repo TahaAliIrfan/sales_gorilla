@@ -1,0 +1,46 @@
+<%# Google Calendar connection state + connect/disconnect, using the existing
+    OmniAuth route and settings#disconnect_google. Shared by Profile and
+    Integrations tabs. %>
+<div class="sect">
+  <div class="sect__head"><div class="sect__title">Google Calendar</div></div>
+  <div class="sect__body">
+    <div class="spread" style="margin-bottom:14px">
+      <div class="row" style="gap:12px">
+        <span class="iccircle" style="width:40px;height:40px;background:color-mix(in oklch, var(--cat-1) 14%, transparent);color:var(--cat-1)">
+          <%= relay_icon("calendar", size: 19) %>
+        </span>
+        <div>
+          <b style="font-weight:700">Google Calendar</b>
+          <div class="muted rl-sm">Sync customer follow-ups to your calendar automatically.</div>
+        </div>
+      </div>
+      <% if @user.google_auth_configured? && @calendar_connected %>
+        <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Connected</span>
+      <% elsif @user.google_auth_configured? %>
+        <span class="rl-pill rl-pill--warn"><i class="rl-dot"></i>Reconnect needed</span>
+      <% else %>
+        <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Not connected</span>
+      <% end %>
+    </div>
+
+    <% if @user.google_auth_configured? %>
+      <% unless @calendar_connected %>
+        <p class="muted rl-sm" style="margin-bottom:12px">We have your Google credentials but couldn't reach Calendar. Reconnect to refresh access.</p>
+      <% end %>
+      <div class="row" style="gap:8px">
+        <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+          <%= relay_icon("plug", size: 14) %>Reconnect
+        <% end %>
+        <%= link_to disconnect_google_path,
+              data: { turbo_method: :delete, turbo_confirm: "Disconnect Google Calendar?" },
+              class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+          Disconnect
+        <% end %>
+      </div>
+    <% else %>
+      <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+        <%= relay_icon("plug", size: 14) %>Connect Google Calendar
+      <% end %>
+    <% end %>
+  </div>
+</div>

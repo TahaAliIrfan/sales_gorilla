@@ -1,0 +1,5 @@
+<%# Appends the just-saved internal note to the conversation canvas, before the
+    scroll-anchor tail. The composer controller resets the form on submit-end. %>
+<%= turbo_stream.before "conversation_tail" do %>
+  <%= render "customers/relay/note_card", activity: @note %>
+<% end %>

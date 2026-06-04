@@ -1,0 +1,83 @@
+<%# Invoices tab — every invoice in scope (policy_scope, mirrors AllInvoicesController).
+    Columns per docs/design/relay-app/project/app/billing.jsx: number (mono),
+    customer (links to the lead workspace), linked milestone, issued, due, amount
+    (mono, right), status pill, and row actions (mark paid / public page / PDF).
+    Mark paid and PDF are policy-gated to the legacy nested invoice endpoints. %>
+<% if @invoices.empty? %>
+  <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+    <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("receipt", size: 22) %></span>
+    <div class="rl-h4">No invoices yet</div>
+    <div class="muted rl-sm" style="margin-top:6px">Create an invoice from a customer's milestone to bill for delivered work.</div>
+  </div></div>
+<% else %>
+  <div class="sect">
+    <div class="sect__body--flush">
+      <div class="rl-table-scroll">
+        <table class="rl-table">
+          <thead>
+            <tr>
+              <th>Invoice</th>
+              <th>Customer</th>
+              <th>Milestone</th>
+              <th>Issued</th>
+              <th>Due</th>
+              <th style="text-align:right">Amount</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @invoices.each do |invoice| %>
+              <% paid = invoice.paid? %>
+              <tr>
+                <td class="rl-cell-strong mono"><%= invoice.invoice_number %></td>
+                <td>
+                  <%= link_to invoice.customer.name, customer_path(invoice.customer), class: "rl-cell-strong", style: "color:inherit" %>
+                </td>
+                <td class="muted"><%= invoice.milestone&.name %></td>
+                <td class="mono rl-sm"><%= invoice.issue_date&.strftime("%b %-d, %Y") %></td>
+                <td class="mono rl-sm"><%= invoice.due_date&.strftime("%b %-d, %Y") %></td>
+                <td class="rl-cell-num"><%= relay_money(invoice.total) %></td>
+                <td>
+                  <% if paid %>
+                    <span class="rl-badge rl-badge--success"><%= relay_icon("check-circle-2", size: 11) %>Paid</span>
+                  <% elsif invoice.expired? %>
+                    <span class="rl-badge rl-badge--warning"><%= relay_icon("alert-triangle", size: 11) %>Overdue</span>
+                  <% else %>
+                    <span class="rl-badge rl-badge--info"><%= relay_icon("hourglass", size: 11) %>Unpaid</span>
+                  <% end %>
+                </td>
+                <td>
+                  <div class="row" style="gap:4px;justify-content:flex-end;flex-wrap:wrap">
+                    <% if !paid && policy(invoice).mark_paid? %>
+                      <%= button_to mark_paid_customer_invoice_path(invoice.customer, invoice),
+                            method: :patch, class: "rl-btn rl-btn--ghost rl-btn--sm",
+                            form: { data: { turbo_confirm: "Mark #{invoice.invoice_number} as paid?" } } do %>
+                        <%= relay_icon("check", size: 14) %>Mark paid
+                      <% end %>
+                    <% end %>
+                    <% if invoice.public_token.present? && invoice.publicly_viewable? %>
+                      <%= link_to public_invoice_url(invoice.public_token), target: "_blank", rel: "noopener",
+                            class: "rl-iconbtn rl-iconbtn--sm", title: "Open public page" do %>
+                        <%= relay_icon("external-link", size: 15) %>
+                      <% end %>
+                    <% end %>
+                    <% if policy(invoice).download_pdf? %>
+                      <%= link_to download_pdf_customer_invoice_path(invoice.customer, invoice),
+                            class: "rl-iconbtn rl-iconbtn--sm", title: "Download PDF" do %>
+                        <%= relay_icon("download", size: 15) %>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <% if @invoices.total_pages > 1 %>
+    <div class="rl-pagebtns" style="margin-top:var(--space-4)"><%= paginate @invoices, theme: "relay" %></div>
+  <% end %>
+<% end %>

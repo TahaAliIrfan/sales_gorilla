@@ -1,0 +1,83 @@
+<%# Lead-workspace composer. Three channel tabs, each a real form posting to an
+    existing endpoint and responding with a turbo_stream that appends to the
+    conversation canvas. locals: customer %>
+<% wa_open = customer.respond_to?(:whatsapp_us_window_open?) && customer.whatsapp_us_window_open? %>
+<div class="lead__compose"
+     data-action="turbo:submit-end->relay--composer#reset">
+
+  <%# Tabs %>
+  <div class="composer__tabs">
+    <button type="button" class="composer__tab is-active" data-channel="whatsapp"
+            data-relay--composer-target="tab" data-action="click->relay--composer#switch">
+      <span style="color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 15) %></span>WhatsApp
+    </button>
+    <button type="button" class="composer__tab" data-channel="email"
+            data-relay--composer-target="tab" data-action="click->relay--composer#switch">
+      <span style="color:var(--channel-email)"><%= relay_icon("mail", size: 15) %></span>Email
+    </button>
+    <button type="button" class="composer__tab" data-channel="note"
+            data-relay--composer-target="tab" data-action="click->relay--composer#switch">
+      <span style="color:var(--color-warning)"><%= relay_icon("sticky-note", size: 15) %></span>Note
+    </button>
+  </div>
+
+  <%# WhatsApp panel %>
+  <div data-channel="whatsapp" data-relay--composer-target="panel">
+    <%= form_with url: customer_whatsapp_us_path(customer), method: :post do |f| %>
+      <div class="composer__box">
+        <textarea name="body" class="composer__input" rows="1" placeholder="Message <%= customer.name.to_s.split.first %> on WhatsApp…"
+                  data-relay--composer-target="input"
+                  data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
+        <div class="composer__bar">
+          <%= link_to customer_whatsapp_us_path(customer, anchor: "whatsapp-us"), class: "rl-iconbtn rl-iconbtn--sm", title: "Templates & media (full WhatsApp)" do %><%= relay_icon("layout-template", size: 16) %><% end %>
+          <% if wa_open %>
+            <span class="rl-badge rl-badge--success" style="margin-left:4px"><%= relay_icon("circle-check", size: 11) %>Session open</span>
+          <% else %>
+            <span class="rl-badge rl-badge--warning" style="margin-left:4px"><%= relay_icon("clock", size: 11) %>Window closed</span>
+          <% end %>
+          <div class="grow"></div>
+          <span class="muted" style="font-size:11px;margin-right:4px">⌘↵ to send</span>
+          <button type="submit" class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--channel-whatsapp)">
+            <%= relay_icon("send-horizontal", size: 14) %>Send
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Email panel %>
+  <div data-channel="email" data-relay--composer-target="panel" hidden>
+    <%= form_with url: customer_emails_path(customer), method: :post do |f| %>
+      <div class="composer__box">
+        <input type="text" name="subject" placeholder="Subject"
+               style="width:100%;border:none;border-bottom:1px solid var(--color-divider);padding:10px 14px;outline:none;background:none;font-size:var(--text-sm);font-weight:600;color:var(--color-fg)">
+        <textarea name="body" class="composer__input" rows="3" placeholder="Write your email…"
+                  data-relay--composer-target="input"
+                  data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
+        <div class="composer__bar">
+          <%= link_to customer_path(customer, anchor: "emails", compose: true), class: "rl-iconbtn rl-iconbtn--sm", title: "Open full composer (attachments, threads)" do %><%= relay_icon("paperclip", size: 16) %><% end %>
+          <div class="grow"></div>
+          <span class="muted" style="font-size:11px;margin-right:4px">⌘↵ to send</span>
+          <button type="submit" class="rl-btn rl-btn--primary rl-btn--sm"><%= relay_icon("send-horizontal", size: 14) %>Send</button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Note panel %>
+  <div data-channel="note" data-relay--composer-target="panel" hidden>
+    <%= form_with url: add_note_customer_path(customer), method: :post do |f| %>
+      <div class="composer__box">
+        <textarea name="body" class="composer__input" rows="2" placeholder="Add an internal note (only your team sees this)…"
+                  data-relay--composer-target="input"
+                  data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
+        <div class="composer__bar">
+          <span class="rl-badge rl-badge--warning"><%= relay_icon("sticky-note", size: 11) %>Private</span>
+          <div class="grow"></div>
+          <span class="muted" style="font-size:11px;margin-right:4px">⌘↵ to save</span>
+          <button type="submit" class="rl-btn rl-btn--primary rl-btn--sm"><%= relay_icon("check", size: 14) %>Save note</button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

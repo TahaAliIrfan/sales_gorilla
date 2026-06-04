@@ -1,0 +1,27 @@
+<%# A single WhatsApp message bubble (whatsapp_messages table). locals: message %>
+<% out = message.direction == "outbound" %>
+<div class="cevent cevent--msg">
+  <div class="rl-msgrow <%= "rl-msgrow--out" if out %>">
+    <div class="rl-bubble <%= out ? "rl-bubble--out" : "rl-bubble--in" %> <%= "rl-bubble--media" if message.media.attached? %>">
+      <% if message.media.attached? %>
+        <% if message.media.image? %>
+          <%= image_tag url_for(message.media), class: "rl-media", style: "object-fit:cover" %>
+        <% else %>
+          <%= link_to url_for(message.media), class: "rl-attach", target: "_blank", rel: "noopener" do %>
+            <span class="rl-attach-ic"><%= relay_icon("file", size: 18) %></span>
+            <span class="rl-sm"><%= message.media.filename %></span>
+          <% end %>
+        <% end %>
+        <% if message.body.present? %><div class="rl-cap"><%= message.body %></div><% end %>
+      <% else %>
+        <%= message.body %>
+      <% end %>
+      <div class="rl-bubble__meta">
+        <%= relay_conv_time(message.timestamp || message.created_at) %>
+        <% if out %>
+          <%= relay_icon("check-check", size: 14, css: relay_whatsapp_read?(message) ? "rl-read" : nil) %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

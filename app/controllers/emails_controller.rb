@@ -83,6 +83,7 @@ class EmailsController < ApplicationController
           render :new
         }
         format.json { render json: { error: "Subject and body are required" }, status: :unprocessable_entity }
+        format.turbo_stream { redirect_to customer_path(@customer), alert: "Subject and body are required." }
       end
       return
     end
@@ -148,6 +149,14 @@ class EmailsController < ApplicationController
           redirect_to customer_path(@customer, anchor: "emails")
         }
         format.json { render json: { success: true, message: "Email sent successfully" } }
+        # Relay composer: append the sent email card to the conversation canvas.
+        format.turbo_stream {
+          render turbo_stream: turbo_stream.before(
+            "conversation_tail",
+            partial: "customers/relay/email_card",
+            locals: { email: @email, customer: @customer }
+          )
+        }
       end
     else
       respond_to do |format|
@@ -156,6 +165,7 @@ class EmailsController < ApplicationController
           redirect_to customer_path(@customer, anchor: "emails")
         }
         format.json { render json: { error: "Failed to send email" }, status: :unprocessable_entity }
+        format.turbo_stream { redirect_to customer_path(@customer), alert: "Failed to send email." }
       end
     end
   end

@@ -11,6 +11,20 @@ ICONS=(
   circle-dollar-sign check-square upload phone bell shield users-2 user
   user-cog plug log-out check check-circle-2 alert-circle info x calculator
   palette inbox hammer
+  list-checks trophy target trending-up trending-down message-circle mail
+  calendar zap activity
+  download chevrons-up-down bookmark user-check tag more-horizontal
+  chevron-left chevron-right file-up file-check-2 columns-2
+  square-arrow-out-up-right archive clock map-pin
+  arrow-left phone-outgoing phone-incoming phone-call file-text file sparkles
+  reply forward sticky-note check-check circle circle-check send-horizontal
+  layout-template paperclip smile pause play calendar-plus
+  sliders-horizontal building-2 percent arrow-right-circle x-circle
+  messages-square arrow-right flag
+  circle-dot
+  users-round loader send square pencil copy calendar-check
+  filter git-fork award
+  external-link eye credit-card link alert-triangle hourglass
 )
 
 for name in "${ICONS[@]}"; do

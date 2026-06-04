@@ -1,0 +1,14 @@
+<%# Dispatches a Relay::ConversationBuilder::Event to the matching card/bubble.
+    locals: event (Struct kind/at/record), customer %>
+<% case event.kind %>
+<% when :whatsapp %>
+  <%= render "customers/relay/whatsapp_bubble", message: event.record %>
+<% when :call %>
+  <%= render "customers/relay/call_card", recording: event.record %>
+<% when :email %>
+  <%= render "customers/relay/email_card", email: event.record, customer: customer %>
+<% when :note %>
+  <%= render "customers/relay/note_card", activity: event.record %>
+<% when :activity %>
+  <%= render "customers/relay/system_row", activity: event.record %>
+<% end %>

@@ -1,0 +1,91 @@
+<%# Campaigns tab — one .sect card per campaign with status pill, per-recipient
+    segbar, schedule/recipient info, and state-gated action POSTs. Counts come
+    from @execution_counts (one grouped query in the controller). %>
+<% if @campaigns.empty? %>
+  <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+    <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("megaphone", size: 22) %></span>
+    <div class="rl-h4">No campaigns yet</div>
+    <div class="muted rl-sm" style="margin-top:6px">Send an approved template to an audience to get started.</div>
+    <div style="margin-top:16px"><%= link_to "New campaign", new_campaign_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+  </div></div>
+<% else %>
+  <div class="col" style="gap:var(--space-4)">
+    <% @campaigns.each do |campaign| %>
+      <% meta   = outreach_campaign_status_meta(campaign.status) %>
+      <% counts = @execution_counts[campaign.id] %>
+      <% total  = counts[:total] %>
+      <div class="sect">
+        <div class="sect__body">
+          <div class="spread" style="margin-bottom:14px;align-items:flex-start">
+            <div class="row" style="gap:12px">
+              <span class="iccircle" style="width:42px;height:42px;background:color-mix(in oklch, var(--channel-whatsapp) 16%, transparent);color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 20) %></span>
+              <div>
+                <div class="row" style="gap:8px">
+                  <b style="font-size:var(--text-h4);font-weight:700"><%= campaign.name %></b>
+                  <span class="rl-badge <%= meta[:badge] %>"><%= relay_icon(meta[:icon], size: 11) %><%= meta[:label] %></span>
+                </div>
+                <div class="muted rl-sm row" style="gap:8px;margin-top:2px;flex-wrap:wrap">
+                  <span class="row" style="gap:4px"><%= relay_icon("clock", size: 13) %><%= campaign.scheduled_at ? campaign.scheduled_at.strftime("%b %-d, %Y %-I:%M %p") : "Send immediately" %></span>
+                  <span>·</span>
+                  <span class="tnum"><%= total %> recipients</span>
+                </div>
+              </div>
+            </div>
+            <div class="row" style="gap:6px;flex-wrap:wrap">
+              <% if policy(campaign).send_now? %>
+                <%= button_to send_now_campaign_path(campaign), class: "rl-btn rl-btn--brand-soft rl-btn--sm",
+                      form: { data: { turbo_confirm: "Send this campaign now?" } } do %>
+                  <%= relay_icon("send", size: 14) %>Send now
+                <% end %>
+              <% end %>
+              <% if policy(campaign).schedule? && campaign.scheduled_at.present? %>
+                <%= button_to schedule_campaign_path(campaign), class: "rl-btn rl-btn--secondary rl-btn--sm",
+                      form: { data: { turbo_confirm: "Schedule this campaign?" } } do %>
+                  <%= relay_icon("calendar-check", size: 14) %>Schedule
+                <% end %>
+              <% end %>
+              <% if policy(campaign).stop? %>
+                <%= button_to stop_campaign_path(campaign), class: "rl-btn rl-btn--destructive-ghost rl-btn--sm",
+                      form: { data: { turbo_confirm: "Stop this campaign? Pending messages will be cancelled." } } do %>
+                  <%= relay_icon("square", size: 14) %>Stop
+                <% end %>
+              <% end %>
+              <% if policy(campaign).restart? %>
+                <%= button_to restart_campaign_path(campaign), class: "rl-btn rl-btn--secondary rl-btn--sm",
+                      form: { data: { turbo_confirm: "Restart this campaign?" } } do %>
+                  <%= relay_icon("play", size: 14) %>Restart
+                <% end %>
+              <% end %>
+              <%# Campaigns here are already policy_scoped to the viewer, so the
+                  Details link to the legacy show page renders unconditionally. %>
+              <%= link_to campaign_path(campaign), class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                Details<%= relay_icon("chevron-right", size: 14) %>
+              <% end %>
+            </div>
+          </div>
+
+          <% if total.positive? %>
+            <div class="segbar" style="margin-bottom:8px">
+              <% OutreachHelper::SEND_SEGMENTS.each do |seg| %>
+                <% n = counts[seg[:key]] %>
+                <% next unless n.positive? %>
+                <i title="<%= seg[:label] %>: <%= n %>" style="width:<%= (n.to_f / total * 100).round(2) %>%;background:<%= seg[:color] %>"></i>
+              <% end %>
+            </div>
+            <div class="row" style="gap:14px;flex-wrap:wrap">
+              <% OutreachHelper::SEND_SEGMENTS.each do |seg| %>
+                <span class="row" style="gap:5px;font-size:12px">
+                  <i style="width:8px;height:8px;border-radius:2px;background:<%= seg[:color] %>"></i>
+                  <span class="muted"><%= seg[:label] %></span>
+                  <b class="tnum"><%= counts[seg[:key]] %></b>
+                </span>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="muted rl-sm">No recipients added yet.</div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

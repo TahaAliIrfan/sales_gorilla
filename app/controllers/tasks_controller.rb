@@ -172,6 +172,10 @@ class TasksController < ApplicationController
         end
       }
       format.json { head :no_content }
+      # Relay "Today" dashboard quick-complete: drop the row in place.
+      format.turbo_stream {
+        render turbo_stream: turbo_stream.remove(ActionView::RecordIdentifier.dom_id(@task))
+      }
     end
   end
 

@@ -1,0 +1,88 @@
+<%# Relay Inbox — cross-lead conversation triage.
+    Ports docs/design/relay-app/project/app/view-inbox.jsx: a 360px conversation
+    list beside the selected lead's conversation canvas + composer (reused from
+    the lead workspace via customers/relay/_conversation). %>
+<% content_for :title, "Inbox — #{current_organization&.name}" %>
+<% content_for :body_class, "app__body--full" %>
+
+<div class="inbox" data-controller="relay--composer">
+  <%# ── Conversation list ───────────────────────────────────────────── %>
+  <div class="inbox__list">
+    <div style="padding:16px 16px 10px;border-bottom:1px solid var(--color-divider);position:sticky;top:0;background:var(--color-surface);z-index:2">
+      <div class="spread" style="margin-bottom:12px">
+        <div class="rl-h3" style="font-family:var(--font-display);font-weight:800">Inbox</div>
+      </div>
+
+      <%= form_with url: inbox_path, method: :get, data: { turbo_action: "replace" } do %>
+        <%= hidden_field_tag :filter, @filter %>
+        <div class="rl-inputwrap" style="margin-bottom:10px">
+          <span class="rl-affix"><%= relay_icon("search", size: 16) %></span>
+          <input type="search" name="q" value="<%= @query %>" class="rl-input rl-input--sm"
+                 placeholder="Search conversations"
+                 onsearch="this.form.requestSubmit()">
+        </div>
+      <% end %>
+
+      <div class="rl-segmented" style="width:100%;display:flex">
+        <%= link_to inbox_path(filter: "all", q: @query.presence),
+              class: class_names("grow", "is-active" => @filter == "all"), title: "All" do %>
+          <%= relay_icon("layers", size: 14) %>
+        <% end %>
+        <%= link_to inbox_path(filter: "unread", q: @query.presence),
+              class: class_names("grow", "is-active" => @filter == "unread"), title: "Unread" do %>
+          <%= relay_icon("circle-dot", size: 14) %>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @conversations.empty? %>
+      <div style="max-width:300px;margin:48px auto;text-align:center" class="col">
+        <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("inbox", size: 22) %></span>
+        <div class="rl-h4"><%= @filter == "unread" ? "No unread conversations" : "Inbox zero" %></div>
+        <div class="muted rl-sm" style="margin-top:6px">
+          <%= @query.present? ? "No conversations match “#{@query}”." : "Conversations land here once a lead messages you on WhatsApp." %>
+        </div>
+      </div>
+    <% else %>
+      <% @conversations.each do |convo| %>
+        <% customer = convo[:customer] %>
+        <%= link_to inbox_path(customer.id, filter: @filter, q: @query.presence),
+              class: class_names("rl-convo", "is-active" => @selected&.id == customer.id) do %>
+          <span class="rl-avatar <%= relay_avatar_class(customer.name) %>"><%= relay_initials(customer.name) %></span>
+          <div class="rl-convo__main">
+            <div class="rl-convo__row">
+              <span class="rl-convo__name"><%= customer.name %></span>
+              <span class="rl-convo__time"><%= time_ago_in_words(convo[:last_at]) %></span>
+            </div>
+            <div class="rl-convo__preview">
+              <span style="color:var(--channel-whatsapp);display:inline-flex"><%= relay_icon("message-circle", size: 12) %></span>
+              <span><%= truncate(convo[:snippet], length: 48) %></span>
+            </div>
+          </div>
+          <% if convo[:unread].positive? %>
+            <span class="rl-convo__unread"><%= convo[:unread] %></span>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%# ── Selected conversation ───────────────────────────────────────── %>
+  <% if @selected %>
+    <% open_workspace = capture do %>
+      <%= link_to customer_path(@selected), class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+        <%= relay_icon("square-arrow-out-up-right", size: 14) %>Open workspace
+      <% end %>
+    <% end %>
+    <%= render "customers/relay/conversation",
+          customer: @selected, conversation: @conversation, header_actions: open_workspace %>
+  <% else %>
+    <div class="lead__conv" style="display:grid;place-items:center">
+      <div style="max-width:360px;text-align:center" class="col">
+        <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("message-square", size: 22) %></span>
+        <div class="rl-h4">Select a conversation</div>
+        <div class="muted rl-sm" style="margin-top:6px">Pick a lead from the list to read and reply.</div>
+      </div>
+    </div>
+  <% end %>
+</div>

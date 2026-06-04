@@ -1,182 +1,22 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Account Settings</h1>
-    
-    <% if flash[:notice] %>
-      <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-6">
-        <div class="flex">
-          <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-          </div>
-          <div class="ml-3">
-            <p class="text-sm text-green-700"><%= flash[:notice] %></p>
-          </div>
-        </div>
-      </div>
-    <% end %>
-    
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-      <div class="p-6 border-b border-gray-200">
-        <h2 class="text-lg font-medium text-gray-900">User Information</h2>
-      </div>
-      
-      <div class="p-6">
-        <div class="mb-6">
-          <div class="flex items-center mb-2">
-            <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-              <%# @user.name.first.upcase %>
-            </div>
-            <div class="ml-4">
-              <h3 class="text-lg font-medium text-gray-900"><%= @user.name %></h3>
-              <p class="text-sm text-gray-500"><%= @user.email %></p>
-            </div>
-          </div>
-        </div>
-        
-        <%= form_with(model: @user, url: update_settings_path, method: :patch, class: "space-y-6") do |form| %>
-          <% if @user.errors.any? %>
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-              <div class="flex">
-                <div class="flex-shrink-0">
-                  <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-                <div class="ml-3">
-                  <h3 class="text-sm font-medium text-red-800">
-                    <%= pluralize(@user.errors.count, "error") %> prohibited these settings from being saved:
-                  </h3>
-                  <div class="mt-2 text-sm text-red-700">
-                    <ul class="list-disc pl-5 space-y-1">
-                      <% @user.errors.full_messages.each do |message| %>
-                        <li><%= message %></li>
-                      <% end %>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% end %>
-          
-          <div>
-            <%= form.label :phone_number, "Phone Number", class: "block text-sm font-medium text-gray-700" %>
-            <div class="mt-1">
-              <%= form.telephone_field :phone_number, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Include country code (e.g. +923001234567)" %>
-              <p class="mt-1 text-xs text-gray-500">Include country code with + sign (e.g. +923001234567)</p>
-            </div>
-          </div>
-          
-          <div class="flex justify-end">
-            <%= form.submit "Save Changes", class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-          </div>
-        <% end %>
-      </div>
-    </div>
-    
-    <!-- Google Calendar Integration -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">
-      <div class="p-6 border-b border-gray-200">
-        <h2 class="text-lg font-medium text-gray-900">Google Calendar Integration</h2>
-      </div>
-      
-      <div class="p-6">
-        <% if @user.google_auth_configured? %>
-          <div class="flex items-center mb-4">
-            <div class="flex-shrink-0">
-              <% if @calendar_connected %>
-                <svg class="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              <% else %>
-                <svg class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              <% end %>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-lg font-medium text-gray-900">
-                <% if @calendar_connected %>
-                  Connected to Google Calendar
-                <% else %>
-                  Google Calendar Connection Issue
-                <% end %>
-              </h3>
-              <p class="text-sm text-gray-500">
-                <% if @calendar_connected %>
-                  Your account is connected to Google Calendar. Customer follow-ups will be automatically added to your calendar.
-                <% else %>
-                  We have your Google credentials, but we couldn't connect to Google Calendar. Please reconnect to refresh your access.
-                <% end %>
-              </p>
-            </div>
-          </div>
-          
-          <div class="flex space-x-4">
-            <%= link_to "Reconnect Google Calendar", '/auth/google_oauth2', class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-            
-            <%= link_to "Disconnect Google Calendar", disconnect_google_path, 
-                data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to disconnect Google Calendar?" },
-                class: "inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500" %>
-          </div>
-        <% else %>
-          <div class="flex items-center mb-4">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <div class="ml-3">
-              <h3 class="text-lg font-medium text-gray-900">Not Connected to Google Calendar</h3>
-              <p class="text-sm text-gray-500">
-                Your account is not connected to Google Calendar. Connect to automatically add customer follow-ups to your calendar.
-              </p>
-            </div>
-          </div>
-          
-          <%= link_to "Connect Google Calendar", '/auth/google_oauth2', class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-        <% end %>
-      </div>
-    </div>
+<%# Relay Settings workspace — profile, branding (white-label live reskin),
+    team & roles, integrations. Ports docs/design/relay-app/project/app/view-settings.jsx.
+    Tabs are server-side links (?tab=…); features is its own route. %>
+<% content_for :title, "Settings — #{current_organization&.name}" %>
 
-    <% if current_user.admin? %>
-      <!-- Admin Panel -->
-      <div class="bg-white shadow-md rounded-lg overflow-hidden mt-8">
-        <div class="p-6 border-b border-gray-200">
-          <div class="flex items-center">
-            <svg class="h-6 w-6 text-red-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <h2 class="text-lg font-medium text-gray-900">Admin Panel</h2>
-          </div>
-        </div>
-
-        <div class="p-6">
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <svg class="h-8 w-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div class="ml-4">
-              <h3 class="text-base font-medium text-gray-900">Export Customers with Deals</h3>
-              <p class="mt-1 text-sm text-gray-500">
-                Download a CSV of all customers who have a deal (won or lost), including deal details, amounts, and statuses.
-              </p>
-              <div class="mt-4">
-                <%= link_to export_customers_with_deals_path, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
-                  <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download CSV
-                <% end %>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    <% end %>
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Settings</div>
+      <div class="pagehead__sub">Manage your profile, your workspace, branding and integrations.</div>
+    </div>
   </div>
+
+  <%= render "settings/tabbar", active: @tab %>
+
+  <% case @tab
+     when "profile"      %><%= render "settings/profile" %>
+  <% when "branding"     %><%= render "settings/branding" %>
+  <% when "team"         %><%= render "settings/team" %>
+  <% when "integrations" %><%= render "settings/integrations" %>
+  <% end %>
 </div>

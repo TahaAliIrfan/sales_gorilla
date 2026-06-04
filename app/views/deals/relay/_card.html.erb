@@ -1,0 +1,40 @@
+<%# Deal card on the pipeline board. Draggable (SortableJS), clicking lazy-loads
+    the deal drawer into the "deal_drawer" turbo-frame and opens the overlay.
+    data-value/data-deal-id feed the kanban controller's client-side recount. %>
+<% owner = deal.user %>
+<% age = relay_deal_age(deal) %>
+<%= link_to deal_path(deal),
+      class: "rl-dealcard",
+      draggable: "false",
+      data: {
+        deal_id: deal.id,
+        value: deal.amount.to_f.round,
+        turbo_frame: "deal_drawer",
+        action: "click->relay--overlay#open"
+      } do %>
+  <div class="rl-dealcard__top">
+    <div class="rl-dealcard__title"><%= deal.title.presence || "Untitled deal" %></div>
+  </div>
+  <div class="rl-dealcard__value"><%= relay_money(deal.amount) %></div>
+  <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+    <% if deal.customer %>
+      <span class="rl-badge"><%= relay_icon("building-2", size: 11) %><%= deal.customer.company.presence || deal.customer.name %></span>
+    <% end %>
+    <% if deal.status != "active" %>
+      <span class="rl-pill <%= relay_deal_status_pill(deal.status) %>"><i class="rl-dot"></i><%= deal.status %></span>
+    <% end %>
+  </div>
+  <div class="rl-dealcard__foot">
+    <div class="row" style="gap:6px">
+      <% if owner %>
+        <span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(owner.name) %>"><%= relay_initials(owner.name) %></span>
+      <% end %>
+      <span class="muted" style="font-size:11px"><%= age %>d old</span>
+    </div>
+    <% if deal.expected_close_date %>
+      <span class="muted row" style="font-size:11px;gap:3px">
+        <%= relay_icon("arrow-right-circle", size: 12) %><%= deal.expected_close_date.strftime("%b %-d") %>
+      </span>
+    <% end %>
+  </div>
+<% end %>

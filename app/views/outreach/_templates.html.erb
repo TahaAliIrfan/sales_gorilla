@@ -1,0 +1,52 @@
+<%# Templates tab (admin-only) — approved Twilio WhatsApp templates as cards
+    with a body preview ({{var}} chips), language/status badges, and a Sync
+    button posting to the existing WhatsappTemplatesController#sync. %>
+<div class="spread" style="margin-bottom:var(--space-4);flex-wrap:wrap;gap:var(--space-3)">
+  <div class="muted rl-sm row" style="gap:6px">
+    <%= relay_icon("clock", size: 14) %>
+    <% if @last_synced_at %>
+      Last synced <%= time_ago_in_words(@last_synced_at) %> ago
+    <% else %>
+      Never synced
+    <% end %>
+  </div>
+  <%= button_to sync_whatsapp_templates_path, class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+    <%= relay_icon("loader", size: 14) %>Sync templates
+  <% end %>
+</div>
+
+<% if @templates.empty? %>
+  <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+    <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("message-circle", size: 22) %></span>
+    <div class="rl-h4">No templates yet</div>
+    <div class="muted rl-sm" style="margin-top:6px">Sync from Twilio to pull in your approved WhatsApp templates.</div>
+  </div></div>
+<% else %>
+  <div class="grid grid-2">
+    <% @templates.each do |template| %>
+      <% approved = template.approval_status.to_s.downcase == "approved" %>
+      <div class="sect"><div class="sect__body">
+        <div class="spread" style="margin-bottom:10px">
+          <div class="row" style="gap:10px">
+            <span class="chan chan--whatsapp" style="width:34px;height:34px"><%= relay_icon("message-circle", size: 16) %></span>
+            <div>
+              <b style="font-weight:700"><%= template.friendly_name.presence || template.content_sid %></b>
+              <div class="muted" style="font-size:12px">
+                WhatsApp<%= " · #{template.category.titleize}" if template.category.present? %><%= " · #{template.language.upcase}" if template.language.present? %>
+              </div>
+            </div>
+          </div>
+          <span class="rl-badge <%= approved ? "rl-badge--success" : "rl-badge--warning" %>">
+            <%= approved ? "Approved" : (template.approval_status.presence&.titleize || "Pending review") %>
+          </span>
+        </div>
+        <div style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:12px;font-size:13px;line-height:1.5;color:var(--color-fg-2)">
+          <%= outreach_template_preview(template.body) %>
+        </div>
+        <% if template.variable_count.positive? %>
+          <div class="muted" style="font-size:11px;margin-top:8px"><span class="tnum"><%= template.variable_count %></span> variable<%= "s" if template.variable_count != 1 %></div>
+        <% end %>
+      </div></div>
+    <% end %>
+  </div>
+<% end %>

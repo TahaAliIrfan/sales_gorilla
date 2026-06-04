@@ -2,7 +2,9 @@ require "cgi"
 require "fileutils"
 
 class CsvImportsController < ApplicationController
-  layout "tenant"
+  # new/mapping render full-page steps in the Relay shell (Phase 3); the
+  # debug/simple helpers render without a layout (see those actions).
+  layout "relay"
   before_action :require_login
   before_action :authorize_import_access
 

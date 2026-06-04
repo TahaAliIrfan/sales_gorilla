@@ -1,0 +1,7 @@
+<%# Compact timeline micro-event (CustomerActivity). locals: activity %>
+<div style="text-align:center;margin:10px 0">
+  <span class="rl-sysmsg">
+    <%= relay_icon(relay_activity_icon(activity.action), size: 12) %>
+    <%= relay_activity_text(activity) %> · <%= relay_conv_time(activity.created_at) %>
+  </span>
+</div>

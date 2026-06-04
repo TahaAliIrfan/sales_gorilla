@@ -1,0 +1,193 @@
+<%# Lead workspace context rail (340px). Identity, channels, best-time-to-call,
+    details, money actions, deals, follow-ups, documents, ad attribution.
+    Ports the LeadRail in view-lead.jsx, honest to the DB. locals: customer %>
+<% calling_on = current_organization&.feature_enabled?(:calling) %>
+<div class="lead__rail">
+
+  <%# === Identity === %>
+  <div class="railsect" style="padding-top:18px">
+    <div class="row" style="gap:12px;margin-bottom:12px">
+      <span class="rl-avatar rl-avatar--xl <%= relay_avatar_class(customer.name) %>"><%= relay_initials(customer.name) %></span>
+      <div style="min-width:0">
+        <div class="rl-h4" style="line-height:1.2"><%= customer.name %></div>
+        <% if customer.company.present? %><div class="rl-sm" style="font-weight:600"><%= customer.company %></div><% end %>
+        <% if customer.country.present? %><div class="muted rl-sm"><%= customer.country %></div><% end %>
+      </div>
+    </div>
+    <div class="row" style="gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <span class="rl-pill <%= relay_status_pill_class(customer.status) %>"><i class="rl-dot"></i><%= customer.status.presence || "Lead" %></span>
+      <% if customer.lead_score.present? %>
+        <span class="row" style="gap:6px">
+          <span class="muted rl-sm">Score</span>
+          <span class="score">
+            <span class="score__bar"><i style="width:<%= customer.lead_score.to_i.clamp(0, 100) %>%;background:<%= relay_score_color(customer.lead_score) %>"></i></span>
+            <span class="score__num"><%= customer.lead_score %></span>
+          </span>
+        </span>
+      <% end %>
+    </div>
+    <div class="row" style="gap:6px">
+      <% if calling_on && customer.phone.present? %>
+        <%= link_to calling.root_path(customer_id: customer.id), data: { turbo: false }, class: "rl-btn rl-btn--primary rl-btn--sm grow" do %>
+          <%= relay_icon("phone", size: 14) %>Call
+        <% end %>
+      <% elsif customer.phone.present? %>
+        <%= link_to "tel:#{customer.phone}", class: "rl-btn rl-btn--primary rl-btn--sm grow" do %>
+          <%= relay_icon("phone", size: 14) %>Call
+        <% end %>
+      <% end %>
+      <% if customer.email.present? %>
+        <%= mail_to customer.email, class: "rl-iconbtn rl-iconbtn--bordered", title: "Email" do %><%= relay_icon("mail", size: 16) %><% end %>
+      <% end %>
+      <% if customer.linkedin_url.present? %>
+        <%= link_to customer.linkedin_url, target: "_blank", rel: "noopener", class: "rl-iconbtn rl-iconbtn--bordered", title: "LinkedIn" do %><%= relay_icon("linkedin", size: 16) %><% end %>
+      <% end %>
+      <%= link_to edit_customer_path(customer), class: "rl-iconbtn rl-iconbtn--bordered", title: "Edit lead" do %><%= relay_icon("user-cog", size: 16) %><% end %>
+    </div>
+  </div>
+
+  <%# === Best time to reach (AI phone analysis) === %>
+  <% local_time = customer.current_time_in_timezone %>
+  <% if local_time || customer.preferred_calling_time.present? || customer.city.present? %>
+    <div class="railsect">
+      <div class="railsect__h"><span><%= relay_icon("sparkles", size: 12) %> Best time to reach</span></div>
+      <div style="background:var(--color-primary-subtle);border:1px solid var(--color-primary-border);border-radius:var(--radius-md);padding:12px">
+        <div class="spread">
+          <div>
+            <% if local_time %><div class="rl-h4 mono"><%= local_time.strftime("%H:%M") %></div><% end %>
+            <div class="muted" style="font-size:12px">
+              <%= [ customer.city, customer.timezone_abbreviation.presence || customer.timezone ].compact.join(" · ") %>
+            </div>
+          </div>
+          <span class="iccircle" style="background:var(--color-surface);color:var(--color-primary-text)"><%= relay_icon("clock", size: 18) %></span>
+        </div>
+        <% if customer.preferred_calling_time.present? %>
+          <div class="hr" style="margin:10px 0"></div>
+          <div class="row" style="gap:7px;font-size:13px">
+            <%= relay_icon("phone-call", size: 14) %>
+            <span><b>Prefers:</b> <%= customer.preferred_calling_time %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# === Details === %>
+  <div class="railsect">
+    <div class="railsect__h">Details</div>
+    <dl style="margin:0">
+      <div class="kvline"><dt>Lead ID</dt><dd class="mono">#<%= customer.id %></dd></div>
+      <% if customer.lead_source.present? %>
+        <div class="kvline"><dt>Source</dt><dd><span class="rl-tag"><i class="rl-tag-dot" style="background:<%= relay_source_color(customer.lead_source) %>"></i><%= customer.lead_source %></span></dd></div>
+      <% end %>
+      <div class="kvline"><dt>Owner</dt><dd>
+        <% if customer.user %>
+          <span class="row" style="gap:6px;justify-content:flex-end"><span class="rl-avatar rl-avatar--xs <%= relay_avatar_class(customer.user.name) %>"><%= relay_initials(customer.user.name) %></span><%= customer.user.name.to_s.split.first %></span>
+        <% else %>Unassigned<% end %>
+      </dd></div>
+      <% if customer.project_estimated_cost.present? %>
+        <div class="kvline"><dt>Potential value</dt><dd class="mono"><%= number_to_currency(customer.project_estimated_cost) %></dd></div>
+      <% end %>
+      <% if customer.phone.present? %><div class="kvline"><dt>Phone</dt><dd class="mono"><%= customer.phone %></dd></div><% end %>
+      <% if customer.email.present? %><div class="kvline"><dt>Email</dt><dd style="font-weight:500;font-size:12px"><%= customer.email %></dd></div><% end %>
+      <div class="kvline"><dt>Created</dt><dd><%= customer.created_at.strftime("%b %-d, %Y") %></dd></div>
+    </dl>
+  </div>
+
+  <%# === Money actions === %>
+  <div class="railsect">
+    <div class="railsect__h">Money actions</div>
+    <div class="col" style="gap:6px">
+      <%= link_to cost_estimates_path, class: "rl-btn rl-btn--secondary rl-btn--block", style: "justify-content:flex-start" do %>
+        <%= relay_icon("calculator", size: 15) %>Cost estimate<span class="grow"></span><%= relay_icon("chevron-right", size: 14) %>
+      <% end %>
+      <%= link_to new_odoo_proposal_path(customer_id: customer.id), class: "rl-btn rl-btn--secondary rl-btn--block", style: "justify-content:flex-start" do %>
+        <%= relay_icon("file-text", size: 15) %>Odoo proposal<span class="grow"></span><%= relay_icon("chevron-right", size: 14) %>
+      <% end %>
+      <%= link_to new_customer_invoice_path(customer), class: "rl-btn rl-btn--secondary rl-btn--block", style: "justify-content:flex-start" do %>
+        <%= relay_icon("receipt", size: 15) %>Create invoice<span class="grow"></span><%= relay_icon("chevron-right", size: 14) %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# === Linked deals === %>
+  <% if @deals.any? %>
+    <div class="railsect">
+      <div class="railsect__h"><span>Deals</span><%= link_to "Board", deals_path, class: "rl-sm clickable", style: "color:var(--color-primary-text)" %></div>
+      <% @deals.each do |deal| %>
+        <%= link_to deal_path(deal), class: "clickable", style: "display:block;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:10px;margin-bottom:8px" do %>
+          <div class="spread"><b class="rl-sm"><%= deal.title.presence || "Untitled deal" %></b></div>
+          <div class="row spread" style="margin-top:6px">
+            <span class="rl-pill" style="border-color:var(--color-border)"><i class="rl-dot"></i><%= deal.status.presence || "Open" %></span>
+            <% if deal.amount.present? %><span class="mono" style="font-weight:700"><%= number_to_currency(deal.amount) %></span><% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# === Open follow-ups (quick-complete, same pattern as Today) === %>
+  <div class="railsect">
+    <div class="railsect__h"><span>Open follow-ups</span><span class="rl-badge"><%= @open_tasks.size %></span></div>
+    <% if @open_tasks.empty? %>
+      <div class="muted rl-sm">No open tasks.</div>
+    <% else %>
+      <% @open_tasks.each do |task| %>
+        <%= turbo_frame_tag dom_id(task) do %>
+          <% pill = relay_priority_pill(task.priority) %>
+          <div class="row" style="gap:8px;padding:6px 0">
+            <%= button_to complete_task_path(task), method: :patch, form: { data: { turbo: true } }, class: "rl-check", title: "Mark complete" do %>
+              <span class="rl-box"></span>
+            <% end %>
+            <span class="rl-sm grow"><%= task.title.presence || "Untitled task" %></span>
+            <span style="width:7px;height:7px;border-radius:9px;background:<%= pill[:dot] %>;flex:none"></span>
+            <span class="muted mono" style="font-size:11px"><%= relay_due_label(task.due_date) %></span>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+    <%= link_to new_customer_followup_path(customer), class: "rl-btn rl-btn--ghost rl-btn--sm", style: "margin-top:6px;margin-left:-6px" do %>
+      <%= relay_icon("plus", size: 14) %>Add follow-up
+    <% end %>
+  </div>
+
+  <%# === Documents === %>
+  <div class="railsect" data-controller="relay--doc-upload">
+    <div class="railsect__h">
+      <span>Documents</span>
+      <button type="button" class="rl-iconbtn rl-iconbtn--sm" title="Upload" data-action="click->relay--doc-upload#pick"><%= relay_icon("upload", size: 14) %></button>
+    </div>
+    <%= form_with url: upload_documents_customer_path(customer), method: :post, multipart: true, data: { relay__doc_upload_target: "form" } do %>
+      <%= file_field_tag "documents[]", multiple: true, class: "hidden", data: { relay__doc_upload_target: "input", action: "change->relay--doc-upload#submit" } %>
+    <% end %>
+    <% if customer.documents.attached? %>
+      <% customer.documents.each do |doc| %>
+        <div class="row" style="gap:10px;padding:7px 0">
+          <span class="iccircle" style="width:30px;height:30px;background:var(--color-surface-2);color:var(--channel-call)"><%= relay_icon("file", size: 15) %></span>
+          <div class="grow" style="min-width:0">
+            <div class="rl-sm" style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><%= doc.filename %></div>
+            <div class="muted" style="font-size:11px"><%= number_to_human_size(doc.byte_size) %></div>
+          </div>
+          <%= link_to rails_blob_path(doc, disposition: "attachment"), class: "rl-iconbtn rl-iconbtn--sm", title: "Download" do %><%= relay_icon("download", size: 15) %><% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <div class="muted rl-sm">No documents yet.</div>
+    <% end %>
+  </div>
+
+  <%# === Ad attribution === %>
+  <% if customer.utm_campaign.present? || customer.utm_source.present? || customer.gclid.present? || customer.meta_campaign_id.present? %>
+    <div class="railsect">
+      <div class="railsect__h">Ad attribution</div>
+      <dl style="margin:0">
+        <% if customer.utm_campaign.present? %><div class="kvline"><dt>Campaign</dt><dd style="font-size:12px"><%= customer.utm_campaign %></dd></div><% end %>
+        <% if customer.utm_source.present? %><div class="kvline"><dt>Source</dt><dd style="font-size:12px"><%= customer.utm_source %></dd></div><% end %>
+        <% if customer.utm_medium.present? %><div class="kvline"><dt>Medium</dt><dd style="font-size:12px"><%= customer.utm_medium %></dd></div><% end %>
+        <% if customer.utm_term.present? %><div class="kvline"><dt>Keyword</dt><dd style="font-size:12px"><%= customer.utm_term %></dd></div><% end %>
+        <% if customer.gclid.present? %><div class="kvline"><dt>Click ID</dt><dd class="mono" style="font-size:11px"><%= truncate(customer.gclid, length: 22) %></dd></div><% end %>
+      </dl>
+    </div>
+  <% end %>
+
+</div>

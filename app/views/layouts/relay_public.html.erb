@@ -1,0 +1,24 @@
+<%# app/views/layouts/relay_public.html.erb — standalone, no-auth, no-app-shell
+    layout for client-facing public pages (the token-based invoice page). Served
+    on the ROOT domain, so it has NO current_organization: branding is derived
+    from the page's own object via public_invoice_organization. Links the Relay
+    DS stylesheets directly per docs/design/relay-app/project/Invoice.html. %>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || "Invoice" %></title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag "relay/fonts", "relay/colors_and_type", "relay/tokens",
+                            "relay/components", "data-turbo-track": "reload" %>
+    <%# Brand the page from the invoice's tenant org, not current_organization. %>
+    <%= relay_brand_style_tag(public_invoice_organization) if respond_to?(:public_invoice_organization) %>
+    <%= javascript_importmap_tags %>
+    <%= yield :head %>
+  </head>
+  <body style="background:var(--color-bg);min-height:100vh">
+    <%= yield %>
+  </body>
+</html>

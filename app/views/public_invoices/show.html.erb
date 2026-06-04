@@ -1,122 +1,168 @@
-<div class="max-w-2xl mx-auto">
-  <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-    <% if flash[:notice] %>
-      <div class="mx-6 mt-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm">
-        <%= flash[:notice] %>
-      </div>
-    <% end %>
-    <% if flash[:error] %>
-      <div class="mx-6 mt-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm">
-        <%= flash[:error] %>
-      </div>
-    <% end %>
+<%# Public, token-based, unauthenticated invoice page. Restyled per
+    docs/design/relay-app/project/Invoice.html — a tenant-branded standalone page.
+    Branding (logo, name, brand color ramp) comes from @invoice.organization via
+    public_invoice_organization; the layout (relay_public) applies the ramp. The
+    payment-proof upload form keeps the existing endpoint + invoice[payment_proof]
+    param untouched. The page CSS below is scoped to this view only. %>
+<% org = public_invoice_organization %>
+<% customer = @invoice.customer %>
+<% content_for :title, "Invoice #{@invoice.invoice_number} — #{org&.name}" %>
 
-    <div class="p-8 sm:p-10">
-      <div class="flex items-center justify-between mb-8">
-        <img src="/tecaudex.svg" alt="Tecaudex" class="h-10 w-auto" onerror="this.style.display='none'" />
-        <span class="text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice</span>
-      </div>
+<style>
+  .pi-wrap { max-width: 720px; margin: 0 auto; padding: 40px 24px 80px; }
+  .pi-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+  .pi-brand { display: flex; align-items: center; gap: 11px; }
+  .pi-brand .pi-logo { width: 38px; height: 38px; border-radius: 10px; background: var(--color-primary); display: grid; place-items: center; color: #fff; overflow: hidden; }
+  .pi-brand .pi-logo svg { width: 22px; height: 22px; }
+  .pi-brand .pi-logo img { width: 100%; height: 100%; object-fit: cover; }
+  .pi-brand b { font-family: var(--font-display); font-weight: 800; font-size: 21px; letter-spacing: -.02em; }
+  .pi-doc { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); overflow: hidden; }
+  .pi-doc__band { height: 6px; background: var(--color-primary); }
+  .pi-doc__pad { padding: 36px 40px; }
+  .pi-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 32px; }
+  .pi-h-title { font-family: var(--font-display); font-weight: 800; font-size: 32px; letter-spacing: -.02em; }
+  .pi-meta { text-align: right; font-size: var(--text-sm); color: var(--color-fg-2); }
+  .pi-meta .mono { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+  .pi-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+  .pi-eyebrow { font-size: var(--text-2xs); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--color-fg-3); margin-bottom: 7px; }
+  .pi-party b { font-weight: 700; font-size: var(--text-base); }
+  .pi-party div { font-size: var(--text-sm); color: var(--color-fg-2); line-height: 1.5; }
+  table.pi-lines { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.pi-lines th { text-align: left; font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: .05em; color: var(--color-fg-3); padding: 0 0 10px; border-bottom: 1px solid var(--color-border); font-weight: 700; }
+  table.pi-lines th.r, table.pi-lines td.r { text-align: right; }
+  table.pi-lines td { padding: 14px 0; border-bottom: 1px solid var(--color-divider); font-size: var(--text-sm); vertical-align: top; }
+  table.pi-lines .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+  .pi-totals { margin-left: auto; width: 280px; margin-top: 16px; }
+  .pi-totals .pi-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: var(--text-sm); }
+  .pi-totals .pi-grand { border-top: 2px solid var(--color-border-strong); margin-top: 6px; padding-top: 14px; }
+  .pi-totals .pi-grand .lbl { font-weight: 700; font-size: var(--text-base); }
+  .pi-totals .pi-grand .val { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .pi-pay { background: var(--color-surface-2); border-top: 1px solid var(--color-border); padding: 24px 40px; }
+  .pi-foot { text-align: center; color: var(--color-fg-3); font-size: var(--text-xs); margin-top: 24px; line-height: 1.6; }
+  .pi-proof { border: 2px dashed var(--color-border-strong); border-radius: var(--radius-lg); padding: 24px; }
+  .pi-flash { margin-bottom: 18px; padding: 12px 16px; border-radius: var(--radius-md); font-size: var(--text-sm); }
+  .pi-flash--ok { background: var(--color-success-subtle); border: 1px solid var(--color-success); color: var(--color-success-text); }
+  .pi-flash--err { background: var(--color-danger-subtle); border: 1px solid var(--color-danger); color: var(--color-danger-text); }
+  @media (max-width: 560px) { .pi-parties { grid-template-columns: 1fr; } .pi-doc__pad, .pi-pay { padding-left: 20px; padding-right: 20px; } }
+</style>
 
-      <div class="flex flex-wrap justify-between items-start gap-4 mb-8">
-        <div>
-          <h1 class="text-2xl font-bold text-slate-900">Invoice <%= @invoice.invoice_number %></h1>
-          <p class="text-slate-600 mt-1"><%= @invoice.project_name.presence || @invoice.milestone.name %></p>
-        </div>
-        <%= link_to public_invoice_pdf_path(@invoice.public_token), class: "inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 font-medium text-sm" do %>
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-          Download PDF
+<div class="pi-wrap">
+  <div class="pi-topbar">
+    <div class="pi-brand">
+      <span class="pi-logo">
+        <% if org&.logo&.attached? %>
+          <%= image_tag org.logo, alt: org.name %>
+        <% else %>
+          <svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
         <% end %>
+      </span>
+      <b><%= org&.name || "Invoice" %></b>
+    </div>
+    <span class="rl-badge rl-badge--neutral">Secure invoice</span>
+  </div>
+
+  <% if flash[:notice] %><div class="pi-flash pi-flash--ok"><%= flash[:notice] %></div><% end %>
+  <% if flash[:error] %><div class="pi-flash pi-flash--err"><%= flash[:error] %></div><% end %>
+
+  <div class="pi-doc">
+    <div class="pi-doc__band"></div>
+    <div class="pi-doc__pad">
+      <div class="pi-head">
+        <div>
+          <div class="pi-h-title">Invoice</div>
+          <div class="rl-badge rl-badge--info" style="margin-top:8px;">Due <%= @invoice.due_date.strftime("%b %-d, %Y") %></div>
+        </div>
+        <div class="pi-meta">
+          <div><span class="pi-eyebrow" style="display:inline;">Invoice no.</span> <span class="mono"><%= @invoice.invoice_number %></span></div>
+          <div style="margin-top:4px;"><span class="pi-eyebrow" style="display:inline;">Issued</span> <span class="mono"><%= @invoice.issue_date.strftime("%b %-d, %Y") %></span></div>
+          <% if @invoice.project_name.present? || @invoice.milestone&.name.present? %>
+            <div style="margin-top:4px;"><span class="pi-eyebrow" style="display:inline;">Project</span> <%= @invoice.project_name.presence || @invoice.milestone&.name %></div>
+          <% end %>
+        </div>
       </div>
 
-      <% @customer = @invoice.customer %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-        <div>
-          <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Bill To</h3>
-          <p class="font-medium text-slate-900"><%= @customer.name %></p>
-          <%= tag.p @customer.company, class: "text-slate-600" if @customer.company.present? %>
-          <%= tag.p @customer.email, class: "text-slate-600" if @customer.email.present? %>
-          <%= tag.p @customer.address, class: "text-slate-600" if @customer.address.present? %>
+      <div class="pi-parties">
+        <div class="pi-party">
+          <div class="pi-eyebrow">From</div>
+          <b><%= org&.name %></b>
         </div>
-        <div>
-          <p class="text-sm text-slate-500">Issue Date: <span class="font-medium text-slate-900"><%= @invoice.issue_date.strftime('%B %d, %Y') %></span></p>
-          <p class="text-sm text-slate-500 mt-1">Due Date: <span class="font-medium text-slate-900"><%= @invoice.due_date.strftime('%B %d, %Y') %></span></p>
+        <div class="pi-party">
+          <div class="pi-eyebrow">Bill to</div>
+          <b><%= customer.name %></b>
+          <div>
+            <%= customer.company if customer.company.present? %>
+            <% if customer.email.present? %><br/><%= customer.email %><% end %>
+            <% if customer.address.present? %><br/><%= customer.address %><% end %>
+          </div>
         </div>
       </div>
 
-      <div class="border border-slate-200 rounded-xl overflow-hidden mb-8">
-        <table class="min-w-full divide-y divide-slate-200">
-          <thead class="bg-slate-50">
-            <tr>
-              <th class="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Description</th>
-              <th class="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Amount</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-200 bg-white">
-            <% @invoice.invoice_line_items.each do |item| %>
-              <tr>
-                <td class="px-4 py-3 text-sm text-slate-900"><%= item.description %></td>
-                <td class="px-4 py-3 text-sm text-slate-900 text-right"><%= number_to_currency(item.amount) %></td>
-              </tr>
+      <table class="pi-lines">
+        <thead><tr><th>Description</th><th class="r">Amount</th></tr></thead>
+        <tbody>
+          <% @invoice.invoice_line_items.each do |item| %>
+            <tr><td><%= item.description %></td><td class="r mono"><%= relay_money(item.amount) %></td></tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="pi-totals">
+        <div class="pi-row"><span>Subtotal</span><span class="mono"><%= relay_money(@invoice.subtotal) %></span></div>
+        <% if @invoice.tax_amount.to_f > 0 %>
+          <div class="pi-row"><span>Tax (<%= @invoice.tax_rate %>%)</span><span class="mono"><%= relay_money(@invoice.tax_amount) %></span></div>
+        <% end %>
+        <div class="pi-row pi-grand"><span class="lbl">Total due</span><span class="val"><%= relay_money(@invoice.total) %></span></div>
+      </div>
+    </div>
+
+    <div class="pi-pay">
+      <div class="spread" style="gap:16px;flex-wrap:wrap;margin-bottom:18px">
+        <div class="muted rl-sm">Amount due <b class="mono" style="color:var(--color-fg);font-size:var(--text-h4)"><%= relay_money(@invoice.total) %></b></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap">
+          <% if @invoice.payment_link.present? %>
+            <%= link_to @invoice.payment_link, target: "_blank", rel: "noopener", class: "rl-btn rl-btn--primary" do %>
+              <%= relay_icon("credit-card", size: 16) %><%= @invoice.payment_link_label.presence || "Pay online" %>
             <% end %>
-          </tbody>
-        </table>
-      </div>
-
-      <% if @invoice.payment_link.present? %>
-        <div class="mb-8 p-4 bg-blue-50 border border-blue-100 rounded-xl">
-          <p class="text-sm font-medium text-blue-900 mb-2">Pay online<% if @invoice.payment_link_label.present? %> — <%= @invoice.payment_link_label %><% end %></p>
-          <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener", class: "text-blue-600 hover:text-blue-800 break-all text-sm font-medium" %>
-        </div>
-      <% end %>
-
-      <div class="flex justify-end mb-10">
-        <div class="w-48 space-y-2 text-right">
-          <p class="text-sm text-slate-600">Subtotal: <span class="font-medium text-slate-900"><%= number_to_currency(@invoice.subtotal) %></span></p>
-          <% if @invoice.tax_amount.to_f > 0 %>
-            <p class="text-sm text-slate-600">Tax (<%= @invoice.tax_rate %>%): <span class="font-medium text-slate-900"><%= number_to_currency(@invoice.tax_amount) %></span></p>
           <% end %>
-          <p class="text-lg font-bold text-slate-900">Total: <%= number_to_currency(@invoice.total) %></p>
+          <%= link_to public_invoice_pdf_path(@invoice.public_token), class: "rl-btn rl-btn--secondary" do %>
+            <%= relay_icon("download", size: 16) %>Download PDF
+          <% end %>
         </div>
       </div>
 
-      <div class="pt-8 border-t border-slate-200">
-        <div id="payment-proof-card" class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-8">
-          <h3 class="text-lg font-semibold text-slate-800 mb-2">Payment proof</h3>
-          <p class="text-sm text-slate-600 mb-6">Upload a screenshot or receipt of your payment (image or PDF, max 10MB)</p>
-          <% if @invoice.payment_proof.attached? %>
-            <div class="mb-6 p-4 bg-white border border-emerald-200 rounded-xl flex items-center justify-between gap-4">
-              <div>
-                <p class="font-medium text-emerald-800">Submitted</p>
-                <p class="text-sm text-slate-600"><%= @invoice.payment_proof.filename %> · <%= number_to_human_size(@invoice.payment_proof.byte_size) %></p>
-              </div>
-              <button type="button" id="replace-toggle" onclick="var f=document.getElementById('replace-form'); f.classList.toggle('hidden'); this.textContent=f.classList.contains('hidden')?'Replace file':'Cancel';" class="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:bg-blue-50">
-                Replace file
-              </button>
+      <div class="pi-proof">
+        <div class="rl-h4" style="margin-bottom:4px">Payment proof</div>
+        <div class="muted rl-sm" style="margin-bottom:16px">Upload a screenshot or receipt of your payment (image or PDF, max 10MB).</div>
+
+        <% if @invoice.payment_proof.attached? %>
+          <div class="spread" style="gap:12px;margin-bottom:16px;padding:12px 14px;background:var(--color-success-subtle);border:1px solid var(--color-success);border-radius:var(--radius-md)">
+            <div>
+              <div style="font-weight:700;color:var(--color-success-text)">Submitted</div>
+              <div class="muted rl-sm"><%= @invoice.payment_proof.filename %> · <%= number_to_human_size(@invoice.payment_proof.byte_size) %></div>
             </div>
-            <div id="replace-form" class="hidden">
-          <% end %>
-          <%= form_tag public_invoice_payment_proof_path(@invoice.public_token), method: :post, multipart: true, data: { turbo: false }, class: "space-y-4" do %>
-            <div class="flex flex-col sm:flex-row gap-4">
-              <label class="flex-1 cursor-pointer block">
-                <span class="sr-only">Choose file</span>
-                <span class="flex items-center justify-center gap-2 w-full py-6 px-4 border-2 border-slate-300 border-dashed rounded-xl bg-white hover:bg-slate-50 hover:border-blue-400 transition-colors text-slate-600 hover:text-blue-600 font-medium">
-                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                  <span id="file-label"><%= @invoice.payment_proof.attached? ? "Choose new file" : "Click to choose file" %></span>
-                </span>
-                <%= file_field_tag "invoice[payment_proof]", accept: "image/*,.pdf", required: true, class: "hidden", data: { file_label: "file-label" }, onchange: "document.getElementById('file-label').textContent = this.files[0] ? this.files[0].name : 'Click to choose file'" %>
-              </label>
-              <button type="submit" class="shrink-0 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-semibold text-sm">
-                <%= @invoice.payment_proof.attached? ? "Replace & Submit" : "Submit" %>
-              </button>
-            </div>
-          <% end %>
-          <% if @invoice.payment_proof.attached? %>
-            </div>
-          <% end %>
-        </div>
+            <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm"
+                    onclick="var f=document.getElementById('pi-replace'); f.hidden=!f.hidden; this.textContent=f.hidden?'Replace file':'Cancel';">Replace file</button>
+          </div>
+          <div id="pi-replace" hidden>
+        <% end %>
+
+        <%= form_tag public_invoice_payment_proof_path(@invoice.public_token), method: :post, multipart: true, data: { turbo: false } do %>
+          <div class="row" style="gap:12px;flex-wrap:wrap;align-items:stretch">
+            <label class="rl-btn rl-btn--secondary" style="flex:1;min-width:200px;cursor:pointer">
+              <%= relay_icon("upload", size: 16) %>
+              <span id="pi-file-label"><%= @invoice.payment_proof.attached? ? "Choose new file" : "Choose file" %></span>
+              <%= file_field_tag "invoice[payment_proof]", accept: "image/*,.pdf", required: true,
+                    style: "display:none",
+                    onchange: "document.getElementById('pi-file-label').textContent = this.files[0] ? this.files[0].name : 'Choose file'" %>
+            </label>
+            <button type="submit" class="rl-btn rl-btn--primary"><%= @invoice.payment_proof.attached? ? "Replace & submit" : "Submit" %></button>
+          </div>
+        <% end %>
+
+        <% if @invoice.payment_proof.attached? %></div><% end %>
       </div>
     </div>
   </div>
 
-  <p class="mt-6 text-center text-xs text-slate-400">Tecaudex · Invoice <%= @invoice.invoice_number %></p>
+  <div class="pi-foot">Powered by <%= org&.name %> on Relay<% if org&.name.present? %> · Questions? Reply to your account contact.<% end %></div>
 </div>

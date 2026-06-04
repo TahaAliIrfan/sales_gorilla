@@ -1,0 +1,47 @@
+<%# Audiences tab — customer groups as cards with member counts (preloaded via
+    members_count in the controller, no N+1). View/edit link to the existing
+    customer_groups CRUD pages. %>
+<% if @customer_groups.empty? %>
+  <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+    <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("users-round", size: 22) %></span>
+    <div class="rl-h4">No audiences yet</div>
+    <div class="muted rl-sm" style="margin-top:6px">Group your leads to target them with a campaign.</div>
+    <div style="margin-top:16px"><%= link_to "New audience", new_customer_group_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+  </div></div>
+<% else %>
+  <div class="grid grid-2">
+    <% @customer_groups.each do |group| %>
+      <div class="sect"><div class="sect__body">
+        <div class="spread" style="margin-bottom:10px">
+          <div class="row" style="gap:10px">
+            <span class="iccircle" style="background:var(--color-primary-subtle);color:var(--color-primary-text)"><%= relay_icon("users-round", size: 18) %></span>
+            <div>
+              <b style="font-weight:700"><%= group.name %></b>
+              <div class="muted" style="font-size:12px">Updated <%= time_ago_in_words(group.updated_at) %> ago</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="tnum" style="font-family:var(--font-display);font-weight:800;font-size:22px"><%= group.members_count %></div>
+            <div class="muted" style="font-size:11px">contacts</div>
+          </div>
+        </div>
+        <% if group.description.present? %>
+          <div class="muted" style="background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:8px 12px;font-size:12px"><%= group.description %></div>
+        <% end %>
+        <div class="row" style="gap:6px;margin-top:12px">
+          <%= link_to new_campaign_path, class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+            <%= relay_icon("megaphone", size: 14) %>Launch campaign
+          <% end %>
+          <%= link_to customer_group_path(group), class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+            <%= relay_icon("users-round", size: 14) %>View
+          <% end %>
+          <% if policy(group).edit? %>
+            <%= link_to edit_customer_group_path(group), class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+              <%= relay_icon("pencil", size: 14) %>Edit
+            <% end %>
+          <% end %>
+        </div>
+      </div></div>
+    <% end %>
+  </div>
+<% end %>

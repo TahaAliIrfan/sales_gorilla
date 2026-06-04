@@ -1,260 +1,152 @@
-<% content_for :title, (action_name == "my_deals" ? "My deals" : "All deals") + " — #{current_organization&.name}" %>
+<%# Relay "Pipeline" — draggable kanban board honest to the DB.
+    Mirrors docs/design/relay-app/project/app/view-pipeline.jsx. Columns are the
+    selected pipeline's active stages; cards are real deals. Drag → update_stage. %>
+<% content_for :title, (action_name == "my_deals" ? "My deals" : "Pipeline") + " — #{current_organization&.name}" %>
+<% content_for :body_class, "app__body--full" %>
+<%
+  is_mine     = action_name == "my_deals"
+  can_config  = current_user&.admin? # only admins manage pipeline stages (PipelinePolicy#update?)
+  stages      = @deal_stages.to_a
+  deals       = @deals.to_a
+  by_stage    = deals.group_by(&:deal_stage_id)
+  open_total  = deals.select { |d| d.status == "active" }.sum { |d| d.amount.to_f }
+  won_total   = deals.select { |d| d.status == "won" }.sum { |d| d.amount.to_f }
+  deals_count = deals.size
 
-<div>
+  base_params  = request.query_parameters.except("pipeline_id")
+  switch_path  = is_mine ? deals_path(base_params) : my_deals_deals_path(base_params)
+  new_path     = @selected_pipeline ? new_deal_path(pipeline_id: @selected_pipeline.id) : new_deal_path
+%>
+
+<div class="page page--flush pipeline-page"
+     data-controller="relay--kanban relay--overlay"
+     data-relay--kanban-url-value="<%= update_stage_deal_path(":id") %>">
+
+  <div class="page" style="padding-bottom:0;max-width:none">
   <%# === Header === %>
-  <div class="mb-6 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-6">
+  <div class="pagehead">
     <div>
-      <p class="micro mb-2">Pipeline</p>
-      <h1 class="font-display text-4xl font-bold tracking-tight text-ink">
-        <%= action_name == "my_deals" ? "My deals" : "All deals" %>
-        <% if current_user.admin? && @selected_pipeline %>
-          <span class="mono text-2xl font-medium" style="color: var(--brand-primary)"> · <%= @selected_pipeline.name %></span>
-        <% end %>
-      </h1>
-      <p class="mt-2 text-ink-soft">
-        <%= current_user.admin? && @selected_pipeline ? "Viewing deals from #{@selected_pipeline.name}" : "Manage your sales pipeline" %>
-      </p>
+      <div class="pagehead__title"><%= is_mine ? "My deals" : "Pipeline" %></div>
+      <div class="pagehead__sub">
+        drag deals across stages · <b><%= number_with_delimiter(deals_count) %></b> <%= "deal".pluralize(deals_count) %> · <%= relay_money(open_total) %> open
+      </div>
     </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <% other_view_path = if action_name == "my_deals"
-           current_user.admin? && @selected_pipeline ? deals_path(pipeline_id: @selected_pipeline.id) : deals_path
-         else
-           current_user.admin? && @selected_pipeline ? my_deals_deals_path(pipeline_id: @selected_pipeline.id) : my_deals_deals_path
-         end %>
-      <%= link_to (action_name == "my_deals" ? "All deals" : "My deals"), other_view_path,
-            class: "inline-flex items-center rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
-      <%= link_to (current_user.admin? && @selected_pipeline ? new_deal_path(pipeline_id: @selected_pipeline.id) : new_deal_path),
-            class: "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
-            style: "background: var(--brand-primary)" do %>
-        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-        New deal
+    <div class="pagehead__actions">
+      <%# Pipeline selector — only when more than one pipeline is accessible. %>
+      <% if @pipelines.to_a.size > 1 || current_user&.admin? %>
+        <div data-controller="relay--dropdown" style="position:relative;display:inline-flex">
+          <button type="button" class="rl-btn rl-btn--secondary"
+                  data-action="relay--dropdown#toggle" data-relay--dropdown-target="trigger">
+            <%= relay_icon("layers", size: 15) %>
+            <%= @selected_pipeline&.name || "All pipelines" %>
+            <%= relay_icon("chevron-down", size: 14) %>
+          </button>
+          <div class="menu-float pop" data-relay--dropdown-target="menu" hidden style="top:calc(100% + 6px);right:0">
+            <div class="rl-menu" style="min-width:220px">
+              <% if current_user&.admin? %>
+                <%= link_to (is_mine ? my_deals_deals_path(base_params.merge(pipeline_id: "")) : deals_path(base_params.merge(pipeline_id: ""))),
+                      class: "rl-menuitem", data: { turbo_frame: "_top" } do %>
+                  <%= relay_icon("layers", size: 15) %>All pipelines
+                <% end %>
+              <% end %>
+              <% @pipelines.each do |pl| %>
+                <%= link_to (is_mine ? my_deals_deals_path(base_params.merge(pipeline_id: pl.id)) : deals_path(base_params.merge(pipeline_id: pl.id))),
+                      class: ["rl-menuitem", ("is-active" if @selected_pipeline&.id == pl.id)].compact.join(" "),
+                      data: { turbo_frame: "_top" } do %>
+                  <i class="rl-dot" style="background:var(--color-primary)"></i><%= pl.name %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <%= link_to switch_path, class: "rl-btn rl-btn--secondary", data: { turbo_frame: "_top" } do %>
+        <%= relay_icon(is_mine ? "users" : "user", size: 15) %><%= is_mine ? "All deals" : "My deals" %>
+      <% end %>
+
+      <% if can_config && @selected_pipeline %>
+        <%= link_to edit_pipeline_path(@selected_pipeline), class: "rl-btn rl-btn--secondary" do %>
+          <%= relay_icon("sliders-horizontal", size: 15) %>Configure stages
+        <% end %>
+      <% end %>
+
+      <%= link_to new_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("plus", size: 15) %>Create deal
       <% end %>
     </div>
   </div>
 
-  <%# === Filters === %>
-  <div class="mb-6 rounded-xl bg-panel p-5 shadow-card ring-1 ring-[var(--color-line-2)]">
-    <%= form_with url: (action_name == "my_deals" ? my_deals_deals_path : deals_path),
-                  method: :get, class: "space-y-4", local: true do |form| %>
-      <% if current_user.admin? && @selected_pipeline %>
-        <%= form.hidden_field :pipeline_id, value: @selected_pipeline.id %>
-      <% end %>
-
-      <p class="micro">Filters</p>
-
-      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <% if @pipelines.count > 1 %>
-          <div>
-            <label for="pipeline_id" class="micro mb-1 block">Pipeline</label>
-            <%
-              options = []
-              options << [ "All pipelines", "" ] if current_user.admin?
-              options += @pipelines.map { |p| [ p.name, p.id ] }
-            %>
-            <%= form.select :pipeline_id,
-                  options_for_select(options, @selected_pipeline&.id || @selected_pipeline_id),
-                  {},
-                  { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
-                    id: "pipeline_id", onchange: "this.form.submit();" } %>
-          </div>
-        <% end %>
-
-        <% if (current_user.admin? || current_user.manager?) && action_name != "my_deals" %>
-          <div>
-            <label for="user_id" class="micro mb-1 block">Assigned to</label>
-            <%= form.select :user_id,
-                  options_for_select([ [ "All users", "" ] ] + @users.map { |u| [ u.name, u.id ] }, params[:user_id]),
-                  {},
-                  { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
-                    id: "user_id" } %>
-          </div>
-        <% end %>
-
-        <div>
-          <label for="deal_stage_id" class="micro mb-1 block">Stage</label>
-          <%= form.select :deal_stage_id,
-                options_for_select([ [ "All stages", "" ] ] + @deal_stages.map { |s| [ s.name, s.id ] }, params[:deal_stage_id]),
-                {},
-                { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
-                  id: "deal_stage_id" } %>
-        </div>
-
-        <div>
-          <label for="filter_range" class="micro mb-1 block">Closing date <span class="text-[10px] text-ink-soft/70">(won/lost only)</span></label>
-          <%= form.select :filter_range,
-                options_for_select([
-                  [ "Last 30 days", "30" ],
-                  [ "Last 90 days", "90" ],
-                  [ "Custom range", "custom" ],
-                  [ "All dates",    "all" ]
-                ], params[:filter_range] || "30"),
-                {},
-                { class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
-                  id: "filter_range", onchange: "toggleCustomDateFields(this.value)" } %>
-        </div>
-
-        <%= form.hidden_field :status, value: params[:status] %>
-      </div>
-
-      <%# Custom date range %>
-      <div id="custom_date_fields"
-           class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> rounded-lg p-4"
-           style="background: var(--brand-primary-soft)">
-        <p class="micro mb-3" style="color: var(--brand-primary)">Custom date range</p>
-        <div class="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label class="micro mb-1 block">Start date</label>
-            <%= form.date_field :start_date, value: @custom_start_date&.strftime("%Y-%m-%d"),
-                  class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
-          </div>
-          <div>
-            <label class="micro mb-1 block">End date</label>
-            <%= form.date_field :end_date, value: @custom_end_date&.strftime("%Y-%m-%d"),
-                  class: "mono block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-2 pt-1">
-        <%= link_to "Clear filters", (action_name == "my_deals" ? my_deals_deals_path : deals_path),
-              class: "rounded-md px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
-        <%= form.submit "Apply filters",
-              class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 cursor-pointer",
-              style: "background: var(--brand-primary)" %>
-      </div>
-    <% end %>
-
-    <% if (params.to_unsafe_h.except("controller", "action").reject { |_, v| v.blank? }).any? %>
-      <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-[var(--color-line)] pt-3">
-        <span class="micro">Active</span>
-        <% params.to_unsafe_h.except("controller", "action").each do |key, value| %>
-          <% next if value.blank? %>
-          <span class="inline-flex items-center rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-xs font-medium text-ink">
-            <% if key == "filter_range" && value != "custom" %>
-              <%= { "30" => "Last 30 days", "90" => "Last 90 days", "all" => "All dates" }[value] %>
-            <% elsif key.to_s.end_with?("_id") %>
-              <%= key.humanize %>: <%= key == "deal_stage_id" ? DealStage.find_by(id: value)&.name : User.find_by(id: value)&.name %>
-            <% else %>
-              <%= key.humanize %>: <%= value %>
-            <% end %>
-          </span>
-        <% end %>
-        <%= link_to "Clear all", (action_name == "my_deals" ? my_deals_deals_path : deals_path),
-              class: "ml-auto text-xs font-medium text-ink-soft underline transition hover:text-ink" %>
-      </div>
-    <% end %>
+  <%# === Summary numerals === %>
+  <div class="row" style="gap:20px;margin-bottom:4px">
+    <div>
+      <span class="rl-eyebrow">Open pipeline</span>
+      <div class="mono" style="font-weight:800;font-size:22px"><%= relay_money(open_total) %></div>
+    </div>
+    <div style="width:1px;background:var(--color-border)"></div>
+    <div>
+      <span class="rl-eyebrow">Won (in range)</span>
+      <div class="mono" style="font-weight:800;font-size:22px;color:var(--color-success-text)"><%= relay_money(won_total) %></div>
+    </div>
   </div>
+  </div><%# /.page %>
 
-  <%# === Kanban === %>
-  <% if @deal_stages.any? %>
-    <div class="flex gap-4 overflow-x-auto pb-4" data-controller="drag">
-      <% @deal_stages.each do |stage| %>
-        <% stage_deals = @deals.by_stage(stage).active %>
-        <div class="w-80 shrink-0">
-          <div class="rounded-t-xl border-b border-[var(--color-line)] bg-panel-2 px-4 py-3" data-stage-id="<%= stage.id %>">
-            <p class="font-display text-sm font-bold text-ink"><%= stage.name %></p>
-            <p class="mono mt-0.5 text-xs text-ink-soft">
-              <span class="deal-count"><%= stage_deals.count %></span> deals · <%= number_to_currency(stage_deals.sum(:amount), precision: 0) %>
-            </p>
-          </div>
-          <div class="min-h-[300px] space-y-2 rounded-b-xl bg-[var(--color-line)] p-2"
-               data-drag-target="stage" data-stage-id="<%= stage.id %>">
-            <% if stage_deals.any? %>
-              <% stage_deals.each do |deal| %>
-                <div class="rounded-lg bg-panel p-3 shadow-card ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5 hover:shadow-lift"
-                     data-drag-target="deal" data-deal-id="<%= deal.id %>">
-                  <div class="flex items-start justify-between gap-2">
-                    <p class="flex min-w-0 items-start gap-1.5 text-sm font-semibold text-ink">
-                      <span class="drag-handle mt-0.5 shrink-0 cursor-move text-ink-soft/60">
-                        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="18" r="1"/></svg>
-                      </span>
-                      <%= link_to (deal.title.presence || "Untitled"), deal_path(deal), class: "truncate transition hover:text-accent" %>
-                    </p>
-                    <span class="mono shrink-0 text-sm font-semibold" style="color: var(--brand-accent)">
-                      <%= number_to_currency(deal.amount, precision: 0) %>
-                    </span>
-                  </div>
-                  <p class="mt-1 truncate text-xs text-ink-soft">
-                    <%= deal.customer&.name.presence || "No customer" %>
-                  </p>
-                  <div class="mt-3 flex items-center justify-between text-[10px] text-ink-soft/80">
-                    <span class="mono">@<%= deal.user.name.split.first %></span>
-                    <% if deal.expected_close_date %>
-                      <span class="mono">close <%= deal.expected_close_date.strftime("%b %-d") %></span>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
-            <% else %>
-              <p class="py-8 text-center text-xs text-ink-soft">No deals in this stage</p>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      <%# Won + Lost columns %>
-      <% [
-        [ "Won deals",  :won,  "var(--color-accent)",        "var(--color-accent-bright)"  ],
-        [ "Lost deals", :lost, "#dc2626",                    "#ef4444"                     ]
-      ].each do |label, scope, header_fg, dot| %>
-        <% column_deals = @deals.public_send(scope) %>
-        <div class="w-80 shrink-0">
-          <div class="rounded-t-xl border-b border-[var(--color-line)] bg-panel-2 px-4 py-3">
-            <p class="flex items-center gap-2 font-display text-sm font-bold text-ink">
-              <span class="h-1.5 w-1.5 rounded-full" style="background: <%= dot %>"></span>
-              <%= label %>
-            </p>
-            <p class="mono mt-0.5 text-xs text-ink-soft">
-              <%= column_deals.count %> deals · <%= number_to_currency(column_deals.sum(:amount), precision: 0) %>
-            </p>
-          </div>
-          <div class="min-h-[300px] space-y-2 rounded-b-xl bg-[var(--color-line)] p-2">
-            <% if column_deals.any? %>
-              <% column_deals.each do |deal| %>
-                <div class="rounded-lg bg-panel p-3 shadow-card ring-1 ring-[var(--color-line-2)]" style="border-left: 3px solid <%= dot %>">
-                  <div class="flex items-start justify-between gap-2">
-                    <%= link_to (deal.title.presence || "Untitled"), deal_path(deal),
-                          class: "truncate text-sm font-semibold text-ink transition hover:text-accent" %>
-                    <span class="mono shrink-0 text-sm font-semibold" style="color: <%= header_fg %>">
-                      <%= number_to_currency(deal.amount, precision: 0) %>
-                    </span>
-                  </div>
-                  <p class="mt-1 truncate text-xs text-ink-soft"><%= deal.customer&.name.presence || "No customer" %></p>
-                  <p class="mono mt-2 text-[10px] text-ink-soft/80">@<%= deal.user.name.split.first %></p>
-                </div>
-              <% end %>
-            <% else %>
-              <p class="py-8 text-center text-xs text-ink-soft">No <%= scope %> deals</p>
-            <% end %>
-          </div>
-        </div>
+  <%# === Board === %>
+  <% if stages.empty? %>
+    <div class="empty" style="margin:0 var(--space-8)">
+      <div class="empty__ic"><%= relay_icon("layers", size: 26) %></div>
+      <div class="rl-h4" style="margin-bottom:4px">No pipeline stages</div>
+      <div class="muted rl-sm" style="max-width:360px">
+        <%= can_config ? "Create a pipeline with stages to start tracking deals." : "Ask an admin to set up a pipeline you can access." %>
+      </div>
+      <% if can_config %>
+        <%= link_to "Create deal", new_path, class: "rl-btn rl-btn--primary rl-btn--sm", style: "margin-top:16px" %>
       <% end %>
     </div>
   <% else %>
-    <div class="rounded-xl bg-panel p-10 text-center shadow-card ring-1 ring-[var(--color-line-2)]">
-      <p class="font-display text-lg font-semibold text-ink">No deal stages yet</p>
-      <p class="mt-1 text-sm text-ink-soft">
-        <% if current_user.admin? %>
-          <%= link_to "Create pipeline stages", pipelines_path,
-                class: "underline transition hover:text-ink", style: "color: var(--brand-primary)" %> to get started.
-        <% else %>
-          Contact your administrator to set up pipelines and stages.
+    <div class="boardwrap grow">
+      <div class="rl-board" style="height:100%">
+        <% stages.each do |stage| %>
+          <% list = (by_stage[stage.id] || []) %>
+          <% col_total = list.sum { |d| d.amount.to_f } %>
+          <% color = relay_stage_color(stage) %>
+          <div class="rl-col">
+            <div class="rl-col__head">
+              <span class="rl-dotmark" style="background:<%= color %>"></span>
+              <b><%= stage.name %></b>
+              <span class="rl-count" data-kanban-count><%= list.size %></span>
+            </div>
+            <div style="padding:6px 14px;border-bottom:1px solid var(--color-divider)">
+              <span class="mono muted" style="font-size:12px;font-weight:600" data-kanban-total><%= relay_money(col_total) %></span>
+            </div>
+            <div class="rl-col__body" style="min-height:120px"
+                 data-relay--kanban-target="column"
+                 data-stage-id="<%= stage.id %>"
+                 data-stage-name="<%= stage.name %>">
+              <% list.each do |deal| %>
+                <%= render "deals/relay/card", deal: deal %>
+              <% end %>
+              <% if list.empty? %>
+                <div class="rl-col__empty" style="text-align:center;padding:16px;color:var(--color-fg-4);font-size:12px">No deals</div>
+              <% end %>
+            </div>
+          </div>
         <% end %>
-      </p>
+      </div>
     </div>
   <% end %>
-</div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const select = document.getElementById("filter_range");
-    if (!select) return;
-    toggleCustomDateFields(select.value);
-    select.addEventListener("change", function () { toggleCustomDateFields(this.value); });
-  });
-  function toggleCustomDateFields(value) {
-    const el = document.getElementById("custom_date_fields");
-    if (!el) return;
-    el.classList.toggle("hidden", value !== "custom");
-  }
-</script>
+  <%# === Lazy-loaded deal drawer ===
+       Cards are links into the "deal_drawer" frame; clicking also opens the
+       overlay panel (Escape / backdrop closes). deals#show renders the drawer
+       partial for this frame. %>
+  <div class="drawer drawer--wide" hidden
+       data-relay--overlay-target="panel"
+       data-action="click->relay--overlay#backdrop">
+    <%= turbo_frame_tag "deal_drawer" do %>
+      <div class="drawer__body" style="display:grid;place-items:center;color:var(--color-fg-4)">
+        <%= relay_icon("circle-dollar-sign", size: 22) %>
+      </div>
+    <% end %>
+  </div>
+</div>

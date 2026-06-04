@@ -1,0 +1,31 @@
+<%# KPI stat tile with a real delta vs the previous equal-length window.
+    Ports the prototype <Stat> (ui.jsx): label, value, delta chip with up/down
+    arrow in success/danger, icon. locals:
+      label, value, icon  – display
+      delta                – signed numeric delta (nil hides the chip)
+      delta_suffix         – "%" or "pt" etc.
+      delta_dir            – :up / :down (defaults from delta sign) %>
+<%
+  delta ||= nil
+  delta_suffix ||= ""
+  unless delta.nil?
+    up = delta >= 0
+    chip_class = up ? "rl-delta-up" : "rl-delta-down"
+    arrow = up ? "trending-up" : "trending-down"
+  end
+%>
+<div class="rl-stat">
+  <div class="spread">
+    <span class="rl-stat__label"><%= label %></span>
+    <span style="color:var(--color-fg-4)"><%= relay_icon(icon, size: 16) %></span>
+  </div>
+  <div class="rl-stat__value mono"><%= value %></div>
+  <% unless delta.nil? %>
+    <span class="rl-stat__delta <%= chip_class %>">
+      <%= relay_icon(arrow, size: 13) %><%= up ? "+" : "" %><%= delta %><%= delta_suffix %>
+      <span class="muted" style="font-weight:500;margin-left:4px">vs prev.</span>
+    </span>
+  <% else %>
+    <div class="muted rl-sm" style="margin-top:var(--space-2)">no prior data</div>
+  <% end %>
+</div>

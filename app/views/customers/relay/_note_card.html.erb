@@ -1,0 +1,16 @@
+<%# Internal note card (CustomerActivity action:"note"). locals: activity %>
+<div class="cevent">
+  <div class="notecard">
+    <div class="notecard__head">
+      <span class="iccircle" style="width:30px;height:30px;background:var(--color-warning-subtle);color:var(--color-warning-text)">
+        <%= relay_icon("sticky-note", size: 16) %>
+      </span>
+      <div class="grow">
+        <b class="rl-sm">Internal note</b>
+        <div class="muted" style="font-size:12px"><%= activity.user&.name.presence || "System" %> · <%= relay_conv_time(activity.created_at) %></div>
+      </div>
+      <span class="rl-badge rl-badge--warning">Private</span>
+    </div>
+    <div style="padding:2px 16px 14px;font-size:var(--text-sm);line-height:1.55;white-space:pre-wrap"><%= activity.details %></div>
+  </div>
+</div>

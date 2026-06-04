@@ -1,0 +1,36 @@
+<%# A single follow-up row. Ports TaskRow (view-today.jsx) to DS .rl-listitem.
+    Quick-complete posts to the existing tasks#complete endpoint; the
+    turbo_stream response removes this frame in place. locals: task, overdue %>
+<%= turbo_frame_tag dom_id(task) do %>
+  <% pill = relay_priority_pill(task.priority) %>
+  <div class="rl-listitem">
+    <%= button_to complete_task_path(task), method: :patch,
+          form: { data: { turbo: true } },
+          class: "rl-check", title: "Mark complete" do %>
+      <span class="rl-box"></span>
+    <% end %>
+    <span class="iccircle" style="width:30px;height:30px;background:var(--color-surface-3);color:var(--color-fg-2)">
+      <%= relay_icon("check-square", size: 15) %>
+    </span>
+    <div class="rl-listitem__main">
+      <div class="rl-listitem__title"><%= task.title.presence || "Untitled task" %></div>
+      <div class="rl-listitem__sub row" style="gap:8px">
+        <% if task.customer %>
+          <%= link_to task.customer.name, customer_path(task.customer), class: "clickable", style: "color:var(--color-primary-text);font-weight:600" %>
+          <span style="width:3px;height:3px;border-radius:9px;background:var(--color-fg-4)"></span>
+        <% end %>
+        <span style="color:<%= overdue ? 'var(--color-danger-text)' : 'var(--color-fg-3)' %>;font-weight:<%= overdue ? 700 : 500 %>" class="mono">
+          <%= relay_due_label(task.due_date) %>
+        </span>
+      </div>
+    </div>
+    <span class="rl-badge" style="background:transparent">
+      <i style="width:7px;height:7px;border-radius:9px;background:<%= pill[:dot] %>"></i><%= pill[:label] %>
+    </span>
+    <% if task.customer %>
+      <%= link_to "Open", customer_path(task.customer), class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+    <% else %>
+      <%= link_to "Open", task_path(task), class: "rl-btn rl-btn--ghost rl-btn--sm" %>
+    <% end %>
+  </div>
+<% end %>
