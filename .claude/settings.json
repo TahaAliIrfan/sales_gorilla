@@ -47,7 +47,9 @@
       "Bash(ruby -c app/controllers/api/v2/whatsapp_us_controller.rb)",
       "Bash(ruby -c app/workers/twilio_whatsapp_media_worker.rb)",
       "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)",
-      "Bash(bundle exec rails runner ' *)"
+      "Bash(bundle exec rails runner ' *)",
+      "Bash(git check-ignore *)",
+      "Bash(RAILS_ENV=development bin/rails runner 'Rails.application.eager_load!; File.write\\(\"/tmp/eager.txt\", \"OK - all classes loaded\"\\)')"
     ],
     "additionalDirectories": [
       "/tmp"

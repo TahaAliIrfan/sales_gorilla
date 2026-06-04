@@ -1,0 +1,35 @@
+<%# Twilio credentials for the Calling module. Secrets are never re-displayed:
+    we show whether each value is set and let the admin overwrite with a new
+    value if they want. Submitting a blank field leaves the stored value alone. %>
+<% s = feature.settings_hash %>
+
+<div class="space-y-4 rounded-lg bg-paper/40 p-4 ring-1 ring-[var(--color-line-2)]">
+  <p class="micro" style="color: var(--color-ink-soft)">Twilio credentials</p>
+
+  <%
+    creds = [
+      [ :account_sid,       "Account SID",        true  ],
+      [ :auth_token,        "Auth token",         true  ],
+      [ :application_sid,   "TwiML App SID",      true  ],
+      [ :api_key,           "API key (optional)", false ],
+      [ :api_secret,        "API secret (optional)", false ],
+      [ :default_caller_id, "Default caller ID",  false ]
+    ]
+  %>
+
+  <% creds.each do |field, label_text, required| %>
+    <div>
+      <%= label_tag "organization_feature_settings_#{field}", label_text,
+            class: "micro", style: "color: var(--color-ink-soft)" %>
+      <%= password_field_tag "organization_feature[settings][#{field}]", "",
+            id: "organization_feature_settings_#{field}",
+            autocomplete: "new-password",
+            placeholder: s[field.to_s].present? ? "•••••• (saved)" : (required ? "Required" : "Optional"),
+            class: input_classes %>
+    </div>
+  <% end %>
+
+  <p class="mono text-xs text-ink-soft/70">
+    Leave a field blank to keep the stored value. Submitting a new value overwrites it.
+  </p>
+</div>

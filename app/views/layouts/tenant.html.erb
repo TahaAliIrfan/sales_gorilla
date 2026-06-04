@@ -92,6 +92,9 @@
           <% if policy(current_organization).edit_branding? %>
             <%= nav_link "Branding", edit_branding_path, icon: "swatch" %>
           <% end %>
+          <% if policy(OrganizationFeature).index? %>
+            <%= nav_link "Features", settings_features_path, icon: "grid" %>
+          <% end %>
           <%= nav_link "Settings", settings_path, icon: "cog" %>
         </nav>
 

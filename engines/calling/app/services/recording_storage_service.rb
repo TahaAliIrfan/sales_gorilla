@@ -3,9 +3,10 @@ class RecordingStorageService
     return if recording.audio_file.attached?
 
     begin
-      # Initialize Twilio client
-      twilio_service = TwilioService.new
-      recording_data = twilio_service.fetch_recording(recording.sid)
+      # Resolve the calling provider for this recording's organization.
+      # `recording` is acts_as_tenant-scoped so its organization is known.
+      provider = recording.organization.calling.provider!
+      recording_data = provider.fetch_recording(recording.sid)
 
       # Download the recording file from Twilio
       response = HTTParty.get(

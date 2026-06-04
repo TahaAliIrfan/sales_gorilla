@@ -1,3 +1,10 @@
+PATH
+  remote: engines/calling
+  specs:
+    calling (0.1.0)
+      rails (>= 7.1)
+      twilio-ruby (~> 7.8)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -524,8 +531,8 @@ GEM
     turbo-rails (2.0.13)
       actionpack (>= 7.1.0)
       railties (>= 7.1.0)
-    twilio-ruby (7.8.4)
-      faraday (>= 0.9, < 3.0)
+    twilio-ruby (7.10.7)
+      faraday (>= 2.0, < 3.0)
       jwt (>= 1.5, < 4.0)
       nokogiri (>= 1.6, < 2.0)
     tzinfo (2.0.6)
@@ -563,6 +570,7 @@ DEPENDENCIES
   acts_as_tenant
   aws-sdk-s3
   bootsnap
+  calling!
   capistrano (~> 3.17)
   capistrano-passenger (~> 0.2.1)
   capistrano-rails (~> 1.6)
@@ -604,7 +612,6 @@ DEPENDENCIES
   tailwindcss-rails
   timezone
   turbo-rails
-  twilio-ruby (~> 7.8)
   tzinfo-data
   web-console
 

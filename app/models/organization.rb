@@ -1,6 +1,7 @@
 class Organization < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
+  has_many :features, class_name: "OrganizationFeature", dependent: :destroy
 
   has_one_attached :logo
 
@@ -26,6 +27,18 @@ class Organization < ApplicationRecord
 
   def initial
     name.to_s.strip[0]&.upcase || "?"
+  end
+
+  def feature(key)
+    features.find_by(key: key.to_s)
+  end
+
+  def feature_enabled?(key)
+    feature(key)&.enabled? || false
+  end
+
+  def calling
+    @calling ||= Calling::Facade.new(self) if defined?(Calling::Facade)
   end
 
   private

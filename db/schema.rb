@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_04_180000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_04_234052) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -698,6 +698,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_04_180000) do
     t.index ["user_id"], name: "index_odoo_proposals_on_user_id"
   end
 
+  create_table "organization_features", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "key", null: false
+    t.boolean "enabled", default: false, null: false
+    t.string "provider"
+    t.text "settings"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "key"], name: "index_organization_features_on_organization_id_and_key", unique: true
+    t.index ["organization_id"], name: "index_organization_features_on_organization_id"
+  end
+
   create_table "organizations", force: :cascade do |t|
     t.string "name", null: false
     t.string "subdomain", null: false
@@ -993,6 +1005,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_04_180000) do
   add_foreign_key "odoo_proposals", "customers"
   add_foreign_key "odoo_proposals", "organizations"
   add_foreign_key "odoo_proposals", "users"
+  add_foreign_key "organization_features", "organizations"
   add_foreign_key "pipelines", "organizations"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "organizations"

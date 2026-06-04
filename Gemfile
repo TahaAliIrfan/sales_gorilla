@@ -48,8 +48,9 @@ gem "image_processing", "~> 1.2"
 # Charts and data visualization
 gem "chartkick", "~> 5.0"
 
-# Twilio for browser-based calling
-gem "twilio-ruby", "~> 7.8"
+# Calling engine — provides browser-based calling via swappable provider
+# adapters. Owns the twilio-ruby dependency.
+gem "calling", path: "engines/calling"
 
 # HTTP client for Ruby
 gem "httparty", "~> 0.21.0"

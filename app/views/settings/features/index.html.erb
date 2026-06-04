@@ -1,0 +1,10 @@
+<% content_for :title, "Features" %>
+
+<%= render "shared/page_header", eyebrow: "Settings", title: "Features",
+      subtitle: "Enable modules for #{current_organization.name} and configure each module's provider." %>
+
+<div class="grid gap-6 lg:grid-cols-1">
+  <% @features.each do |feature| %>
+    <%= render "settings/features/feature_card", feature: feature %>
+  <% end %>
+</div>

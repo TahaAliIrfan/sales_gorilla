@@ -17,7 +17,10 @@ class Api::V2::TwilioController < Api::V2::BaseController
 
   private
 
+  # Resolves the calling provider for the caller's current organization. The
+  # provider is whatever they've configured under Settings > Features > Calling
+  # (Twilio today; Plivo/Vonage in the future).
   def twilio_service
-    @twilio_service ||= TwilioService.new
+    @twilio_service ||= current_organization.calling.provider!
   end
 end

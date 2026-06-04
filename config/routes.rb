@@ -328,6 +328,12 @@ Rails.application.routes.draw do
     delete "settings/disconnect_google",         to: "settings#disconnect_google",          as: :disconnect_google
     get    "settings/export_customers_with_deals", to: "settings#export_customers_with_deals", as: :export_customers_with_deals
 
+    # Modular ERP feature toggles (per-organization).
+    namespace :settings do
+      resources :features, only: %i[index update], param: :key,
+                constraints: { key: /[a-z_]+/ }
+    end
+
     resources :odoo_proposals, only: %i[index new create show edit update destroy] do
       member do
         get   "download_pdf"
@@ -349,17 +355,10 @@ Rails.application.routes.draw do
       end
     end
 
-    # Browser-based calling.
-    get   "calling",                   to: "calling#index"
-    get   "calling/token",             to: "calling#token"
-    match "calling/voice",             to: "calling#voice", via: %i[get post]
-    get   "calling/available_numbers", to: "calling#available_numbers"
-    post  "calling/store_customer_id", to: "calling#store_customer_id"
-
-    get  "calling/recordings",            to: "calling#recordings"
-    get  "calling/recording/:sid",        to: "calling#recording",         as: :get_recording
-    get  "calling/play_recording/:sid",   to: "calling#play_recording",    as: :calling_play_recording
-    post "calling/recording_status",      to: "calling#recording_status"
+    # Browser-based calling lives entirely in the Calling engine. The mount
+    # owns `/calling/*`. Host code references the engine root via `calling_path`
+    # (the default helper from `mount`).
+    mount Calling::Engine => "/calling", as: :calling
 
     resources :whatsapp_templates, only: %i[index] do
       collection { post :sync }

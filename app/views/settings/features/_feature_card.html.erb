@@ -1,0 +1,65 @@
+<%# Renders one feature module (e.g. Calling) with on/off toggle, provider
+    selector, and the provider-specific credentials form. %>
+<%
+  meta = {
+    "calling" => {
+      title: "Calling",
+      blurb: "Browser-based phone calls, recordings, and transcription."
+    }
+  }[feature.key]
+%>
+
+<div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
+  <%= form_with model: feature,
+        url: settings_feature_path(key: feature.key),
+        method: :patch,
+        class: "space-y-6" do |f| %>
+
+    <% if feature.errors.any? %>
+      <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
+        <ul class="list-inside list-disc space-y-1">
+          <% feature.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="flex items-start justify-between gap-6">
+      <div>
+        <h3 class="text-lg font-semibold text-ink"><%= meta[:title] %></h3>
+        <p class="mt-1 text-sm text-ink-soft"><%= meta[:blurb] %></p>
+      </div>
+
+      <label class="inline-flex cursor-pointer items-center gap-3">
+        <span class="micro" style="color: var(--color-ink-soft)">
+          <%= feature.enabled? ? "Enabled" : "Disabled" %>
+        </span>
+        <%= f.hidden_field :enabled, value: "0" %>
+        <%= f.check_box :enabled,
+              { class: "peer sr-only", checked: feature.enabled? },
+              "1", "0" %>
+        <span class="relative h-6 w-11 rounded-full bg-[var(--color-line-2)] transition peer-checked:bg-[var(--brand-primary)]">
+          <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+        </span>
+      </label>
+    </div>
+
+    <div>
+      <%= f.label :provider, class: "micro", style: "color: var(--color-ink-soft)" %>
+      <%= f.select :provider,
+            OrganizationFeature::PROVIDERS[feature.key].map { |p| [ p.titleize, p ] },
+            { include_blank: "Select a provider" },
+            class: input_classes %>
+    </div>
+
+    <% if feature.key == "calling" %>
+      <%= render "settings/features/twilio_fields", f: f, feature: feature %>
+    <% end %>
+
+    <div class="flex items-center gap-3">
+      <%= f.submit "Save #{meta[:title]}",
+            data: { turbo_submits_with: "Saving…" },
+            class: "rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer",
+            style: "background: var(--brand-primary)" %>
+    </div>
+  <% end %>
+</div>
