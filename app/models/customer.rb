@@ -482,12 +482,14 @@ class Customer < ApplicationRecord
 
 
   def meta_eligible?
-    meta_inbound_eligible? || meta_website_eligible? || meta_ccr_eligible? || meta_wa_eligible?
+    return false unless meta_service.feature_enabled?
+    return false unless meta_service.source_eligible?(lead_source)
+    return false if meta_service.requires_lead_id?(lead_source) && meta_lead_id.blank?
+    true
   end
 
   def meta_wa_eligible?
-    # lead_source == 'WA' till we don't have whatsapp connected
-    false
+    lead_source == "WA"
   end
 
   def meta_inbound_eligible?
@@ -502,48 +504,44 @@ class Customer < ApplicationRecord
     lead_source == "Website"
   end
 
-  def meta_action_source
-    if meta_wa_eligible?
-      "business_messaging"
-    elsif meta_website_eligible?
-      "website"
-    elsif  meta_ccr_eligible?
-      "website"
-    else
-      "system_generated"
-    end
+  def meta_service
+    @meta_service ||= MetaConversionsApiService.new(organization: organization)
   end
 
+  # Resolves the Meta CAPI action_source for this customer's lead source via
+  # the admin-configurable mapping (Settings > Features > Meta Conversions API).
+  # Fixes the prior hardcoded behavior that returned "website" for CCR; CCR
+  # (click-to-call ads) should be "phone_call" so Meta attributes correctly.
+  def meta_action_source
+    meta_service.action_source_for(lead_source)
+  end
+
+  # Fires the Meta event mapped to this customer's current status (configured
+  # in Settings > Features > Meta Conversions API → status mappings). Idempotent:
+  # each (customer, event_name) pair fires at most once.
   def track_meta_conversions_events
     return unless meta_eligible?
+    return unless meta_service.credentials_configured?
 
-    service = MetaConversionsApiService.new
-
-    return unless service.credentials_configured?
-
-    if status == "Contact Established" && !MetaConversionLog.find_by(customer: self, event_name: "Contact").present?
-      service.send_form_lead_event(self, "Contact", nil, meta_action_source)
-    end
-
-    if status == "Pending" && !MetaConversionLog.find_by(customer: self, event_name: "Lead").present?
-      service.send_form_lead_event(self, "Lead", nil, meta_action_source)
-    end
-
-    if meta_wa_eligible? && whatsapp_status == "Connected" && !MetaConversionLog.find_by(customer: self, event_name: "Contact").present?
-      service.send_form_lead_event(self, "Contact", nil, meta_action_source, messaging_channel: "whatsapp")
-    end
-  end
-
-
-  def track_meta_conversions_events_create
-    return unless meta_eligible?
-
-    service = MetaConversionsApiService.new
-
-    return unless service.credentials_configured?
+    event_name = meta_service.event_for_customer_status(status)
+    return if event_name.blank?
+    return unless meta_service.event_enabled?(event_name)
+    return if MetaConversionLog.exists?(customer: self, event_name: event_name)
 
     options = meta_wa_eligible? ? { messaging_channel: "whatsapp" } : {}
-    service.send_form_lead_event(self, "Lead", nil, meta_action_source, options)
+    meta_service.send_form_lead_event(self, event_name, nil, meta_action_source, options)
+  end
+
+  # Fires a "Lead" event on initial creation. This is the canonical "new lead"
+  # signal regardless of which status the customer was created with; status
+  # transitions afterward go through `track_meta_conversions_events`.
+  def track_meta_conversions_events_create
+    return unless meta_eligible?
+    return unless meta_service.credentials_configured?
+    return unless meta_service.event_enabled?("Lead")
+
+    options = meta_wa_eligible? ? { messaging_channel: "whatsapp" } : {}
+    meta_service.send_form_lead_event(self, "Lead", nil, meta_action_source, options)
   end
 
 

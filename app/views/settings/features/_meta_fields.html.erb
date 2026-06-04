@@ -1,0 +1,302 @@
+<%# Meta Conversions API editor: credentials, test event code, event toggles,
+    eligible lead sources, status/stage→event mapping, source→action_source
+    mapping with match quality preview, plus a "Send test event" diagnostic. %>
+<%
+  s = feature.settings_hash
+  service = MetaConversionsApiService.new(organization: current_organization)
+
+  # Sample the most recent customer per lead_source so the match quality
+  # preview reflects real data (vs an unscoped theoretical "all identifiers").
+  enabled_sources_for_preview = Array(s["eligible_sources"]).presence ||
+                                OrganizationFeature::META_DEFAULT_ELIGIBLE_SOURCES
+  recent_samples = Customer.where(lead_source: enabled_sources_for_preview)
+                            .order(created_at: :desc)
+                            .limit(50)
+                            .group_by(&:lead_source)
+                            .transform_values(&:first)
+
+  status_mappings = (s["customer_status_mappings"] || {}).presence ||
+                    OrganizationFeature::META_DEFAULT_CUSTOMER_STATUS_MAPPINGS
+  stage_mappings  = s["deal_stage_mappings"] || {}
+  source_actions  = (s["source_action_sources"] || {}).presence ||
+                    OrganizationFeature::META_DEFAULT_SOURCE_ACTION_SOURCES
+
+  pipelines = Pipeline.includes(:deal_stages).order(:name)
+
+  quality_palette = {
+    "Great" => [ "var(--brand-accent)", "Strong match" ],
+    "Good"  => [ "#b07300",             "Decent match" ],
+    "Poor"  => [ "#a83a22",             "Weak match" ]
+  }
+%>
+
+<div data-controller="meta-test"
+     data-meta-test-url-value="<%= test_settings_feature_path(key: feature.key) %>"
+     class="space-y-5 rounded-lg bg-paper/40 p-4 ring-1 ring-[var(--color-line-2)]">
+
+  <%# ── Credentials ─────────────────────────────────────────────────────── %>
+  <div class="space-y-3">
+    <p class="micro" style="color: var(--color-ink-soft)">Credentials</p>
+
+    <div>
+      <%= label_tag "organization_feature_settings_pixel_id", "Pixel ID",
+            class: "micro", style: "color: var(--color-ink-soft)" %>
+      <%= text_field_tag "organization_feature[settings][pixel_id]", s["pixel_id"],
+            id: "organization_feature_settings_pixel_id",
+            placeholder: "e.g. 123456789012345",
+            class: input_classes %>
+    </div>
+
+    <div>
+      <%= label_tag "organization_feature_settings_access_token", "Access token",
+            class: "micro", style: "color: var(--color-ink-soft)" %>
+      <%= password_field_tag "organization_feature[settings][access_token]", "",
+            id: "organization_feature_settings_access_token",
+            autocomplete: "new-password",
+            placeholder: s["access_token"].present? ? "•••••• (saved)" : "Required",
+            class: input_classes %>
+      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+        Generate a system-user token in Meta Business Manager. Leave blank to keep the saved value.
+      </p>
+    </div>
+  </div>
+
+  <%# ── Test event code ────────────────────────────────────────────────── %>
+  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
+    <p class="micro" style="color: var(--color-ink-soft)">Test event code <span class="text-ink-soft/60">(optional)</span></p>
+    <%= text_field_tag "organization_feature[settings][test_event_code]", s["test_event_code"],
+          id: "organization_feature_settings_test_event_code",
+          placeholder: "e.g. TEST12345",
+          class: input_classes %>
+    <p class="mono text-[11px] text-ink-soft/70">
+      While set, events are routed to Meta's <b>Events Manager → Test events</b> tab instead of going live.
+      Remove this value when ready to ship.
+    </p>
+  </div>
+
+  <%# ── Events to fire ─────────────────────────────────────────────────── %>
+  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
+    <p class="micro" style="color: var(--color-ink-soft)">Events to fire</p>
+    <%= hidden_field_tag "organization_feature[settings][events_enabled][]", "" %>
+    <div class="grid grid-cols-2 gap-2">
+      <% enabled_events = Array(s["events_enabled"]).presence || OrganizationFeature::META_DEFAULT_EVENTS %>
+      <% OrganizationFeature::META_DEFAULT_EVENTS.each do |evt| %>
+        <label class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+          <%= check_box_tag "organization_feature[settings][events_enabled][]", evt,
+                enabled_events.include?(evt),
+                class: "h-4 w-4 rounded border-[var(--color-line-2)]",
+                style: "accent-color: var(--brand-primary)" %>
+          <span class="text-sm text-ink"><%= evt %></span>
+        </label>
+      <% end %>
+    </div>
+    <p class="mono text-[11px] text-ink-soft/70">
+      Unchecked events won't be sent to Meta regardless of customer activity.
+    </p>
+  </div>
+
+  <%# ── Eligible lead sources ───────────────────────────────────────────── %>
+  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
+    <p class="micro" style="color: var(--color-ink-soft)">Eligible lead sources</p>
+    <%= hidden_field_tag "organization_feature[settings][eligible_sources][]", "" %>
+    <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+      <% enabled_sources = Array(s["eligible_sources"]).presence || OrganizationFeature::META_DEFAULT_ELIGIBLE_SOURCES %>
+      <% Customer::LEAD_SOURCES.values.each do |src| %>
+        <label class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
+          <%= check_box_tag "organization_feature[settings][eligible_sources][]", src,
+                enabled_sources.include?(src),
+                class: "h-4 w-4 rounded border-[var(--color-line-2)]",
+                style: "accent-color: var(--brand-primary)" %>
+          <span class="text-sm text-ink"><%= src %></span>
+        </label>
+      <% end %>
+    </div>
+    <p class="mono text-[11px] text-ink-soft/70">
+      Only customers with a checked lead source can trigger Meta events.
+      Inbound sources also require a <code>meta_lead_id</code> (set by the Meta Lead Ads webhook).
+    </p>
+  </div>
+
+  <%# ── Source → action_source + match quality ──────────────────────────── %>
+  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+    <div>
+      <p class="micro" style="color: var(--color-ink-soft)">Source routing &amp; match quality</p>
+      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+        For each eligible source, pick the Meta <code>action_source</code> that matches the ad type
+        (Lead Ads webhook → <code>system_generated</code>, click-to-call → <code>phone_call</code>,
+        Messenger/WA → <code>business_messaging</code>, etc.). Require <code>lead_id</code> for
+        sources that come through Meta's Lead Ads webhook — events without it will be skipped.
+      </p>
+    </div>
+
+    <%# One blank hidden field anchors the hash key in params even if no rows render. %>
+    <%= hidden_field_tag "organization_feature[settings][source_action_sources][__anchor__][action_source]", "" %>
+
+    <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
+      <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
+        <thead class="bg-paper/40 text-left">
+          <tr>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Lead source</th>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">action_source</th>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Requires lead_id</th>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Match quality (recent)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-line-2)]">
+          <% enabled_sources_for_preview.each do |src| %>
+            <%
+              config = source_actions[src] || {}
+              current_as = config["action_source"]
+              current_lead_id_required = !!config["require_lead_id"]
+              sample = recent_samples[src]
+              quality = service.match_quality_summary(sample_customer: sample)
+              q_color, q_label = quality_palette[quality[:quality]] || quality_palette["Poor"]
+            %>
+            <tr class="bg-panel">
+              <td class="px-3 py-2 align-middle font-medium text-ink"><%= src %></td>
+              <td class="px-3 py-2 align-middle">
+                <%= select_tag "organization_feature[settings][source_action_sources][#{src}][action_source]",
+                      options_for_select(OrganizationFeature::META_ACTION_SOURCES.map { |a| [ a, a ] }, current_as),
+                      include_blank: "—",
+                      class: "#{input_classes} !py-1.5 !text-xs" %>
+              </td>
+              <td class="px-3 py-2 align-middle">
+                <%= hidden_field_tag "organization_feature[settings][source_action_sources][#{src}][require_lead_id]", "0" %>
+                <%= check_box_tag "organization_feature[settings][source_action_sources][#{src}][require_lead_id]", "1",
+                      current_lead_id_required,
+                      class: "h-4 w-4 rounded border-[var(--color-line-2)]",
+                      style: "accent-color: var(--brand-primary)" %>
+              </td>
+              <td class="px-3 py-2 align-middle">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style="color: <%= q_color %>; background: color-mix(in srgb, <%= q_color %> 12%, transparent);"
+                        title="<%= q_label %> · sample: <%= sample ? "customer ##{sample.id}" : "no recent customers" %>">
+                    <span class="h-1.5 w-1.5 rounded-full" style="background: <%= q_color %>"></span>
+                    <%= quality[:quality] %>
+                  </span>
+                  <% quality[:identifiers].each do |id, present| %>
+                    <span class="mono text-[10px]" style="color: <%= present ? "var(--color-ink-soft)" : "var(--color-ink-soft) 70%" %>">
+                      <span style="color: <%= present ? "var(--brand-accent)" : "var(--color-ink-soft)" %>"><%= present ? "✓" : "·" %></span>
+                      <%= id %>
+                    </span>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ── Customer status → event mapping ─────────────────────────────────── %>
+  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+    <div>
+      <p class="micro" style="color: var(--color-ink-soft)">Customer status → Meta event</p>
+      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+        When a customer transitions to a status, fire the mapped Meta event.
+        Leave <em>None</em> to skip. Events also need to be checked in <strong>Events to fire</strong> above.
+      </p>
+    </div>
+
+    <%= hidden_field_tag "organization_feature[settings][customer_status_mappings][__anchor__]", "" %>
+
+    <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
+      <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
+        <thead class="bg-paper/40 text-left">
+          <tr>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Customer status</th>
+            <th class="micro px-3 py-2 text-ink-soft" style="font-weight: 500;">Meta event</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--color-line-2)]">
+          <% Customer::STATUSES.values.each do |status| %>
+            <% current = status_mappings[status] %>
+            <tr class="bg-panel">
+              <td class="px-3 py-2 align-middle font-medium text-ink"><%= status %></td>
+              <td class="px-3 py-2 align-middle">
+                <%= select_tag "organization_feature[settings][customer_status_mappings][#{status}]",
+                      options_for_select([ [ "None", "" ] ] + OrganizationFeature::META_AVAILABLE_EVENTS.map { |e| [ e, e ] }, current),
+                      class: "#{input_classes} !py-1.5 !text-xs max-w-xs" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%# ── Deal stage → event mapping (grouped by pipeline) ────────────────── %>
+  <div class="space-y-3 border-t border-[var(--color-line-2)] pt-4">
+    <div>
+      <p class="micro" style="color: var(--color-ink-soft)">Deal stage → Meta event</p>
+      <p class="mono mt-1 text-[11px] text-ink-soft/70">
+        When a deal moves into a stage, fire the mapped Meta event. <code>Purchase</code> events
+        automatically include the deal's <code>amount</code> as the conversion value.
+      </p>
+    </div>
+
+    <%= hidden_field_tag "organization_feature[settings][deal_stage_mappings][__anchor__]", "" %>
+
+    <% if pipelines.empty? %>
+      <div class="rounded-md bg-paper/40 p-4 text-sm text-ink-soft ring-1 ring-[var(--color-line-2)]">
+        No pipelines configured yet. Create one in <%= link_to "Pipelines", pipelines_path, class: "underline hover:text-ink" %> to map deal stages.
+      </div>
+    <% else %>
+      <div class="space-y-3">
+        <% pipelines.each do |pipeline| %>
+          <% stages = pipeline.deal_stages.ordered %>
+          <% next if stages.empty? %>
+
+          <div class="overflow-hidden rounded-md ring-1 ring-[var(--color-line-2)]">
+            <div class="bg-paper/40 px-3 py-2">
+              <p class="font-display text-sm font-semibold text-ink"><%= pipeline.name %></p>
+            </div>
+            <table class="min-w-full divide-y divide-[var(--color-line-2)] text-sm">
+              <tbody class="divide-y divide-[var(--color-line-2)]">
+                <% stages.each do |stage| %>
+                  <% current = stage_mappings[stage.id.to_s] %>
+                  <tr class="bg-panel">
+                    <td class="px-3 py-2 align-middle text-ink">
+                      <span class="inline-flex items-center gap-2">
+                        <span class="mono text-[11px] text-ink-soft">#<%= stage.position %></span>
+                        <%= stage.name %>
+                      </span>
+                    </td>
+                    <td class="px-3 py-2 align-middle">
+                      <%= select_tag "organization_feature[settings][deal_stage_mappings][#{stage.id}]",
+                            options_for_select([ [ "None", "" ] ] + OrganizationFeature::META_AVAILABLE_EVENTS.map { |e| [ e, e ] }, current),
+                            class: "#{input_classes} !py-1.5 !text-xs max-w-xs" %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ── Diagnostics: Send test event ────────────────────────────────────── %>
+  <div class="space-y-2 border-t border-[var(--color-line-2)] pt-4">
+    <p class="micro" style="color: var(--color-ink-soft)">Diagnostics</p>
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="button"
+              data-action="meta-test#send"
+              data-meta-test-target="button"
+              class="inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] disabled:opacity-60 disabled:cursor-not-allowed">
+        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>
+        </svg>
+        Send test event
+      </button>
+      <span data-meta-test-target="result" class="text-sm"></span>
+    </div>
+    <p class="mono text-[11px] text-ink-soft/70">
+      Sends a synthetic <b>Lead</b> event with dummy user data. Useful to verify your credentials and test event code before going live.
+      Test events are saved by Meta but not by us (no MetaConversionLog row created).
+    </p>
+  </div>
+</div>

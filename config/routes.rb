@@ -331,7 +331,9 @@ Rails.application.routes.draw do
     # Modular ERP feature toggles (per-organization).
     namespace :settings do
       resources :features, only: %i[index update], param: :key,
-                constraints: { key: /[a-z_]+/ }
+                constraints: { key: /[a-z_]+/ } do
+        member { post :test }
+      end
     end
 
     resources :odoo_proposals, only: %i[index new create show edit update destroy] do

@@ -47,26 +47,26 @@ class Deal < ApplicationRecord
     )
   end
 
-  # Track Meta Conversions API events for deal lifecycle.
-  # Only fires when the associated customer is an inbound Meta lead.
+  # Fires the Meta event mapped to this deal's current stage (configured in
+  # Settings > Features > Meta Conversions API → deal stage mappings). Runs on
+  # creation OR on stage change; admins map each pipeline stage to whichever
+  # standard event makes sense (Schedule, SubmitApplication, Purchase, etc.).
+  #
+  # No dedup at the model level: moving a deal back-and-forth between stages
+  # will fire repeat events. The intent is that pipeline stages flow forward.
   def track_meta_conversions_deal_events
     return if customer.nil? || !customer.meta_eligible?
+    return unless saved_change_to_deal_stage_id? || saved_change_to_id?
 
-    service = MetaConversionsApiService.new
+    service = MetaConversionsApiService.new(organization: customer.organization)
     return unless service.credentials_configured?
 
-    action_source = customer.meta_action_source
+    event_name = service.event_for_deal_stage(deal_stage_id)
+    return if event_name.blank?
+    return unless service.event_enabled?(event_name)
 
-
-    # Schedule — fires once when the deal is first created
-    if saved_change_to_id?
-      service.send_form_lead_event(customer, "Schedule", nil, action_source)
-    end
-
-    # Purchase — fires when the deal is marked as won
-    if saved_change_to_status? && status == "won"
-      service.send_form_lead_event(customer, "Purchase", amount, action_source)
-    end
+    amount_arg = (event_name == "Purchase") ? amount : nil
+    service.send_form_lead_event(customer, event_name, amount_arg, customer.meta_action_source)
   end
 
   def deal_stage_belongs_to_user_pipeline

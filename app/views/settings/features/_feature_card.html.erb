@@ -13,8 +13,21 @@
       title: "Transcription",
       blurb: "Automatic speaker-diarized transcripts for every call recording.",
       icon:  "rec"
+    },
+    "meta_conversions" => {
+      title: "Meta Conversions API",
+      blurb: "Server-side conversion tracking for Meta Lead Ads, CCR, and website signups.",
+      icon:  "megaphone"
     }
   }.fetch(feature.key, { title: feature.key.titleize, blurb: "", icon: "grid" })
+
+  # 7-day activity stats only relevant for meta_conversions today.
+  stats =
+    if feature.key == "meta_conversions"
+      since = 7.days.ago
+      logs  = MetaConversionLog.where("created_at >= ?", since)
+      { ok: logs.where(success: true).count, fail: logs.where(success: false).count, window: "7d" }
+    end
 
   configured_credentials = feature.settings_hash.reject { |_, v| v.blank? }.keys
   status_label =
@@ -49,7 +62,7 @@
       </div>
       <p class="mt-1 text-sm text-ink-soft"><%= meta[:blurb] %></p>
 
-      <% if feature.provider.present? || configured_credentials.any? %>
+      <% if feature.provider.present? || configured_credentials.any? || stats %>
         <dl class="mono mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
           <% if feature.provider.present? %>
             <div class="flex items-center gap-1.5">
@@ -61,6 +74,17 @@
             <div class="flex items-center gap-1.5">
               <dt class="text-ink-soft/70">Configured</dt>
               <dd class="text-ink"><%= pluralize(configured_credentials.size, "field") %></dd>
+            </div>
+          <% end %>
+          <% if stats %>
+            <div class="flex items-center gap-1.5">
+              <dt class="text-ink-soft/70">Last <%= stats[:window] %></dt>
+              <dd class="text-ink">
+                <span style="color: var(--brand-accent)"><%= stats[:ok] %> ok</span>
+                <% if stats[:fail].positive? %>
+                  · <span style="color: #a83a22"><%= stats[:fail] %> failed</span>
+                <% end %>
+              </dd>
             </div>
           <% end %>
         </dl>
@@ -122,6 +146,8 @@
         <%= render "settings/features/twilio_fields", f: f, feature: feature %>
       <% when "transcription" %>
         <%= render "settings/features/deepgram_fields", f: f, feature: feature %>
+      <% when "meta_conversions" %>
+        <%= render "settings/features/meta_fields", f: f, feature: feature %>
       <% end %>
 
       <div class="flex items-center justify-end gap-3 border-t border-[var(--color-line-2)] pt-4">
