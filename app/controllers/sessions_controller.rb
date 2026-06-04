@@ -58,7 +58,7 @@ class SessionsController < ApplicationController
   private
 
   # New users created via OAuth need a default-org membership so they land in
-  # the existing Tecaudex workspace automatically.
+  # the default workspace automatically.
   def ensure_membership_in_default_org(user)
     default_org = Organization.find_by(subdomain: "tecaudex")
     return unless default_org

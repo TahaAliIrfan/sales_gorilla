@@ -1,10 +1,10 @@
-<% content_for :title, "Tecaudex CRM" %>
+<% content_for :title, "Relay" %>
 
 <div class="min-h-full">
   <%# ---- Nav ---- %>
   <header class="border-b border-[var(--color-line-2)]">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <a href="/" class="font-display text-xl font-bold tracking-tight text-ink">Tecaudex<span class="text-accent-bright">.</span></a>
+      <a href="/" class="font-display text-xl font-bold tracking-tight text-ink">Relay<span class="text-accent-bright">.</span></a>
       <nav class="flex items-center gap-1 text-sm font-medium">
         <% if current_user %>
           <%= link_to "Your workspaces", organizations_path, class: "rounded-md px-4 py-2 text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink" %>
@@ -112,7 +112,7 @@
 
   <footer class="border-t border-[var(--color-line-2)]">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-      <span class="micro">© <%= Date.current.year %> Tecaudex</span>
+      <span class="micro">© <%= Date.current.year %> Relay</span>
       <span class="micro">Multi-tenant CRM</span>
     </div>
   </footer>
