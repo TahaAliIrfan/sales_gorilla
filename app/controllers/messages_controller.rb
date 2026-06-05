@@ -1,5 +1,8 @@
 class MessagesController < ApplicationController
-  layout "tenant"
+  # No HTML views render through this controller: #index is JSON-only (consumed
+  # by the lead workspace conversation tab) and every other HTML response is a
+  # redirect to the customer (relay-layout) workspace. The legacy WhatsApp chat
+  # page is superseded by that workspace, so no tenant-layout view is reachable.
   before_action :require_login, except: :webhook
   before_action :set_customer, only: [ :index, :create, :sync, :refresh ]
   skip_before_action :verify_authenticity_token, only: [ :webhook, :sync ]

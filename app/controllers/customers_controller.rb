@@ -591,11 +591,25 @@ class CustomersController < ApplicationController
     # This avoids triggering document validations and other unrelated checks
     if @customer.update_column(:user_id, current_user.id)
       respond_to do |format|
+        # In-place update for the Today dashboard: drop the unassigned row and
+        # confirm with a toast, without navigating away. (The Leads table's
+        # button opts out via data: { turbo: false } and keeps the redirect.)
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.remove(helpers.dom_id(@customer, :unassigned)),
+            turbo_stream.append("relay_toasts", partial: "relay/shared/toast",
+              locals: { kind: "success", message: "#{@customer.name} assigned to you" })
+          ]
+        end
         format.html { redirect_to customers_path, notice: "Customer '#{@customer.name}' successfully assigned to you." }
         format.json { render json: { success: true, user_id: current_user.id, user_name: current_user.name } }
       end
     else
       respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append("relay_toasts", partial: "relay/shared/toast",
+            locals: { kind: "danger", message: "Couldn't assign lead — try again" })
+        end
         format.html { redirect_to customers_path, alert: "Failed to assign customer." }
         format.json { render json: { success: false, errors: [ "Assignment failed" ] }, status: :unprocessable_entity }
       end
@@ -671,13 +685,12 @@ class CustomersController < ApplicationController
 
   private
 
-  # Relay shell adoption: the Leads list (Phase 3) and the lead workspace
-  # show/add_note (Phase 4) use the relay layout. Edit/new keep the legacy
-  # tenant form until a later phase ports them.
-  RELAY_ACTIONS = %w[index show add_note].freeze
-
+  # Every customers action now lives in the relay shell. The HTML-rendering
+  # actions (index, show, add_note, new, edit, and create/update re-rendering
+  # their forms on failure) use it directly; the remaining actions only
+  # redirect or render JSON, so relay is a safe default for them too.
   def choose_layout
-    RELAY_ACTIONS.include?(action_name) ? "relay" : "tenant"
+    "relay"
   end
 
   def set_customer
@@ -731,10 +744,5 @@ class CustomersController < ApplicationController
     scope
   end
 
-  def require_login
-    unless session[:user_id]
-      flash[:error] = "You must be logged in to access this section"
-      redirect_to root_path
-    end
-  end
+  # Auth comes from ApplicationController (require_login / current_user).
 end

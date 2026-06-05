@@ -1,104 +1,22 @@
-<% content_for :title, "Branding" %>
+<%# Standalone branding page — relay DS. Settings → Branding is the primary
+    surface; this page is the fallback that BrandingController#update re-renders
+    on validation failure, so it reuses the canonical settings/_branding partial
+    (same relay--branding-preview controller, same form/params, same
+    settings/errors rendering for @organization). %>
+<% content_for :title, "Branding — #{current_organization&.name}" %>
 
-<%= render "shared/page_header", eyebrow: "Settings", title: "Branding",
-      subtitle: "Customize how #{current_organization.name}'s workspace looks for everyone." %>
-
-<div data-controller="branding-preview" class="grid gap-6 lg:grid-cols-3">
-  <%# ---- Form ---- %>
-  <div class="lg:col-span-2">
-    <%= form_with model: @organization, url: branding_path, method: :patch, class: "space-y-6" do |f| %>
-      <% if @organization.errors.any? %>
-        <div class="rounded-md bg-paper p-4 text-sm text-[#a83a22] ring-1 ring-[#a83a22]/20">
-          <ul class="list-inside list-disc space-y-1">
-            <% @organization.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
-          </ul>
-        </div>
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Branding</div>
+      <div class="pagehead__sub">Customize how <%= current_organization&.name %>'s workspace looks for everyone.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to settings_path(tab: "branding"), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to settings
       <% end %>
-
-      <div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
-        <p class="micro">Identity</p>
-        <div class="mt-4 space-y-5">
-          <div>
-            <%= f.label :name, "Organization name", class: "micro", style: "color: var(--color-ink-soft)" %>
-            <%= f.text_field :name, class: input_classes %>
-          </div>
-
-          <div>
-            <span class="micro" style="color: var(--color-ink-soft)">Logo</span>
-            <div class="mt-2 flex items-center gap-4">
-              <%= render "shared/org_logo", organization: @organization, size: "h-16 w-16" %>
-              <%= f.file_field :logo, accept: "image/png,image/jpeg,image/svg+xml,image/webp",
-                    class: "block text-sm text-ink-soft file:mr-3 file:rounded-md file:border-0 file:bg-[var(--color-line)] file:px-4 file:py-2 file:text-sm file:font-medium file:text-ink hover:file:bg-[var(--color-line-2)]" %>
-            </div>
-            <p class="mono mt-1 text-xs text-ink-soft/70">PNG, JPEG, SVG or WebP.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
-        <p class="micro">Theme colors</p>
-
-        <div class="mt-4 grid gap-6 sm:grid-cols-2">
-          <%= render "color_field", f: f, field: :primary_color, label: "Primary",
-                target: "primary", hex_target: "primaryHex", action: "syncPrimary", hex_action: "syncPrimaryHex",
-                value: @organization.primary_color %>
-          <%= render "color_field", f: f, field: :accent_color, label: "Accent",
-                target: "accent", hex_target: "accentHex", action: "syncAccent", hex_action: "syncAccentHex",
-                value: @organization.accent_color %>
-        </div>
-
-        <p class="micro mt-6">Presets</p>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <% [
-            ["Tecaudex", "#1E3A8A", "#10B981"],
-            ["Pine",     "#1B4D3E", "#2F8F6B"],
-            ["Oxblood",  "#7A2230", "#C2703D"],
-            ["Slate",    "#1F2A37", "#3B82F6"],
-            ["Plum",     "#4A2545", "#D9488A"]
-          ].each do |name, primary, accent| %>
-            <button type="button" data-action="branding-preview#applyPreset"
-                    data-primary="<%= primary %>" data-accent="<%= accent %>"
-                    class="flex items-center gap-2 rounded-md px-3 py-1.5 ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
-              <span class="flex">
-                <span class="h-4 w-4 rounded-l" style="background: <%= primary %>"></span>
-                <span class="h-4 w-4 rounded-r" style="background: <%= accent %>"></span>
-              </span>
-              <span class="micro"><%= name %></span>
-            </button>
-          <% end %>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <%= f.submit "Save branding",
-              data: { turbo_submits_with: "Saving…" },
-              class: "rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer",
-              style: "background: var(--brand-primary)" %>
-        <%= link_to "Cancel", tenant_root_path, class: "text-sm font-medium text-ink-soft transition hover:text-ink" %>
-      </div>
-    <% end %>
-  </div>
-
-  <%# ---- Live preview ---- %>
-  <div>
-    <p class="micro mb-2">Live preview</p>
-    <div data-branding-preview-target="preview"
-         style="<%= brand_style(@organization) %>"
-         class="sticky top-24 overflow-hidden rounded-xl bg-panel shadow-lift ring-1 ring-[var(--color-line-2)]">
-      <div class="flex items-center gap-3 px-4 py-4 text-white" style="background: var(--brand-primary)">
-        <%= render "shared/org_logo", organization: @organization, size: "h-9 w-9" %>
-        <span class="font-display font-bold"><%= @organization.name %></span>
-      </div>
-      <div class="space-y-3 p-5">
-        <div class="h-2.5 w-2/3 rounded-full bg-[var(--color-line-2)]"></div>
-        <div class="h-2.5 w-1/2 rounded-full bg-[var(--color-line)]"></div>
-        <div class="flex items-center gap-2 pt-2">
-          <button class="rounded-md px-3.5 py-2 text-sm font-semibold text-white" style="background: var(--brand-primary)">Primary</button>
-          <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-white" style="background: var(--brand-accent)">
-            <span class="micro text-white">Verified</span>
-          </span>
-        </div>
-      </div>
     </div>
   </div>
+
+  <%= render "settings/branding" %>
 </div>

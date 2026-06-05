@@ -63,7 +63,10 @@
         <%= link_to settings_path, class: "rl-menuitem" do %><%= relay_icon("user-cog") %>Profile &amp; preferences<% end %>
         <%= link_to settings_path, class: "rl-menuitem" do %><%= relay_icon("plug") %>Connections<% end %>
         <div class="rl-menu__sep"></div>
-        <%= link_to signout_path, class: "rl-menuitem is-danger", data: { turbo: false } do %><%= relay_icon("log-out") %>Sign out<% end %>
+        <%# /signout only routes on the root domain (RootDomain constraint);
+            the session cookie spans all subdomains, so signing out there
+            signs out everywhere. signout_path would 404 on a tenant host. %>
+        <%= link_to signout_url(subdomain: false), class: "rl-menuitem is-danger", data: { turbo: false } do %><%= relay_icon("log-out") %>Sign out<% end %>
       </div>
     </div>
   </span>

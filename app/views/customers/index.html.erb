@@ -217,7 +217,7 @@
                     </div>
                   <% elsif policy(customer).assign_to_self? %>
                     <%= button_to assign_to_self_customer_path(customer), method: :post,
-                          form: { class: "shrink-0" }, class: "rl-btn rl-btn--brand-soft rl-btn--sm" do %>
+                          form: { data: { turbo: false } }, class: "rl-btn rl-btn--brand-soft rl-btn--sm" do %>
                       Assign to me
                     <% end %>
                   <% else %>
@@ -250,9 +250,15 @@
                           <%= relay_icon("square-arrow-out-up-right", size: 15) %>Open workspace
                         <% end %>
                         <% if customer.phone.present? && feature_enabled?(:calling) %>
-                          <%= link_to calling_path(customer_id: customer.id, phone: customer.phone), class: "rl-menuitem" do %>
+                          <%# Start a real Twilio call in-context via the global callbar. %>
+                          <button type="button" class="rl-menuitem"
+                                  data-controller="relay--call-trigger"
+                                  data-action="click->relay--call-trigger#call"
+                                  data-relay--call-trigger-customer-id-value="<%= customer.id %>"
+                                  data-relay--call-trigger-name-value="<%= customer.name %>"
+                                  data-relay--call-trigger-phone-value="<%= customer.phone %>">
                             <%= relay_icon("phone", size: 15) %>Call now
-                          <% end %>
+                          </button>
                         <% end %>
                         <%= link_to edit_customer_path(customer), class: "rl-menuitem" do %>
                           <%= relay_icon("user-check", size: 15) %>Edit lead

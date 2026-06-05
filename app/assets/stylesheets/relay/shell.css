@@ -121,3 +121,62 @@
   --color-primary-text:         var(--brand-700);
   --color-bubble-out:           var(--brand-600);
 }
+
+/* Utility shims for the calling engine's Stimulus controller, which toggles
+   these (Tailwind-era) class names from JS. Scoped shims beat rewriting the
+   battle-tested Twilio JS. */
+.hidden { display: none !important; }
+.opacity-50 { opacity: 0.5; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* Global call bar (relay--callbar): the Mute button carries both mic and
+   mic-off glyphs; the controller toggles .is-muted to swap which shows. The
+   DS .callbtn.is-on highlight is applied by the controller for mute/keypad. */
+.callbtn .cb-mic-off { display: none; }
+.callbtn.is-muted .cb-mic { display: none; }
+.callbtn.is-muted .cb-mic-off { display: inline-flex; }
+
+/* Small uppercase eyebrow used by shared/_page_header and the ported money
+   pages. The page_header partial was authored against Tailwind's `.micro`;
+   define it once here so it renders identically under the relay layout. */
+.micro {
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-fg-3);
+}
+
+/* Utility shims for the Odoo proposal calculator (odoo_calculator_controller).
+   The controller toggles these (Tailwind-era) class names from JS on module
+   cards, deployment/hosting tier labels, and the submit button. Shimming them
+   beats rewriting the calculator JS, matching the .hidden/.opacity-50 approach.
+   cursor-pointer/cursor-not-allowed/opacity-50 are already defined above. */
+.cursor-pointer { cursor: pointer; }
+.module-card.selected,
+.border-red-500.bg-red-50 {
+  border-color: var(--color-primary) !important;
+  background: var(--color-primary-subtle) !important;
+}
+.border-red-500 { border-color: var(--color-primary) !important; }
+.bg-red-50 { background: var(--color-primary-subtle) !important; }
+/* The default (deselected) tier-label border the controller toggles back on. */
+.border-gray-100 { border-color: var(--color-border) !important; }
+
+/* Smart Detect status banner: odoo_calculator#showStatus rebuilds the element's
+   className from a Tailwind string (rounded/padding/text + a per-kind color set),
+   which clobbers any DS class. Shim just those utilities so the banner stays
+   padded and legible under the relay layout. */
+.rounded-lg { border-radius: var(--radius-md); }
+.px-3 { padding-left: 12px; padding-right: 12px; }
+.py-2 { padding-top: 8px; padding-bottom: 8px; }
+.text-xs { font-size: var(--text-sm); }
+.font-medium { font-weight: 600; }
+.bg-purple-50 { background: var(--color-primary-subtle); }
+.text-purple-700 { color: var(--color-primary-text); }
+.border-purple-100 { border: 1px solid var(--color-primary-border); }
+.bg-green-50 { background: var(--color-success-subtle); }
+.text-green-700 { color: var(--color-success-text); }
+.border-green-100 { border: 1px solid var(--color-success); }
+.text-red-700 { color: var(--color-danger-text); }
+.border-red-100 { border: 1px solid var(--color-danger); }

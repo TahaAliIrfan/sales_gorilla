@@ -1,70 +1,77 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
+<%# Customer group show — relay DS. Two panels: current members (remove) and
+    available customers (add). Both keep the existing add_customer (POST) /
+    remove_customer (DELETE) endpoints with customer_id. %>
+<% content_for :title, "#{@customer_group.name} — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <h1 class="text-2xl font-bold"><%= @customer_group.name %></h1>
+      <div class="pagehead__title"><%= @customer_group.name %></div>
       <% if @customer_group.description.present? %>
-        <p class="text-gray-600 mt-1"><%= @customer_group.description %></p>
+        <div class="pagehead__sub"><%= @customer_group.description %></div>
       <% end %>
     </div>
-    <div class="flex gap-2">
-      <%= link_to "Edit", edit_customer_group_path(@customer_group),
-          class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
-      <%= link_to "Back", customer_groups_path,
-          class: "bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded" %>
+    <div class="pagehead__actions">
+      <%= link_to edit_customer_group_path(@customer_group), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("pencil", size: 15) %>Edit
+      <% end %>
+      <%= link_to customer_groups_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back
+      <% end %>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Current Customers -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold">Customers in Group</h2>
-        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-          <%= @customers.count %>
-        </span>
+  <div class="grid grid-2" style="gap:var(--space-4);align-items:start">
+    <div class="sect">
+      <div class="sect__head">
+        <div class="sect__title grow">Customers in group</div>
+        <span class="rl-badge rl-badge--info"><%= @customers.count %></span>
       </div>
-
-      <% if @customers.any? %>
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          <% @customers.each do |customer| %>
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded hover:bg-gray-100">
-              <div>
-                <p class="font-medium text-gray-900"><%= customer.name %></p>
-                <p class="text-sm text-gray-500"><%= customer.email %></p>
+      <div class="sect__body">
+        <% if @customers.any? %>
+          <div class="col" style="gap:8px;max-height:24rem;overflow-y:auto">
+            <% @customers.each do |customer| %>
+              <div class="spread" style="padding:10px 12px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+                <div style="min-width:0">
+                  <div class="rl-cell-strong" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= customer.name %></div>
+                  <div class="muted rl-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= customer.email %></div>
+                </div>
+                <%= button_to remove_customer_customer_group_path(@customer_group, customer_id: customer.id), method: :delete,
+                      form: { data: { turbo_confirm: "Remove this customer from the group?" } },
+                      class: "rl-iconbtn rl-iconbtn--sm", title: "Remove" do %>
+                  <%= relay_icon("x", size: 15) %>
+                <% end %>
               </div>
-              <%= link_to "Remove", remove_customer_customer_group_path(@customer_group, customer_id: customer.id),
-                  method: :delete,
-                  data: { confirm: "Remove this customer from the group?" },
-                  class: "text-red-600 hover:text-red-800 text-sm" %>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="text-gray-500 text-center py-8">No customers in this group yet.</p>
-      <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="muted rl-sm" style="text-align:center;padding:24px 0">No customers in this group yet.</p>
+        <% end %>
+      </div>
     </div>
 
-    <!-- Available Customers -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-xl font-semibold mb-4">Add Customers</h2>
-
-      <% if @available_customers.any? %>
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          <% @available_customers.each do |customer| %>
-            <div class="flex justify-between items-center p-3 bg-gray-50 rounded hover:bg-gray-100">
-              <div>
-                <p class="font-medium text-gray-900"><%= customer.name %></p>
-                <p class="text-sm text-gray-500"><%= customer.email %></p>
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Add customers</div></div>
+      <div class="sect__body">
+        <% if @available_customers.any? %>
+          <div class="col" style="gap:8px;max-height:24rem;overflow-y:auto">
+            <% @available_customers.each do |customer| %>
+              <div class="spread" style="padding:10px 12px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+                <div style="min-width:0">
+                  <div class="rl-cell-strong" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= customer.name %></div>
+                  <div class="muted rl-sm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= customer.email %></div>
+                </div>
+                <%= button_to add_customer_customer_group_path(@customer_group, customer_id: customer.id), method: :post,
+                      class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+                  <%= relay_icon("plus", size: 14) %>Add
+                <% end %>
               </div>
-              <%= link_to "Add", add_customer_customer_group_path(@customer_group, customer_id: customer.id),
-                  method: :post,
-                  class: "bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded" %>
-            </div>
-          <% end %>
-        </div>
-      <% else %>
-        <p class="text-gray-500 text-center py-8">All customers are already in this group.</p>
-      <% end %>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="muted rl-sm" style="text-align:center;padding:24px 0">All customers are already in this group.</p>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>

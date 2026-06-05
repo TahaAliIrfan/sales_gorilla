@@ -1,5 +1,5 @@
 class CustomerGroupsController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :set_customer_group, only: [ :show, :edit, :update, :destroy, :add_customer, :remove_customer ]
 
   def index

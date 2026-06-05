@@ -1,0 +1,64 @@
+<%# app/views/relay/shared/_callbar.html.erb — global floating active-call bar.
+    Hidden until window CustomEvent "relay:call" fires. Wired to the REAL Twilio
+    Voice SDK via relay--callbar controller (token lazy-fetched on call start).
+    Recording is unconditional server-side (voice TwiML record-from-answer), so
+    REC is a status badge, not a toggle. caller_id is omitted — the engine's
+    voice action defaults it server-side (get_verified_caller_id). DS markup
+    mirrors docs/design/relay-app/project/app/shell.jsx CallBar. %>
+<div class="callbar"
+     hidden
+     data-controller="relay--callbar"
+     data-relay--callbar-token-url-value="<%= calling.token_path %>"
+     data-relay--callbar-voice-url-value="<%= calling.voice_path %>"
+     data-relay--callbar-store-url-value="<%= calling.store_customer_id_path %>"
+     data-action="relay:call@window->relay--callbar#start">
+  <div class="callbar__strip"></div>
+
+  <div class="callbar__head">
+    <span class="rl-avatar rl-avatar--lg rl-avatar--c1" data-relay--callbar-target="avatar"></span>
+    <div class="grow" style="min-width:0">
+      <div style="font-weight:700;font-size:var(--text-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"
+           data-relay--callbar-target="name"></div>
+      <div class="row" style="gap:8px">
+        <span class="mono muted" style="font-size:12px" data-relay--callbar-target="phone"></span>
+      </div>
+      <div class="row" style="gap:6px;margin-top:4px">
+        <span class="pulse-dot"></span>
+        <span class="mono" style="font-size:13px;font-weight:700" data-relay--callbar-target="timer">00:00</span>
+        <span class="rl-badge rl-badge--danger" style="margin-left:auto" data-relay--callbar-target="rec">
+          <%= relay_icon("circle", size: 9) %>REC
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <%# Status line (Connecting… / In call / Ended / error). Replaces the timer's
+      role only for transient states; the timer stays as the call duration. %>
+  <div class="row" style="gap:6px;padding:0 var(--space-4) var(--space-2);font-size:12px"
+       data-relay--callbar-target="status"></div>
+
+  <div class="callbar__keys" hidden data-relay--callbar-target="keys">
+    <% %w[1 2 3 4 5 6 7 8 9 * 0 #].each do |k| %>
+      <button type="button" class="callbar__key"
+              data-action="click->relay--callbar#sendDigit"
+              data-digit="<%= k %>"><%= k %></button>
+    <% end %>
+  </div>
+
+  <div class="callbar__actions">
+    <button type="button" class="callbtn" data-relay--callbar-target="muteBtn"
+            data-action="click->relay--callbar#toggleMute">
+      <%= relay_icon("mic", size: 18, css: "cb-mic") %>
+      <%= relay_icon("mic-off", size: 18, css: "cb-mic-off") %>
+      <span data-relay--callbar-target="muteLabel">Mute</span>
+    </button>
+    <button type="button" class="callbtn" data-relay--callbar-target="keypadBtn"
+            data-action="click->relay--callbar#toggleKeypad">
+      <%= relay_icon("grid-3x3", size: 18) %>Keypad
+    </button>
+    <button type="button" class="callbtn callbtn--end"
+            data-action="click->relay--callbar#end">
+      <%= relay_icon("phone-off", size: 18) %>End
+    </button>
+  </div>
+</div>

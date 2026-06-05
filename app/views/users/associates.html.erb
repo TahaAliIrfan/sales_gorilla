@@ -1,174 +1,89 @@
-<div class="px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 min-h-screen">
-  <!-- Header -->
-  <div class="mb-8">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-          <span class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl p-3 mr-4">
-            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          </span>
-          <%= current_user.admin? ? "All Associates" : "My Associates" %>
-        </h1>
-        <p class="mt-2 text-sm text-gray-600">
-          <%= current_user.admin? ? "All users with associate role in the system" : "Team members assigned to you as a manager" %>
-        </p>
-      </div>
-      <div>
-        <%= link_to users_path, class: "inline-flex items-center px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium" do %>
-          <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Users
-        <% end %>
-      </div>
+<% content_for :title, "#{current_user.admin? ? "All associates" : "My associates"} — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title"><%= current_user.admin? ? "All associates" : "My associates" %></div>
+      <div class="pagehead__sub"><%= current_user.admin? ? "All users with the associate role." : "Team members assigned to you as a manager." %></div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to users_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to users
+      <% end %>
     </div>
   </div>
 
   <% if notice.present? %>
-    <div class="mb-6 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg">
-      <div class="flex">
-        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-        </svg>
-        <p class="ml-3 text-sm text-green-700 font-medium"><%= notice %></p>
-      </div>
-    </div>
+    <div class="rl-sm" style="background:var(--color-success-subtle);border:1px solid var(--color-success-border);color:var(--color-success-text);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:var(--space-4)"><%= notice %></div>
   <% end %>
 
-  <!-- Stats Card -->
-  <div class="mb-8 bg-white shadow-lg rounded-xl p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900">Associates Overview</h2>
-        <p class="mt-1 text-sm text-gray-600">Total team members with associate role</p>
-      </div>
-      <div class="text-right">
-        <div class="text-4xl font-bold text-green-600"><%= @users.count %></div>
-        <div class="text-sm text-gray-500">Total Associates</div>
-      </div>
-    </div>
+  <div class="grid grid-3" style="margin-bottom:var(--space-5)">
+    <%= render "user_dashboard/stat", label: "Total associates", value: @users.count, sub: "with associate role", icon: "users" %>
   </div>
 
-  <!-- Associates List -->
-  <div class="bg-white shadow-lg rounded-xl overflow-hidden">
-    <div class="px-6 py-5 border-b border-gray-200">
-      <h3 class="text-xl font-semibold text-gray-900">Associates List</h3>
-      <p class="mt-1 text-sm text-gray-500">View and manage associate team members</p>
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title">Associates list</div>
+      <div class="muted rl-sm">View and manage associate team members</div>
     </div>
-    
-    <% if @users.any? %>
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Associate</th>
-              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Contact</th>
-              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Manager</th>
-              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Performance</th>
-              <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Assigned At</th>
-              <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <% @users.each do |user| %>
-              <% assignment = user.role_assignments.find_by(role: Role.associate) %>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-green-500 flex items-center justify-center text-white font-bold text-lg">
-                        <%= user.name.present? ? user.name.first.upcase : user.email.first.upcase %>
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-semibold text-gray-900">
-                        <%= link_to (user.name.presence || user.email), user_path(user), class: "hover:text-green-600 transition-colors" %>
-                      </div>
-                      <div class="text-xs text-gray-500">ID: <%= user.id %></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900"><%= user.email %></div>
-                  <% if user.phone_number.present? %>
-                    <div class="text-xs text-gray-500"><%= user.phone_number %></div>
-                  <% end %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <% if assignment&.assigned_by %>
-                    <div class="flex items-center">
-                      <div class="h-8 w-8 rounded-full bg-gradient-to-br from-purple-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm mr-2">
-                        <%= assignment.assigned_by.name.present? ? assignment.assigned_by.name.first.upcase : assignment.assigned_by.email.first.upcase %>
-                      </div>
-                      <div>
-                        <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), class: "text-sm text-blue-600 hover:text-blue-800 font-medium" %>
-                      </div>
-                    </div>
-                  <% else %>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                      System
-                    </span>
-                  <% end %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                      <%= user.customers.count %> customers
-                    </span>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                      <%= user.deals.count %> deals
-                    </span>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <% if assignment %>
-                    <div class="flex items-center">
-                      <svg class="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <%= time_ago_in_words(assignment.created_at) %> ago
-                    </div>
-                  <% else %>
-                    -
-                  <% end %>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <div class="flex items-center justify-end space-x-2">
-                    <%= link_to user_path(user), class: "inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium" do %>
-                      <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                      View
-                    <% end %>
-                    <% if current_user.admin? || (current_user.manager? && current_user.associates.include?(user)) %>
-                      <%= link_to user_path(user), class: "inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-xs font-medium" do %>
-                        <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Manage
-                      <% end %>
-                    <% end %>
-                  </div>
-                </td>
+    <div class="sect__body--flush">
+      <% if @users.any? %>
+        <div class="rl-table-wrap">
+          <table class="rl-table">
+            <thead>
+              <tr>
+                <th>Associate</th>
+                <th>Contact</th>
+                <th>Manager</th>
+                <th>Performance</th>
+                <th>Assigned at</th>
+                <th style="text-align:right"></th>
               </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% else %>
-      <div class="px-6 py-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No associates found</h3>
-        <p class="mt-1 text-sm text-gray-500">
+            </thead>
+            <tbody>
+              <% @users.each_with_index do |user, i| %>
+                <% assignment = user.role_assignments.find_by(role: Role.associate) %>
+                <tr>
+                  <td>
+                    <div class="row" style="gap:10px">
+                      <span class="rl-avatar rl-avatar--sm rl-avatar--c<%= (i % 6) + 1 %>"><%= (user.name.presence || user.email).first.upcase %></span>
+                      <div>
+                        <div class="rl-cell-strong"><%= link_to (user.name.presence || user.email), user_path(user), style: "color:inherit" %></div>
+                        <div class="muted" style="font-size:11px">ID: <%= user.id %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="rl-sm"><%= user.email %></div>
+                    <% if user.phone_number.present? %><div class="muted" style="font-size:11px"><%= user.phone_number %></div><% end %>
+                  </td>
+                  <td class="rl-sm">
+                    <% if assignment&.assigned_by %>
+                      <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), style: "color:var(--color-primary-text)" %>
+                    <% else %>
+                      <span class="rl-badge rl-badge--neutral">System</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="row" style="gap:6px">
+                      <span class="rl-badge rl-badge--info"><%= user.customers.count %> customers</span>
+                      <span class="rl-badge rl-badge--success"><%= user.deals.count %> deals</span>
+                    </div>
+                  </td>
+                  <td class="muted rl-sm"><%= assignment ? "#{time_ago_in_words(assignment.created_at)} ago" : "-" %></td>
+                  <td style="text-align:right">
+                    <%= link_to "View", user_path(user), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="muted rl-sm" style="text-align:center;padding:var(--space-8)">
           <%= current_user.admin? ? "There are no associates in the system yet." : "You don't have any associates assigned to you yet." %>
-        </p>
-      </div>
-    <% end %>
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>

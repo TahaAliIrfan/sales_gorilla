@@ -1,0 +1,59 @@
+<% content_for :title, "Schedule follow-up — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Schedule follow-up</div>
+      <div class="pagehead__sub">For <%= @customer.name %></div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to customer_path(@customer), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to customer
+      <% end %>
+    </div>
+  </div>
+
+  <div class="sect" style="max-width:560px">
+    <div class="sect__body">
+      <%= form_with url: customer_followups_path(@customer), method: :post, class: "col", html: { style: "gap:var(--space-4)" } do |form| %>
+        <div class="grid grid-2">
+          <div class="rl-field">
+            <label class="rl-label" for="followup_date">Follow-up date</label>
+            <%= form.date_field "followup[date]", class: "rl-input" %>
+          </div>
+          <div class="rl-field">
+            <label class="rl-label" for="followup_time">Follow-up time</label>
+            <%= form.time_field "followup[time]", class: "rl-input" %>
+          </div>
+        </div>
+
+        <div class="rl-field">
+          <label class="rl-label" for="followup_notes">Notes</label>
+          <%= form.text_area "followup[notes]", rows: 4, class: "rl-textarea" %>
+          <p class="rl-help">Notes are included in the calendar event and the to-do.</p>
+        </div>
+
+        <% if current_user&.google_auth_configured? %>
+          <label class="rl-check">
+            <%= form.check_box "followup[add_to_calendar]", checked: true %>
+            <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+            <span>
+              <span class="rl-label" style="display:inline">Add to Google Calendar</span>
+              <span class="rl-help" style="display:block;margin-top:2px">Add this follow-up to your Google Calendar.</span>
+            </span>
+          </label>
+        <% else %>
+          <div class="rl-sm" style="background:var(--color-warning-subtle);border:1px solid var(--color-warning-border);color:var(--color-warning-text);border-radius:var(--radius-md);padding:12px 14px">
+            <b>Google Calendar integration</b>
+            <div style="margin-top:4px">Your Google account is not yet configured for calendar integration. The follow-up will be created as a task only.</div>
+          </div>
+        <% end %>
+
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <%= link_to "Cancel", customer_path(@customer), class: "rl-btn rl-btn--secondary" %>
+          <%= form.submit "Schedule follow-up", class: "rl-btn rl-btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

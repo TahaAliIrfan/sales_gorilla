@@ -1,0 +1,97 @@
+<%# Relay customer multi-select used by both _form (new campaign) and show
+    (add individual customers). Preserves the campaign_customer_selector
+    Stimulus contract exactly: the controller element, the searchInput /
+    leadSourceFilter / selectAllCheckbox / selectedCount / customerItem targets,
+    the per-row data-customer-* attributes, and the change/input actions. The
+    controller toggles the `hidden` class on each customerItem <tr>.
+
+    locals:
+      customers           - collection of selectable customers
+      checkbox_name       - name attribute for the row checkboxes
+      checkbox_id_prefix  - id prefix so labels/ids stay unique on the page
+%>
+<div data-controller="campaign-customer-selector">
+  <div class="sect" style="margin-bottom:var(--space-4)">
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <div class="rl-field">
+          <label class="rl-label">Search</label>
+          <input type="text"
+                 class="rl-input"
+                 placeholder="Search by name, email, or phone…"
+                 data-campaign-customer-selector-target="searchInput"
+                 data-action="input->campaign-customer-selector#filter">
+        </div>
+        <div class="rl-field">
+          <label class="rl-label">Lead source</label>
+          <select class="rl-select"
+                  data-campaign-customer-selector-target="leadSourceFilter"
+                  data-action="change->campaign-customer-selector#filter">
+            <option value="">All lead sources</option>
+            <% Customer::LEAD_SOURCES.keys.each do |source| %>
+              <option value="<%= source %>"><%= source %></option>
+            <% end %>
+          </select>
+        </div>
+      </div>
+
+      <div class="spread" style="margin-top:var(--space-3);padding-top:var(--space-3);border-top:1px solid var(--color-border)">
+        <label class="rl-check">
+          <%= check_box_tag "select_all", "1", false,
+                data: {
+                  campaign_customer_selector_target: "selectAllCheckbox",
+                  action: "change->campaign-customer-selector#toggleSelectAll"
+                } %>
+          <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+          <span><span class="rl-label" style="display:inline">Select all visible</span></span>
+        </label>
+        <div class="muted rl-sm">
+          Selected: <b class="tnum" data-campaign-customer-selector-target="selectedCount">0</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect__body--flush">
+      <div class="rl-table-scroll" style="max-height:24rem;overflow-y:auto">
+        <table class="rl-table">
+          <thead>
+            <tr>
+              <th style="width:3rem"></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Lead source</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% customers.each do |customer| %>
+              <tr data-campaign-customer-selector-target="customerItem"
+                  data-customer-name="<%= customer.name || '' %>"
+                  data-customer-email="<%= customer.email || '' %>"
+                  data-customer-phone="<%= customer.phone || '' %>"
+                  data-customer-lead-source="<%= customer.lead_source || '' %>">
+                <td>
+                  <%= check_box_tag checkbox_name, customer.id, false,
+                        id: "#{checkbox_id_prefix}#{customer.id}",
+                        data: { action: "change->campaign-customer-selector#updateSelectedCount change->campaign-customer-selector#updateSelectAllState" } %>
+                </td>
+                <td><div class="rl-cell-strong"><%= customer.name || "N/A" %></div></td>
+                <td class="rl-sm muted"><%= customer.email || "N/A" %></td>
+                <td class="rl-sm muted mono"><%= customer.phone || "N/A" %></td>
+                <td>
+                  <% if customer.lead_source.present? %>
+                    <span class="rl-badge rl-badge--info"><%= customer.lead_source %></span>
+                  <% else %>
+                    <span class="muted rl-sm">N/A</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

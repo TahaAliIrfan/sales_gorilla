@@ -1,47 +1,17 @@
-<div class="container mx-auto px-4 py-6">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold">Edit Role: <%= @role.name %></h1>
-  </div>
+<% content_for :title, "Edit #{@role.name} — #{current_organization&.name}" %>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden p-6">
-    <%= form_with(model: @role, class: "space-y-4") do |form| %>
-      <% if @role.errors.any? %>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-          <h2><%= pluralize(@role.errors.count, "error") %> prohibited this role from being saved:</h2>
-          <ul class="list-disc list-inside">
-            <% @role.errors.full_messages.each do |message| %>
-              <li><%= message %></li>
-            <% end %>
-          </ul>
-        </div>
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Edit role</div>
+      <div class="pagehead__sub"><%= @role.name %></div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to roles_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back
       <% end %>
-
-      <div>
-        <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
-      </div>
-
-      <div>
-        <%= form.label :key, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :key, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
-        <p class="mt-1 text-sm text-gray-500">Use a simple identifier like "admin", "manager", etc.</p>
-      </div>
-
-      <div>
-        <%= form.label :description, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :description, rows: 3, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
-      </div>
-
-      <div>
-        <%= form.label :hierarchy_level, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.number_field :hierarchy_level, min: 0, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" %>
-        <p class="mt-1 text-sm text-gray-500">Higher numbers indicate higher privileges (e.g., 100 for Admin, 50 for Manager, 10 for Associate)</p>
-      </div>
-
-      <div class="flex items-center space-x-4">
-        <%= form.submit "Update Role", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" %>
-        <%= link_to "Cancel", roles_path, class: "text-gray-500 hover:text-gray-700" %>
-      </div>
-    <% end %>
+    </div>
   </div>
+
+  <div style="max-width:680px"><%= render "form", role: @role %></div>
 </div>

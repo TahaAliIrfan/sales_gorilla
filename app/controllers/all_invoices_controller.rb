@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class AllInvoicesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
 
   def index

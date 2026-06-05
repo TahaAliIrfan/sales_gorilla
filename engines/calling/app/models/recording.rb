@@ -26,7 +26,14 @@ class Recording < ApplicationRecord
   end
 
   def latest_ai_analysis
+    # The AiAnalysis model/association was never shipped to this engine. Guard
+    # so recordings#show (and anything else calling this) renders instead of
+    # raising NameError when the constant/association is absent.
+    return nil unless defined?(AiAnalysis)
+
     ai_analyses.order(created_at: :desc).first
+  rescue NameError
+    nil
   end
 
   private

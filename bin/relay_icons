@@ -9,7 +9,7 @@ ICONS=(
   sunrise users message-square layers megaphone bar-chart-3 receipt settings
   chevrons-left chevrons-right chevron-up chevron-down search plus user-plus
   circle-dollar-sign check-square upload phone bell shield users-2 user
-  user-cog plug log-out check check-circle-2 alert-circle info x calculator
+  user-cog plug log-out check check-circle-2 alert-circle info x calculator phone-off
   palette inbox hammer
   list-checks trophy target trending-up trending-down message-circle mail
   calendar zap activity
@@ -25,6 +25,9 @@ ICONS=(
   users-round loader send square pencil copy calendar-check
   filter git-fork award
   external-link eye credit-card link alert-triangle hourglass
+  mic mic-off grid-3x3
+  trash-2
+  lock frown dollar-sign refresh-cw minus
 )
 
 for name in "${ICONS[@]}"; do

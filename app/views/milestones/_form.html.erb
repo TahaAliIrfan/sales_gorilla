@@ -1,87 +1,88 @@
-<%= form_with model: [customer, milestone], url: milestone.persisted? ? customer_milestone_path(customer, milestone) : customer_milestones_path(customer), method: milestone.persisted? ? :patch : :post, class: "space-y-6" do |f| %>
+<%# Milestone form — relay DS. Preserves the milestone params (name, total_amount,
+    schedule_type, currency, notes) and the nested milestone_items fields_for with
+    its add/remove vanilla-JS contract: #milestone-items container, #add-milestone-item
+    button, #milestone-item-template, .milestone-item-row / .remove-milestone-item /
+    .destroy-checkbox hooks. The script is kept verbatim. %>
+<%= form_with model: [customer, milestone],
+      url: milestone.persisted? ? customer_milestone_path(customer, milestone) : customer_milestones_path(customer),
+      method: milestone.persisted? ? :patch : :post,
+      class: "col", html: { style: "gap:var(--space-5)" } do |f| %>
   <% if milestone.errors.any? %>
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-      <ul class="list-disc list-inside">
-        <% milestone.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
+    <%= render "settings/errors", record: milestone %>
   <% end %>
 
-  <div class="grid grid-cols-2 gap-4">
-    <div>
-      <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :name, class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "e.g., Project Alpha" %>
-    </div>
-    <div>
-      <%= f.label :total_amount, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.number_field :total_amount, step: 0.01, class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "0.00" %>
-    </div>
-    <div>
-      <%= f.label :schedule_type, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.select :schedule_type, Milestone::SCHEDULE_TYPES.map { |k, v| [v, k] }, {}, class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-    </div>
-    <div>
-      <%= f.label :currency, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :currency, class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "USD" %>
-    </div>
-  </div>
-
-  <div>
-    <%= f.label :notes, class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= f.text_area :notes, rows: 3, class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-  </div>
-
-  <div>
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-sm font-medium text-gray-700">Payment Schedule Items</h3>
-      <button type="button" id="add-milestone-item" class="text-sm text-blue-600 hover:text-blue-800 font-medium">+ Add Item</button>
-    </div>
-    <div id="milestone-items" class="space-y-3">
-      <%= f.fields_for :milestone_items do |item_f| %>
-        <div class="milestone-item-row flex gap-4 items-end p-3 bg-gray-50 rounded-lg">
-          <div class="flex-1">
-            <%= item_f.label :description, "Description", class: "block text-xs font-medium text-gray-500 mb-1" %>
-            <%= item_f.text_field :description, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "e.g., Design Phase" %>
-          </div>
-          <div class="w-32">
-            <%= item_f.label :amount, class: "block text-xs font-medium text-gray-500 mb-1" %>
-            <%= item_f.number_field :amount, step: 0.01, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "0" %>
-          </div>
-          <div class="w-40">
-            <%= item_f.label :due_date, "Due Date", class: "block text-xs font-medium text-gray-500 mb-1" %>
-            <%= item_f.date_field :due_date, class: "block w-full rounded-lg border-gray-300 shadow-sm" %>
-          </div>
-          <div class="flex items-center">
-            <% if milestone.persisted? %>
-              <%= item_f.check_box :_destroy, class: "rounded border-gray-300 hidden destroy-checkbox" %>
-            <% end %>
-            <button type="button" class="remove-milestone-item text-sm text-red-600 hover:text-red-800 font-medium">Remove</button>
-          </div>
+  <div class="sect">
+    <div class="sect__head"><div class="sect__title">Milestone details</div></div>
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <%= render "shared/relay_field", f: f, field: :name, placeholder: "e.g. Project Alpha", autofocus: milestone.new_record? %>
+        <div class="rl-field">
+          <%= f.label :total_amount, class: "rl-label" %>
+          <%= f.number_field :total_amount, step: 0.01, class: "rl-input mono", placeholder: "0.00" %>
         </div>
-      <% end %>
+        <%= render "shared/relay_field", f: f, field: :schedule_type, type: "select",
+              options: Milestone::SCHEDULE_TYPES.map { |k, v| [v, k] } %>
+        <%= render "shared/relay_field", f: f, field: :currency, placeholder: "USD" %>
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: f, field: :notes, type: "textarea", rows: 3 %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title grow">Payment schedule items</div>
+      <button type="button" id="add-milestone-item" class="rl-btn rl-btn--secondary rl-btn--sm">
+        <%= relay_icon("plus", size: 14) %>Add item
+      </button>
+    </div>
+    <div class="sect__body">
+      <div id="milestone-items" class="col" style="gap:10px">
+        <%= f.fields_for :milestone_items do |item_f| %>
+          <div class="milestone-item-row row" style="gap:12px;align-items:flex-end;padding:12px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+            <div class="grow">
+              <%= item_f.label :description, "Description", class: "rl-label" %>
+              <%= item_f.text_field :description, class: "rl-input", placeholder: "e.g. Design Phase" %>
+            </div>
+            <div style="width:140px">
+              <%= item_f.label :amount, class: "rl-label" %>
+              <%= item_f.number_field :amount, step: 0.01, class: "rl-input mono", placeholder: "0" %>
+            </div>
+            <div style="width:170px">
+              <%= item_f.label :due_date, "Due date", class: "rl-label" %>
+              <%= item_f.date_field :due_date, class: "rl-input mono" %>
+            </div>
+            <div class="row" style="align-items:center;height:38px">
+              <% if milestone.persisted? %>
+                <%= item_f.check_box :_destroy, class: "hidden destroy-checkbox" %>
+              <% end %>
+              <button type="button" class="remove-milestone-item rl-btn rl-btn--destructive-ghost rl-btn--sm">Remove</button>
+            </div>
+          </div>
+        <% end %>
+      </div>
     </div>
   </div>
 
   <template id="milestone-item-template">
     <%= f.fields_for :milestone_items, MilestoneItem.new, child_index: "NEW_ITEM_INDEX" do |item_f| %>
-      <div class="milestone-item-row flex gap-4 items-end p-3 bg-gray-50 rounded-lg">
+      <div class="milestone-item-row row" style="gap:12px;align-items:flex-end;padding:12px;background:var(--color-surface-2);border-radius:var(--radius-md)">
         <%= item_f.hidden_field :position, value: "NEW_POSITION" %>
-        <div class="flex-1">
-          <%= item_f.label :description, "Description", class: "block text-xs font-medium text-gray-500 mb-1" %>
-          <%= item_f.text_field :description, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "e.g., Design Phase" %>
+        <div class="grow">
+          <%= item_f.label :description, "Description", class: "rl-label" %>
+          <%= item_f.text_field :description, class: "rl-input", placeholder: "e.g. Design Phase" %>
         </div>
-        <div class="w-32">
-          <%= item_f.label :amount, class: "block text-xs font-medium text-gray-500 mb-1" %>
-          <%= item_f.number_field :amount, step: 0.01, class: "block w-full rounded-lg border-gray-300 shadow-sm", placeholder: "0" %>
+        <div style="width:140px">
+          <%= item_f.label :amount, class: "rl-label" %>
+          <%= item_f.number_field :amount, step: 0.01, class: "rl-input mono", placeholder: "0" %>
         </div>
-        <div class="w-40">
-          <%= item_f.label :due_date, "Due Date", class: "block text-xs font-medium text-gray-500 mb-1" %>
-          <%= item_f.date_field :due_date, class: "block w-full rounded-lg border-gray-300 shadow-sm" %>
+        <div style="width:170px">
+          <%= item_f.label :due_date, "Due date", class: "rl-label" %>
+          <%= item_f.date_field :due_date, class: "rl-input mono" %>
         </div>
-        <div class="flex items-center">
-          <button type="button" class="remove-milestone-item text-sm text-red-600 hover:text-red-800 font-medium">Remove</button>
+        <div class="row" style="align-items:center;height:38px">
+          <button type="button" class="remove-milestone-item rl-btn rl-btn--destructive-ghost rl-btn--sm">Remove</button>
         </div>
       </div>
     <% end %>
@@ -118,8 +119,10 @@
   })();
   </script>
 
-  <div class="flex gap-3 pt-4">
-    <%= f.submit milestone.persisted? ? "Update Milestone" : "Create Milestone", class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium cursor-pointer" %>
-    <%= link_to "Cancel", milestone.persisted? ? customer_milestone_path(customer, milestone) : customer_milestones_path(customer), class: "px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium" %>
+  <div class="row" style="justify-content:flex-end;gap:8px">
+    <%= link_to "Cancel", milestone.persisted? ? customer_milestone_path(customer, milestone) : customer_milestones_path(customer),
+          class: "rl-btn rl-btn--secondary" %>
+    <%= f.submit (milestone.persisted? ? "Update milestone" : "Create milestone"),
+          class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
   </div>
 <% end %>

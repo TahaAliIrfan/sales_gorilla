@@ -1,119 +1,96 @@
-<div class="container mx-auto px-4 py-6">
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold">Manager Dashboard</h1>
-    <p class="text-gray-600">Overview of your associates' performance</p>
+<% content_for :title, "Manager dashboard — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Manager dashboard</div>
+      <div class="pagehead__sub">Overview of your associates' performance over the last 30 days.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to root_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Today
+      <% end %>
+    </div>
   </div>
 
   <% if @associates.empty? %>
-    <div class="bg-white shadow-md rounded-lg p-6 mb-6 text-center">
-      <p class="text-gray-600">You don't have any associates assigned yet.</p>
-      <% if current_user.admin? %>
-        <p class="mt-2">
-          <%= link_to "Manage Users", users_path, class: "text-blue-600 hover:text-blue-800" %> to assign associates to managers.
-        </p>
-      <% end %>
+    <div class="sect">
+      <div class="sect__body">
+        <div class="empty">
+          <span class="empty__ic"><%= relay_icon("users", size: 26) %></span>
+          <div class="rl-h4" style="margin-bottom:4px">No associates assigned</div>
+          <div class="muted rl-sm" style="max-width:360px">You don't have any associates assigned yet.</div>
+          <% if current_user.admin? %>
+            <div style="margin-top:16px"><%= link_to "Manage users", users_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+          <% end %>
+        </div>
+      </div>
     </div>
   <% else %>
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Associates</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @associates.count %></p>
-      </div>
-      
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Customers</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_customers %></p>
-        <p class="text-sm text-green-600">+<%= @total_new_customers %> in 30 days</p>
-      </div>
-      
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Total Recordings</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_recordings %></p>
-        <p class="text-sm text-gray-500">Last 30 days</p>
-      </div>
-      
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Active Deals</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_active_deals %></p>
-      </div>
-      
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Won Deals</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800"><%= @total_won_deals %></p>
-        <p class="text-sm text-gray-500">Last 30 days</p>
-      </div>
-      
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <h3 class="text-xs uppercase text-gray-500 font-medium">Deal Value</h3>
-        <p class="mt-2 text-2xl font-bold text-gray-800">$<%= number_with_delimiter(@total_deal_value.to_i) %></p>
-        <p class="text-sm text-gray-500">Last 30 days</p>
-      </div>
+    <div class="grid grid-3" style="margin-bottom:var(--space-5)">
+      <%= render "user_dashboard/stat", label: "Total associates", value: @associates.count, sub: "on your team", icon: "users" %>
+      <%= render "user_dashboard/stat", label: "Total customers", value: @total_customers, sub: "+#{@total_new_customers} in 30 days", icon: "user-check" %>
+      <%= render "user_dashboard/stat", label: "Total recordings", value: @total_recordings, sub: "last 30 days", icon: "mic" %>
+      <%= render "user_dashboard/stat", label: "Active deals", value: @total_active_deals, sub: "in pipeline", icon: "trending-up" %>
+      <%= render "user_dashboard/stat", label: "Won deals", value: @total_won_deals, sub: "last 30 days", icon: "trophy" %>
+      <%= render "user_dashboard/stat", label: "Deal value", value: relay_money(@total_deal_value), sub: "won · last 30 days", icon: "circle-dollar-sign" %>
     </div>
-    
-    <!-- Associates Performance Table -->
-    <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h2 class="text-lg font-semibold">Associates Performance</h2>
-        <p class="text-sm text-gray-600">Key metrics for each associate in the last 30 days</p>
+
+    <div class="sect">
+      <div class="sect__head">
+        <div class="sect__title">Associates performance</div>
+        <div class="muted rl-sm">Key metrics for each associate in the last 30 days</div>
       </div>
-      
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associate</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customers</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activities</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recordings</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tasks</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deals</th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <% @associates.each do |associate| %>
-              <% metrics = @associate_metrics[associate.id] %>
+      <div class="sect__body--flush">
+        <div class="rl-table-wrap">
+          <table class="rl-table">
+            <thead>
               <tr>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center">
-                    <div>
-                      <div class="text-sm font-medium text-gray-900">
-                        <%= link_to associate.name, user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
-                      </div>
-                      <div class="text-sm text-gray-500"><%= associate.email %></div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900"><%= metrics[:customers_count] %> total</div>
-                  <div class="text-sm text-green-600">+<%= metrics[:new_customers] %> new</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <%= metrics[:recent_activities] %> activities
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <%= metrics[:recordings_count] %> calls
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900"><%= metrics[:completed_tasks] %> completed</div>
-                  <div class="text-sm text-yellow-600"><%= metrics[:pending_tasks] %> pending</div>
-                  <div class="text-sm text-red-600"><%= metrics[:overdue_tasks] %> overdue</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm text-gray-900"><%= metrics[:active_deals] %> active</div>
-                  <div class="text-sm text-green-600"><%= metrics[:won_deals] %> won ($<%= number_with_delimiter(metrics[:deal_value].to_i) %>)</div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div class="space-x-2">
-                    <%= link_to "View", user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
-                    <%= link_to "Manage Roles", user_path(associate), class: "text-indigo-600 hover:text-indigo-900" %>
-                  </div>
-                </td>
+                <th>Associate</th>
+                <th>Customers</th>
+                <th>Activities</th>
+                <th>Recordings</th>
+                <th>Tasks</th>
+                <th>Deals</th>
+                <th style="text-align:right"></th>
               </tr>
-            <% end %>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <% @associates.each_with_index do |associate, i| %>
+                <% metrics = @associate_metrics[associate.id] %>
+                <tr>
+                  <td>
+                    <div class="row" style="gap:10px">
+                      <span class="rl-avatar rl-avatar--sm rl-avatar--c<%= (i % 6) + 1 %>"><%= (associate.name.presence || associate.email).first.upcase %></span>
+                      <div>
+                        <div class="rl-cell-strong"><%= link_to associate.name, user_path(associate), style: "color:inherit" %></div>
+                        <div class="muted" style="font-size:11px"><%= associate.email %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="rl-sm"><%= metrics[:customers_count] %> total</div>
+                    <div class="rl-sm" style="color:var(--color-success-text)">+<%= metrics[:new_customers] %> new</div>
+                  </td>
+                  <td class="mono"><%= metrics[:recent_activities] %></td>
+                  <td class="mono"><%= metrics[:recordings_count] %></td>
+                  <td>
+                    <div class="rl-sm"><%= metrics[:completed_tasks] %> completed</div>
+                    <div class="rl-sm" style="color:var(--color-warning-text, var(--color-fg-3))"><%= metrics[:pending_tasks] %> pending</div>
+                    <div class="rl-sm" style="color:var(--color-danger-text)"><%= metrics[:overdue_tasks] %> overdue</div>
+                  </td>
+                  <td>
+                    <div class="rl-sm"><%= metrics[:active_deals] %> active</div>
+                    <div class="rl-sm" style="color:var(--color-success-text)"><%= metrics[:won_deals] %> won (<%= relay_money(metrics[:deal_value]) %>)</div>
+                  </td>
+                  <td style="text-align:right">
+                    <%= link_to "View", user_path(associate), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   <% end %>

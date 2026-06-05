@@ -1,207 +1,78 @@
-<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="md:flex md:items-center md:justify-between mb-6">
-    <div class="flex-1 min-w-0">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        <% if params[:action] == 'my_tasks' %>
-          My Tasks
-        <% else %>
-          All Tasks
-        <% end %>
-      </h2>
+<%
+  my = params[:action] == "my_tasks"
+  base_path = my ? my_tasks_tasks_path : tasks_path
+  page_title = my ? "My tasks" : "All tasks"
+  status_tabs = [ %w[pending Pending], %w[in_progress In\ progress], %w[completed Completed], %w[cancelled Cancelled] ]
+%>
+<% content_for :title, "#{page_title} — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title"><%= page_title %></div>
+      <div class="pagehead__sub">Track and complete your assigned work.</div>
     </div>
-    <div class="mt-4 flex md:mt-0 md:ml-4">
-      <%= link_to new_task_path, class: "ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-        <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-        </svg>
-        New Task
+    <div class="pagehead__actions">
+      <%= link_to new_task_path(from: (my ? "my_tasks" : nil)), class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("plus", size: 15) %>New task
       <% end %>
     </div>
   </div>
 
-  <!-- Status Tabs -->
-  <div class="border-b border-gray-200 mb-6">
-    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-      <% 
-        # Define URLs for each tab
-        if params[:action] == 'my_tasks'
-          today_url = my_tasks_tasks_path(due_date: 'today')
-          pending_url = my_tasks_tasks_path(status: 'pending')
-          in_progress_url = my_tasks_tasks_path(status: 'in_progress')
-          completed_url = my_tasks_tasks_path(status: 'completed')
-          cancelled_url = my_tasks_tasks_path(status: 'cancelled')
-        else
-          pending_url = tasks_path(status: 'pending')
-          in_progress_url = tasks_path(status: 'in_progress')
-          completed_url = tasks_path(status: 'completed')
-          cancelled_url = tasks_path(status: 'cancelled')
-        end
-      %>
-      
-      <%= link_to "Pending", pending_url, class: "#{params[:status] == 'pending' ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
-      
-      <%= link_to "In Progress", in_progress_url, class: "#{params[:status] == 'in_progress' ? 'border-purple-500 text-purple-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
-      
-      <%= link_to "Completed", completed_url, class: "#{params[:status] == 'completed' ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
-      
-      <%= link_to "Cancelled", cancelled_url, class: "#{params[:status] == 'cancelled' ? 'border-gray-500 text-gray-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'} whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" %>
-    </nav>
-  </div>
-
-  <!-- Sleek Filters Section -->
-  <div class="mb-6 flex flex-wrap items-center gap-3">
-    <%= form_with url: params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path, method: :get, data: { turbo_frame: "_top" }, class: "flex flex-wrap items-center gap-3" do |f| %>
-      <% if params[:status].present? %>
-        <%= f.hidden_field :status, value: params[:status] %>
-      <% end %>
-      
-      <% if params[:due_date].present? %>
-        <%= f.hidden_field :due_date, value: params[:due_date] %>
-      <% end %>
-      
-      <div class="inline-flex items-center">
-        <%= f.select :priority, 
-                    options_for_select(Task::PRIORITIES.map { |k, v| [v, k] }, params[:priority]), 
-                    { include_blank: "Priority" }, 
-                    class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
-      </div>
-      
-      <% if current_user.admin? && params[:action] == 'index' %>
-        <div class="inline-flex items-center">
-          <%= f.select :user_id, 
-                      options_from_collection_for_select(User.all, :id, :name, params[:user_id]), 
-                      { include_blank: "Assignee" }, 
-                      class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
-        </div>
-      <% end %>
-      
-      <% unless params[:due_date] == 'today' && params[:action] == 'my_tasks' && !params[:status].present? %>
-        <div class="inline-flex items-center">
-          <%= f.select :due_date, 
-                      options_for_select([
-                        ["Today", "today"],
-                        ["Upcoming", "upcoming"],
-                        ["Overdue", "overdue"]
-                      ], params[:due_date]), 
-                      { include_blank: "Due Date" }, 
-                      class: "block pl-3 pr-10 py-2 text-sm border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md" %>
-        </div>
-      <% end %>
-      
-      <%= f.button type: "submit", class: "inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-        </svg>
-        Filter
-      <% end %>
-      
-      <% if params[:priority].present? || params[:user_id].present? || (params[:due_date].present? && !(params[:due_date] == 'today' && params[:action] == 'my_tasks' && !params[:status].present?)) %>
-        <%= link_to params[:status].present? ? (params[:action] == 'my_tasks' ? my_tasks_tasks_path(status: params[:status]) : tasks_path(status: params[:status])) : (params[:action] == 'my_tasks' ? my_tasks_tasks_path : tasks_path), class: "inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Clear
-        <% end %>
-      <% end %>
+  <%# Status tabs — server-side links preserving the status/due_date contract %>
+  <div class="rl-tabs" style="margin-bottom:var(--space-4)">
+    <% status_tabs.each do |val, label| %>
+      <%= link_to label,
+            (my ? my_tasks_tasks_path(status: val) : tasks_path(status: val)),
+            class: "rl-tab #{'is-active' if params[:status] == val}" %>
     <% end %>
   </div>
 
-  <!-- Tasks List -->
-  <div class="bg-white shadow overflow-hidden sm:rounded-md">    
-    <ul class="divide-y divide-gray-200">
-      <% if @tasks.present? && @tasks.any? %>
-        <% @tasks.each_with_index do |task, index| %>
-          <li>
-            <div class="px-4 py-4 sm:px-6 hover:bg-gray-50">              
-              <div class="flex items-center justify-between">
-                <div class="flex items-center">
-                  <div class="min-w-0 flex-1 flex items-center">
-                    <% if params[:action] == 'my_tasks' %>
-                      <div class="flex-shrink-0 mr-2">
-                        <span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
-                          <%= index + 1 %>
-                        </span>
-                      </div>
-                    <% end %>
-                    <div class="flex-shrink-0">
-                      <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        <%= case task.priority
-                            when 'High' then 'bg-red-100 text-red-800'
-                            when 'Medium' then 'bg-yellow-100 text-yellow-800'
-                            when 'Low' then 'bg-green-100 text-green-800'
-                            end %>">
-                        <%= task.priority %>
-                      </span>
-                    </div>
-                    <div class="min-w-0 flex-1 px-4">
-                      <div>
-                        <div class="flex">
-                          <p class="text-sm font-medium text-blue-600 truncate">
-                            <%= link_to task.title, task_path(task) %>
-                          </p>
-                          <% if task.completed? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                              Completed
-                            </span>
-                          <% elsif task.overdue? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                              Overdue
-                            </span>
-                          <% elsif task.due_today? && task.pending? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              Due Today
-                            </span>
-                          <% elsif task.pending? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                              Pending
-                            </span>
-                          <% elsif task.in_progress? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                              In Progress
-                            </span>
-                          <% elsif task.cancelled? %>
-                            <span class="ml-2 flex-shrink-0 inline-block px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 rounded-full">
-                              Cancelled
-                            </span>
-                          <% end %>
-                        </div>
-                        <div class="text-sm text-gray-500">
-                          Due: <%= task.due_date.strftime("%b %d, %Y at %I:%M %p") %>
-                          <% if task.customer.present? %>
-                            | Customer: <%= link_to task.customer.name, customer_path(task.customer), class: "text-blue-600 hover:text-blue-900" %>
-                          <% end %>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="ml-5 flex-shrink-0 flex">
-                  <% unless task.completed? %>
-                    <%= button_to complete_task_path(task, return_to: 'current_page'), method: :patch, class: "mr-2 rounded-full p-1 bg-green-100 hover:bg-green-200 text-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    <% end %>
-                  <% else %>
-                    <span class="mr-2 rounded-full p-1 bg-gray-100 text-gray-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-green-500">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    </span>
-                  <% end %>
-                  <%= link_to edit_task_path(task), class: "inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-                    Edit
-                  <% end %>
-                </div>
-              </div>
-            </div>
-          </li>
-        <% end %>
-      <% else %>
-        <li class="px-4 py-6 sm:px-6 text-center text-gray-500">
-          No tasks found matching your criteria.
-        </li>
+  <%# Filters — same params as legacy (priority, user_id for admin index, due_date) %>
+  <%= form_with url: base_path, method: :get, data: { turbo_frame: "_top" },
+        class: "row row--wrap", html: { style: "margin-bottom:var(--space-4);gap:8px" } do |f| %>
+    <% if params[:status].present? %><%= f.hidden_field :status, value: params[:status] %><% end %>
+    <% if params[:due_date].present? %><%= f.hidden_field :due_date, value: params[:due_date] %><% end %>
+
+    <%= f.select :priority, options_for_select(Task::PRIORITIES.map { |k, v| [ v, k ] }, params[:priority]),
+          { include_blank: "Priority" }, class: "rl-select rl-input--sm", style: "width:auto" %>
+
+    <% if current_user.admin? && params[:action] == "index" %>
+      <%= f.select :user_id, options_from_collection_for_select(User.all, :id, :name, params[:user_id]),
+            { include_blank: "Assignee" }, class: "rl-select rl-input--sm", style: "width:auto" %>
+    <% end %>
+
+    <% unless params[:due_date] == "today" && my && params[:status].blank? %>
+      <%= f.select :due_date,
+            options_for_select([ %w[Today today], %w[Upcoming upcoming], %w[Overdue overdue] ], params[:due_date]),
+            { include_blank: "Due date" }, class: "rl-select rl-input--sm", style: "width:auto" %>
+    <% end %>
+
+    <%= f.button type: "submit", class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+      <%= relay_icon("filter", size: 14) %>Filter
+    <% end %>
+
+    <% if params[:priority].present? || params[:user_id].present? || (params[:due_date].present? && !(params[:due_date] == "today" && my && params[:status].blank?)) %>
+      <%= link_to (params[:status].present? ? base_path + "?status=#{params[:status]}" : base_path),
+            class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+        <%= relay_icon("x", size: 14) %>Clear
       <% end %>
-    </ul>
+    <% end %>
+  <% end %>
+
+  <div class="sect">
+    <div class="sect__body--flush">
+      <% if @tasks.present? && @tasks.any? %>
+        <div class="rl-list">
+          <% @tasks.each do |task| %>
+            <%= render "tasks/row", task: task, return_to: "current_page" %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="muted" style="text-align:center;padding:var(--space-8)">
+          No tasks found matching your criteria.
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>

@@ -1,11 +1,12 @@
 class CustomerFollowupsController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :set_customer
 
   def new
-    # Since we're now using a modal, redirect back to the customer page
-    redirect_to customer_path(params[:customer_id])
+    # Renders the relay scheduling page. (The same form is also available as a
+    # modal via customer_followups/_modal, driven by followup_modal_controller.)
+    authorize @customer, :update?
   end
 
   def create

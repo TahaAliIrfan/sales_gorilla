@@ -1,7 +1,7 @@
 class ManagerController < ApplicationController
   before_action :authenticate_user!
   before_action :require_manager
-  layout "tenant"
+  layout "relay"
 
   def dashboard
     @associates = current_user.associates

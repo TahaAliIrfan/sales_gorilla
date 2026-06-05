@@ -1,6 +1,7 @@
 # Lets owners/admins customize their organization's branding: display name,
 # primary/accent colors, and logo. Operates on the current organization.
 class BrandingController < TenantController
+  layout "relay"
   before_action :set_organization
 
   def edit

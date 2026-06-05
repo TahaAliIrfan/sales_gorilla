@@ -611,14 +611,12 @@ class DealsController < ApplicationController
 
   private
 
-  # Relay shell adoption (Phase 5): the pipeline board (index/my_deals) uses the
-  # relay layout. show serves the deal drawer as a turbo-frame partial
-  # (layout:false); its full-page HTML and the new/edit/create/update forms keep
-  # the legacy tenant layout until a later phase ports them.
-  RELAY_ACTIONS = %w[index my_deals].freeze
-
+  # Relay shell adoption: every deals action renders on the relay layout. show
+  # still serves the deal drawer as a turbo-frame partial (layout:false) when
+  # requested inside the "deal_drawer" frame; otherwise it renders the full
+  # relay page, which reuses the same detail partial as the drawer.
   def choose_layout
-    RELAY_ACTIONS.include?(action_name) ? "relay" : "tenant"
+    "relay"
   end
 
   def set_deal

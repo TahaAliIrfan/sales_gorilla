@@ -1,96 +1,112 @@
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <div class="mb-6">
-    <%= link_to customer_invoices_path(@customer), class: "text-sm text-gray-600 hover:text-gray-900 flex items-center mb-2" do %>
-      <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-      </svg>
-      Back to Invoices
-    <% end %>
+<%# Invoice detail — relay DS. Keeps Edit / Download PDF / Mark Paid (mark_paid
+    endpoint, pending? gate), the client public link + copy, payment proof, payment
+    link, and the subtotal/tax/total summary. %>
+<% content_for :title, "Invoice #{@invoice.invoice_number}" %>
+<% paid = @invoice.paid? %>
+
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__sub" style="margin-bottom:6px">
+        <%= link_to customer_invoices_path(@customer), class: "row", style: "gap:4px;color:var(--color-fg-2)" do %>
+          <%= relay_icon("arrow-left", size: 14) %>Back to invoices
+        <% end %>
+      </div>
+      <div class="pagehead__title row" style="gap:10px;align-items:center">
+        Invoice <span class="mono muted">· <%= @invoice.invoice_number %></span>
+        <% if paid %>
+          <span class="rl-badge rl-badge--success"><%= relay_icon("check-circle-2", size: 11) %>Paid</span>
+        <% else %>
+          <span class="rl-badge rl-badge--info"><%= relay_icon("hourglass", size: 11) %>Pending</span>
+        <% end %>
+      </div>
+      <div class="pagehead__sub"><%= @invoice.project_name.presence || @invoice.milestone&.name %></div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to edit_customer_invoice_path(@customer, @invoice), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("pencil", size: 15) %>Edit
+      <% end %>
+      <%= link_to download_pdf_customer_invoice_path(@customer, @invoice), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("download", size: 15) %>Download PDF
+      <% end %>
+      <% if @invoice.pending? %>
+        <%= button_to mark_paid_customer_invoice_path(@customer, @invoice), method: :patch, class: "rl-btn rl-btn--primary" do %>
+          <%= relay_icon("check", size: 15) %>Mark paid
+        <% end %>
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-    <div class="flex justify-between items-start mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Invoice <%= @invoice.invoice_number %></h1>
-        <p class="text-gray-600 mt-1"><%= @invoice.project_name.presence || @invoice.milestone.name %></p>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= @invoice.paid? ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' %>">
-          <%= @invoice.status.titleize %>
-        </span>
-        <%= link_to "Edit", edit_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-medium text-sm" %>
-        <%= link_to "Download PDF", download_pdf_customer_invoice_path(@customer, @invoice), class: "inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm" %>
-        <% if @invoice.pending? %>
-          <%= button_to "Mark Paid", mark_paid_customer_invoice_path(@customer, @invoice), method: :patch, class: "inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm" %>
-        <% end %>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-6 mb-8">
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 uppercase mb-2">Bill To</h3>
-        <p class="font-medium text-gray-900"><%= @customer.name %></p>
-        <%= @customer.company if @customer.company.present? %><br>
-        <%= @customer.email if @customer.email.present? %><br>
-        <%= @customer.address if @customer.address.present? %>
-      </div>
-      <div>
-        <p class="text-sm text-gray-500">Issue Date: <span class="font-medium text-gray-900"><%= @invoice.issue_date.strftime('%B %d, %Y') %></span></p>
-        <p class="text-sm text-gray-500 mt-1">Due Date: <span class="font-medium text-gray-900"><%= @invoice.due_date.strftime('%B %d, %Y') %></span></p>
-      </div>
-    </div>
-
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
-          <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200">
-        <% @invoice.invoice_line_items.each do |item| %>
-          <tr>
-            <td class="px-4 py-3 text-sm text-gray-900"><%= item.description %></td>
-            <td class="px-4 py-3 text-sm text-gray-900 text-right"><%= number_to_currency(item.amount) %></td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-
-    <% if @invoice.payment_proof.attached? %>
-      <div class="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-        <p class="text-sm font-medium text-emerald-800">Payment proof submitted</p>
-        <p class="text-xs text-emerald-700 mt-1">Submitted on <%= @invoice.payment_proof.created_at.strftime('%B %d, %Y at %l:%M %p') %></p>
-        <%= link_to "View / Download", rails_blob_path(@invoice.payment_proof, disposition: "attachment"), target: "_blank", class: "inline-flex items-center mt-2 text-sm font-medium text-emerald-700 hover:text-emerald-900" %>
-      </div>
-    <% end %>
-
-    <% if @invoice.public_token.present? %>
-      <div class="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
-        <p class="text-sm font-medium text-gray-700 mb-1">Client view link</p>
-        <p class="text-xs text-gray-500 mb-2">Share this link with the customer to view the invoice, download PDF, and upload payment proof.</p>
-        <div class="flex flex-wrap items-center gap-2">
-          <code class="text-sm text-slate-700 bg-white px-3 py-1.5 rounded border border-slate-200 flex-1 min-w-0 truncate"><%= public_invoice_url(@invoice.public_token) %></code>
-          <button type="button" data-url="<%= public_invoice_url(@invoice.public_token) %>" onclick="navigator.clipboard.writeText(this.dataset.url); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded text-sm font-medium">Copy</button>
+  <div class="sect">
+    <div class="sect__body">
+      <div class="grid grid-2" style="margin-bottom:24px">
+        <div>
+          <div class="muted" style="margin-bottom:6px;font-size:var(--text-2xs);font-weight:700;letter-spacing:.06em;text-transform:uppercase">Bill to</div>
+          <div class="rl-cell-strong"><%= @customer.name %></div>
+          <div class="muted rl-sm">
+            <%= @customer.company if @customer.company.present? %>
+            <% if @customer.email.present? %><br><%= @customer.email %><% end %>
+            <% if @customer.address.present? %><br><%= @customer.address %><% end %>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="rl-sm muted">Issue date <span class="mono" style="color:var(--color-fg)"><%= @invoice.issue_date.strftime("%B %-d, %Y") %></span></div>
+          <div class="rl-sm muted" style="margin-top:4px">Due date <span class="mono" style="color:var(--color-fg)"><%= @invoice.due_date.strftime("%B %-d, %Y") %></span></div>
         </div>
       </div>
-    <% end %>
 
-    <% if @invoice.payment_link.present? %>
-      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-        <p class="text-sm font-medium text-gray-700">Pay online <% if @invoice.payment_link_label.present? %>— <%= @invoice.payment_link_label %><% end %></p>
-        <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener", class: "text-blue-600 hover:text-blue-800 break-all" %>
+      <div class="rl-table-scroll">
+        <table class="rl-table">
+          <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+          <tbody>
+            <% @invoice.invoice_line_items.each do |item| %>
+              <tr><td><%= item.description %></td><td class="rl-cell-num"><%= relay_money(item.amount) %></td></tr>
+            <% end %>
+          </tbody>
+        </table>
       </div>
-    <% end %>
 
-    <div class="mt-6 flex justify-end">
-      <div class="w-48 space-y-2 text-right">
-        <p class="text-sm text-gray-600">Subtotal: <span class="font-medium"><%= number_to_currency(@invoice.subtotal) %></span></p>
+      <div style="margin-top:20px;margin-left:auto;width:260px">
+        <div class="spread" style="padding:6px 0"><span class="muted rl-sm">Subtotal</span><span class="mono"><%= relay_money(@invoice.subtotal) %></span></div>
         <% if @invoice.tax_amount.to_f > 0 %>
-          <p class="text-sm text-gray-600">Tax (<%= @invoice.tax_rate %>%): <span class="font-medium"><%= number_to_currency(@invoice.tax_amount) %></span></p>
+          <div class="spread" style="padding:6px 0"><span class="muted rl-sm">Tax (<%= @invoice.tax_rate %>%)</span><span class="mono"><%= relay_money(@invoice.tax_amount) %></span></div>
         <% end %>
-        <p class="text-lg font-bold text-gray-900">Total: <%= number_to_currency(@invoice.total) %></p>
+        <div class="spread" style="padding:12px 0 0;border-top:2px solid var(--color-border-strong);margin-top:6px">
+          <span class="rl-h4">Total</span><span class="rl-h4 mono"><%= relay_money(@invoice.total) %></span>
+        </div>
       </div>
     </div>
   </div>
+
+  <% if @invoice.payment_proof.attached? %>
+    <div class="sect"><div class="sect__body" style="background:var(--color-success-subtle);border-radius:var(--radius-lg)">
+      <div class="rl-cell-strong" style="color:var(--color-success-text)">Payment proof submitted</div>
+      <div class="muted rl-sm" style="margin-top:4px">Submitted on <%= @invoice.payment_proof.created_at.strftime("%B %-d, %Y at %l:%M %p") %></div>
+      <%= link_to rails_blob_path(@invoice.payment_proof, disposition: "attachment"), target: "_blank",
+            class: "rl-btn rl-btn--ghost rl-btn--sm", style: "margin-top:8px" do %>
+        <%= relay_icon("download", size: 14) %>View / Download
+      <% end %>
+    </div></div>
+  <% end %>
+
+  <% if @invoice.public_token.present? %>
+    <div class="sect"><div class="sect__body">
+      <div class="rl-cell-strong">Client view link</div>
+      <div class="muted rl-sm" style="margin:4px 0 12px">Share this link with the customer to view the invoice, download the PDF, and upload payment proof.</div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        <code class="rl-chip mono grow" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= public_invoice_url(@invoice.public_token) %></code>
+        <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                data-url="<%= public_invoice_url(@invoice.public_token) %>"
+                onclick="navigator.clipboard.writeText(this.dataset.url); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+      </div>
+    </div></div>
+  <% end %>
+
+  <% if @invoice.payment_link.present? %>
+    <div class="sect"><div class="sect__body">
+      <div class="rl-cell-strong">Pay online<% if @invoice.payment_link_label.present? %> — <%= @invoice.payment_link_label %><% end %></div>
+      <%= link_to @invoice.payment_link, @invoice.payment_link, target: "_blank", rel: "noopener",
+            class: "rl-sm", style: "color:var(--color-primary-text);word-break:break-all" %>
+    </div></div>
+  <% end %>
 </div>

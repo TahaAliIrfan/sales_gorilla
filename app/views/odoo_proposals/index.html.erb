@@ -1,109 +1,77 @@
-<div class="bg-white border-b border-gray-200 px-6 py-5">
-  <div class="flex items-center justify-between">
+<%# Odoo proposals — relay DS card grid. Keeps View / PDF / Delete actions and the
+    module chips, deployment pill, and PKR cost summary. %>
+<% content_for :title, "Odoo proposals — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">Odoo Proposals</h1>
-      <p class="text-sm text-gray-500 mt-1">Manage Odoo ERP proposals for your clients</p>
+      <div class="pagehead__title">Odoo proposals</div>
+      <div class="pagehead__sub">Manage Odoo ERP proposals for your clients.</div>
     </div>
-    <%= link_to new_odoo_proposal_path, class: "inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-      </svg>
-      New Proposal
-    <% end %>
+    <div class="pagehead__actions">
+      <%= link_to new_odoo_proposal_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("plus", size: 15) %>New proposal
+      <% end %>
+    </div>
   </div>
-</div>
 
-<div class="p-6">
   <% if @proposals.empty? %>
-    <div class="text-center py-20">
-      <div class="mx-auto w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mb-4">
-        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
+    <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+      <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-primary-subtle);color:var(--color-primary-text)"><%= relay_icon("file-text", size: 22) %></span>
+      <div class="rl-h4">No proposals yet</div>
+      <div class="muted rl-sm" style="margin-top:6px">Create your first Odoo ERP proposal using the calculator.</div>
+      <div style="margin-top:16px">
+        <%= link_to new_odoo_proposal_path, class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+          <%= relay_icon("plus", size: 14) %>Create proposal
+        <% end %>
       </div>
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">No proposals yet</h3>
-      <p class="text-gray-500 text-sm mb-6">Create your first Odoo ERP proposal using the calculator.</p>
-      <%= link_to "Create Proposal", new_odoo_proposal_path, class: "inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors" %>
-    </div>
+    </div></div>
   <% else %>
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="grid grid-3">
       <% @proposals.each do |proposal| %>
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5">
-          <!-- Header -->
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                </svg>
-              </div>
+        <div class="sect"><div class="sect__body">
+          <div class="spread" style="margin-bottom:12px">
+            <div class="row" style="gap:10px;align-items:center">
+              <span class="iccircle" style="background:var(--color-primary-subtle);color:var(--color-primary-text)"><%= relay_icon("building-2", size: 18) %></span>
               <div>
-                <h3 class="text-sm font-bold text-gray-900"><%= proposal.display_name %></h3>
-                <p class="text-xs text-gray-400"><%= proposal.created_at.strftime('%b %d, %Y') %></p>
+                <div class="rl-cell-strong"><%= proposal.display_name %></div>
+                <div class="muted rl-sm"><%= proposal.created_at.strftime("%b %-d, %Y") %></div>
               </div>
             </div>
-            <span class="text-xs px-2 py-1 rounded-full font-medium
-              <%= proposal.deployment_type == 'online' ? 'bg-blue-100 text-blue-700' :
-                  proposal.deployment_type == 'sh' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-gray-100 text-gray-700' %>">
-              <%= proposal.deployment_label %>
-            </span>
+            <span class="rl-badge rl-badge--info"><%= proposal.deployment_label %></span>
           </div>
 
-          <!-- Modules -->
-          <div class="mb-4">
-            <div class="flex flex-wrap gap-1">
-              <% proposal.selected_modules.first(5).each do |mod_key| %>
-                <% mod = OdooProposal::MODULES.values.flatten.find { |m| m[:key] == mod_key } %>
-                <% if mod %>
-                  <span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-700 font-medium"><%= mod[:label] %></span>
-                <% end %>
-              <% end %>
-              <% extra = proposal.selected_modules.size - 5 %>
-              <% if extra > 0 %>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">+<%= extra %> more</span>
-              <% end %>
-            </div>
+          <div class="row row--wrap" style="gap:6px;margin-bottom:14px">
+            <% proposal.selected_modules.first(5).each do |mod_key| %>
+              <% mod = OdooProposal::MODULES.values.flatten.find { |m| m[:key] == mod_key } %>
+              <% if mod %><span class="rl-chip"><%= mod[:label] %></span><% end %>
+            <% end %>
+            <% extra = proposal.selected_modules.size - 5 %>
+            <% if extra > 0 %><span class="rl-chip muted">+<%= extra %> more</span><% end %>
           </div>
 
-          <!-- Cost -->
-          <div class="bg-gray-50 rounded-lg px-4 py-3 mb-4">
-            <div class="flex justify-between items-center">
-              <span class="text-xs text-gray-500">Total Investment</span>
-              <span class="text-sm font-bold text-red-700">PKR <%= number_with_delimiter(proposal.total_cost) %></span>
-            </div>
-            <div class="flex justify-between items-center mt-1">
-              <span class="text-xs text-gray-400">Implementation</span>
-              <span class="text-xs text-gray-600">PKR <%= number_with_delimiter(proposal.implementation_fee) %></span>
-            </div>
+          <div style="padding:12px 14px;background:var(--color-surface-2);border-radius:var(--radius-md);margin-bottom:14px">
+            <div class="spread"><span class="muted rl-sm">Total investment</span><span class="mono" style="font-weight:700;color:var(--color-primary-text)">PKR <%= number_with_delimiter(proposal.total_cost) %></span></div>
+            <div class="spread" style="margin-top:4px"><span class="muted rl-sm">Implementation</span><span class="mono rl-sm">PKR <%= number_with_delimiter(proposal.implementation_fee) %></span></div>
             <% if proposal.annual_hosting_cost > 0 %>
-              <div class="flex justify-between items-center mt-1">
-                <span class="text-xs text-gray-400">Annual Hosting</span>
-                <span class="text-xs text-gray-600">PKR <%= number_with_delimiter(proposal.annual_hosting_cost) %></span>
-              </div>
+              <div class="spread" style="margin-top:4px"><span class="muted rl-sm">Annual hosting</span><span class="mono rl-sm">PKR <%= number_with_delimiter(proposal.annual_hosting_cost) %></span></div>
             <% end %>
           </div>
 
-          <!-- Actions -->
-          <div class="flex gap-2">
-            <%= link_to odoo_proposal_path(proposal), class: "flex-1 text-center text-xs font-medium py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors" do %>
-              View Details
+          <div class="row" style="gap:6px">
+            <%= link_to odoo_proposal_path(proposal), class: "rl-btn rl-btn--primary rl-btn--sm grow", style: "justify-content:center" do %>
+              <%= relay_icon("eye", size: 14) %>View details
             <% end %>
-            <%= link_to download_pdf_odoo_proposal_path(proposal), class: "flex items-center justify-center gap-1 text-xs font-medium py-2 px-3 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700 transition-colors" do %>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              PDF
+            <%= link_to download_pdf_odoo_proposal_path(proposal), class: "rl-iconbtn rl-iconbtn--sm", title: "Download PDF" do %>
+              <%= relay_icon("download", size: 15) %>
             <% end %>
             <%= button_to odoo_proposal_path(proposal), method: :delete,
-                data: { confirm: "Delete this proposal?" },
-                class: "flex items-center justify-center py-2 px-3 rounded-lg border border-gray-200 hover:bg-red-50 hover:border-red-200 text-gray-400 hover:text-red-500 transition-colors" do %>
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
+                  form: { data: { turbo_confirm: "Delete this proposal?" } },
+                  class: "rl-iconbtn rl-iconbtn--sm", title: "Delete" do %>
+              <%= relay_icon("trash-2", size: 15) %>
             <% end %>
           </div>
-        </div>
+        </div></div>
       <% end %>
     </div>
   <% end %>

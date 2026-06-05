@@ -28,9 +28,16 @@
     </div>
     <div class="row" style="gap:6px">
       <% if calling_on && customer.phone.present? %>
-        <%= link_to calling.root_path(customer_id: customer.id), data: { turbo: false }, class: "rl-btn rl-btn--primary rl-btn--sm grow" do %>
+        <%# Dispatch relay:call → the global callbar starts a real Twilio call
+            in-context (no navigation). %>
+        <button type="button" class="rl-btn rl-btn--primary rl-btn--sm grow"
+                data-action="click->relay--call-trigger#call"
+                data-controller="relay--call-trigger"
+                data-relay--call-trigger-customer-id-value="<%= customer.id %>"
+                data-relay--call-trigger-name-value="<%= customer.name %>"
+                data-relay--call-trigger-phone-value="<%= customer.phone %>">
           <%= relay_icon("phone", size: 14) %>Call
-        <% end %>
+        </button>
       <% elsif customer.phone.present? %>
         <%= link_to "tel:#{customer.phone}", class: "rl-btn rl-btn--primary rl-btn--sm grow" do %>
           <%= relay_icon("phone", size: 14) %>Call

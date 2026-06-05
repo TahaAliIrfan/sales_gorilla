@@ -1,0 +1,48 @@
+<%# A single task row in DS .rl-listitem form. locals:
+      task        - the Task
+      return_to   - value passed to tasks#complete for the post-complete redirect
+                    (e.g. "current_page", "my_tasks_dashboard"); optional
+      show_edit   - whether to render the edit link (default true) %>
+<%
+  return_to ||= nil
+  show_edit = local_assigns.fetch(:show_edit, true)
+  pill  = relay_priority_pill(task.priority)
+  state = relay_task_state_pill(task)
+  done  = task.completed? || task.cancelled?
+%>
+<div class="rl-listitem">
+  <% if done %>
+    <span class="rl-check" style="opacity:.6">
+      <span class="rl-box" style="background:var(--color-success);border-color:var(--color-success);color:var(--color-on-primary)"><%= relay_icon("check", size: 13) %></span>
+    </span>
+  <% else %>
+    <%= button_to complete_task_path(task, return_to: return_to),
+          method: :patch, class: "rl-check", title: "Mark complete" do %>
+      <span class="rl-box"></span>
+    <% end %>
+  <% end %>
+
+  <div class="rl-listitem__main">
+    <div class="rl-listitem__title">
+      <%= link_to task.title.presence || "Untitled task", task_path(task), class: "clickable" %>
+    </div>
+    <div class="rl-listitem__sub row" style="gap:8px">
+      <span class="mono"><%= relay_due_label(task.due_date) %></span>
+      <% if task.customer.present? %>
+        <span style="width:3px;height:3px;border-radius:9px;background:var(--color-fg-4)"></span>
+        <%= link_to task.customer.name, customer_path(task.customer), class: "clickable", style: "color:var(--color-primary-text);font-weight:600" %>
+      <% end %>
+    </div>
+  </div>
+
+  <span class="rl-pill <%= state[:klass] %>"><i class="rl-dot"></i><%= state[:label] %></span>
+  <span class="rl-badge" style="background:transparent">
+    <i style="width:7px;height:7px;border-radius:9px;background:<%= pill[:dot] %>"></i><%= pill[:label] %>
+  </span>
+
+  <% if show_edit %>
+    <%= link_to edit_task_path(task), class: "rl-iconbtn rl-iconbtn--sm", title: "Edit task" do %>
+      <%= relay_icon("pencil", size: 15) %>
+    <% end %>
+  <% end %>
+</div>

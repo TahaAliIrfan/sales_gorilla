@@ -1,5 +1,5 @@
 class PipelinesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :set_pipeline, only: [ :show, :edit, :update, :destroy, :assign_users ]
   after_action :verify_authorized

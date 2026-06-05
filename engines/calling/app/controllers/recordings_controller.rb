@@ -4,7 +4,7 @@ class RecordingsController < ApplicationController
   before_action :require_login
   before_action :require_calling_enabled
   before_action :require_transcription_enabled, only: :transcript
-  layout "tenant"
+  layout "relay"
   before_action :set_recording, only: [ :show, :transcript, :download ]
 
   after_action :verify_authorized, except: [ :index, :my_recordings ]
@@ -58,7 +58,10 @@ class RecordingsController < ApplicationController
   def show
     authorize @recording
     @latest_analysis = @recording.latest_ai_analysis
-    @analyses = @recording.ai_analyses.order(created_at: :desc)
+    # The AiAnalysis model was never shipped to this engine, so touching the
+    # ai_analyses association raises NameError. Guard the same way
+    # Recording#latest_ai_analysis does so the page renders (empty analyses).
+    @analyses = defined?(AiAnalysis) ? @recording.ai_analyses.order(created_at: :desc) : []
   end
 
   def download

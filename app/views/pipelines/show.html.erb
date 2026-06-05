@@ -1,95 +1,107 @@
-<div class="container mx-auto px-4 py-6">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-gray-900"><%= @pipeline.name %></h1>
-    <div class="flex space-x-2">
-      <%= link_to "Edit Pipeline", edit_pipeline_path(@pipeline), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
-      <%= link_to "Add Stage", new_pipeline_deal_stage_path(@pipeline), class: "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" %>
-      <%= link_to "Back to Pipelines", pipelines_path, class: "bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" %>
-    </div>
-  </div>
+<% content_for :title, "#{@pipeline.name} — #{current_organization&.name}" %>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-      <p class="text-gray-600"><%= @pipeline.description %></p>
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title"><%= @pipeline.name %></div>
+      <div class="pagehead__sub">Pipeline stages and user assignment.</div>
     </div>
-    
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">Statistics</h3>
-      <div class="space-y-2">
-        <p class="text-sm text-gray-600">Total Deals: <span class="font-semibold"><%= @deals_count %></span></p>
-        <p class="text-sm text-gray-600">Assigned Users: <span class="font-semibold"><%= @assigned_users.count %></span></p>
-        <p class="text-sm text-gray-600">Status: 
-          <% if @pipeline.active? %>
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Active</span>
-          <% else %>
-            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Inactive</span>
-          <% end %>
-        </p>
-      </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h3 class="text-lg font-semibold text-gray-900 mb-2">User Assignment</h3>
-      <%= form_with url: assign_users_pipeline_path(@pipeline), method: :patch, local: true, class: "space-y-2" do |form| %>
-        <div class="max-h-32 overflow-y-auto">
-          <% User.all.each do |user| %>
-            <label class="flex items-center space-x-2">
-              <%= check_box_tag "user_ids[]", user.id, @assigned_users.include?(user), class: "rounded border-gray-300" %>
-              <span class="text-sm text-gray-700"><%= user.name || user.email %></span>
-            </label>
-          <% end %>
-        </div>
-        <%= form.submit "Update Assignments", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm" %>
+    <div class="pagehead__actions">
+      <%= link_to pipelines_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back
+      <% end %>
+      <%= link_to new_pipeline_deal_stage_path(@pipeline), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("plus", size: 15) %>Add stage
+      <% end %>
+      <%= link_to edit_pipeline_path(@pipeline), class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("pencil", size: 15) %>Edit pipeline
       <% end %>
     </div>
   </div>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-900">Pipeline Stages</h2>
-    </div>
-    
-    <% if @deal_stages.any? %>
-      <div class="overflow-x-auto">
-        <div class="flex space-x-4 p-6">
-          <% @deal_stages.each_with_index do |stage, index| %>
-            <div class="flex-shrink-0 w-64 bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-              <div class="flex justify-between items-center mb-2">
-                <h3 class="font-semibold text-gray-900"><%= stage.name %></h3>
-                <span class="text-xs text-gray-500">Position <%= stage.position %></span>
-              </div>
-              
-              <% if stage.description.present? %>
-                <p class="text-sm text-gray-600 mb-3"><%= truncate(stage.description, length: 100) %></p>
-              <% end %>
-              
-              <div class="text-xs text-gray-500 mb-3">
-                Deals: <%= stage.deals.count %>
-              </div>
-              
-              <div class="flex space-x-1">
-                <%= link_to "Edit", edit_pipeline_deal_stage_path(@pipeline, stage), class: "text-xs bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded" %>
-                <%= link_to "Delete", pipeline_deal_stage_path(@pipeline, stage), method: :delete, 
-                      confirm: "Are you sure?", 
-                      class: "text-xs bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded" %>
-              </div>
-            </div>
-            
-            <% unless index == @deal_stages.length - 1 %>
-              <div class="flex-shrink-0 flex items-center">
-                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </div>
-            <% end %>
+  <div class="grid" style="grid-template-columns:1.4fr 1fr;align-items:start;gap:var(--space-5);margin-bottom:var(--space-5)">
+    <div class="col" style="gap:var(--space-5)">
+      <div class="sect">
+        <div class="sect__head"><div class="sect__title">Description</div></div>
+        <div class="sect__body">
+          <% if @pipeline.description.present? %>
+            <div class="rl-sm" style="white-space:pre-wrap;line-height:1.6"><%= @pipeline.description %></div>
+          <% else %>
+            <div class="muted rl-sm">No description provided.</div>
           <% end %>
         </div>
       </div>
-    <% else %>
-      <div class="text-center py-8">
-        <p class="text-gray-500">No stages found. <%= link_to "Add your first stage", new_pipeline_deal_stage_path(@pipeline), class: "text-blue-600 hover:text-blue-900" %>.</p>
+
+      <div class="sect">
+        <div class="sect__head"><div class="sect__title">Statistics</div></div>
+        <div class="sect__body">
+          <div class="kvline"><dt>Total deals</dt><dd class="mono"><%= @deals_count %></dd></div>
+          <div class="kvline"><dt>Assigned users</dt><dd class="mono"><%= @assigned_users.count %></dd></div>
+          <div class="kvline">
+            <dt>Status</dt>
+            <dd>
+              <% if @pipeline.active? %>
+                <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Active</span>
+              <% else %>
+                <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Inactive</span>
+              <% end %>
+            </dd>
+          </div>
+        </div>
       </div>
-    <% end %>
+    </div>
+
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title"><%= relay_icon("users", size: 18) %>User assignment</div></div>
+      <div class="sect__body">
+        <%= form_with url: assign_users_pipeline_path(@pipeline), method: :patch, class: "col", html: { style: "gap:var(--space-4)" } do |form| %>
+          <div class="col" style="gap:8px;max-height:240px;overflow-y:auto">
+            <% User.all.each do |user| %>
+              <label class="rl-check">
+                <%= check_box_tag "user_ids[]", user.id, @assigned_users.include?(user) %>
+                <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+                <span><%= user.name.presence || user.email %></span>
+              </label>
+            <% end %>
+          </div>
+          <%= form.submit "Update assignments", class: "rl-btn rl-btn--primary rl-btn--sm" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect__head"><div class="sect__title"><%= relay_icon("columns-2", size: 18) %>Pipeline stages</div></div>
+    <div class="sect__body">
+      <% if @deal_stages.any? %>
+        <div class="row row--wrap" style="gap:12px;align-items:stretch">
+          <% @deal_stages.each_with_index do |stage, index| %>
+            <div class="rl-card" style="width:240px;padding:14px">
+              <div class="spread" style="margin-bottom:6px">
+                <b><%= stage.name %></b>
+                <span class="rl-badge rl-badge--neutral">Pos <%= stage.position %></span>
+              </div>
+              <% if stage.description.present? %>
+                <p class="muted rl-sm" style="margin:0 0 10px"><%= truncate(stage.description, length: 100) %></p>
+              <% end %>
+              <div class="muted rl-xs" style="margin-bottom:10px"><%= stage.deals.count %> deals</div>
+              <div class="row" style="gap:6px">
+                <%= link_to "Edit", edit_pipeline_deal_stage_path(@pipeline, stage), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+                <%= button_to pipeline_deal_stage_path(@pipeline, stage), method: :delete,
+                      form: { data: { turbo_confirm: "Are you sure?" } },
+                      class: "rl-btn rl-btn--destructive-ghost rl-btn--sm" do %>Delete<% end %>
+              </div>
+            </div>
+            <% unless index == @deal_stages.length - 1 %>
+              <div class="row" style="align-items:center;color:var(--color-fg-4)"><%= relay_icon("chevron-right", size: 18) %></div>
+            <% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)">
+          No stages found. <%= link_to "Add your first stage", new_pipeline_deal_stage_path(@pipeline), style: "color:var(--color-primary-text)" %>.
+        </div>
+      <% end %>
+    </div>
   </div>
 </div>

@@ -1,5 +1,5 @@
 class MyTasksDashboardController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
 
   def index

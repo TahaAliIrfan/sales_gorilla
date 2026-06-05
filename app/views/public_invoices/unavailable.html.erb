@@ -1,21 +1,31 @@
-<div class="max-w-lg mx-auto">
-  <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-10 sm:p-12 text-center">
-    <div class="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center">
-      <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
+<%# Public, token-based, unauthenticated "invoice unavailable" page. Standalone
+    relay_public layout + DS — no Tailwind. Branding ramp comes from the layout via
+    public_invoice_organization. Keeps the @reason branching untouched. %>
+<% org = (public_invoice_organization if respond_to?(:public_invoice_organization)) %>
+<% content_for :title, "Invoice unavailable#{" — #{org.name}" if org&.name.present?}" %>
+
+<div class="pis-wrap">
+  <div class="sect pis-card">
+    <div class="sect__body" style="text-align:center;padding:48px 32px">
+      <span class="iccircle pis-ic"><%= relay_icon("lock", size: 26) %></span>
+      <div class="rl-h4" style="margin-top:16px">Information not available</div>
+      <p class="muted rl-sm" style="margin-top:8px;line-height:1.6">
+        <% case @reason %>
+        <% when :paid %>
+          This invoice has been marked as paid. Thank you for your payment.
+        <% when :expired %>
+          This invoice link has expired. Please contact us for a new payment link if you still need to pay.
+        <% else %>
+          This invoice is no longer accessible. If you believe this is an error, please contact us.
+        <% end %>
+      </p>
+      <p class="muted" style="margin-top:24px;font-size:var(--text-xs)"><%= org&.name || "Relay" %></p>
     </div>
-    <h1 class="text-xl font-bold text-slate-900 mb-2">Information Not Available</h1>
-    <p class="text-slate-600 text-sm leading-relaxed">
-      <% case @reason %>
-      <% when :paid %>
-        This invoice has been marked as paid. Thank you for your payment.
-      <% when :expired %>
-        This invoice link has expired. Please contact us for a new payment link if you still need to pay.
-      <% else %>
-        This invoice is no longer accessible. If you believe this is an error, please contact us.
-      <% end %>
-    </p>
-    <p class="mt-6 text-xs text-slate-400">Tecaudex</p>
   </div>
 </div>
+
+<style>
+  .pis-wrap { max-width: 480px; margin: 0 auto; padding: 80px 24px; }
+  .pis-card { box-shadow: var(--shadow-lg); }
+  .pis-ic { width: 56px; height: 56px; margin: 0 auto; background: var(--color-surface-2); color: var(--color-fg-3); }
+</style>

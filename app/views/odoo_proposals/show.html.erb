@@ -1,426 +1,286 @@
-<!-- Header -->
-<div class="bg-white border-b border-gray-200 px-6 py-5">
-  <div class="flex items-center justify-between">
+<%# Odoo proposal detail — relay DS. Preserves the full AI-narrative UX:
+    generate_narrative (POST), per-section regenerate_section (POST, section=…),
+    and update_narrative (PATCH) with the claude_summary / claude_rationale /
+    claude_next_steps fields and the claude_module_justifications[<key>] map.
+    Edit / Download-PDF / Delete keep their endpoints. %>
+<% content_for :title, "Proposal — #{@proposal.display_name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-        <%= link_to odoo_proposals_path, class: "hover:text-gray-800" do %>
-          ← Odoo Proposals
+      <div class="pagehead__sub" style="margin-bottom:6px">
+        <%= link_to odoo_proposals_path, class: "row", style: "gap:4px;color:var(--color-fg-2)" do %>
+          <%= relay_icon("arrow-left", size: 14) %>Odoo proposals
         <% end %>
       </div>
-      <h1 class="text-2xl font-bold text-gray-900">
-        Proposal for <%= @proposal.display_name %>
-      </h1>
-      <p class="text-sm text-gray-500 mt-1">Created <%= @proposal.created_at.strftime('%B %d, %Y') %></p>
+      <div class="pagehead__title">Proposal for <%= @proposal.display_name %></div>
+      <div class="pagehead__sub">Created <%= @proposal.created_at.strftime("%B %-d, %Y") %></div>
     </div>
-    <div class="flex gap-3">
-      <%= link_to edit_odoo_proposal_path(@proposal),
-          class: "inline-flex items-center gap-2 px-4 py-2.5 border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-        </svg>
-        Edit
+    <div class="pagehead__actions">
+      <%= link_to edit_odoo_proposal_path(@proposal), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("pencil", size: 15) %>Edit
       <% end %>
-      <%= link_to download_pdf_odoo_proposal_path(@proposal),
-          class: "inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        Download PDF Proposal
+      <%= link_to download_pdf_odoo_proposal_path(@proposal), class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("download", size: 15) %>Download PDF proposal
       <% end %>
       <%= button_to odoo_proposal_path(@proposal), method: :delete,
-          data: { confirm: "Delete this proposal?" },
-          class: "inline-flex items-center gap-2 px-4 py-2.5 border border-red-200 hover:bg-red-50 text-red-600 text-sm font-medium rounded-lg transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        Delete
+            form: { data: { turbo_confirm: "Delete this proposal?" } }, class: "rl-btn rl-btn--destructive" do %>
+        <%= relay_icon("trash-2", size: 15) %>Delete
       <% end %>
     </div>
   </div>
-</div>
 
-<div class="p-6 grid grid-cols-3 gap-6">
-
-  <!-- LEFT: Main Details -->
-  <div class="col-span-2 space-y-6">
-
-    <!-- Client & Deployment -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">Project Overview</h2>
-      <div class="grid grid-cols-3 gap-6">
-        <div>
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Client</p>
-          <p class="text-base font-bold text-gray-900"><%= @proposal.display_name %></p>
-          <% if @proposal.customer %>
-            <p class="text-xs text-gray-400 mt-0.5"><%= @proposal.customer.email %></p>
-          <% end %>
-        </div>
-        <div>
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Deployment</p>
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
-            <%= @proposal.deployment_type == 'online' ? 'bg-blue-100 text-blue-700' :
-                @proposal.deployment_type == 'sh' ? 'bg-yellow-100 text-yellow-700' :
-                'bg-gray-100 text-gray-700' %>">
-            <%= @proposal.deployment_label %>
-          </span>
-        </div>
-        <div>
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">Users</p>
-          <p class="text-base font-bold text-gray-900"><%= @proposal.num_users %> users</p>
-        </div>
-      </div>
-      <% if (tier_info = @proposal.current_tier_info) %>
-        <div class="mt-5 pt-5 border-t border-gray-100">
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">
-            <%= @proposal.deployment_type == 'sh' ? 'Odoo.sh Platform Plan' : 'Hosting Tier' %>
-          </p>
-          <div class="flex items-center gap-4">
-            <div class="bg-red-50 rounded-lg px-4 py-2">
-              <p class="text-sm font-bold text-red-700"><%= tier_info[:label] %></p>
-              <p class="text-xs text-red-500"><%= tier_info[:specs] %></p>
-            </div>
-            <p class="text-xs text-gray-500"><%= tier_info[:users] %></p>
-          </div>
-        </div>
-      <% end %>
-
-      <% if @proposal.industry.present? || @proposal.company_size.present? || @proposal.pain_points_array.any? %>
-        <div class="mt-5 pt-5 border-t border-gray-100">
-          <p class="text-xs text-gray-400 font-medium uppercase tracking-wide mb-3">Business Context</p>
-          <div class="grid grid-cols-2 gap-3 mb-3">
-            <% if @proposal.industry.present? %>
-              <div>
-                <p class="text-xs text-gray-400">Industry</p>
-                <p class="text-sm font-semibold text-gray-800"><%= @proposal.industry %></p>
-              </div>
-            <% end %>
-            <% if @proposal.company_size.present? %>
-              <div>
-                <p class="text-xs text-gray-400">Company Size</p>
-                <p class="text-sm font-semibold text-gray-800"><%= @proposal.company_size %></p>
-              </div>
-            <% end %>
-          </div>
-          <% if @proposal.pain_points_array.any? %>
-            <p class="text-xs text-gray-400 mb-1.5">Pain Points</p>
-            <div class="flex flex-wrap gap-1.5">
-              <% @proposal.pain_points_array.each do |pp| %>
-                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
-                  <%= pp %>
-                </span>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-
-    <!-- Selected Modules -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-5">
-        Selected Modules
-        <span class="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700 text-xs font-bold">
-          <%= @proposal.selected_modules.size + @proposal.custom_module_details.size %>
-        </span>
-      </h2>
-      <% OdooProposal::MODULES.each do |category, mods| %>
-        <% selected_in_cat = mods.select { |m| @proposal.selected_modules.include?(m[:key]) } %>
-        <% next if selected_in_cat.empty? %>
-        <div class="mb-5">
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3"><%= category %></h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <% selected_in_cat.each do |mod| %>
-              <div class="flex items-start gap-3 p-3 bg-red-50 rounded-lg border border-red-100">
-                <div class="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm font-semibold text-gray-800"><%= mod[:label] %></p>
-                    <p class="text-xs font-bold text-red-600">PKR <%= number_with_delimiter(mod[:impl_cost]) %></p>
-                  </div>
-                  <p class="text-xs text-gray-500 mt-0.5"><%= mod[:description] %></p>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-
-      <% if @proposal.custom_module_details.any? %>
-        <div class="mb-1">
-          <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-            Custom Modules
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700">AI / Custom Dev</span>
-          </h3>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <% @proposal.custom_module_details.each do |cm| %>
-              <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg border border-purple-100">
-                <div class="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                  </svg>
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm font-semibold text-gray-800"><%= cm[:label] %></p>
-                    <div class="text-right">
-                      <p class="text-xs font-bold text-purple-700">PKR <%= number_with_delimiter(cm[:impl_cost]) %></p>
-                      <% if cm[:hours].to_i.positive? %>
-                        <p class="text-[10px] text-purple-400">~<%= cm[:hours] %> hrs</p>
-                      <% end %>
-                    </div>
-                  </div>
-                  <% if cm[:description].present? %>
-                    <p class="text-xs text-gray-500 mt-0.5"><%= cm[:description] %></p>
-                  <% end %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    </div>
-
-    <!-- Notes -->
-    <% if @proposal.notes.present? %>
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-3">Notes</h2>
-        <p class="text-sm text-gray-600 leading-relaxed"><%= @proposal.notes %></p>
-      </div>
-    <% end %>
-
-    <!-- AI Narrative -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-purple-500 to-red-500 flex items-center justify-center">
-            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-            </svg>
+  <div class="grid" style="grid-template-columns:2fr 1fr;gap:var(--space-4);align-items:start">
+    <%# ── LEFT ─────────────────────────────────────────────────────────── %>
+    <div class="col" style="gap:var(--space-4)">
+      <%# Project overview %>
+      <div class="sect"><div class="sect__body">
+        <div class="micro" style="margin-bottom:16px">Project overview</div>
+        <div class="grid grid-3">
+          <div>
+            <div class="micro" style="margin-bottom:4px">Client</div>
+            <div class="rl-cell-strong"><%= @proposal.display_name %></div>
+            <% if @proposal.customer %><div class="muted rl-sm"><%= @proposal.customer.email %></div><% end %>
           </div>
           <div>
-            <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">AI-Generated Narrative</h2>
-            <% if @proposal.narrative_generated? %>
-              <p class="text-xs text-gray-400">Last generated <%= time_ago_in_words(@proposal.narrative_generated_at) %> ago — Powered by Claude</p>
-            <% else %>
-              <p class="text-xs text-gray-400">Generate a personalised proposal narrative using Claude AI</p>
-            <% end %>
+            <div class="micro" style="margin-bottom:4px">Deployment</div>
+            <span class="rl-badge rl-badge--info"><%= @proposal.deployment_label %></span>
+          </div>
+          <div>
+            <div class="micro" style="margin-bottom:4px">Users</div>
+            <div class="rl-cell-strong"><%= @proposal.num_users %> users</div>
           </div>
         </div>
-      </div>
 
-      <% if @proposal.narrative_generated? %>
-        <%= form_with url: update_narrative_odoo_proposal_path(@proposal), method: :patch, local: true do |f| %>
-
-          <!-- Summary -->
-          <div class="mb-5">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Executive Summary</label>
-              <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: 'summary'),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Regenerate the summary? Unsaved edits will be lost." } },
-                  class: "text-xs text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1" do %>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Regenerate
-              <% end %>
+        <% if (tier_info = @proposal.current_tier_info) %>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+            <div class="micro" style="margin-bottom:8px"><%= @proposal.deployment_type == "sh" ? "Odoo.sh platform plan" : "Hosting tier" %></div>
+            <div class="row" style="gap:14px;align-items:center">
+              <div style="padding:8px 14px;background:var(--color-primary-subtle);border-radius:var(--radius-md)">
+                <div class="rl-sm" style="font-weight:700;color:var(--color-primary-text)"><%= tier_info[:label] %></div>
+                <div class="rl-sm" style="color:var(--color-primary-text)"><%= tier_info[:specs] %></div>
+              </div>
+              <div class="muted rl-sm"><%= tier_info[:users] %></div>
             </div>
-            <%= f.text_area :claude_summary, rows: 4,
-                value: @proposal.claude_summary,
-                class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-transparent leading-relaxed" %>
           </div>
+        <% end %>
 
-          <!-- Rationale -->
-          <div class="mb-5">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Recommendation Rationale</label>
-              <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: 'rationale'),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Regenerate the rationale? Unsaved edits will be lost." } },
-                  class: "text-xs text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1" do %>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Regenerate
+        <% if @proposal.industry.present? || @proposal.company_size.present? || @proposal.pain_points_array.any? %>
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--color-border)">
+            <div class="micro" style="margin-bottom:12px">Business context</div>
+            <div class="grid grid-2" style="margin-bottom:12px">
+              <% if @proposal.industry.present? %>
+                <div><div class="muted rl-sm">Industry</div><div class="rl-sm" style="font-weight:600"><%= @proposal.industry %></div></div>
+              <% end %>
+              <% if @proposal.company_size.present? %>
+                <div><div class="muted rl-sm">Company size</div><div class="rl-sm" style="font-weight:600"><%= @proposal.company_size %></div></div>
               <% end %>
             </div>
-            <%= f.text_area :claude_rationale, rows: 5,
-                value: @proposal.claude_rationale,
-                class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-transparent leading-relaxed" %>
+            <% if @proposal.pain_points_array.any? %>
+              <div class="muted rl-sm" style="margin-bottom:6px">Pain points</div>
+              <div class="row row--wrap" style="gap:6px">
+                <% @proposal.pain_points_array.each do |pp| %><span class="rl-chip"><%= pp %></span><% end %>
+              </div>
+            <% end %>
           </div>
+        <% end %>
+      </div></div>
 
-          <!-- Module justifications -->
-          <div class="mb-5">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Module Justifications</label>
-              <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: 'module_justifications'),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Regenerate all module justifications? Unsaved edits will be lost." } },
-                  class: "text-xs text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1" do %>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Regenerate all
-              <% end %>
-            </div>
-            <div class="space-y-2">
-              <% @proposal.selected_module_details.each do |mod| %>
-                <div class="flex gap-3 items-start p-3 bg-gray-50 rounded-lg border border-gray-100">
-                  <div class="w-28 flex-shrink-0">
-                    <p class="text-xs font-bold text-gray-800"><%= mod[:label] %></p>
-                    <p class="text-xs text-gray-400 mt-0.5"><%= mod[:key] %></p>
+      <%# Selected modules %>
+      <div class="sect"><div class="sect__body">
+        <div class="spread" style="margin-bottom:16px">
+          <div class="micro">Selected modules</div>
+          <span class="rl-badge rl-badge--primary"><%= @proposal.selected_modules.size + @proposal.custom_module_details.size %></span>
+        </div>
+        <% OdooProposal::MODULES.each do |category, mods| %>
+          <% selected_in_cat = mods.select { |m| @proposal.selected_modules.include?(m[:key]) } %>
+          <% next if selected_in_cat.empty? %>
+          <div style="margin-bottom:16px">
+            <div class="micro" style="margin-bottom:10px"><%= category %></div>
+            <div class="grid grid-2">
+              <% selected_in_cat.each do |mod| %>
+                <div class="row" style="gap:10px;align-items:flex-start;padding:10px;background:var(--color-primary-subtle);border-radius:var(--radius-md)">
+                  <span class="ic" style="color:var(--color-primary-text);flex:none"><%= relay_icon("circle-check", size: 16) %></span>
+                  <div class="grow">
+                    <div class="spread"><span class="rl-sm" style="font-weight:600"><%= mod[:label] %></span><span class="mono rl-sm" style="color:var(--color-primary-text)">PKR <%= number_with_delimiter(mod[:impl_cost]) %></span></div>
+                    <div class="muted rl-sm" style="margin-top:2px"><%= mod[:description] %></div>
                   </div>
-                  <%= text_area_tag "odoo_proposal[claude_module_justifications][#{mod[:key]}]",
-                      @proposal.module_justification_for(mod[:key]),
-                      rows: 2,
-                      class: "flex-1 rounded-lg border border-gray-200 text-xs px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-transparent leading-relaxed bg-white" %>
                 </div>
               <% end %>
             </div>
           </div>
+        <% end %>
 
-          <!-- Next steps -->
-          <div class="mb-5">
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Customised Next Steps</label>
-              <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: 'next_steps'),
-                  method: :post,
-                  form: { data: { turbo_confirm: "Regenerate next steps? Unsaved edits will be lost." } },
-                  class: "text-xs text-purple-600 hover:text-purple-800 font-medium inline-flex items-center gap-1" do %>
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Regenerate
+        <% if @proposal.custom_module_details.any? %>
+          <div>
+            <div class="micro row" style="gap:8px;margin-bottom:10px">Custom modules <span class="rl-badge rl-badge--neutral">AI / Custom dev</span></div>
+            <div class="grid grid-2">
+              <% @proposal.custom_module_details.each do |cm| %>
+                <div class="row" style="gap:10px;align-items:flex-start;padding:10px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+                  <span class="ic" style="flex:none"><%= relay_icon("plus", size: 16) %></span>
+                  <div class="grow">
+                    <div class="spread">
+                      <span class="rl-sm" style="font-weight:600"><%= cm[:label] %></span>
+                      <div style="text-align:right">
+                        <span class="mono rl-sm">PKR <%= number_with_delimiter(cm[:impl_cost]) %></span>
+                        <% if cm[:hours].to_i.positive? %><div class="muted rl-sm">~<%= cm[:hours] %> hrs</div><% end %>
+                      </div>
+                    </div>
+                    <% if cm[:description].present? %><div class="muted rl-sm" style="margin-top:2px"><%= cm[:description] %></div><% end %>
+                  </div>
+                </div>
               <% end %>
             </div>
-            <%= f.text_area :claude_next_steps, rows: 6,
-                value: @proposal.claude_next_steps,
-                class: "w-full rounded-lg border border-gray-200 text-sm px-3 py-2 focus:ring-2 focus:ring-purple-400 focus:border-transparent leading-relaxed font-mono" %>
-            <p class="text-xs text-gray-400 mt-1">One step per line. Each line becomes a numbered bullet in the PDF.</p>
-          </div>
-
-          <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-            <p class="text-xs text-gray-500">Edits are kept until you regenerate. The PDF uses whatever is saved here.</p>
-            <%= f.submit "Save Narrative Edits",
-                class: "px-5 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition-colors cursor-pointer" %>
           </div>
         <% end %>
+      </div></div>
 
-      <% else %>
-        <!-- Not yet generated -->
-        <div class="text-center py-8 px-6 bg-gradient-to-br from-purple-50 to-red-50 rounded-xl border border-purple-100">
-          <svg class="w-12 h-12 text-purple-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-          </svg>
-          <p class="text-sm font-semibold text-gray-800 mb-1">Generate a personalised narrative</p>
-          <p class="text-xs text-gray-500 mb-4 max-w-md mx-auto">
-            Claude will write an executive summary, per-module justifications, and customised next steps based on
-            <%= @proposal.industry.presence || 'this client' %>'s context and the selected modules.
-          </p>
-          <% if @proposal.industry.blank? && @proposal.company_size.blank? && @proposal.pain_points_array.empty? %>
-            <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 inline-block">
-              Tip: the narrative is much better when industry, size and pain points are filled in. You can still generate without them.
+      <% if @proposal.notes.present? %>
+        <div class="sect"><div class="sect__body">
+          <div class="micro" style="margin-bottom:8px">Notes</div>
+          <p class="rl-sm"><%= @proposal.notes %></p>
+        </div></div>
+      <% end %>
+
+      <%# AI narrative %>
+      <div class="sect"><div class="sect__body">
+        <div class="row" style="gap:10px;align-items:center;margin-bottom:16px">
+          <span class="iccircle" style="background:var(--color-primary-subtle);color:var(--color-primary-text)"><%= relay_icon("sparkles", size: 18) %></span>
+          <div>
+            <div class="micro">AI-generated narrative</div>
+            <% if @proposal.narrative_generated? %>
+              <div class="muted rl-sm">Last generated <%= time_ago_in_words(@proposal.narrative_generated_at) %> ago — powered by Claude</div>
+            <% else %>
+              <div class="muted rl-sm">Generate a personalised proposal narrative using Claude AI</div>
+            <% end %>
+          </div>
+        </div>
+
+        <% if @proposal.narrative_generated? %>
+          <%= form_with url: update_narrative_odoo_proposal_path(@proposal), method: :patch do |f| %>
+            <% [["claude_summary", "Executive summary", "summary", 4],
+                ["claude_rationale", "Recommendation rationale", "rationale", 5]].each do |field, label, section, rows| %>
+              <div class="rl-field">
+                <div class="spread" style="margin-bottom:6px">
+                  <label class="rl-label" style="margin:0"><%= label %></label>
+                  <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: section), method: :post,
+                        form: { data: { turbo_confirm: "Regenerate the #{label.downcase}? Unsaved edits will be lost." } },
+                        class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                    <%= relay_icon("refresh-cw", size: 13) %>Regenerate
+                  <% end %>
+                </div>
+                <%= f.text_area field, rows: rows, value: @proposal.public_send(field), class: "rl-textarea" %>
+              </div>
+            <% end %>
+
+            <div class="rl-field">
+              <div class="spread" style="margin-bottom:6px">
+                <label class="rl-label" style="margin:0">Module justifications</label>
+                <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: "module_justifications"), method: :post,
+                      form: { data: { turbo_confirm: "Regenerate all module justifications? Unsaved edits will be lost." } },
+                      class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                  <%= relay_icon("refresh-cw", size: 13) %>Regenerate all
+                <% end %>
+              </div>
+              <div class="col" style="gap:8px">
+                <% @proposal.selected_module_details.each do |mod| %>
+                  <div class="row" style="gap:12px;align-items:flex-start;padding:10px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+                    <div style="width:120px;flex:none">
+                      <div class="rl-sm" style="font-weight:700"><%= mod[:label] %></div>
+                      <div class="muted rl-sm"><%= mod[:key] %></div>
+                    </div>
+                    <%= text_area_tag "odoo_proposal[claude_module_justifications][#{mod[:key]}]",
+                          @proposal.module_justification_for(mod[:key]), rows: 2, class: "rl-textarea grow" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="rl-field">
+              <div class="spread" style="margin-bottom:6px">
+                <label class="rl-label" style="margin:0">Customised next steps</label>
+                <%= button_to regenerate_section_odoo_proposal_path(@proposal, section: "next_steps"), method: :post,
+                      form: { data: { turbo_confirm: "Regenerate next steps? Unsaved edits will be lost." } },
+                      class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                  <%= relay_icon("refresh-cw", size: 13) %>Regenerate
+                <% end %>
+              </div>
+              <%= f.text_area :claude_next_steps, rows: 6, value: @proposal.claude_next_steps, class: "rl-textarea mono" %>
+              <p class="rl-help">One step per line. Each line becomes a numbered bullet in the PDF.</p>
+            </div>
+
+            <div class="spread" style="padding-top:14px;border-top:1px solid var(--color-border)">
+              <p class="muted rl-sm">Edits are kept until you regenerate. The PDF uses whatever is saved here.</p>
+              <%= f.submit "Save narrative edits", class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
+            </div>
+          <% end %>
+        <% else %>
+          <div style="text-align:center;padding:32px 24px;background:var(--color-primary-subtle);border-radius:var(--radius-lg)">
+            <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface);color:var(--color-primary-text)"><%= relay_icon("sparkles", size: 22) %></span>
+            <div class="rl-h4">Generate a personalised narrative</div>
+            <p class="muted rl-sm" style="margin:8px auto 16px;max-width:440px">
+              Claude will write an executive summary, per-module justifications, and customised next steps based on
+              <%= @proposal.industry.presence || "this client" %>'s context and the selected modules.
             </p>
-          <% end %>
-          <%= button_to generate_narrative_odoo_proposal_path(@proposal),
-              method: :post,
-              class: "inline-flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm cursor-pointer" do %>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            Generate with Claude
-          <% end %>
-        </div>
-      <% end %>
-    </div>
-
-  </div>
-
-  <!-- RIGHT: Cost Breakdown -->
-  <div class="space-y-5">
-
-    <!-- Cost Summary Card -->
-    <% sub_info = @proposal.odoo_subscription_info %>
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="bg-gradient-to-br from-red-600 to-red-800 p-5">
-        <p class="text-red-200 text-xs font-medium uppercase tracking-wide">Year 1 Total Investment</p>
-        <p class="text-3xl font-bold text-white mt-1">PKR <%= number_with_delimiter(@proposal.year_1_total) %></p>
-        <p class="text-red-300 text-xs mt-1">Setup + Year 1 hosting + Year 1 Odoo subscription</p>
-      </div>
-      <div class="p-5 space-y-3">
-        <div class="flex justify-between items-center text-sm">
-          <span class="text-gray-500">Implementation Fee <span class="text-gray-400 text-xs">(one-time)</span></span>
-          <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.implementation_fee.to_i) %></span>
-        </div>
-        <% if @proposal.annual_hosting_cost > 0 %>
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Annual Hosting</span>
-            <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.annual_hosting_cost.to_i) %></span>
+            <% if @proposal.industry.blank? && @proposal.company_size.blank? && @proposal.pain_points_array.empty? %>
+              <p class="rl-help" style="margin-bottom:16px">Tip: the narrative is much better when industry, size and pain points are filled in. You can still generate without them.</p>
+            <% end %>
+            <%= button_to generate_narrative_odoo_proposal_path(@proposal), method: :post, class: "rl-btn rl-btn--primary" do %>
+              <%= relay_icon("zap", size: 15) %>Generate with Claude
+            <% end %>
           </div>
         <% end %>
-        <div class="pt-2 border-t border-gray-100">
-          <div class="flex justify-between items-center text-sm">
-            <span class="text-gray-500">Odoo Subscription <span class="text-gray-400 text-xs">(yearly)</span></span>
-            <span class="font-semibold text-gray-900">PKR <%= number_with_delimiter(@proposal.subscription_yearly_total) %></span>
-          </div>
-          <div class="flex justify-between items-center text-xs text-gray-400 mt-1">
-            <span><%= sub_info[:plan] %> · $<%= sub_info[:usd_monthly] %>/user/mo × <%= @proposal.num_users %> users</span>
-            <span>Paid to Odoo</span>
-          </div>
+      </div></div>
+    </div>
+
+    <%# ── RIGHT — cost breakdown ───────────────────────────────────────── %>
+    <div class="col" style="gap:var(--space-4)">
+      <% sub_info = @proposal.odoo_subscription_info %>
+      <div class="sect" style="overflow:hidden">
+        <div style="background:var(--color-primary);padding:20px;color:#fff">
+          <div class="rl-sm" style="opacity:.85;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Year 1 total investment</div>
+          <div class="mono" style="font-size:var(--text-h2);font-weight:800;margin-top:4px">PKR <%= number_with_delimiter(@proposal.year_1_total) %></div>
+          <div class="rl-sm" style="opacity:.85;margin-top:4px">Setup + Year 1 hosting + Year 1 Odoo subscription</div>
         </div>
-        <div class="flex justify-between items-center text-xs pt-2 border-t border-gray-100">
-          <span class="font-semibold text-gray-600">Year 2+ recurring / year</span>
-          <span class="font-bold text-red-600">PKR <%= number_with_delimiter(@proposal.year_2_recurring_yearly) %></span>
+        <div class="sect__body col" style="gap:10px">
+          <div class="spread"><span class="muted rl-sm">Implementation fee <span class="muted">(one-time)</span></span><span class="mono rl-sm">PKR <%= number_with_delimiter(@proposal.implementation_fee.to_i) %></span></div>
+          <% if @proposal.annual_hosting_cost > 0 %>
+            <div class="spread"><span class="muted rl-sm">Annual hosting</span><span class="mono rl-sm">PKR <%= number_with_delimiter(@proposal.annual_hosting_cost.to_i) %></span></div>
+          <% end %>
+          <div style="padding-top:10px;border-top:1px solid var(--color-border)">
+            <div class="spread"><span class="muted rl-sm">Odoo subscription <span class="muted">(yearly)</span></span><span class="mono rl-sm">PKR <%= number_with_delimiter(@proposal.subscription_yearly_total) %></span></div>
+            <div class="spread" style="margin-top:4px"><span class="muted rl-sm"><%= sub_info[:plan] %> · $<%= sub_info[:usd_monthly] %>/user/mo × <%= @proposal.num_users %></span><span class="muted rl-sm">Paid to Odoo</span></div>
+          </div>
+          <div class="spread" style="padding-top:10px;border-top:1px solid var(--color-border)"><span class="rl-sm" style="font-weight:600">Year 2+ recurring / year</span><span class="mono rl-sm" style="font-weight:700;color:var(--color-primary-text)">PKR <%= number_with_delimiter(@proposal.year_2_recurring_yearly) %></span></div>
         </div>
       </div>
-    </div>
 
-    <!-- What's Included -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">What's Included</h2>
-      <ul class="space-y-2">
-        <% [
-          ['Full module configuration', 'All selected modules set up and configured to your workflow'],
-          ['Workflow customisation', 'Tailored processes, approval flows and automations'],
-          ['Data migration', 'Assistance migrating your existing data into Odoo'],
-          ['User training', 'Hands-on training sessions for your team'],
-          ['2 weeks post-go-live support', 'Dedicated support after launch to ensure smooth adoption']
-        ].each do |title, desc| %>
-          <li class="flex items-start gap-2.5">
-            <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg class="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-semibold text-gray-700"><%= title %></p>
-              <p class="text-xs text-gray-400 mt-0.5"><%= desc %></p>
-            </div>
-          </li>
+      <div class="sect"><div class="sect__body">
+        <div class="micro" style="margin-bottom:12px">What's included</div>
+        <ul style="list-style:none;margin:0;padding:0" class="col">
+          <% [
+            ["Full module configuration", "All selected modules set up and configured to your workflow"],
+            ["Workflow customisation", "Tailored processes, approval flows and automations"],
+            ["Data migration", "Assistance migrating your existing data into Odoo"],
+            ["User training", "Hands-on training sessions for your team"],
+            ["2 weeks post-go-live support", "Dedicated support after launch to ensure smooth adoption"]
+          ].each do |title, desc| %>
+            <li class="row" style="gap:10px;align-items:flex-start;padding:6px 0">
+              <span class="ic" style="color:var(--color-success);flex:none"><%= relay_icon("check", size: 15) %></span>
+              <div><div class="rl-sm" style="font-weight:600"><%= title %></div><div class="muted rl-sm"><%= desc %></div></div>
+            </li>
+          <% end %>
+        </ul>
+      </div></div>
+
+      <div class="sect"><div class="sect__body" style="text-align:center">
+        <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-primary-text)"><%= relay_icon("file-text", size: 22) %></span>
+        <div class="rl-cell-strong">Professional PDF proposal</div>
+        <div class="muted rl-sm" style="margin:4px 0 16px">Ready to send to <%= @proposal.display_name %></div>
+        <%= link_to download_pdf_odoo_proposal_path(@proposal), class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+          <%= relay_icon("download", size: 14) %>Download proposal PDF
         <% end %>
-      </ul>
+      </div></div>
     </div>
-
-    <!-- Download PDF CTA -->
-    <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl p-5 text-center">
-      <svg class="w-8 h-8 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>
-      <p class="text-white font-semibold text-sm mb-1">Professional PDF Proposal</p>
-      <p class="text-gray-400 text-xs mb-4">Ready to send to <%= @proposal.display_name %></p>
-      <%= link_to download_pdf_odoo_proposal_path(@proposal),
-          class: "inline-flex items-center gap-2 px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-sm font-semibold rounded-lg transition-colors" do %>
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        Download Proposal PDF
-      <% end %>
-    </div>
-
   </div>
-
 </div>

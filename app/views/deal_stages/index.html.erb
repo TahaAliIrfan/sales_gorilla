@@ -1,74 +1,78 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
+<% content_for :title, "Deal stages — #{current_organization&.name}" %>
+<%
+  selected = (@selected_pipeline_id.present? && @selected_pipeline_id != "") ? @pipelines.find(@selected_pipeline_id) : nil
+%>
+
+<div class="page">
+  <div class="pagehead">
     <div>
-      <h1 class="text-2xl font-bold">Deal Stages Management</h1>
-      <p class="text-gray-600 mt-1">Configure and manage your sales pipeline stages</p>
+      <div class="pagehead__title">Deal stages</div>
+      <div class="pagehead__sub">Configure and manage your sales pipeline stages.</div>
     </div>
-    <div class="flex items-center space-x-4">
-      <% if @pipelines.count > 1 %>
-        <div class="flex items-center space-x-2">
-          <label for="pipeline_selector" class="text-sm font-medium text-gray-700">Pipeline:</label>
-          <%= form_with url: deal_stages_path, method: :get, class: "flex items-center" do |form| %>
-            <% 
-              options = []
-              options << ["All Pipelines", ""] if current_user.admin?
-              options += @pipelines.map { |p| [p.name, p.id] }
-            %>
-            <%= form.select :pipeline_id, 
-                options_for_select(options, @selected_pipeline_id),
-                { include_blank: false }, 
-                { id: "pipeline_selector", class: "rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm", onchange: "this.form.submit()" } %>
-          <% end %>
-        </div>
+    <div class="pagehead__actions">
+      <% if selected %>
+        <%= link_to deals_path(pipeline_id: selected.id), class: "rl-btn rl-btn--secondary" do %>
+          <%= relay_icon("columns-2", size: 15) %>Open board
+        <% end %>
       <% end %>
-      <p class="text-sm text-gray-600">Manage stages through <%= link_to "Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-800" %></p>
+      <%= link_to pipelines_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("layers", size: 15) %>Pipelines
+      <% end %>
     </div>
   </div>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden mb-8">
-    <div class="p-6 border-b border-gray-200">
-      <h2 class="text-lg font-medium text-gray-900">
-        <% if @selected_pipeline_id.present? && @selected_pipeline_id != "" %>
-          <%= @pipelines.find(@selected_pipeline_id).name %> - Pipeline Stages
-        <% else %>
-          Current Pipeline Stages
-        <% end %>
-      </h2>
-      <p class="text-sm text-gray-600 mt-1">Drag to reorder stages (coming soon)</p>
+  <% if @pipelines.count > 1 %>
+    <%= form_with url: deal_stages_path, method: :get, data: { turbo_frame: "_top" },
+          class: "row", html: { style: "margin-bottom:var(--space-4);gap:8px;align-items:center" } do |form| %>
+      <span class="rl-label" style="margin:0">Pipeline</span>
+      <%
+        options = []
+        options << [ "All Pipelines", "" ] if current_user.admin?
+        options += @pipelines.map { |p| [ p.name, p.id ] }
+      %>
+      <%= form.select :pipeline_id,
+            options_for_select(options, @selected_pipeline_id),
+            { include_blank: false },
+            { class: "rl-select rl-input--sm", style: "width:auto",
+              onchange: "this.form.requestSubmit()" } %>
+    <% end %>
+  <% end %>
+
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title">
+        <%= selected ? "#{selected.name} — stages" : "Current pipeline stages" %>
+      </div>
     </div>
-    <div class="p-6">
+    <div class="sect__body--flush">
       <% if @deal_stages.any? %>
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <div class="rl-table-wrap">
+          <table class="rl-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Deals</th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th>Position</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Active deals</th>
+                <th style="text-align:right">Actions</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody>
               <% @deal_stages.each do |stage| %>
                 <tr>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= stage.position %></td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900"><%= stage.name %></div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-500"><%= stage.description %></div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <%= Deal.active.by_stage(stage).count %>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div class="flex space-x-2">
-                      <%= link_to "Edit", edit_deal_stage_path(stage), class: "text-indigo-600 hover:text-indigo-900" %>
+                  <td class="mono"><%= stage.position %></td>
+                  <td class="rl-cell-strong"><%= stage.name %></td>
+                  <td class="muted rl-sm"><%= stage.description %></td>
+                  <td class="mono"><%= Deal.active.by_stage(stage).count %></td>
+                  <td style="text-align:right">
+                    <div class="row" style="gap:6px;justify-content:flex-end">
+                      <%= link_to "Edit", edit_pipeline_deal_stage_path(stage.pipeline, stage), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
                       <% if Deal.by_stage(stage).none? %>
-                        <%= button_to "Delete", deal_stage_path(stage), method: :delete, data: { confirm: "Are you sure you want to delete this stage?" }, class: "text-red-600 hover:text-red-900 bg-transparent border-none p-0 cursor-pointer" %>
+                        <%= button_to pipeline_deal_stage_path(stage.pipeline, stage), method: :delete,
+                              form: { data: { turbo_confirm: "Are you sure you want to delete this stage?" } },
+                              class: "rl-btn rl-btn--destructive-ghost rl-btn--sm" do %>Delete<% end %>
                       <% else %>
-                        <span class="text-gray-400 cursor-not-allowed" title="Cannot delete a stage with deals">Delete</span>
+                        <span class="rl-btn rl-btn--ghost rl-btn--sm" style="opacity:.4;cursor:not-allowed" title="Cannot delete a stage with deals">Delete</span>
                       <% end %>
                     </div>
                   </td>
@@ -78,197 +82,10 @@
           </table>
         </div>
       <% else %>
-        <div class="text-center py-8 text-gray-500">
-          <p>No deal stages defined yet. <%= link_to "Create stages through Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)">
+          No deal stages defined yet. <%= link_to "Create stages through Pipelines", pipelines_path, style: "color:var(--color-primary-text)" %>.
         </div>
       <% end %>
-    </div>
-  </div>
-
-  <!-- Kanban View of All Deals by Stage -->
-  <div class="mb-6 flex justify-between items-center">
-    <div>
-      <h2 class="text-xl font-bold">
-        <% if @selected_pipeline_id.present? && @selected_pipeline_id != "" %>
-          <%= @pipelines.find(@selected_pipeline_id).name %> - Pipeline Overview
-        <% else %>
-          Pipeline Overview
-        <% end %>
-      </h2>
-      <p class="text-gray-600 mt-1">View and manage deals across pipeline stages</p>
-    </div>
-    <div class="flex space-x-4">
-      <%= link_to "New Deal", new_deal_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
-    </div>
-  </div>
-
-  <div class="flex overflow-x-auto pb-4 space-x-4" data-controller="drag">
-    <% @deal_stages.each do |stage| %>
-      <div class="flex-shrink-0 w-80 bg-gray-100 rounded-lg shadow">
-        <div class="p-4 border-b border-gray-200 bg-gray-200 rounded-t-lg" data-stage-id="<%= stage.id %>">
-          <div class="flex justify-between items-center">
-            <h3 class="font-semibold text-gray-700"><%= stage.name %></h3>
-            <%= link_to new_deal_path(stage_id: stage.id), class: "text-blue-600 hover:text-blue-800" do %>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-              </svg>
-            <% end %>
-          </div>
-          <% stage_deals = Deal.active.by_stage(stage) %>
-          <p class="text-sm text-gray-500"><span class="deal-count"><%= stage_deals.count %></span> deals - <%= number_to_currency(stage_deals.sum(:amount)) %></p>
-        </div>
-        <div class="p-2 min-h-[300px] max-h-[600px] overflow-y-auto" data-drag-target="stage" data-stage-id="<%= stage.id %>">
-          <% if stage_deals.any? %>
-            <% stage_deals.each do |deal| %>
-              <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow" data-drag-target="deal" data-deal-id="<%= deal.id %>">
-                <div class="flex justify-between items-start">
-                  <h4 class="font-medium text-blue-600 flex items-center">
-                    <span class="drag-handle cursor-move mr-2 text-gray-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
-                    </span>
-                    <%= link_to deal.title, deal_path(deal) %>
-                  </h4>
-                  <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
-                </div>
-                <p class="text-sm text-gray-600 mt-1 truncate">
-                  <% if deal.customer.present? %>
-                    <%= deal.customer.name %>
-                  <% else %>
-                    <span class="text-gray-500">No customer</span>
-                  <% end %>
-                </p>
-                
-                <!-- User Assignment Dropdown -->
-                <div class="mt-3">
-                  <%= form_with(url: assign_user_deal_path(deal), method: :patch, class: "flex items-center") do |form| %>
-                    <div class="flex-grow">
-                      <%= form.select :user_id, 
-                          User.all.map { |u| [u.name, u.id, { selected: u.id == deal.user_id }] }, 
-                          { include_blank: "Assign to..." }, 
-                          { class: "block w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
-                            onchange: "this.form.submit()" } %>
-                    </div>
-                  <% end %>
-                </div>
-                
-                <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                  <span>Assigned to: <%= deal.user.name %></span>
-                  <% if deal.expected_close_date %>
-                    <span>Close: <%= deal.expected_close_date.strftime("%b %d") %></span>
-                  <% end %>
-                </div>
-                
-                <!-- Deal Actions -->
-                <div class="mt-3 flex justify-between">
-                  <!-- Win/Loss Actions -->
-                  <div class="flex space-x-2">
-                    <%= button_to mark_as_won_deal_path(deal), method: :patch, class: "text-green-600 hover:text-green-800" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    <% end %>
-                    <%= button_to mark_as_lost_deal_path(deal), method: :patch, class: "text-red-600 hover:text-red-800" do %>
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    <% end %>
-                  </div>
-                </div>
-              </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-8 text-gray-500 text-sm">
-              No deals in this stage
-            </div>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
-    
-    <!-- Won Deals Column -->
-    <div class="flex-shrink-0 w-80 bg-green-50 rounded-lg shadow">
-      <div class="p-4 border-b border-green-200 bg-green-100 rounded-t-lg">
-        <h3 class="font-semibold text-green-700">Won Deals</h3>
-        <% won_deals = Deal.won %>
-        <p class="text-sm text-green-600"><%= won_deals.count %> deals - <%= number_to_currency(won_deals.sum(:amount)) %></p>
-      </div>
-      <div class="p-2 min-h-[300px] max-h-[600px] overflow-y-auto">
-        <% if won_deals.any? %>
-          <% won_deals.each do |deal| %>
-            <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-green-500">
-              <div class="flex justify-between items-start">
-                <h4 class="font-medium text-green-600">
-                  <%= link_to deal.title, deal_path(deal) %>
-                </h4>
-                <span class="text-sm font-semibold text-green-600"><%= number_to_currency(deal.amount) %></span>
-              </div>
-              <p class="text-sm text-gray-600 mt-1 truncate">
-                <% if deal.customer.present? %>
-                  <%= deal.customer.name %>
-                <% else %>
-                  <span class="text-gray-500">No customer</span>
-                <% end %>
-              </p>
-              <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                <span>Assigned to: <%= deal.user.name %></span>
-                <% if deal.closing_date.present? %>
-                  <span>Closing: <%= deal.closing_date.strftime("%b %d, %Y") %></span>
-                <% else %>
-                  <span>No closing date</span>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        <% else %>
-          <div class="text-center py-8 text-gray-500 text-sm">
-            No won deals yet
-          </div>
-        <% end %>
-      </div>
-    </div>
-    
-    <!-- Lost Deals Column -->
-    <div class="flex-shrink-0 w-80 bg-red-50 rounded-lg shadow">
-      <div class="p-4 border-b border-red-200 bg-red-100 rounded-t-lg">
-        <h3 class="font-semibold text-red-700">Lost Deals</h3>
-        <% lost_deals = Deal.lost %>
-        <p class="text-sm text-red-600"><%= lost_deals.count %> deals - <%= number_to_currency(lost_deals.sum(:amount)) %></p>
-      </div>
-      <div class="p-2 min-h-[300px] max-h-[600px] overflow-y-auto">
-        <% if lost_deals.any? %>
-          <% lost_deals.each do |deal| %>
-            <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow border-l-4 border-red-500">
-              <div class="flex justify-between items-start">
-                <h4 class="font-medium text-red-600">
-                  <%= link_to deal.title, deal_path(deal) %>
-                </h4>
-                <span class="text-sm font-semibold text-red-600"><%= number_to_currency(deal.amount) %></span>
-              </div>
-              <p class="text-sm text-gray-600 mt-1 truncate">
-                <% if deal.customer.present? %>
-                  <%= deal.customer.name %>
-                <% else %>
-                  <span class="text-gray-500">No customer</span>
-                <% end %>
-              </p>
-              <div class="flex justify-between items-center mt-3 text-xs text-gray-500">
-                <span>Assigned to: <%= deal.user.name %></span>
-                <% if deal.closing_date.present? %>
-                  <span>Closing: <%= deal.closing_date.strftime("%b %d, %Y") %></span>
-                <% else %>
-                  <span>No closing date</span>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-        <% else %>
-          <div class="text-center py-8 text-gray-500 text-sm">
-            No lost deals
-          </div>
-        <% end %>
-      </div>
     </div>
   </div>
 </div>

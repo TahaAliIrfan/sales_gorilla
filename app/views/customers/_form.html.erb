@@ -1,204 +1,188 @@
-<%= form_with(model: customer, class: "space-y-6") do |form| %>
-  <div class="mb-2">
-    <p class="micro mb-2"><%= customer.new_record? ? "Create" : "Edit" %></p>
-    <h1 class="font-display text-3xl font-bold tracking-tight text-ink">
-      <%= customer.new_record? ? "New customer" : customer.name %>
-    </h1>
-    <p class="mt-2 text-sm text-ink-soft">
-      Fill in the details below to <%= customer.new_record? ? "create a new" : "update this" %> customer record.
-    </p>
-  </div>
-
-  <%= render "shared/form_errors", record: customer %>
-
-  <%# ============================== Basic info ============================ %>
-  <%= render "shared/panel", eyebrow: "Basic information" do %>
-    <div class="grid gap-5 md:grid-cols-2">
-      <%= render "shared/form_field", f: form, field: :name, autofocus: customer.new_record?, required: true %>
-      <%= render "shared/form_field", f: form, field: :email, type: "email" %>
-      <%= render "shared/form_field", f: form, field: :phone, type: "tel", label: "Phone number",
-            placeholder: "+923001234567",
-            hint: "Include country code with + sign." %>
-      <%= render "shared/form_field", f: form, field: :company %>
-
-      <%# Country dropdown (Stimulus) — kept as-is functionally, restyled === %>
-      <div data-controller="country">
-        <%= form.label :country, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <%= form.hidden_field :country, data: { country_target: "select" } %>
-        <div class="relative">
-          <button type="button"
-                  data-action="click->country#toggleDropdown"
-                  class="flex w-full items-center rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]">
-            <span data-country-target="selectedFlag" class="flex-grow text-left">
-              <%= customer.country.presence || "Select a country" %>
-            </span>
-            <svg class="h-4 w-4 text-ink-soft" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
-          <div data-country-target="dropdown"
-               class="hidden absolute z-30 mt-1 max-h-60 w-full overflow-auto rounded-md bg-panel py-1 text-sm shadow-lift ring-1 ring-[var(--color-line-2)]">
-            <div class="sticky top-0 bg-panel p-2">
-              <input type="text"
-                     placeholder="Search countries…"
-                     data-country-target="searchInput"
-                     data-action="input->country#search"
-                     class="block w-full rounded-md border-0 bg-paper px-3 py-2 text-sm text-ink ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]">
-            </div>
-            <ul class="py-1"></ul>
-          </div>
-        </div>
-      </div>
-
-      <div>
-        <%= form.label :timezone, "Timezone", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <%= form.select :timezone,
-              [
-                [ "Auto-detect from country", "" ],
-                [ "Common Timezones", [
-                  [ "US Eastern (New York)",    "America/New_York" ],
-                  [ "US Central (Chicago)",     "America/Chicago" ],
-                  [ "US Mountain (Denver)",     "America/Denver" ],
-                  [ "US Pacific (Los Angeles)", "America/Los_Angeles" ],
-                  [ "UK (London)",              "Europe/London" ],
-                  [ "Central European",         "Europe/Paris" ],
-                  [ "India (New Delhi)",        "Asia/Kolkata" ],
-                  [ "China (Beijing)",          "Asia/Shanghai" ],
-                  [ "Japan (Tokyo)",            "Asia/Tokyo" ],
-                  [ "Australia (Sydney)",       "Australia/Sydney" ]
-                ] ],
-                [ "All Timezones", ActiveSupport::TimeZone.all.map { |tz| [ "#{tz.formatted_offset} #{tz.name.tr('_', ' ')}", tz.name ] } ]
-              ],
-              {},
-              class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
-        <p class="mt-1 text-xs text-ink-soft">If not set, the timezone falls back to the country.</p>
-      </div>
-
-      <div class="md:col-span-2">
-        <%= render "shared/form_field", f: form, field: :address, type: "textarea", rows: 2 %>
-      </div>
-
-      <%# Documents === %>
-      <div class="md:col-span-2">
-        <%= form.label :documents, "Attachment (PDF, DOC, or image)", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <div class="flex items-center gap-3">
-          <% if form.object.documents.attached? %>
-            <% doc = form.object.documents.first %>
-            <div>
-              <% if doc&.content_type&.start_with?("image/") %>
-                <%= image_tag doc.variant(resize_to_limit: [ 96, 96 ]), class: "h-16 w-auto rounded-md object-cover ring-1 ring-[var(--color-line-2)]" %>
-              <% else %>
-                <div class="mono inline-flex items-center gap-1.5 rounded-md bg-[var(--color-line)] px-3 py-2 text-xs font-medium text-ink">
-                  📎 <%= doc&.filename || "Document" %>
-                </div>
-              <% end %>
-            </div>
-            <label class="cursor-pointer rounded-md bg-paper px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
-              Change file
-              <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
-            </label>
-          <% else %>
-            <label class="inline-flex cursor-pointer items-center gap-2 rounded-md bg-paper px-3.5 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]">
-              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
-              Choose file
-              <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
-            </label>
-          <% end %>
-        </div>
-        <p class="mt-1 text-xs text-ink-soft">PDF, DOC, DOCX, JPG, PNG, GIF (max 10MB).</p>
-      </div>
-    </div>
+<%= form_with(model: customer, class: "col", html: { style: "gap:var(--space-5)" }) do |form| %>
+  <% if customer.errors.any? %>
+    <%= render "settings/errors", record: customer %>
   <% end %>
 
+  <%# ============================== Basic info ============================ %>
+  <div class="sect">
+    <div class="sect__head"><div class="sect__title">Basic information</div></div>
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <%= render "shared/relay_field", f: form, field: :name, autofocus: customer.new_record?, required: true %>
+        <%= render "shared/relay_field", f: form, field: :email, type: "email" %>
+        <%= render "shared/relay_field", f: form, field: :phone, type: "tel", label: "Phone number",
+              mono: true, placeholder: "+923001234567",
+              hint: "Include country code with a + sign." %>
+        <%= render "shared/relay_field", f: form, field: :company %>
+
+        <%# Country dropdown (Stimulus) — kept functionally, restyled to DS === %>
+        <div class="rl-field" data-controller="country">
+          <%= form.label :country, class: "rl-label" %>
+          <%= form.hidden_field :country, data: { country_target: "select" } %>
+          <div style="position:relative">
+            <button type="button" class="rl-select" style="text-align:left;display:flex;align-items:center"
+                    data-action="click->country#toggleDropdown">
+              <span data-country-target="selectedFlag" class="grow">
+                <%= customer.country.presence || "Select a country" %>
+              </span>
+            </button>
+            <div data-country-target="dropdown"
+                 class="hidden rl-menu" style="position:absolute;z-index:30;margin-top:4px;max-height:240px;overflow:auto;width:100%;left:0">
+              <div style="position:sticky;top:0;background:var(--color-surface);padding:8px">
+                <input type="text" class="rl-input rl-input--sm" placeholder="Search countries…"
+                       data-country-target="searchInput" data-action="input->country#search">
+              </div>
+              <ul style="list-style:none;margin:0;padding:4px 0"></ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="rl-field">
+          <%= form.label :timezone, "Timezone", class: "rl-label" %>
+          <%= form.select :timezone,
+                [
+                  [ "Auto-detect from country", "" ],
+                  [ "Common Timezones", [
+                    [ "US Eastern (New York)",    "America/New_York" ],
+                    [ "US Central (Chicago)",     "America/Chicago" ],
+                    [ "US Mountain (Denver)",     "America/Denver" ],
+                    [ "US Pacific (Los Angeles)", "America/Los_Angeles" ],
+                    [ "UK (London)",              "Europe/London" ],
+                    [ "Central European",         "Europe/Paris" ],
+                    [ "India (New Delhi)",        "Asia/Kolkata" ],
+                    [ "China (Beijing)",          "Asia/Shanghai" ],
+                    [ "Japan (Tokyo)",            "Asia/Tokyo" ],
+                    [ "Australia (Sydney)",       "Australia/Sydney" ]
+                  ] ],
+                  [ "All Timezones", ActiveSupport::TimeZone.all.map { |tz| [ "#{tz.formatted_offset} #{tz.name.tr('_', ' ')}", tz.name ] } ]
+                ],
+                {},
+                class: "rl-select mono" %>
+          <p class="rl-help">If not set, the timezone falls back to the country.</p>
+        </div>
+
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :address, type: "textarea", rows: 2 %>
+        </div>
+
+        <%# Documents === %>
+        <div class="rl-field" style="grid-column:1 / -1">
+          <%= form.label :documents, "Attachment (PDF, DOC, or image)", class: "rl-label" %>
+          <div class="row" style="gap:12px">
+            <% if form.object.documents.attached? %>
+              <% doc = form.object.documents.first %>
+              <% if doc&.content_type&.start_with?("image/") %>
+                <%= image_tag doc.variant(resize_to_limit: [ 96, 96 ]), style: "height:64px;width:auto;border-radius:var(--radius-md);border:1px solid var(--color-border)" %>
+              <% else %>
+                <span class="rl-chip mono"><%= relay_icon("paperclip", size: 14) %><%= doc&.filename || "Document" %></span>
+              <% end %>
+              <label class="rl-btn rl-btn--secondary rl-btn--sm" style="cursor:pointer">
+                Change file
+                <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
+              </label>
+            <% else %>
+              <label class="rl-btn rl-btn--secondary rl-btn--sm" style="cursor:pointer">
+                <%= relay_icon("upload", size: 14) %>Choose file
+                <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
+              </label>
+            <% end %>
+          </div>
+          <p class="rl-help">PDF, DOC, DOCX, JPG, PNG, GIF (max 10MB).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <%# ========================= Source & Project ========================== %>
-  <div data-controller="lead-source">
-    <%= render "shared/panel", eyebrow: "Source & project details" do %>
-      <div class="grid gap-5 md:grid-cols-2">
-        <div>
-          <%= form.label :lead_source, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
+  <div class="sect" data-controller="lead-source">
+    <div class="sect__head"><div class="sect__title">Source &amp; project details</div></div>
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <div class="rl-field">
+          <%= form.label :lead_source, class: "rl-label" %>
           <%= form.select :lead_source, current_organization.taxonomy_values("lead_source"),
                 { include_blank: "Select source" },
-                class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]",
+                class: "rl-select mono",
                 data: { action: "change->lead-source#toggleCcrFields", "lead-source-target": "select" } %>
         </div>
-        <%= render "shared/form_field", f: form, field: :linkedin_url, type: "url", label: "LinkedIn URL" %>
-        <%= render "shared/form_field", f: form, field: :meta_lead_id, label: "Meta lead ID",
-              placeholder: "e.g. 1234567890123456" %>
+        <%= render "shared/relay_field", f: form, field: :linkedin_url, type: "url", label: "LinkedIn URL" %>
+        <%= render "shared/relay_field", f: form, field: :meta_lead_id, label: "Meta lead ID",
+              mono: true, placeholder: "e.g. 1234567890123456" %>
 
         <div data-lead-source-target="ccrFields" class="<%= 'hidden' unless customer.lead_source == 'CCR' %>">
-          <%= render "shared/form_field", f: form, field: :ccr_link, type: "url",
+          <%= render "shared/relay_field", f: form, field: :ccr_link, type: "url",
                 label: "CCR link", placeholder: "Google Drive link" %>
         </div>
 
-        <div data-lead-source-target="ccrCost" class="<%= 'hidden' unless customer.lead_source == 'CCR' %>">
-          <%= form.label :project_estimated_cost, "Project estimated cost",
-                class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-          <div class="relative">
-            <span class="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-sm text-ink-soft">$</span>
-            <%= form.number_field :project_estimated_cost, step: "0.01",
-                  class: "mono block w-full rounded-md border-0 bg-paper py-2.5 pl-7 pr-3.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+        <div class="rl-field <%= 'hidden' unless customer.lead_source == 'CCR' %>" data-lead-source-target="ccrCost">
+          <%= form.label :project_estimated_cost, "Project estimated cost", class: "rl-label" %>
+          <div class="rl-inputwrap">
+            <span class="rl-affix">$</span>
+            <%= form.number_field :project_estimated_cost, step: "0.01", class: "rl-input mono" %>
           </div>
         </div>
 
-        <%= render "shared/form_field", f: form, field: :project_type, type: "select",
+        <%= render "shared/relay_field", f: form, field: :project_type, type: "select",
               options: current_organization.taxonomy_options("project_type") %>
-        <%= render "shared/form_field", f: form, field: :platform, type: "select",
+        <%= render "shared/relay_field", f: form, field: :platform, type: "select",
               options: Customer::PLATFORMS.keys.zip(Customer::PLATFORMS.values) %>
-        <%= render "shared/form_field", f: form, field: :project_scope, type: "select",
+        <%= render "shared/relay_field", f: form, field: :project_scope, type: "select",
               options: Customer::PROJECT_SCOPES.keys.zip(Customer::PROJECT_SCOPES.values) %>
 
-        <div class="md:col-span-2">
-          <%= render "shared/form_field", f: form, field: :idea_description, type: "textarea", rows: 4 %>
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :idea_description, type: "textarea", rows: 4 %>
         </div>
       </div>
-    <% end %>
+    </div>
   </div>
 
   <%# ====================== Status & Communication ======================= %>
-  <%= render "shared/panel", eyebrow: "Status & communication" do %>
-    <div class="grid gap-5 md:grid-cols-2">
-      <%= render "shared/form_field", f: form, field: :status, type: "select",
-            options: current_organization.taxonomy_options("customer_status") %>
+  <div class="sect">
+    <div class="sect__head"><div class="sect__title">Status &amp; communication</div></div>
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <%= render "shared/relay_field", f: form, field: :status, type: "select",
+              options: current_organization.taxonomy_options("customer_status") %>
 
-      <% if current_user&.admin? %>
-        <div>
-          <%= form.label :user_id, "Assigned to",
-                class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-          <%= form.collection_select :user_id, User.all, :id, :name,
-                { include_blank: "Unassigned" },
-                class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+        <% if current_user&.admin? %>
+          <div class="rl-field">
+            <%= form.label :user_id, "Assigned to", class: "rl-label" %>
+            <%= form.collection_select :user_id, User.all, :id, :name,
+                  { include_blank: "Unassigned" }, class: "rl-select" %>
+          </div>
+        <% end %>
+
+        <%= render "shared/relay_field", f: form, field: :call_status, type: "select",
+              options: current_organization.taxonomy_options("call_status") %>
+        <%= render "shared/relay_field", f: form, field: :preferred_calling_time,
+              label: "Preferred calling time" %>
+        <%= render "shared/relay_field", f: form, field: :email_status, type: "select",
+              options: current_organization.taxonomy_options("email_status") %>
+        <%= render "shared/relay_field", f: form, field: :whatsapp_status, type: "select",
+              options: current_organization.taxonomy_options("whatsapp_status") %>
+        <%= render "shared/relay_field", f: form, field: :linkedin_status, type: "select",
+              options: current_organization.taxonomy_options("linkedin_status") %>
+        <%= render "shared/relay_field", f: form, field: :upwork_profile, type: "select",
+              options: Customer::UPWORK_PROFILES.keys.zip(Customer::UPWORK_PROFILES.values) %>
+        <%= render "shared/relay_field", f: form, field: :exhaust_status, type: "select",
+              options: current_organization.taxonomy_options("exhaust_status") %>
+
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :repeat_lead, type: "checkbox",
+                label: "Mark as repeat lead",
+                hint: "Tick if this customer has contacted us before with a different email/phone, or is returning after a long time." %>
         </div>
-      <% end %>
 
-      <%= render "shared/form_field", f: form, field: :call_status, type: "select",
-            options: current_organization.taxonomy_options("call_status") %>
-      <%= render "shared/form_field", f: form, field: :preferred_calling_time,
-            label: "Preferred calling time" %>
-      <%= render "shared/form_field", f: form, field: :email_status, type: "select",
-            options: current_organization.taxonomy_options("email_status") %>
-      <%= render "shared/form_field", f: form, field: :whatsapp_status, type: "select",
-            options: current_organization.taxonomy_options("whatsapp_status") %>
-      <%= render "shared/form_field", f: form, field: :linkedin_status, type: "select",
-            options: current_organization.taxonomy_options("linkedin_status") %>
-      <%= render "shared/form_field", f: form, field: :upwork_profile, type: "select",
-            options: Customer::UPWORK_PROFILES.keys.zip(Customer::UPWORK_PROFILES.values) %>
-      <%= render "shared/form_field", f: form, field: :exhaust_status, type: "select",
-            options: current_organization.taxonomy_options("exhaust_status") %>
-
-      <div class="md:col-span-2">
-        <%= render "shared/form_field", f: form, field: :repeat_lead, type: "checkbox",
-              label: "Mark as repeat lead",
-              hint: "Tick if this customer has contacted us before with a different email/phone, or is returning after a long time." %>
-      </div>
-
-      <div class="md:col-span-2">
-        <%= render "shared/form_field", f: form, field: :notes, type: "textarea", rows: 4 %>
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :notes, type: "textarea", rows: 4 %>
+        </div>
       </div>
     </div>
-  <% end %>
+  </div>
 
-  <div class="flex items-center justify-end gap-2 border-t border-[var(--color-line)] pt-5">
-    <%= link_to "Cancel", customers_path,
-          class: "rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
-    <%= form.submit class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 cursor-pointer",
-                    style: "background: var(--brand-primary)" %>
+  <div class="row" style="justify-content:flex-end;gap:8px">
+    <%= link_to "Cancel", customers_path, class: "rl-btn rl-btn--secondary" %>
+    <%= form.submit (customer.new_record? ? "Create customer" : "Save changes"),
+          class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
   </div>
 <% end %>

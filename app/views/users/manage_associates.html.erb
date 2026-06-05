@@ -1,204 +1,143 @@
-<div class="container mx-auto px-4 py-6">
-  <div class="flex justify-between items-center mb-6">
+<%# Relay team management — drag/drop associate assignment. Preserves the
+    team-management Stimulus controller contract: targets (currentTeam,
+    availableAssociates, associateCard, searchInput), data-associate-id/name/email,
+    .associate-card / .associate-details hooks, the .text-xs status pill the JS
+    rewrites, and the #current-count / #available-count / *-empty-placeholder ids.
+    POSTs to UsersController#assign_associate / #remove_associate (unchanged). %>
+<% content_for :title, "Manage team — #{@user.name} — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
     <div>
-      <h1 class="text-2xl font-bold">Manage Team Members for <%= @user.name %></h1>
-      <p class="text-sm text-gray-600 mt-1">Only administrators can assign or remove associates to managers.</p>
+      <div class="pagehead__title">Manage team for <%= @user.name %></div>
+      <div class="pagehead__sub">Only administrators can assign or remove associates. Changes save automatically.</div>
     </div>
-    <div class="flex space-x-2">
-      <%= link_to "View Team Hierarchy", team_hierarchy_path, class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2" %>
-      <%= link_to "Back to User", user_path(@user), class: "bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded" %>
+    <div class="pagehead__actions">
+      <%= link_to user_path(@user), class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to user
+      <% end %>
     </div>
   </div>
 
   <% if notice.present? %>
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-      <%= notice %>
-    </div>
+    <div class="rl-sm" style="background:var(--color-success-subtle);border:1px solid var(--color-success-border);color:var(--color-success-text);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:var(--space-4)"><%= notice %></div>
   <% end %>
-  
   <% if alert.present? %>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-      <%= alert %>
-    </div>
+    <div class="rl-sm" style="background:var(--color-danger-subtle);border:1px solid var(--color-danger-border);color:var(--color-danger-text);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:var(--space-4)"><%= alert %></div>
   <% end %>
 
-  <!-- Main Team Management Interface -->
-  <div class="bg-white shadow-md rounded-lg overflow-hidden mb-6" data-controller="team-management">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <h2 class="text-xl font-semibold">Team Members</h2>
-      <p class="text-sm text-gray-500">Drag and drop associates between lists to manage team members</p>
+  <div class="sect" data-controller="team-management">
+    <div class="sect__head">
+      <div class="sect__title"><%= relay_icon("users", size: 18) %>Team members</div>
+      <div class="muted rl-sm">Drag associates between lists, or use the quick add button.</div>
     </div>
-    
-    <div class="p-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Current Team Members -->
-        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-blue-800">Current Team Members (<span id="current-count"><%= @current_associates.count %></span>)</h3>
-            <button type="button" class="text-blue-600 hover:text-blue-800 text-sm" data-action="team-management#expandAll">
-              Expand All
-            </button>
+    <div class="sect__body">
+      <div class="grid grid-2" style="gap:var(--space-5);align-items:start">
+        <%# Current team %>
+        <div>
+          <div class="spread" style="margin-bottom:10px">
+            <b>Current team members (<span id="current-count"><%= @current_associates.count %></span>)</b>
+            <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" data-action="team-management#expandAll">Expand all</button>
           </div>
-          
-          <div id="current-team-list" class="team-drop-area min-h-[200px] p-2" data-team-management-target="currentTeam">
+          <div id="current-team-list" class="team-drop-area col" style="gap:8px;min-height:200px;padding:8px;border:1px dashed var(--color-border);border-radius:var(--radius-lg)"
+               data-team-management-target="currentTeam">
             <% if @current_associates.any? %>
               <% @current_associates.each do |associate| %>
                 <% assignment = associate.role_assignments.find_by(role: Role.associate, assigned_by: @user) %>
-                <div class="associate-card bg-white rounded-md shadow-sm p-3 mb-2 cursor-move border-l-4 border-blue-500" 
+                <div class="associate-card rl-card" style="padding:12px;cursor:move"
                      data-team-management-target="associateCard"
                      data-associate-id="<%= associate.id %>"
-                     data-associate-name="<%= associate.name.present? ? associate.name.downcase : '' %>" 
-                     data-associate-email="<%= associate.email.present? ? associate.email.downcase : '' %>">
-                  <div class="flex justify-between items-center">
+                     data-associate-name="<%= associate.name.present? ? associate.name.downcase : "" %>"
+                     data-associate-email="<%= associate.email.present? ? associate.email.downcase : "" %>">
+                  <div class="spread">
                     <div>
-                      <h4 class="font-medium text-gray-900"><%= associate.name.present? ? associate.name : 'No Name' %></h4>
-                      <p class="text-sm text-gray-500"><%= associate.email.present? ? associate.email : 'No Email' %></p>
+                      <div class="rl-cell-strong"><%= associate.name.presence || "No name" %></div>
+                      <div class="muted rl-sm"><%= associate.email.presence || "No email" %></div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">Team Member</span>
-                      <button type="button" class="ml-2 text-red-600 hover:text-red-800 focus:outline-none" 
-                              data-action="team-management#unassignAssociate" data-associate-id="<%= associate.id %>">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                    <div class="row" style="gap:8px;align-items:center">
+                      <span class="text-xs rl-badge rl-badge--primary">Team member</span>
+                      <button type="button" class="rl-iconbtn rl-iconbtn--sm" style="color:var(--color-danger-text)"
+                              data-action="team-management#unassignAssociate" data-associate-id="<%= associate.id %>" title="Remove">
+                        <%= relay_icon("trash-2", size: 16) %>
                       </button>
                     </div>
                   </div>
-                  <button type="button" class="text-sm text-blue-600 hover:text-blue-800 mt-2 w-full text-left focus:outline-none" 
-                          data-action="team-management#toggleDetails">
-                    Show Details
-                  </button>
-                  <div class="associate-details hidden mt-2 pt-2 border-t border-gray-100 text-sm">
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <p class="text-gray-500">Assigned On:</p>
-                        <p class="font-medium"><%= assignment&.created_at&.strftime("%b %d, %Y") || "N/A" %></p>
-                      </div>
-                      <div>
-                        <p class="text-gray-500">Assigned By:</p>
-                        <p class="font-medium"><%= assignment&.assigned_by&.name || "System" %></p>
-                      </div>
+                  <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" style="margin-top:8px" data-action="team-management#toggleDetails">Show details</button>
+                  <div class="associate-details hidden rl-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border)">
+                    <div class="row" style="gap:16px">
+                      <div><span class="muted">Assigned on:</span> <b><%= assignment&.created_at&.strftime("%b %d, %Y") || "N/A" %></b></div>
+                      <div><span class="muted">Assigned by:</span> <b><%= assignment&.assigned_by&.name || "System" %></b></div>
                     </div>
-                    <div class="mt-2">
-                      <p class="text-gray-500">Recent Activity:</p>
-                      <div class="flex space-x-4 mt-1">
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.customers.count %> customers
-                        </span>
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.tasks.where(completed: false).count %> pending tasks
-                        </span>
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.deals.where.not(status: ['won', 'lost']).count %> active deals
-                        </span>
-                      </div>
+                    <div class="row" style="gap:8px;margin-top:8px">
+                      <span class="rl-badge rl-badge--neutral"><%= associate.customers.count %> customers</span>
+                      <span class="rl-badge rl-badge--neutral"><%= associate.tasks.where(completed: false).count %> pending tasks</span>
+                      <span class="rl-badge rl-badge--neutral"><%= associate.deals.where.not(status: [ "won", "lost" ]).count %> active deals</span>
                     </div>
                   </div>
                 </div>
               <% end %>
             <% else %>
-              <div class="text-center py-12 text-gray-500" id="current-empty-placeholder">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <p>No team members assigned yet.</p>
-                <p class="text-sm mt-2">Drag associates from the right panel to add them to the team.</p>
+              <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)" id="current-empty-placeholder">
+                No team members assigned yet. Drag associates from the right panel to add them.
               </div>
             <% end %>
           </div>
         </div>
-        
-        <!-- Available Associates -->
-        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-gray-700">Available Associates (<span id="available-count"><%= @available_associates.count %></span>)</h3>
-            <div class="flex space-x-2">
-              <input type="text" placeholder="Search associates..." class="border border-gray-300 rounded px-2 py-1 text-sm" 
+
+        <%# Available associates %>
+        <div>
+          <div class="spread" style="margin-bottom:10px">
+            <b>Available associates (<span id="available-count"><%= @available_associates.count %></span>)</b>
+            <div class="row" style="gap:6px">
+              <input type="text" placeholder="Search…" class="rl-input rl-input--sm" style="width:160px"
                      data-team-management-target="searchInput" data-action="input->team-management#searchAssociates">
-              <button type="button" class="text-blue-600 hover:text-blue-800 text-sm" data-action="team-management#clearSearch">
-                Clear
-              </button>
+              <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" data-action="team-management#clearSearch">Clear</button>
             </div>
           </div>
-          
-          <div id="available-associates-list" class="team-drop-area min-h-[200px] p-2" data-team-management-target="availableAssociates">
+          <div id="available-associates-list" class="team-drop-area col" style="gap:8px;min-height:200px;padding:8px;border:1px dashed var(--color-border);border-radius:var(--radius-lg)"
+               data-team-management-target="availableAssociates">
             <% if @available_associates.any? %>
               <% @available_associates.each do |associate| %>
-                <div class="associate-card bg-white rounded-md shadow-sm p-3 mb-2 cursor-move border-l-4 border-gray-300" 
+                <div class="associate-card rl-card" style="padding:12px;cursor:move"
                      data-team-management-target="associateCard"
-                     data-associate-id="<%= associate.id %>" 
-                     data-associate-name="<%= associate.name.present? ? associate.name.downcase : '' %>" 
-                     data-associate-email="<%= associate.email.present? ? associate.email.downcase : '' %>">
-                  <div class="flex justify-between items-center">
+                     data-associate-id="<%= associate.id %>"
+                     data-associate-name="<%= associate.name.present? ? associate.name.downcase : "" %>"
+                     data-associate-email="<%= associate.email.present? ? associate.email.downcase : "" %>">
+                  <div class="spread">
                     <div>
-                      <h4 class="font-medium text-gray-900"><%= associate.name.present? ? associate.name : 'No Name' %></h4>
-                      <p class="text-sm text-gray-500"><%= associate.email.present? ? associate.email : 'No Email' %></p>
+                      <div class="rl-cell-strong"><%= associate.name.presence || "No name" %></div>
+                      <div class="muted rl-sm"><%= associate.email.presence || "No email" %></div>
                     </div>
-                    <div class="flex items-center">
-                      <span class="text-xs bg-gray-100 text-gray-800 rounded-full px-2 py-1">Available</span>
-                      <button type="button" class="ml-2 text-green-600 hover:text-green-800 focus:outline-none" 
-                              data-action="team-management#quickAssign" data-associate-id="<%= associate.id %>">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
+                    <div class="row" style="gap:8px;align-items:center">
+                      <span class="text-xs rl-badge rl-badge--neutral">Available</span>
+                      <button type="button" class="rl-iconbtn rl-iconbtn--sm" style="color:var(--color-success)"
+                              data-action="team-management#quickAssign" data-associate-id="<%= associate.id %>" title="Assign">
+                        <%= relay_icon("plus", size: 16) %>
                       </button>
                     </div>
                   </div>
-                  <button type="button" class="text-sm text-blue-600 hover:text-blue-800 mt-2 w-full text-left focus:outline-none" 
-                          data-action="team-management#toggleDetails">
-                    Show Details
-                  </button>
-                  <div class="associate-details hidden mt-2 pt-2 border-t border-gray-100 text-sm">
-                    <div class="grid grid-cols-2 gap-2">
-                      <div>
-                        <p class="text-gray-500">Role Assigned:</p>
-                        <p class="font-medium"><%= associate.role_assignments.find_by(role: Role.associate)&.created_at&.strftime("%b %d, %Y") || "N/A" %></p>
-                      </div>
-                      <div>
-                        <p class="text-gray-500">Current Manager:</p>
-                        <p class="font-medium">None</p>
-                      </div>
+                  <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" style="margin-top:8px" data-action="team-management#toggleDetails">Show details</button>
+                  <div class="associate-details hidden rl-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border)">
+                    <div class="row" style="gap:16px">
+                      <div><span class="muted">Role assigned:</span> <b><%= associate.role_assignments.find_by(role: Role.associate)&.created_at&.strftime("%b %d, %Y") || "N/A" %></b></div>
+                      <div><span class="muted">Current manager:</span> <b>None</b></div>
                     </div>
-                    <div class="mt-2">
-                      <p class="text-gray-500">Recent Activity:</p>
-                      <div class="flex space-x-4 mt-1">
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.customers.count %> customers
-                        </span>
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.tasks.where(completed: false).count %> pending tasks
-                        </span>
-                        <span class="px-2 py-1 bg-gray-100 rounded text-xs">
-                          <%= associate.deals.where.not(status: ['won', 'lost']).count %> active deals
-                        </span>
-                      </div>
+                    <div class="row" style="gap:8px;margin-top:8px">
+                      <span class="rl-badge rl-badge--neutral"><%= associate.customers.count %> customers</span>
+                      <span class="rl-badge rl-badge--neutral"><%= associate.tasks.where(completed: false).count %> pending tasks</span>
+                      <span class="rl-badge rl-badge--neutral"><%= associate.deals.where.not(status: [ "won", "lost" ]).count %> active deals</span>
                     </div>
                   </div>
                 </div>
               <% end %>
             <% else %>
-              <div class="text-center py-12 text-gray-500" id="available-empty-placeholder">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <p>No available associates to assign.</p>
-                <p class="text-sm mt-2">All associates with the associate role have been assigned.</p>
+              <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)" id="available-empty-placeholder">
+                No available associates to assign. All associates have been assigned.
               </div>
             <% end %>
           </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
-      <div class="flex justify-between">
-        <div class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span class="text-sm text-gray-600">Drag and drop associates between lists, or use the quick add button. Changes are saved automatically.</span>
         </div>
       </div>
     </div>
   </div>
-</div> 
+</div>

@@ -1,16 +1,17 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="mb-6">
-    <%= link_to "← Back to Customers", customers_path, class: "text-blue-600 hover:text-blue-800" %>
+<% content_for :title, "New customer — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">New customer</div>
+      <div class="pagehead__sub">Add a new customer to your CRM.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to customers_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to customers
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <div class="p-6 border-b border-gray-200">
-      <h1 class="text-2xl font-bold text-gray-900">New Customer</h1>
-      <p class="text-gray-600 mt-1">Add a new customer to your CRM</p>
-    </div>
-
-    <div class="p-6">
-      <%= render 'form', customer: @customer %>
-    </div>
-  </div>
+  <%= render "form", customer: @customer %>
 </div>

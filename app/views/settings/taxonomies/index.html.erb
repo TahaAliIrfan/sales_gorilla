@@ -1,131 +1,153 @@
-<% content_for :title, "Lists & statuses" %>
+<%# Lists & statuses — relay DS. Sits inside the Settings workspace (same tab
+    bar on top). The taxonomy-modal + taxonomy-sort Stimulus contracts
+    (targets/actions/ids), all form params, and the JSON usage endpoint are
+    unchanged from the original Tailwind version. %>
+<% content_for :title, "Lists & statuses — #{current_organization&.name}" %>
 
-<%= render "shared/page_header", eyebrow: "Settings", title: "Lists & statuses",
-      subtitle: "Lead sources, customer statuses, project types — anything your team picks from a dropdown. Add, rename, reorder, or delete." %>
+<div class="page page--wide">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Settings</div>
+      <div class="pagehead__sub">
+        Lead sources, customer statuses, project types — anything your team picks from a dropdown.
+        Add, rename, reorder, or delete.
+      </div>
+    </div>
+  </div>
 
-<div class="grid gap-6 lg:grid-cols-[15rem_1fr]"
-     data-controller="taxonomy-modal"
-     data-taxonomy-modal-usage-url-template-value="<%= usage_settings_taxonomy_path(":id") %>">
+  <%= render "settings/tabbar", active: "taxonomies" %>
 
-  <%# ── Sidebar: kind tabs ──────────────────────────────────────────────── %>
-  <aside class="lg:sticky lg:top-24 lg:self-start">
-    <nav class="flex flex-col gap-0.5 rounded-xl bg-panel p-2 shadow-card ring-1 ring-[var(--color-line-2)]">
-      <% Taxonomy::KINDS.each do |kind| %>
-        <% active = kind == @kind %>
-        <% count = @taxonomies_by_kind[kind].size %>
-        <%= link_to settings_taxonomies_path(kind: kind),
-              class: "flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition #{active ? 'bg-[var(--color-line-2)] text-ink' : 'text-ink-soft hover:bg-[var(--color-line)] hover:text-ink'}" do %>
-          <span><%= Taxonomy::KIND_LABELS[kind] %></span>
-          <span class="mono rounded-full bg-[var(--color-line)] px-1.5 py-0.5 text-[10px] font-semibold text-ink-soft">
-            <%= count %>
-          </span>
+  <div class="grid"
+       style="grid-template-columns:15rem 1fr;align-items:start;gap:var(--space-5)"
+       data-controller="taxonomy-modal"
+       data-taxonomy-modal-usage-url-template-value="<%= usage_settings_taxonomy_path(":id") %>">
+
+    <%# ── Sidebar: kind tabs ──────────────────────────────────────────────── %>
+    <aside class="sect" style="position:sticky;top:var(--space-5)">
+      <nav class="col" style="padding:var(--space-2);gap:2px">
+        <% Taxonomy::KINDS.each do |kind| %>
+          <% active = kind == @kind %>
+          <% count = @taxonomies_by_kind[kind].size %>
+          <%= link_to settings_taxonomies_path(kind: kind),
+                class: "rl-sm",
+                style: "display:flex;align-items:center;justify-content:space-between;gap:var(--space-2);" \
+                       "padding:8px var(--space-3);border-radius:var(--radius-md);font-weight:var(--weight-medium);" \
+                       "text-decoration:none;" + (active ?
+                         "background:var(--color-primary-subtle);color:var(--color-primary-text)" :
+                         "color:var(--color-fg-2)") do %>
+            <span><%= Taxonomy::KIND_LABELS[kind] %></span>
+            <span class="rl-tab-count"><%= count %></span>
+          <% end %>
         <% end %>
-      <% end %>
-    </nav>
-  </aside>
+      </nav>
+    </aside>
 
-  <%# ── Main: editable list of the selected kind ───────────────────────── %>
-  <section class="space-y-4">
-    <div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
-      <div class="flex flex-wrap items-end justify-between gap-4 border-b border-[var(--color-line-2)] pb-4">
-        <div>
-          <h2 class="font-display text-2xl font-semibold text-ink"><%= Taxonomy::KIND_LABELS[@kind] %></h2>
-          <p class="mt-1 text-sm text-ink-soft">
+    <%# ── Main: editable list of the selected kind ───────────────────────── %>
+    <section class="sect">
+      <div class="sect__head">
+        <div class="grow">
+          <div class="sect__title"><%= relay_icon("layers", size: 18) %><%= Taxonomy::KIND_LABELS[@kind] %></div>
+          <p class="muted rl-sm" style="margin-top:2px">
             Drag rows to reorder. The order here is what users see in the dropdown.
           </p>
         </div>
         <%= form_with url: settings_taxonomies_path(kind: @kind), method: :post, local: true,
-              class: "flex items-center gap-2" do %>
-          <%= text_field_tag "taxonomy[name]", nil, placeholder: "Add value", class: "#{input_classes} !py-1.5 !text-sm w-56", required: true %>
+              class: "row", html: { style: "gap:var(--space-2)" } do %>
+          <%= text_field_tag "taxonomy[name]", nil, placeholder: "Add value",
+                class: "rl-input rl-input--sm", style: "width:14rem", required: true %>
           <%= submit_tag "Add", data: { turbo_submits_with: "Adding…" },
-                class: "rounded-md px-4 py-1.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:opacity-60 cursor-pointer",
-                style: "background: var(--brand-primary)" %>
+                class: "rl-btn rl-btn--primary" %>
         <% end %>
       </div>
 
-      <% if @current_list.empty? %>
-        <p class="py-8 text-center text-sm text-ink-soft">No values yet. Add one above.</p>
-      <% else %>
-        <ul data-controller="taxonomy-sort"
-            data-taxonomy-sort-kind-value="<%= @kind %>"
-            data-taxonomy-sort-url-value="<%= reorder_settings_taxonomies_path %>"
-            class="divide-y divide-[var(--color-line-2)]">
-          <% @current_list.each do |tax| %>
-            <li data-id="<%= tax.id %>"
-                class="flex items-center gap-3 py-2.5">
-              <%# Drag handle %>
-              <span class="taxonomy-sort-handle cursor-grab text-ink-soft hover:text-ink active:cursor-grabbing" title="Drag to reorder">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
-                  <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-                  <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
-                </svg>
-              </span>
+      <div class="sect__body sect__body--flush">
+        <% if @current_list.empty? %>
+          <p class="muted rl-sm" style="padding:var(--space-6);text-align:center">No values yet. Add one above.</p>
+        <% else %>
+          <ul data-controller="taxonomy-sort"
+              data-taxonomy-sort-kind-value="<%= @kind %>"
+              data-taxonomy-sort-url-value="<%= reorder_settings_taxonomies_path %>"
+              class="col">
+            <% @current_list.each do |tax| %>
+              <li data-id="<%= tax.id %>" class="rl-listitem">
+                <%# Drag handle %>
+                <span class="taxonomy-sort-handle muted" title="Drag to reorder"
+                      style="cursor:grab;display:inline-flex">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
+                    <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
+                    <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
+                  </svg>
+                </span>
 
-              <%# Inline-rename form (turbo) %>
-              <%= form_with url: settings_taxonomy_path(tax), method: :patch, local: true,
-                    class: "flex flex-1 items-center gap-2" do %>
-                <%= text_field_tag "taxonomy[name]", tax.name,
-                      class: "flex-1 rounded-md border-0 bg-paper px-3 py-1.5 text-sm text-ink ring-1 ring-[var(--color-line-2)] focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+                <%# Inline-rename form (turbo) %>
+                <%= form_with url: settings_taxonomy_path(tax), method: :patch, local: true,
+                      class: "row grow", html: { style: "gap:var(--space-2);flex:1" } do %>
+                  <%= text_field_tag "taxonomy[name]", tax.name, class: "rl-input rl-input--sm", style: "flex:1" %>
 
-                <% if tax.system_default %>
-                  <span class="mono rounded-full px-2 py-0.5 text-[10px] font-medium"
-                        style="color: var(--color-ink-soft); background: var(--color-line)">default</span>
+                  <% if tax.system_default %>
+                    <span class="rl-badge rl-badge--neutral">default</span>
+                  <% end %>
+
+                  <button type="submit" data-turbo-submits-with="Saving…" class="rl-btn rl-btn--secondary">
+                    Save
+                  </button>
                 <% end %>
 
-                <button type="submit" data-turbo-submits-with="Saving…"
-                        class="rounded-md px-3 py-1.5 text-xs font-medium text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink">
-                  Save
+                <%# Delete trigger — opens reassignment modal %>
+                <button type="button"
+                        data-action="taxonomy-modal#open"
+                        data-taxonomy-id="<%= tax.id %>"
+                        data-taxonomy-name="<%= tax.name %>"
+                        class="rl-btn rl-btn--destructive-ghost"
+                        title="Delete">
+                  <%= relay_icon("trash-2", size: 16) %>
                 </button>
-              <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      </div>
+    </section>
 
-              <%# Delete trigger — opens reassignment modal %>
-              <button type="button"
-                      data-action="taxonomy-modal#open"
-                      data-taxonomy-id="<%= tax.id %>"
-                      data-taxonomy-name="<%= tax.name %>"
-                      class="rounded-md px-2.5 py-1.5 text-xs font-medium text-ink-soft transition hover:bg-[#a83a22]/10 hover:text-[#a83a22]">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>
-                </svg>
-              </button>
-            </li>
-          <% end %>
-        </ul>
-      <% end %>
-    </div>
-  </section>
-
-  <%# ── Delete + Reassign modal (populated by Stimulus) ─────────────────── %>
-  <div data-taxonomy-modal-target="modal"
-       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4"
-       data-action="click->taxonomy-modal#backdropClick">
-    <div class="w-full max-w-md rounded-xl bg-panel p-6 shadow-lift ring-1 ring-[var(--color-line-2)]"
-         data-taxonomy-modal-target="dialog">
-      <h3 class="font-display text-lg font-semibold text-ink" data-taxonomy-modal-target="title">Delete value</h3>
-      <p class="mt-2 text-sm text-ink-soft" data-taxonomy-modal-target="body">Loading…</p>
-
-      <%= form_with url: "#", method: :delete, local: true,
-            data: { taxonomy_modal_target: "form" },
-            class: "mt-4 space-y-4 hidden" do %>
-        <div data-taxonomy-modal-target="reassignWrap" class="hidden">
-          <%= label_tag :reassign_to, "Move customers to", class: "micro", style: "color: var(--color-ink-soft)" %>
-          <%= select_tag :reassign_to, options_for_select([]),
-                data: { taxonomy_modal_target: "reassignSelect" },
-                class: input_classes %>
-        </div>
-
-        <div class="flex items-center justify-end gap-2 pt-2">
-          <button type="button" data-action="taxonomy-modal#close"
-                  class="rounded-md px-4 py-2 text-sm font-medium text-ink-soft transition hover:text-ink">
-            Cancel
+    <%# ── Delete + Reassign modal (populated by Stimulus) ─────────────────── %>
+    <div data-taxonomy-modal-target="modal"
+         class="hidden rl-scrim"
+         style="position:fixed;inset:0;padding:16px"
+         data-action="click->taxonomy-modal#backdropClick">
+      <div class="rl-modal" style="max-width:480px;width:100%"
+           data-taxonomy-modal-target="dialog">
+        <div class="rl-modal__head">
+          <span class="rl-modal__icon rl-modal__icon--danger"><%= relay_icon("trash-2", size: 20) %></span>
+          <div class="rl-modal__title" data-taxonomy-modal-target="title">Delete value</div>
+          <button type="button" class="rl-iconbtn rl-modal__close" data-action="taxonomy-modal#close" title="Close">
+            <%= relay_icon("x", size: 18) %>
           </button>
-          <%= submit_tag "Delete",
-                data: { turbo_submits_with: "Deleting…" },
-                class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5",
-                style: "background: #a83a22" %>
         </div>
-      <% end %>
+        <div class="rl-modal__body">
+          <p data-taxonomy-modal-target="body">Loading…</p>
+
+          <%= form_with url: "#", method: :delete, local: true,
+                data: { taxonomy_modal_target: "form" },
+                class: "hidden col", html: { style: "gap:var(--space-4);margin-top:var(--space-4)" } do %>
+            <div data-taxonomy-modal-target="reassignWrap" class="hidden rl-field">
+              <%= label_tag :reassign_to, "Move customers to", class: "rl-label" %>
+              <%= select_tag :reassign_to, options_for_select([]),
+                    data: { taxonomy_modal_target: "reassignSelect" },
+                    class: "rl-select" %>
+            </div>
+
+            <div class="row" style="justify-content:flex-end;gap:var(--space-2)">
+              <button type="button" data-action="taxonomy-modal#close" class="rl-btn rl-btn--secondary">
+                Cancel
+              </button>
+              <%= submit_tag "Delete",
+                    data: { turbo_submits_with: "Deleting…" },
+                    class: "rl-btn rl-btn--destructive" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
     </div>
   </div>
 </div>

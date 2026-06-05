@@ -1,99 +1,95 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="flex justify-between items-center mb-6">
+<%# Campaigns index — relay DS table. Status badges via OutreachHelper. Row
+    actions keep the existing endpoints (View / Edit / Send now / Delete) and
+    their turbo_confirm prompts. %>
+<% content_for :title, "Campaigns — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <h1 class="text-2xl font-bold">WhatsApp Campaigns</h1>
-      <p class="text-gray-600 mt-1">Create and manage WhatsApp message campaigns</p>
+      <div class="pagehead__title">WhatsApp campaigns</div>
+      <div class="pagehead__sub">Create and manage bulk WhatsApp message campaigns.</div>
     </div>
-    <%= link_to "New Campaign", new_campaign_path,
-        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    <div class="pagehead__actions">
+      <%= link_to new_campaign_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("megaphone", size: 15) %>New campaign
+      <% end %>
+    </div>
   </div>
 
-  <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recipients</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <% @campaigns.each do |campaign| %>
-          <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-medium text-gray-900"><%= campaign.name %></div>
-              <div class="text-sm text-gray-500"><%= truncate(campaign.message, length: 50) %></div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <% status_colors = {
-                'draft' => 'bg-gray-100 text-gray-800',
-                'scheduled' => 'bg-yellow-100 text-yellow-800',
-                'in_progress' => 'bg-blue-100 text-blue-800',
-                'completed' => 'bg-green-100 text-green-800',
-                'failed' => 'bg-red-100 text-red-800'
-              } %>
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full <%= status_colors[campaign.status] %>">
-                <%= campaign.status.titleize %>
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <%= campaign.total_recipients %> customers
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <%= campaign.scheduled_at ? campaign.scheduled_at.strftime("%b %d, %Y %I:%M %p") : "Send immediately" %>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-              <% total = campaign.campaign_executions.count %>
-              <% completed = campaign.campaign_executions.where(status: 'completed').count %>
-              <% failed = campaign.campaign_executions.where(status: 'failed').count %>
-              <% if total > 0 %>
-                <div class="text-sm">
-                  <%= completed %>/<%= total %> sent
-                  <% if failed > 0 %>
-                    (<span class="text-red-600"><%= failed %> failed</span>)
-                  <% end %>
-                </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
-                  <div class="bg-blue-600 h-2 rounded-full" style="width: <%= (completed.to_f / total * 100).round %>%"></div>
-                </div>
-              <% else %>
-                -
+  <% if @campaigns.empty? %>
+    <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+      <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("megaphone", size: 22) %></span>
+      <div class="rl-h4">No campaigns</div>
+      <div class="muted rl-sm" style="margin-top:6px">Get started by creating a new campaign.</div>
+      <div style="margin-top:16px"><%= link_to "New campaign", new_campaign_path, class: "rl-btn rl-btn--primary rl-btn--sm" %></div>
+    </div></div>
+  <% else %>
+    <div class="sect">
+      <div class="sect__body--flush">
+        <div class="rl-table-scroll">
+          <table class="rl-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Recipients</th>
+                <th>Scheduled</th>
+                <th>Progress</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @campaigns.each do |campaign| %>
+                <% meta = outreach_campaign_status_meta(campaign.status) %>
+                <tr>
+                  <td>
+                    <div class="rl-cell-strong"><%= campaign.name %></div>
+                    <div class="muted rl-sm" style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= truncate(campaign.message, length: 60) %></div>
+                  </td>
+                  <td><span class="rl-badge <%= meta[:badge] %>"><%= relay_icon(meta[:icon], size: 11) %><%= meta[:label] %></span></td>
+                  <td class="rl-sm tnum"><%= campaign.total_recipients %></td>
+                  <td class="rl-sm"><%= campaign.scheduled_at ? campaign.scheduled_at.strftime("%b %-d, %Y %-I:%M %p") : "Send immediately" %></td>
+                  <td>
+                    <% total = campaign.campaign_executions.count %>
+                    <% completed = campaign.campaign_executions.where(status: "completed").count %>
+                    <% failed = campaign.campaign_executions.where(status: "failed").count %>
+                    <% if total > 0 %>
+                      <div class="rl-sm tnum"><%= completed %>/<%= total %> sent<% if failed > 0 %> <span style="color:var(--color-danger)">(<%= failed %> failed)</span><% end %></div>
+                      <div class="segbar" style="margin-top:4px;max-width:140px">
+                        <i style="width:<%= (completed.to_f / total * 100).round(2) %>%;background:var(--channel-whatsapp)"></i>
+                      </div>
+                    <% else %>
+                      <span class="muted rl-sm">—</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="row" style="gap:6px;justify-content:flex-end">
+                      <%= link_to campaign_path(campaign), class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                        <%= relay_icon("eye", size: 14) %>View
+                      <% end %>
+                      <% if campaign.draft? %>
+                        <%= link_to edit_campaign_path(campaign), class: "rl-iconbtn rl-iconbtn--sm", title: "Edit" do %>
+                          <%= relay_icon("pencil", size: 15) %>
+                        <% end %>
+                        <%= button_to send_now_campaign_path(campaign), method: :post,
+                              form: { data: { turbo_confirm: "Send #{campaign.total_recipients} messages?" } },
+                              class: "rl-iconbtn rl-iconbtn--sm", title: "Send now" do %>
+                          <%= relay_icon("send", size: 15) %>
+                        <% end %>
+                      <% end %>
+                      <%= button_to campaign_path(campaign), method: :delete,
+                            form: { data: { turbo_confirm: "Are you sure?" } },
+                            class: "rl-iconbtn rl-iconbtn--sm", title: "Delete" do %>
+                        <%= relay_icon("trash-2", size: 15) %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
               <% end %>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <div class="flex gap-2">
-                <%= link_to "View", campaign_path(campaign), class: "text-blue-600 hover:text-blue-900" %>
-                <% if campaign.draft? %>
-                  <%= link_to "Edit", edit_campaign_path(campaign), class: "text-gray-600 hover:text-gray-900" %>
-                  <%= button_to "Send Now", send_now_campaign_path(campaign), method: :post,
-                      form: { data: { turbo_confirm: "Send #{campaign.total_recipients} messages?" }, class: "inline" },
-                      class: "text-green-600 hover:text-green-900 bg-transparent border-0 p-0 cursor-pointer" %>
-                <% end %>
-                <%= button_to "Delete", campaign_path(campaign), method: :delete,
-                    form: { data: { turbo_confirm: "Are you sure?" }, class: "inline" },
-                    class: "text-red-600 hover:text-red-900 bg-transparent border-0 p-0 cursor-pointer" %>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-      </tbody>
-    </table>
-
-    <% if @campaigns.empty? %>
-      <div class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating a new campaign.</p>
-        <div class="mt-6">
-          <%= link_to "New Campaign", new_campaign_path,
-              class: "inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700" %>
+            </tbody>
+          </table>
         </div>
       </div>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 </div>

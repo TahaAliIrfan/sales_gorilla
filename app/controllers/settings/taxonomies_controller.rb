@@ -3,6 +3,7 @@
 # types). Backed by app/models/taxonomy.rb; rename/delete cascade via
 # TaxonomyManagementService.
 class Settings::TaxonomiesController < TenantController
+  layout "relay"
   before_action :require_login
   before_action :load_taxonomy, only: %i[update destroy]
   before_action :validate_kind, only: %i[index create reorder]

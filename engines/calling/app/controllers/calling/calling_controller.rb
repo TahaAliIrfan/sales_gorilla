@@ -1,7 +1,12 @@
 module Calling
   class CallingController < ApplicationController
     skip_before_action :verify_authenticity_token, only: %i[voice recording_status]
-    layout "tenant"
+    layout "relay"
+    # The relay shell (sidebar/topbar/brand ramp) is built from host helpers
+    # that the isolated engine doesn't inherit automatically.
+    helper Relay::ThemeHelper
+    helper Relay::IconHelper
+    helper Relay::NavHelper
     rescue_from StandardError, with: :handle_calling_error
 
     def index

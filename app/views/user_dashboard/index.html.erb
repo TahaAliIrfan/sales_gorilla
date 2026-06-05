@@ -23,8 +23,8 @@
       </div>
     </div>
     <div class="pagehead__actions">
-      <%= link_to reports_path, class: "rl-btn rl-btn--secondary" do %>
-        <%= relay_icon("bar-chart-3", size: 15) %>My numbers
+      <%= link_to (@is_manager ? reports_path : my_reports_path), class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("bar-chart-3", size: 15) %><%= @is_manager ? "Team numbers" : "My numbers" %>
       <% end %>
       <%= link_to customers_path, class: "rl-btn rl-btn--primary" do %>
         <%= relay_icon("zap", size: 15) %>Work my list
@@ -32,18 +32,19 @@
     </div>
   </div>
 
-  <%# === KPI row === %>
+  <%# === KPI row — reps see their own numbers, managers/admins their team's === %>
+  <% scope_word = @is_manager ? "team" : "you" %>
   <div class="grid <%= feature_enabled?(:calling) ? "grid-4" : "grid-3" %>" style="margin-bottom:var(--space-6)">
     <% if feature_enabled?(:calling) %>
       <%= render "user_dashboard/stat", label: "Calls today", value: @calls_today,
-            sub: "#{@connected_today} connected", icon: "phone" %>
+            sub: "#{@connected_today} connected · #{scope_word}", icon: "phone" %>
     <% end %>
     <%= render "user_dashboard/stat", label: "Leads worked", value: @leads_worked,
-          sub: "this month", icon: "users" %>
+          sub: "this month · #{scope_word}", icon: "users" %>
     <%= render "user_dashboard/stat", label: "Deals won (mo)", value: relay_money_compact(@deals_won_value),
-          sub: "#{@deals_won_count} closed", icon: "trophy" %>
+          sub: "#{@deals_won_count} closed · #{scope_word}", icon: "trophy" %>
     <%= render "user_dashboard/stat", label: "Conversion", value: "#{@conversion}%",
-          sub: "win rate, all time", icon: "target" %>
+          sub: "win rate, all time · #{scope_word}", icon: "target" %>
   </div>
 
   <div class="grid" style="grid-template-columns:1.55fr 1fr;align-items:start">
@@ -123,7 +124,7 @@
       <% if @is_manager %>
         <div class="sect">
           <div class="sect__head">
-            <div class="sect__title"><%= relay_icon("users-2", size: 19) %>Team today</div>
+            <div class="sect__title"><%= relay_icon("users-2", size: 19) %>Team this month</div>
             <%= link_to "Full report", manager_dashboard_path, class: "rl-btn rl-btn--ghost rl-btn--sm" %>
           </div>
           <div class="sect__body--flush">
@@ -166,7 +167,7 @@
             <div style="padding:20px 16px;text-align:center" class="muted rl-sm">All caught up — nothing waiting.</div>
           <% else %>
             <% @unassigned.each do |lead| %>
-              <div class="rl-listitem">
+              <div class="rl-listitem" id="<%= dom_id(lead, :unassigned) %>">
                 <span class="rl-avatar rl-avatar--sm <%= relay_avatar_class(lead.name) %>"><%= relay_initials(lead.name) %></span>
                 <div class="rl-listitem__main">
                   <div class="rl-listitem__title"><%= lead.name %></div>

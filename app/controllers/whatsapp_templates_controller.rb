@@ -2,7 +2,7 @@
 # templates that the WhatsApp US chat composer can send. Templates are
 # read-only here — creation/approval happens in Twilio's console.
 class WhatsappTemplatesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :require_admin
 

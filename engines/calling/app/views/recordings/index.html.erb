@@ -1,281 +1,207 @@
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-  <div class="px-4 py-5 sm:px-6">
-    <h2 class="text-2xl font-semibold text-gray-900">Recordings</h2>
-    <p class="mt-1 text-sm text-gray-500">List of all call recordings</p>
-  </div>
+<%# Call recordings — relay DS. Serves both #index (all recordings) and
+    #my_recordings (renders :index). Preserves the JS contracts exactly:
+      - audio-player controller (data-audio-player-url-value, click->audio-player#play)
+        + the #audio-player-modal / #audio-player elements it targets by id;
+      - transcript-modal controller (data-transcript-modal-id-value, click->transcript-modal#open)
+        + the #transcript-modal / #transcript-content / #debug-section / #debug-content
+        / #toggle-debug / #copy-transcript elements and the inline script it relies on.
+    The filter form keeps the start_date/end_date/customer_id/caller_id GET params
+    and the transcript/download endpoints are unchanged. %>
+<% mine = params[:action] == "my_recordings" %>
+<% content_for :title, "#{mine ? "My recordings" : "Recordings"} — #{current_organization&.name}" %>
 
-  <!-- Filtering Form -->
-  <div class="bg-gray-50 px-4 py-5 sm:px-6 border-b border-gray-200">
-    <%= form_with url: recordings_path, method: :get, class: "space-y-4" do |form| %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <div>
-          <label for="start_date" class="block text-sm font-medium text-gray-700">Start Date</label>
-          <%= form.date_field :start_date, value: params[:start_date], 
-                              class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-        </div>
-        
-        <div>
-          <label for="end_date" class="block text-sm font-medium text-gray-700">End Date</label>
-          <%= form.date_field :end_date, value: params[:end_date], 
-                              class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" %>
-        </div>
-        
-        <div>
-          <label for="customer_id" class="block text-sm font-medium text-gray-700">Customer</label>
-          <%= form.collection_select :customer_id, Customer.order(:name), :id, :name, 
-                                    { include_blank: "All Customers", selected: params[:customer_id] },
-                                    { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-        </div>
-        
-        <div>
-          <label for="caller_id" class="block text-sm font-medium text-gray-700">Caller</label>
-          <%= form.collection_select :caller_id, User.order(:name), :id, :name, 
-                                    { include_blank: "All Callers", selected: params[:caller_id] },
-                                    { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" } %>
-        </div>
-      </div>
-      
-      <div class="flex justify-end">
-        <%= form.submit "Filter", class: "ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-        <%= link_to "Clear Filters", recordings_path, class: "ml-3 inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- Recordings Table -->
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Caller</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Audio</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transcript</th>
-          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <% if @recordings.empty? %>
-          <tr>
-            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No recordings found</td>
-          </tr>
-        <% else %>
-          <% @recordings.each do |recording| %>
-            <tr class="<%= recording.duration.to_i >= 40 ? 'bg-green-50' : '' %>">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <%= recording.date&.strftime("%b %d, %Y %H:%M") %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <%= link_to recording.customer.name, customer_path(recording.customer), class: "text-blue-600 hover:text-blue-900" %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <%= recording.user&.name || "Unknown" %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <%= pluralize(recording.duration.to_i / 60, "minute") %> <%= recording.duration.to_i % 60 > 0 ? "#{recording.duration.to_i % 60} seconds" : "" %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <% if recording.audio_file.attached? %>
-                  <button data-controller="audio-player" data-audio-player-url-value="<%= rails_blob_url(recording.audio_file) %>" data-action="click->audio-player#play" class="text-blue-600 hover:text-blue-900">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </button>
-                <% else %>
-                  <span class="text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                <% if recording.transcribed? %>
-                  <button data-controller="transcript-modal" data-transcript-modal-id-value="<%= recording.id %>" data-action="click->transcript-modal#open" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    View Transcript
-                  </button>
-                <% else %>
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Not Available
-                  </span>
-                <% end %>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div class="flex space-x-2">
-                  <%= link_to recording_path(recording), class: "text-blue-600 hover:text-blue-900", title: "View Details" do %>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  <% end %>
-                  
-                  <%= link_to download_recording_path(recording), class: "text-green-600 hover:text-green-900", title: "Download Recording" do %>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                  <% end %>
-                </div>
-              </td>
-            </tr>
-          <% end %>
-        <% end %>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination -->
-  <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-    <div class="flex-1 flex justify-between sm:hidden">
-      <%= link_to_prev_page @recordings, 'Previous', class: 'relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
-      <%= link_to_next_page @recordings, 'Next', class: 'ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50' %>
-    </div>
-    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-      <div>
-        <p class="text-sm text-gray-700">
-          Showing <%= @recordings.present? ? @recordings.offset_value + 1 : 0 %>
-          to <%= @recordings.offset_value + @recordings.length %>
-          of <%= @recordings.total_count %> recordings
-        </p>
-      </div>
-      <div>
-        <%= paginate @recordings %>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Audio Player Modal -->
-<div id="audio-player-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" data-controller="modal" data-action="click@window->modal#closeBackground keyup@window->modal#closeWithKeyboard">
-  <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6" data-modal-target="container">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-medium text-gray-900">Recording Player</h3>
-      <button data-action="modal#close" class="text-gray-400 hover:text-gray-500">
-        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
-    </div>
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <audio id="audio-player" controls class="w-full"></audio>
+      <div class="pagehead__title"><%= mine ? "My recordings" : "Recordings" %></div>
+      <div class="pagehead__sub"><%= mine ? "Your call recordings." : "All call recordings." %></div>
+    </div>
+  </div>
+
+  <div class="sect" style="margin-bottom:var(--space-4)">
+    <div class="sect__body">
+      <%= form_with url: (mine ? my_recordings_recordings_path : recordings_path), method: :get, class: "col", html: { style: "gap:var(--space-3)" } do |form| %>
+        <div class="grid <%= mine ? "grid-3" : "grid-4" %>">
+          <div class="rl-field">
+            <label class="rl-label">Start date</label>
+            <%= form.date_field :start_date, value: params[:start_date], class: "rl-input" %>
+          </div>
+          <div class="rl-field">
+            <label class="rl-label">End date</label>
+            <%= form.date_field :end_date, value: params[:end_date], class: "rl-input" %>
+          </div>
+          <div class="rl-field">
+            <label class="rl-label">Customer</label>
+            <%= form.collection_select :customer_id, Customer.order(:name), :id, :name,
+                  { include_blank: "All customers", selected: params[:customer_id] }, { class: "rl-select" } %>
+          </div>
+          <% unless mine %>
+            <div class="rl-field">
+              <label class="rl-label">Caller</label>
+              <%= form.collection_select :caller_id, User.order(:name), :id, :name,
+                    { include_blank: "All callers", selected: params[:caller_id] }, { class: "rl-select" } %>
+            </div>
+          <% end %>
+        </div>
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <%= link_to "Clear filters", (mine ? my_recordings_recordings_path : recordings_path), class: "rl-btn rl-btn--secondary" %>
+          <%= form.submit "Filter", class: "rl-btn rl-btn--primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect__body--flush">
+      <div class="rl-table-scroll">
+        <table class="rl-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Caller</th>
+              <th>Duration</th>
+              <th>Audio</th>
+              <th>Transcript</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @recordings.empty? %>
+              <tr><td colspan="7" class="muted rl-sm" style="text-align:center;padding:32px">No recordings found</td></tr>
+            <% else %>
+              <% @recordings.each do |recording| %>
+                <tr>
+                  <td class="rl-sm"><%= recording.date&.strftime("%b %-d, %Y %H:%M") %></td>
+                  <td><%= link_to recording.customer.name, customer_path(recording.customer), class: "rl-cell-strong", style: "color:var(--brand-primary)" %></td>
+                  <td class="rl-sm"><%= recording.user&.name || "Unknown" %></td>
+                  <td class="rl-sm tnum"><%= pluralize(recording.duration.to_i / 60, "minute") %> <%= recording.duration.to_i % 60 > 0 ? "#{recording.duration.to_i % 60} seconds" : "" %></td>
+                  <td>
+                    <% if recording.audio_file.attached? %>
+                      <button data-controller="audio-player" data-audio-player-url-value="<%= rails_blob_url(recording.audio_file) %>"
+                              data-action="click->audio-player#play" class="rl-iconbtn rl-iconbtn--sm" title="Play">
+                        <%= relay_icon("play", size: 15) %>
+                      </button>
+                    <% else %>
+                      <span class="muted"><%= relay_icon("x-circle", size: 15) %></span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if recording.transcribed? %>
+                      <button data-controller="transcript-modal" data-transcript-modal-id-value="<%= recording.id %>"
+                              data-action="click->transcript-modal#open" class="rl-badge rl-badge--success" style="cursor:pointer;border:none">
+                        <%= relay_icon("file-text", size: 12) %>View transcript
+                      </button>
+                    <% else %>
+                      <span class="rl-badge rl-badge--neutral"><%= relay_icon("x-circle", size: 12) %>Not available</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="row" style="gap:6px;justify-content:flex-end">
+                      <%= link_to recording_path(recording), class: "rl-iconbtn rl-iconbtn--sm", title: "View details" do %>
+                        <%= relay_icon("eye", size: 15) %>
+                      <% end %>
+                      <%= link_to download_recording_path(recording), class: "rl-iconbtn rl-iconbtn--sm", title: "Download recording" do %>
+                        <%= relay_icon("download", size: 15) %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <% if @recordings.respond_to?(:total_pages) && @recordings.total_pages > 1 %>
+    <div class="rl-pagebtns" style="margin-top:var(--space-4)"><%= paginate @recordings, theme: "relay" %></div>
+  <% end %>
+</div>
+
+<%# ── Audio player modal (id-targeted by audio_player_controller) ──────────── %>
+<div id="audio-player-modal" class="hidden ce-overlay" data-controller="modal"
+     data-action="click@window->modal#closeBackground keyup@window->modal#closeWithKeyboard">
+  <div class="ce-modal sect" data-modal-target="container">
+    <div class="sect__head">
+      <div class="sect__title grow">Recording player</div>
+      <button type="button" class="rl-iconbtn rl-iconbtn--sm" data-action="modal#close" title="Close"><%= relay_icon("x", size: 16) %></button>
+    </div>
+    <div class="sect__body">
+      <audio id="audio-player" controls style="width:100%"></audio>
     </div>
   </div>
 </div>
 
-<!-- Transcript Modal -->
-<div id="transcript-modal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50" data-controller="modal" data-action="click->modal#closeBackground keyup@window->modal#closeWithKeyboard">
-  <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full p-6" data-modal-target="container">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-lg font-medium text-gray-900 flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Call Transcript
-      </h3>
-
-      <div class="flex items-center space-x-2">
-        <button id="toggle-debug" class="text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100" title="Toggle Debugging Info">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-          </svg>
-        </button>
-        <button id="copy-transcript" class="text-gray-700 hover:text-gray-900 p-2 rounded-md hover:bg-gray-100" title="Copy transcript to clipboard">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-          </svg>
-        </button>
-        <button data-action="modal#close" class="text-gray-400 hover:text-gray-500 p-2">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+<%# ── Transcript modal (id-targeted by transcript_modal_controller + inline JS) %>
+<div id="transcript-modal" class="hidden ce-overlay" data-controller="modal"
+     data-action="click->modal#closeBackground keyup@window->modal#closeWithKeyboard">
+  <div class="ce-modal sect" style="max-width:56rem" data-modal-target="container">
+    <div class="sect__head">
+      <div class="sect__title grow row" style="gap:8px"><%= relay_icon("file-text", size: 16) %>Call transcript</div>
+      <div class="row" style="gap:4px">
+        <button type="button" id="toggle-debug" class="rl-iconbtn rl-iconbtn--sm" title="Toggle debugging info"><%= relay_icon("settings", size: 15) %></button>
+        <button type="button" id="copy-transcript" class="rl-iconbtn rl-iconbtn--sm" title="Copy transcript to clipboard"><%= relay_icon("copy", size: 15) %></button>
+        <button type="button" class="rl-iconbtn rl-iconbtn--sm" data-action="modal#close" title="Close"><%= relay_icon("x", size: 16) %></button>
       </div>
     </div>
-    
-    <div id="debug-section" class="mb-4 hidden">
-      <div class="bg-gray-800 text-white p-4 rounded-md overflow-auto max-h-40">
-        <h4 class="text-sm font-medium mb-2">Debug Information:</h4>
-        <pre id="debug-content" class="text-xs whitespace-pre-wrap"></pre>
+    <div class="sect__body col" style="gap:var(--space-3)">
+      <div id="debug-section" class="hidden">
+        <div style="background:#1f2937;color:#fff;padding:12px;border-radius:var(--radius-md);overflow:auto;max-height:10rem">
+          <div class="rl-sm" style="margin-bottom:6px">Debug information</div>
+          <pre id="debug-content" style="font-size:11px;white-space:pre-wrap"></pre>
+        </div>
       </div>
-    </div>
-    
-    <div class="border-t border-gray-200 pt-4">
-      <div id="transcript-content" class="max-h-96 overflow-y-auto space-y-4 p-4">
-        <div class="text-center py-8">
-          <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p class="mt-2 text-sm text-gray-500">Loading transcript...</p>
+      <div id="transcript-content" class="col" style="max-height:24rem;overflow-y:auto;gap:var(--space-3)">
+        <div style="text-align:center;padding:32px">
+          <div class="muted rl-sm">Loading transcript…</div>
         </div>
       </div>
     </div>
-    
-    <div class="border-t border-gray-200 mt-4 pt-4 flex justify-end">
-      <button data-action="modal#close" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
-        Close
-      </button>
+    <div class="sect__body" style="border-top:1px solid var(--color-border)">
+      <div class="row" style="justify-content:flex-end">
+        <button type="button" class="rl-btn rl-btn--secondary" data-action="modal#close">Close</button>
+      </div>
     </div>
   </div>
 </div>
+
+<style>
+  .ce-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.4); display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; overflow:auto; }
+  .ce-overlay.hidden { display: none; }
+  .ce-modal { width: 100%; max-width: 640px; box-shadow: var(--shadow-lg); }
+</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Debug toggle functionality
-    document.getElementById('toggle-debug').addEventListener('click', function() {
+    var toggle = document.getElementById('toggle-debug');
+    if (toggle) toggle.addEventListener('click', function() {
       const debugSection = document.getElementById('debug-section');
       debugSection.classList.toggle('hidden');
-      
-      // Fetch and display the data if debug section becomes visible
       if (!debugSection.classList.contains('hidden')) {
         const recordingId = document.querySelector('[data-transcript-modal-id-value]')?.dataset.transcriptModalIdValue;
         if (recordingId) {
           fetch(`/recordings/${recordingId}/transcript`)
             .then(response => response.json())
-            .then(data => {
-              document.getElementById('debug-content').textContent = JSON.stringify(data, null, 2);
-            })
-            .catch(error => {
-              document.getElementById('debug-content').textContent = `Error: ${error.message}`;
-            });
+            .then(data => { document.getElementById('debug-content').textContent = JSON.stringify(data, null, 2); })
+            .catch(error => { document.getElementById('debug-content').textContent = `Error: ${error.message}`; });
         } else {
           document.getElementById('debug-content').textContent = 'No recording ID found';
         }
       }
     });
-    
-    // Add functionality to copy transcript button
-    document.getElementById('copy-transcript').addEventListener('click', function() {
+
+    var copyBtn = document.getElementById('copy-transcript');
+    if (copyBtn) copyBtn.addEventListener('click', function() {
       const transcriptContent = document.getElementById('transcript-content');
-      
-      // Create a temporary element to hold text content
       const tempElement = document.createElement('div');
       tempElement.innerHTML = transcriptContent.innerHTML;
-      
-      // Extract just the text content without HTML
-      const text = Array.from(tempElement.querySelectorAll('p'))
-        .map(p => p.textContent.trim())
-        .join('\n\n');
-      
-      // Copy to clipboard
+      const text = Array.from(tempElement.querySelectorAll('p')).map(p => p.textContent.trim()).join('\n\n');
       navigator.clipboard.writeText(text).then(
-        function() {
-          // Success message
-          alert('Transcript copied to clipboard!');
-        }, 
-        function() {
-          // Error message
-          alert('Could not copy transcript');
-        }
+        function() { alert('Transcript copied to clipboard!'); },
+        function() { alert('Could not copy transcript'); }
       );
     });
   });
-</script> 
+</script>

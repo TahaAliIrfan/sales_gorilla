@@ -1,145 +1,106 @@
-<% content_for :title, "Calling" %>
-
-<%= render "shared/page_header", eyebrow: "Calling", title: "Make a call",
-      subtitle: "Browser-based phone — calls are recorded and transcribed automatically." %>
+<%# Relay-styled browser dialer. The markup contract with
+    app/javascript/controllers/calling_controller.js is unchanged: every
+    data-calling-* target/action and the #customer-search / #caller-id /
+    #phone-number ids are identical to the previous (Tailwind) version. %>
+<% content_for :title, "Calling — #{current_organization&.name}" %>
 
 <%# Get the Twilio SDK warming up as soon as the browser parses this. %>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preload" as="script" href="https://cdn.jsdelivr.net/npm/@twilio/voice-sdk@2.15.0/dist/twilio.min.js" crossorigin>
 
-<div data-controller="calling"
-     data-calling-token-value="<%= @access_token %>"
-     class="mx-auto max-w-2xl space-y-5">
+<div class="page" data-controller="calling" data-calling-token-value="<%= @access_token %>"
+     style="max-width:720px">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Make a call</div>
+      <div class="pagehead__sub">Browser-based phone — calls are recorded and transcribed automatically.</div>
+    </div>
+  </div>
+
   <%# Live status pill — fed by the Stimulus controller. %>
-  <div data-calling-target="callStatus"
-       class="flex items-center gap-3 rounded-xl bg-panel px-4 py-3 shadow-card ring-1 ring-[var(--color-line-2)]">
-    <span class="relative flex h-2.5 w-2.5">
-      <span class="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60" style="background: var(--brand-accent)"></span>
-      <span class="relative inline-flex h-2.5 w-2.5 rounded-full" style="background: var(--brand-accent)"></span>
-    </span>
-    <span data-calling-target="statusMessage" class="text-sm text-ink-soft">Initializing phone system…</span>
+  <div data-calling-target="callStatus" class="sect row"
+       style="gap:10px;padding:12px 16px;margin-bottom:var(--space-4)">
+    <span class="pulse-dot" style="background:var(--color-primary)"></span>
+    <span data-calling-target="statusMessage" class="muted rl-sm">Initializing phone system…</span>
   </div>
 
   <%# Main phone card. %>
-  <div class="overflow-hidden rounded-2xl bg-panel shadow-lift ring-1 ring-[var(--color-line-2)]">
-    <%# Header strip with brand gradient. %>
-    <div class="flex items-center justify-between px-6 py-5 text-white"
-         style="background: linear-gradient(135deg, var(--brand-primary) 0%, color-mix(in srgb, var(--brand-primary) 70%, black) 100%);">
-      <div class="flex items-center gap-3">
-        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/20">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
-          </svg>
-        </span>
-        <div>
-          <p class="font-display text-lg font-semibold leading-none">Virtual Caller</p>
-          <p class="mono mt-1 text-[11px] uppercase tracking-wider text-white/70">Twilio • <%= current_organization.name %></p>
-        </div>
-      </div>
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title"><%= relay_icon("phone", size: 18) %>Virtual caller</div>
+      <span class="mono muted" style="font-size:11px;letter-spacing:var(--tracking-caps);text-transform:uppercase">Twilio · <%= current_organization.name %></span>
     </div>
 
-    <div class="space-y-6 p-6">
+    <div class="sect__body col" style="gap:var(--space-5)">
       <%# ── Customer picker ─────────────────────────────────────────────── %>
-      <section class="space-y-3">
-        <p class="micro" style="color: var(--color-ink-soft)">Customer</p>
-
-        <div class="relative">
-          <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-ink-soft">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
-            </svg>
-          </span>
-          <input type="text"
-                 id="customer-search"
-                 placeholder="Search by name…"
-                 class="<%= input_classes %> pl-9"
-                 data-action="input->calling#filterCustomers">
-        </div>
-
-        <div class="relative">
-          <select data-calling-target="customerSelect"
-                  data-action="calling#onCustomerSelect"
-                  class="<%= input_classes %> appearance-none pr-9">
-            <option value="">Select a customer…</option>
-            <% @customers.each do |customer| %>
-              <option value="<%= customer.id %>"
-                      data-phone="<%= customer.phone %>"
-                      data-customer-name="<%= customer.name.downcase %>"
-                      <%= 'selected' if @selected_customer&.id == customer.id %>>
-                <%= customer.name %> — <%= customer.phone %>
-              </option>
-            <% end %>
-          </select>
-          <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-ink-soft">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </span>
-        </div>
-      </section>
+      <div class="col" style="gap:10px">
+        <label class="rl-label" for="customer-search">Customer</label>
+        <input type="text"
+               id="customer-search"
+               placeholder="Search by name…"
+               class="rl-input"
+               data-action="input->calling#filterCustomers">
+        <select data-calling-target="customerSelect"
+                data-action="calling#onCustomerSelect"
+                class="rl-select">
+          <option value="">Select a customer…</option>
+          <% @customers.each do |customer| %>
+            <option value="<%= customer.id %>"
+                    data-phone="<%= customer.phone %>"
+                    data-customer-name="<%= customer.name.downcase %>"
+                    <%= 'selected' if @selected_customer&.id == customer.id %>>
+              <%= customer.name %> — <%= customer.phone %>
+            </option>
+          <% end %>
+        </select>
+      </div>
 
       <%# ── Caller ID + phone + dial ────────────────────────────────────── %>
-      <section class="space-y-4">
-        <div>
-          <label for="caller-id" class="micro mb-2 block" style="color: var(--color-ink-soft)">Caller ID</label>
-          <div class="relative">
-            <select id="caller-id" data-calling-target="callerId" class="<%= input_classes %> appearance-none pr-9">
-              <% if @twilio_numbers.present? %>
-                <% @twilio_numbers.each do |number| %>
-                  <% country_label = get_country_label(number[:phone_number]) %>
-                  <option value="<%= number[:phone_number] %>"><%= country_label %> · <%= number[:phone_number] %></option>
-                <% end %>
-              <% else %>
-                <option value="+447897021964">UK · +447897021964</option>
-              <% end %>
-            </select>
-            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-ink-soft">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </span>
-          </div>
-        </div>
+      <div class="rl-field">
+        <label for="caller-id" class="rl-label">Caller ID</label>
+        <select id="caller-id" data-calling-target="callerId" class="rl-select">
+          <% if @twilio_numbers.present? %>
+            <% @twilio_numbers.each do |number| %>
+              <% country_label = get_country_label(number[:phone_number]) %>
+              <option value="<%= number[:phone_number] %>"><%= country_label %> · <%= number[:phone_number] %></option>
+            <% end %>
+          <% else %>
+            <option value="+447897021964">UK · +447897021964</option>
+          <% end %>
+        </select>
+      </div>
 
-        <div>
-          <label for="phone-number" class="micro mb-2 block" style="color: var(--color-ink-soft)">Call to</label>
-          <div class="flex gap-2">
-            <input type="tel"
-                   id="phone-number"
-                   data-calling-target="phoneNumber"
-                   data-action="input->calling#onPhoneNumberInput"
-                   class="<%= input_classes %> font-mono"
-                   placeholder="+92 300 1234567"
-                   value="<%= @phone_to_call %>">
-            <button data-calling-target="callButton"
-                    data-action="calling#makeCall"
-                    disabled
-                    class="inline-flex shrink-0 items-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                    style="background: var(--brand-accent)">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/>
-              </svg>
-              Call
-            </button>
-          </div>
+      <div class="rl-field">
+        <label for="phone-number" class="rl-label">Call to</label>
+        <div class="row" style="gap:8px">
+          <input type="tel"
+                 id="phone-number"
+                 data-calling-target="phoneNumber"
+                 data-action="input->calling#onPhoneNumberInput"
+                 class="rl-input mono grow"
+                 placeholder="+92 300 1234567"
+                 value="<%= @phone_to_call %>">
+          <button data-calling-target="callButton"
+                  data-action="calling#makeCall"
+                  disabled
+                  class="rl-btn rl-btn--primary" style="flex:none">
+            <%= relay_icon("phone", size: 15) %>Call
+          </button>
         </div>
-      </section>
+      </div>
 
       <%# ── Active call panel: hangup + dialpad ─────────────────────────── %>
-      <section data-calling-target="callControls" class="hidden space-y-4 border-t border-[var(--color-line-2)] pt-6">
+      <div data-calling-target="callControls" class="hidden col"
+           style="gap:var(--space-4);border-top:1px solid var(--color-divider);padding-top:var(--space-5)">
         <button data-calling-target="hangupButton"
                 data-action="calling#hangUp"
-                class="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#a83a22] px-4 py-3 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91"/>
-            <line x1="23" y1="1" x2="1" y2="23"/>
-          </svg>
-          Hang up
+                class="rl-btn rl-btn--destructive" style="width:100%;justify-content:center">
+          <%= relay_icon("phone-off", size: 15) %>Hang up
         </button>
 
         <div>
-          <p class="micro mb-2" style="color: var(--color-ink-soft)">Dialpad</p>
-          <div class="grid grid-cols-3 gap-2 rounded-xl bg-paper p-3 ring-1 ring-[var(--color-line-2)]">
+          <div class="rl-label" style="margin-bottom:8px">Dialpad</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
             <% [
               [ "1", "" ],     [ "2", "ABC" ], [ "3", "DEF" ],
               [ "4", "GHI" ],  [ "5", "JKL" ], [ "6", "MNO" ],
@@ -150,21 +111,20 @@
                       data-calling-target="dtmf"
                       data-action="calling#sendDigit"
                       data-digit="<%= digit %>"
-                      class="group flex flex-col items-center justify-center rounded-lg bg-panel py-3 shadow-card ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5 hover:bg-[var(--color-line)]">
-                <span class="font-display text-2xl font-semibold text-ink"><%= digit %></span>
-                <span class="mono mt-0.5 text-[10px] tracking-widest text-ink-soft/70 group-hover:text-ink-soft">
-                  <%= letters.presence || "&nbsp;".html_safe %>
-                </span>
+                      class="callbar__key col"
+                      style="height:56px;gap:1px">
+                <span style="font-family:var(--font-display);font-size:var(--text-lg);font-weight:600"><%= digit %></span>
+                <span class="mono muted" style="font-size:9px;letter-spacing:.12em"><%= letters %></span>
               </button>
             <% end %>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 
   <%# Footer hint. %>
-  <p class="mono text-center text-[11px] text-ink-soft/70">
+  <p class="mono muted" style="text-align:center;font-size:11px;margin-top:var(--space-4)">
     Calls dial out via your organization's Twilio number. Recordings are auto-stored and transcribed.
   </p>
 </div>

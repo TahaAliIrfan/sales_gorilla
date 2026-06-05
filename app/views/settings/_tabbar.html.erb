@@ -29,5 +29,9 @@
           class: class_names("rl-tab", "is-active" => active == "features") do %>
       <%= relay_icon("hammer", size: 15) %>Features
     <% end %>
+    <%= link_to settings_taxonomies_path,
+          class: class_names("rl-tab", "is-active" => active == "taxonomies") do %>
+      <%= relay_icon("layers", size: 15) %>Lists &amp; statuses
+    <% end %>
   <% end %>
 </div>

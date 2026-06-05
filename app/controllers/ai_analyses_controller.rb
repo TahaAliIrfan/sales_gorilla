@@ -1,5 +1,5 @@
 class AiAnalysesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :set_recording
 
   def create

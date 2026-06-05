@@ -19,14 +19,14 @@ class PublicInvoicesController < ApplicationController
       render :show
     else
       @reason = unavailable_reason
-      render :unavailable, layout: "public", status: :ok
+      render :unavailable, status: :ok
     end
   end
 
   def download_pdf
     unless @invoice.publicly_viewable?
       @reason = unavailable_reason
-      render :unavailable, layout: "public", status: :gone
+      render :unavailable, status: :gone
       return
     end
 
@@ -41,7 +41,7 @@ class PublicInvoicesController < ApplicationController
   def upload_payment_proof
     unless @invoice.publicly_viewable?
       @reason = unavailable_reason
-      render :unavailable, layout: "public", status: :gone
+      render :unavailable, status: :gone
       return
     end
 
@@ -70,7 +70,7 @@ class PublicInvoicesController < ApplicationController
   def set_invoice_by_token
     @invoice = Invoice.find_by!(public_token: params[:token])
   rescue ActiveRecord::RecordNotFound
-    render "public_invoices/not_found", layout: "public", status: :not_found
+    render "public_invoices/not_found", status: :not_found
   end
 
   def unavailable_reason

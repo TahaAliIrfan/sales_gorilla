@@ -1,9 +1,17 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">New WhatsApp Campaign</h1>
+<% content_for :title, "New campaign — #{current_organization&.name}" %>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <%= render "form", campaign: @campaign %>
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">New WhatsApp campaign</div>
+      <div class="pagehead__sub">Send an approved message to a set of customers.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to campaigns_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to campaigns
+      <% end %>
     </div>
   </div>
+
+  <%= render "form", campaign: @campaign %>
 </div>

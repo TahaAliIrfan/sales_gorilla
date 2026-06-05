@@ -1,126 +1,55 @@
-<%= form_with(model: task, html: { class: "max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md" }) do |form| %>
+<%= form_with(model: task, class: "col", html: { style: "gap:var(--space-5)" }) do |form| %>
   <% if task.errors.any? %>
-    <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 rounded-r-md">
-      <div class="flex">
-        <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-          </svg>
-        </div>
-        <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800">
-            <%= pluralize(task.errors.count, "error") %> prohibited this task from being saved:
-          </h3>
-          <div class="mt-2 text-sm text-red-700">
-            <ul class="list-disc pl-5 space-y-1">
-              <% task.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
-              <% end %>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+    <%= render "settings/errors", record: task %>
   <% end %>
 
-  <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
-    <div class="sm:col-span-6">
-      <%= form.label :title, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= form.text_field :title, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Enter task title" %>
-    </div>
-
-    <div class="sm:col-span-3">
-      <%= form.label :status, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <div class="relative">
-        <%= form.select :status, 
-                       options_for_select(Task::STATUSES.map { |k, v| [v, k] }, task.status), 
-                       {}, 
-                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
+  <div class="sect">
+    <div class="sect__body">
+      <div class="grid grid-2">
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :title, required: true,
+                placeholder: "Enter task title" %>
         </div>
-      </div>
-    </div>
 
-    <div class="sm:col-span-3">
-      <%= form.label :priority, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <div class="relative">
-        <%= form.select :priority, 
-                       options_for_select(Task::PRIORITIES.map { |k, v| [v, k] }, task.priority), 
-                       {}, 
-                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
-      </div>
-    </div>
+        <%= render "shared/relay_field", f: form, field: :status, type: "select",
+              options: Task::STATUSES.map { |k, v| [ v, k ] } %>
+        <%= render "shared/relay_field", f: form, field: :priority, type: "select",
+              options: Task::PRIORITIES.map { |k, v| [ v, k ] } %>
 
-    <div class="sm:col-span-3">
-      <%= form.label :due_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <div class="flex space-x-2">
-        <%= form.datetime_field :due_date, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md" %>
-      </div>
-      <p class="mt-1 text-xs text-gray-500">Set a deadline date and time for this task</p>
-    </div>
+        <%= render "shared/relay_field", f: form, field: :due_date, type: "datetime-local",
+              hint: "Set a deadline date and time for this task." %>
 
-    <% if current_user.admin? %>
-      <div class="sm:col-span-3">
-        <%= form.label :user_id, "Assigned To", class: "block text-sm font-medium text-gray-700 mb-1" %>
-        <div class="relative">
-          <%= form.collection_select :user_id, 
-                                    User.all, 
-                                    :id, 
-                                    :name, 
-                                    {}, 
-                                    class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-          <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
+        <% if current_user.admin? %>
+          <div class="rl-field">
+            <%= form.label :user_id, "Assigned to", class: "rl-label" %>
+            <%= form.collection_select :user_id, User.all, :id, :name, {}, class: "rl-select" %>
           </div>
+        <% else %>
+          <%= form.hidden_field :user_id, value: current_user.id %>
+        <% end %>
+
+        <div class="rl-field">
+          <%= form.label :customer_id, "Related customer", class: "rl-label" %>
+          <%= form.collection_select :customer_id,
+                (current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)),
+                :id, :name, { include_blank: "None" }, class: "rl-select" %>
+          <p class="rl-help">Customer this task is associated with.</p>
+        </div>
+
+        <div style="grid-column:1 / -1">
+          <%= render "shared/relay_field", f: form, field: :description, type: "textarea", rows: 5,
+                placeholder: "Describe the task in detail…",
+                hint: "Add detailed description of what needs to be done for this task." %>
         </div>
       </div>
-    <% else %>
-      <%= form.hidden_field :user_id, value: current_user.id %>
-    <% end %>
-
-    <div class="sm:col-span-3">
-      <%= form.label :customer_id, "Related Customer", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <div class="relative">
-        <%= form.collection_select :customer_id, 
-                                  current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id), 
-                                  :id, 
-                                  :name, 
-                                  { include_blank: "None" }, 
-                                  class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
-        <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-          </svg>
-        </div>
-      </div>
-      <p class="mt-1 text-xs text-gray-500">Customer this task is associated with</p>
-    </div>
-
-    <div class="sm:col-span-6">
-      <%= form.label :description, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= form.text_area :description, rows: 5, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Describe the task in detail..." %>
-      <p class="mt-2 text-xs text-gray-500">
-        Add detailed description of what needs to be done for this task.
-      </p>
     </div>
   </div>
 
-  <div class="pt-6 mt-4 border-t border-gray-200">
-    <div class="flex justify-end space-x-3">
-      <%= link_to (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : (task.persisted? ? task_path(task) : tasks_path)), class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-        Cancel
-      <% end %>
-      <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
-    </div>
+  <div class="row" style="justify-content:flex-end;gap:8px">
+    <%= link_to "Cancel",
+          (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : (task.persisted? ? task_path(task) : tasks_path)),
+          class: "rl-btn rl-btn--secondary" %>
+    <%= form.submit (task.new_record? ? "Create task" : "Save changes"),
+          class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
   </div>
-<% end %> 
+<% end %>

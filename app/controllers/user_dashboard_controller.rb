@@ -20,25 +20,40 @@ class UserDashboardController < ApplicationController
 
   private
 
+  # KPI altitude: reps see their own numbers; managers/admins see their team's
+  # (admins: whole org, managers: themselves + associates). Used by the KPI
+  # tiles AND the pipeline snapshot so the subhead never mixes scopes.
+  def kpi_user_ids
+    @kpi_user_ids ||=
+      if current_user.admin?
+        User.ids
+      elsif current_user.manager?
+        [ current_user.id, *current_user.associates.ids ]
+      else
+        [ current_user.id ]
+      end
+  end
+
   # === KPI stat tiles ===
   def load_kpis
-    recordings_today = Recording.where(user: current_user)
+    recordings_today = Recording.where(user_id: kpi_user_ids)
                                 .where(date: @today.beginning_of_day..@today.end_of_day)
     @calls_today = recordings_today.count
     @connected_today = recordings_today.where("duration >= ?", 120).count
 
-    # Leads worked this month: customers this rep moved past the initial pending state.
-    @leads_worked = current_user.customers
-                                .where(status: WORKED_STATUSES)
-                                .where(updated_at: @month_start..Time.current)
-                                .count
+    # Leads worked this month: customers moved past the initial pending state.
+    @leads_worked = Customer.where(user_id: kpi_user_ids)
+                            .where(status: WORKED_STATUSES)
+                            .where(updated_at: @month_start..Time.current)
+                            .count
 
-    won_this_month = current_user.deals.won.where(closing_date: @month_start..@today)
+    won_this_month = Deal.where(user_id: kpi_user_ids).won
+                         .where(closing_date: @month_start..@today)
     @deals_won_value = won_this_month.sum(:amount)
     @deals_won_count = won_this_month.count
 
-    won = current_user.deals.won.count
-    lost = current_user.deals.lost.count
+    won = Deal.where(user_id: kpi_user_ids).won.count
+    lost = Deal.where(user_id: kpi_user_ids).lost.count
     closed = won + lost
     @conversion = closed.positive? ? ((won.to_f / closed) * 100).round : 0
   end
@@ -84,14 +99,14 @@ class UserDashboardController < ApplicationController
     @unassigned_count = Customer.where(user_id: nil).count
   end
 
-  # === Pipeline snapshot ===
+  # === Pipeline snapshot (same altitude as the KPI tiles) ===
   def load_pipeline
-    open = current_user.deals.active
+    open = Deal.where(user_id: kpi_user_ids).active
     @open_pipeline_value = open.sum(:amount)
     @open_pipeline_count = open.count
 
-    won = current_user.deals.won.count
-    lost = current_user.deals.lost.count
+    won = Deal.where(user_id: kpi_user_ids).won.count
+    lost = Deal.where(user_id: kpi_user_ids).lost.count
     closed = won + lost
     @win_rate = closed.positive? ? ((won.to_f / closed) * 100).round : 0
   end
@@ -112,14 +127,7 @@ class UserDashboardController < ApplicationController
     end.sort_by { |r| -r[:attainment] }
   end
 
-  def require_login
-    unless session[:user_id]
-      flash[:error] = "You must be logged in to access this section"
-      redirect_to root_path
-    end
-  end
-
-  def current_user
-    @current_user ||= User.find_by(id: session[:user_id])
-  end
+  # Auth comes from ApplicationController (require_login / current_user) — the
+  # session-reading duplicates that used to live here diverged from the rest
+  # of the app and were removed with the Relay redesign.
 end

@@ -26,5 +26,13 @@
 
     <%= render "relay/shared/command_palette" %>
     <%= render "relay/shared/toasts" %>
+
+    <% if feature_enabled?(:calling) %>
+      <%# Global active-call bar — wired to the real Twilio Voice SDK. The SDK is
+          loaded here (lazily used: the bar only inits a Device when a call
+          starts) so calling works in-context from any relay page. %>
+      <%= render "relay/shared/callbar" %>
+      <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/@twilio/voice-sdk@2.15.0/dist/twilio.min.js", "data-turbo-track": "reload" %>
+    <% end %>
   </body>
 </html>

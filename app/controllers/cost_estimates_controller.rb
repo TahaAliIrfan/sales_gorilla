@@ -1,5 +1,5 @@
 class CostEstimatesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :set_cost_estimate, only: [ :show, :destroy, :generate_proposal ]
 

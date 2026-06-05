@@ -1,9 +1,17 @@
-<div class="container mx-auto px-4 py-8">
-  <div class="max-w-2xl mx-auto">
-    <h1 class="text-2xl font-bold mb-6">New Customer Group</h1>
+<% content_for :title, "New audience — #{current_organization&.name}" %>
 
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <%= render "form", customer_group: @customer_group %>
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">New customer group</div>
+      <div class="pagehead__sub">Group customers for campaign targeting.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to customer_groups_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to groups
+      <% end %>
     </div>
   </div>
+
+  <%= render "form", customer_group: @customer_group %>
 </div>

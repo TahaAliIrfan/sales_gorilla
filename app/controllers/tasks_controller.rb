@@ -1,5 +1,5 @@
 class TasksController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :set_task, only: [ :show, :edit, :update, :destroy, :complete ]
   after_action :verify_authorized, except: [ :index, :my_tasks ]
@@ -209,13 +209,5 @@ class TasksController < ApplicationController
       end
     end
 
-    def require_login
-      unless session[:user_id]
-        redirect_to signin_path, alert: "Please sign in to access this page."
-      end
-    end
-
-    def current_user
-      @current_user ||= User.find_by(id: session[:user_id])
-    end
+    # Auth comes from ApplicationController (require_login / current_user).
 end

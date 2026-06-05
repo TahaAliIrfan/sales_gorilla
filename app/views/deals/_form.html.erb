@@ -1,76 +1,77 @@
-<%= form_with(model: deal, class: "space-y-6") do |form| %>
-  <%= render "shared/form_errors", record: deal %>
+<%= form_with(model: deal, class: "col", html: { style: "gap:var(--space-5)" }) do |form| %>
+  <% if deal.errors.any? %>
+    <%= render "settings/errors", record: deal %>
+  <% end %>
 
-  <div class="grid gap-6 md:grid-cols-2">
-    <div class="space-y-5">
-      <%= render "shared/form_field", f: form, field: :title, autofocus: true %>
-      <%= render "shared/form_field", f: form, field: :description, type: "textarea", rows: 4 %>
+  <div class="grid grid-2" style="align-items:start">
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Deal details</div></div>
+      <div class="sect__body col" style="gap:var(--space-4)">
+        <%= render "shared/relay_field", f: form, field: :title, autofocus: true, required: true %>
+        <%= render "shared/relay_field", f: form, field: :description, type: "textarea", rows: 4 %>
 
-      <div>
-        <%= form.label :amount, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <div class="relative">
-          <span class="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-sm text-ink-soft">$</span>
-          <%= form.number_field :amount, step: 0.01, min: 0,
-                class: "mono block w-full rounded-md border-0 bg-paper py-2.5 pl-7 pr-3.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" %>
+        <div class="rl-field">
+          <%= form.label :amount, class: "rl-label" %>
+          <div class="rl-inputwrap">
+            <span class="rl-affix">$</span>
+            <%= form.number_field :amount, step: 0.01, min: 0, class: "rl-input mono" %>
+          </div>
         </div>
-      </div>
 
-      <%= render "shared/form_field", f: form, field: :expected_close_date, type: "date",
-            hint: "When you expect this deal to close." %>
-      <%= render "shared/form_field", f: form, field: :closing_date, type: "date",
-            label: "Actual closing date",
-            hint: "Set when a deal is won or lost." %>
-      <%= render "shared/form_field", f: form, field: :created_at, type: "datetime-local" %>
+        <%= render "shared/relay_field", f: form, field: :expected_close_date, type: "date",
+              hint: "When you expect this deal to close." %>
+        <%= render "shared/relay_field", f: form, field: :closing_date, type: "date",
+              label: "Actual closing date", hint: "Set when a deal is won or lost." %>
+        <%= render "shared/relay_field", f: form, field: :created_at, type: "datetime-local" %>
+      </div>
     </div>
 
-    <div class="space-y-5">
-      <div>
-        <%= form.label :customer_id, class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <div class="flex items-center gap-2">
-          <%= form.collection_select :customer_id, @customers, :id, :name,
-                { prompt: "Select a customer", include_blank: "No customer" },
-                { class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" } %>
-          <%= link_to new_customer_path,
-                class: "mono inline-flex items-center gap-1 rounded-md px-3 py-2 text-xs font-semibold whitespace-nowrap text-white shadow-card transition hover:-translate-y-0.5",
-                style: "background: var(--brand-primary)" do %>
-            + New
-          <% end %>
-        </div>
-      </div>
-
-      <div>
-        <%= form.label :user_id, "Assigned to", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <%= form.collection_select :user_id, @users, :id, :name,
-              { prompt: "Select a user" },
-              { class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" } %>
-      </div>
-
-      <div>
-        <%= form.label :deal_stage_id, "Deal stage", class: "micro mb-1 block", style: "color: var(--color-ink-soft)" %>
-        <% if @deal_stages.any? %>
-          <%= form.collection_select :deal_stage_id, @deal_stages, :id, :name,
-                { prompt: "Select a stage" },
-                { class: "mono block w-full rounded-md border-0 bg-paper px-3.5 py-2.5 text-sm text-ink shadow-sm ring-1 ring-[var(--color-line-2)] transition focus:bg-panel focus:outline-none focus:ring-2 focus:ring-[var(--brand-primary)]" } %>
-        <% else %>
-          <div class="rounded-md px-3 py-2.5 text-sm" style="background: rgba(220,38,38,0.10); color: #991b1b">
-            <% if current_user.admin? %>
-              No deal stages available. <%= link_to "Create pipeline stages", pipelines_path, class: "underline" %> first.
-            <% else %>
-              No deal stages available. Contact your administrator.
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Assignment &amp; stage</div></div>
+      <div class="sect__body col" style="gap:var(--space-4)">
+        <div class="rl-field">
+          <%= form.label :customer_id, class: "rl-label" %>
+          <div class="row" style="gap:8px">
+            <%= form.collection_select :customer_id, @customers, :id, :name,
+                  { prompt: "Select a customer", include_blank: "No customer" },
+                  { class: "rl-select mono grow" } %>
+            <%= link_to new_customer_path, class: "rl-btn rl-btn--secondary rl-btn--sm", style: "white-space:nowrap" do %>
+              <%= relay_icon("plus", size: 14) %>New
             <% end %>
           </div>
-        <% end %>
-      </div>
+        </div>
 
-      <%= render "shared/form_field", f: form, field: :status, type: "select",
-            options: Deal.statuses.keys.map { |s| [ s.capitalize, s ] } %>
+        <div class="rl-field">
+          <%= form.label :user_id, "Assigned to", class: "rl-label" %>
+          <%= form.collection_select :user_id, @users, :id, :name,
+                { prompt: "Select a user" }, { class: "rl-select" } %>
+        </div>
+
+        <div class="rl-field">
+          <%= form.label :deal_stage_id, "Deal stage", class: "rl-label" %>
+          <% if @deal_stages.any? %>
+            <%= form.collection_select :deal_stage_id, @deal_stages, :id, :name,
+                  { prompt: "Select a stage" }, { class: "rl-select" } %>
+          <% else %>
+            <div class="rl-sm" style="background:var(--color-danger-subtle);border:1px solid var(--color-danger-border);color:var(--color-danger-text);border-radius:var(--radius-md);padding:10px 12px">
+              <% if current_user.admin? %>
+                No deal stages available. <%= link_to "Create pipeline stages", pipelines_path, style: "text-decoration:underline" %> first.
+              <% else %>
+                No deal stages available. Contact your administrator.
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <%= render "shared/relay_field", f: form, field: :status, type: "select",
+              options: Deal.statuses.keys.map { |s| [ s.capitalize, s ] } %>
+      </div>
     </div>
   </div>
 
-  <div class="flex items-center justify-end gap-2 border-t border-[var(--color-line)] pt-5">
-    <%= link_to "Cancel", deals_path,
-          class: "rounded-md px-4 py-2 text-sm font-medium text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-[var(--color-line)]" %>
-    <%= form.submit class: "rounded-md px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 cursor-pointer",
-                    style: "background: var(--brand-primary)" %>
+  <div class="row" style="justify-content:flex-end;gap:8px">
+    <%= link_to "Cancel", deals_path, class: "rl-btn rl-btn--secondary" %>
+    <%= form.submit (deal.new_record? ? "Create deal" : "Save changes"),
+          class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
   </div>
 <% end %>

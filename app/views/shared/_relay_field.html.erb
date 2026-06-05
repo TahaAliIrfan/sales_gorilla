@@ -1,0 +1,79 @@
+<%#
+  Relay DS form field. Mirrors shared/_form_field but emits relay component
+  classes (rl-field / rl-label / rl-input / rl-select / rl-textarea) and the
+  rl-help / rl-help--error helper text. Keeps the same locals contract as the
+  legacy partial so callers map one-to-one.
+
+  locals:
+    f     - form builder
+    field - attribute symbol
+    label - display label (defaults to field.to_s.humanize)
+    type  - "text" (default), "email", "tel", "url", "textarea", "select",
+            "number", "date", "datetime-local", "time", "password", "checkbox"
+    placeholder, hint, required, options, include_blank, rows, value,
+    autofocus, disabled, step, min, mono (adds the mono class to the control)
+%>
+<%
+  type ||= "text"
+  label ||= field.to_s.humanize
+  show_errors = f.object && f.object.errors[field].any?
+  base = type == "select" ? "rl-select" : (type == "textarea" ? "rl-textarea" : "rl-input")
+  base = "#{base} mono" if local_assigns[:mono]
+  base = "#{base} is-error" if show_errors
+  input_opts = { class: base }
+  input_opts[:placeholder] = placeholder if local_assigns[:placeholder].present?
+  input_opts[:value]       = value       if local_assigns[:value].present?
+  input_opts[:autofocus]   = true        if local_assigns[:autofocus]
+  input_opts[:disabled]    = true        if local_assigns[:disabled]
+  input_opts[:required]    = true        if local_assigns[:required]
+  input_opts[:step]        = step        if local_assigns[:step].present?
+  input_opts[:min]         = min         if local_assigns[:min].present?
+%>
+
+<% if type == "checkbox" %>
+  <label class="rl-check">
+    <%= f.check_box field %>
+    <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+    <span>
+      <span class="rl-label" style="display:inline"><%= label %></span>
+      <% if local_assigns[:hint].present? %><span class="rl-help" style="display:block;margin-top:2px"><%= hint %></span><% end %>
+    </span>
+  </label>
+<% else %>
+  <div class="rl-field">
+    <%= f.label field, label, class: "rl-label" do %>
+      <%= label %><% if local_assigns[:required] %><span class="rl-req">*</span><% end %>
+    <% end %>
+
+    <% case type
+       when "textarea" %>
+      <%= f.text_area field, **input_opts.merge(rows: local_assigns[:rows] || 4) %>
+    <% when "select" %>
+      <%= f.select field, options, { include_blank: local_assigns[:include_blank] }, class: base %>
+    <% when "email" %>
+      <%= f.email_field field, **input_opts %>
+    <% when "tel" %>
+      <%= f.telephone_field field, **input_opts %>
+    <% when "url" %>
+      <%= f.url_field field, **input_opts %>
+    <% when "number" %>
+      <%= f.number_field field, **input_opts %>
+    <% when "date" %>
+      <%= f.date_field field, **input_opts %>
+    <% when "datetime-local" %>
+      <%= f.datetime_local_field field, **input_opts %>
+    <% when "time" %>
+      <%= f.time_field field, **input_opts %>
+    <% when "password" %>
+      <%= f.password_field field, **input_opts %>
+    <% else %>
+      <%= f.text_field field, **input_opts %>
+    <% end %>
+
+    <% if show_errors %>
+      <p class="rl-help rl-help--error"><%= f.object.errors[field].first %></p>
+    <% elsif local_assigns[:hint].present? %>
+      <p class="rl-help"><%= hint %></p>
+    <% end %>
+  </div>
+<% end %>

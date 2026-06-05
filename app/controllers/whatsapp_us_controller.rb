@@ -3,7 +3,6 @@
 # via TwilioWhatsappController (webhook); this controller lists them and sends
 # outbound replies through TwilioWhatsappService.
 class WhatsappUsController < ApplicationController
-  layout "tenant"
   before_action :require_login
   before_action :set_customer
   after_action :verify_authorized

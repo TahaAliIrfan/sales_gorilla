@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class InvoicesController < ApplicationController
-  layout "tenant"
+  layout "relay"
   before_action :require_login
   before_action :set_customer
   before_action :set_invoice, only: [ :show, :edit, :update, :download_pdf, :mark_paid ]

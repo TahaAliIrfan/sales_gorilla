@@ -1,238 +1,147 @@
-<div class="bg-white shadow overflow-hidden sm:rounded-lg">
-  <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+<%# Recording details — relay DS. Preserves the page-transcript controller
+    contract (#transcript-container + data-page-transcript-id-value), the
+    download endpoint, the AI analysis generate/regenerate POST, and the inline
+    copyToClipboard() script the followup copy buttons call. %>
+<% content_for :title, "Recording — #{current_organization&.name}" %>
+
+<div class="page page--wide">
+  <div class="pagehead">
     <div>
-      <h2 class="text-2xl font-semibold text-gray-900">Recording Details</h2>
-      <p class="mt-1 text-sm text-gray-500">
-        Call recording from <%= @recording.date&.strftime("%b %d, %Y %H:%M") %>
-      </p>
+      <div class="pagehead__title">Recording details</div>
+      <div class="pagehead__sub">Call recording from <%= @recording.date&.strftime("%b %-d, %Y %H:%M") %></div>
     </div>
-    <div>
-      <%= link_to recordings_path, class: "inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Back to Recordings
+    <div class="pagehead__actions">
+      <%= link_to recordings_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to recordings
       <% end %>
     </div>
   </div>
 
-  <div class="border-t border-gray-200 px-4 py-5 sm:p-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Recording Information -->
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Recording Information</h3>
-        
-        <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Date</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @recording.date&.strftime("%b %d, %Y %H:%M") %></dd>
-          </div>
-          
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Duration</dt>
-            <dd class="mt-1 text-sm text-gray-900">
-              <%= pluralize(@recording.duration.to_i / 60, "minute") %> 
-              <%= @recording.duration.to_i % 60 > 0 ? "#{@recording.duration.to_i % 60} seconds" : "" %>
-            </dd>
-          </div>
-          
-          
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Customer</dt>
-            <dd class="mt-1 text-sm text-gray-900">
-              <%= link_to @recording.customer.name, customer_path(@recording.customer), class: "text-blue-600 hover:text-blue-900" %>
-            </dd>
-          </div>
-          
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Caller</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @recording.user&.name || "Unknown" %></dd>
-          </div>
-          
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Recording SID</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @recording.sid %></dd>
-          </div>
-          
-          <div class="sm:col-span-1">
-            <dt class="text-sm font-medium text-gray-500">Call SID</dt>
-            <dd class="mt-1 text-sm text-gray-900"><%= @recording.call_sid %></dd>
-          </div>
-        </dl>
-        
-        <div class="mt-6 flex space-x-3">
-          <%= link_to download_recording_path(@recording), class: "inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" do %>
-            <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Download Recording
+  <div class="grid grid-2" style="gap:var(--space-4);align-items:start">
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Recording information</div></div>
+      <div class="sect__body col" style="gap:var(--space-4)">
+        <div class="grid grid-2" style="gap:var(--space-3)">
+          <div><div class="micro">Date</div><div class="rl-sm" style="margin-top:2px"><%= @recording.date&.strftime("%b %-d, %Y %H:%M") %></div></div>
+          <div><div class="micro">Duration</div><div class="rl-sm" style="margin-top:2px"><%= pluralize(@recording.duration.to_i / 60, "minute") %> <%= @recording.duration.to_i % 60 > 0 ? "#{@recording.duration.to_i % 60} seconds" : "" %></div></div>
+          <div><div class="micro">Customer</div><div class="rl-sm" style="margin-top:2px"><%= link_to @recording.customer.name, customer_path(@recording.customer), style: "color:var(--brand-primary)" %></div></div>
+          <div><div class="micro">Caller</div><div class="rl-sm" style="margin-top:2px"><%= @recording.user&.name || "Unknown" %></div></div>
+          <div><div class="micro">Recording SID</div><div class="rl-sm mono" style="margin-top:2px;word-break:break-all"><%= @recording.sid %></div></div>
+          <div><div class="micro">Call SID</div><div class="rl-sm mono" style="margin-top:2px;word-break:break-all"><%= @recording.call_sid %></div></div>
+        </div>
+        <div class="row">
+          <%= link_to download_recording_path(@recording), class: "rl-btn rl-btn--secondary" do %>
+            <%= relay_icon("download", size: 15) %>Download recording
           <% end %>
         </div>
       </div>
-      
-      <!-- Audio Player -->
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Audio Player</h3>
-        
+    </div>
+
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Audio player</div></div>
+      <div class="sect__body">
         <% if @recording.audio_file.attached? %>
-          <div class="w-full">
-            <audio controls class="w-full">
-              <source src="<%= rails_blob_url(@recording.audio_file) %>" type="audio/mpeg">
-              Your browser does not support the audio element.
-            </audio>
-          </div>
+          <audio controls style="width:100%">
+            <source src="<%= rails_blob_url(@recording.audio_file) %>" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
         <% else %>
-          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-            <div class="flex">
-              <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                  <path fill-rule="evenodd" d="M8.257 3.099c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-              </div>
-              <div class="ml-3">
-                <p class="text-sm text-yellow-700">
-                  Audio file not available
-                </p>
-              </div>
-            </div>
+          <div class="rl-sm row" style="gap:10px;padding:12px;background:var(--color-warning-subtle);border-radius:var(--radius-md);color:var(--color-warning-text)">
+            <%= relay_icon("alert-triangle", size: 16) %>Audio file not available
           </div>
         <% end %>
       </div>
     </div>
-    
-    <!-- Transcript Section -->
-    <% if feature_enabled?(:transcription) %>
-      <div class="mt-8">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Transcript</h3>
+  </div>
 
+  <% if feature_enabled?(:transcription) %>
+    <div class="sect" style="margin-top:var(--space-4)">
+      <div class="sect__head"><div class="sect__title">Transcript</div></div>
+      <div class="sect__body">
         <% if @recording.transcribed? %>
-          <div id="transcript-container" class="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto" data-controller="page-transcript" data-page-transcript-id-value="<%= @recording.id %>">
-            <div class="text-center py-8">
-              <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <p class="mt-2 text-sm text-gray-500">Loading transcript...</p>
-            </div>
+          <div id="transcript-container" style="max-height:24rem;overflow-y:auto;padding:14px;background:var(--color-surface-2);border-radius:var(--radius-md)"
+               data-controller="page-transcript" data-page-transcript-id-value="<%= @recording.id %>">
+            <div style="text-align:center;padding:32px"><div class="muted rl-sm">Loading transcript…</div></div>
           </div>
         <% else %>
-          <div class="bg-gray-50 p-4 rounded-lg">
-            <p class="text-sm text-gray-500 text-center py-6">
-              Transcript is not available for this recording.
-            </p>
-          </div>
+          <p class="muted rl-sm" style="text-align:center;padding:24px 0">Transcript is not available for this recording.</p>
         <% end %>
       </div>
-    <% end %>
-    
-    <!-- AI Analysis Section -->
-    <div class="mt-8">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-lg font-medium text-gray-900">AI Analysis</h3>
-        <% if @recording.transcribed? && (@latest_analysis.nil? || @analyses.count < 3) %>
-          <%= button_to recording_ai_analyses_path(@recording), method: :post, class: "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" do %>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-            <%= @latest_analysis.nil? ? "Generate AI Analysis" : "Regenerate Analysis" %>
-          <% end %>
+    </div>
+  <% end %>
+
+  <div class="sect" style="margin-top:var(--space-4)">
+    <div class="sect__head">
+      <div class="sect__title grow">AI analysis</div>
+      <% if @recording.transcribed? && (@latest_analysis.nil? || @analyses.count < 3) %>
+        <%= button_to recording_ai_analyses_path(@recording), method: :post, class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+          <%= relay_icon("sparkles", size: 14) %><%= @latest_analysis.nil? ? "Generate AI analysis" : "Regenerate analysis" %>
         <% end %>
-      </div>
-      
+      <% end %>
+    </div>
+    <div class="sect__body">
       <% if @latest_analysis.present? %>
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <dl class="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-            <div class="sm:col-span-2">
-              <dt class="text-sm font-medium text-gray-500">Summary</dt>
-              <dd class="mt-1 text-sm text-gray-900"><%= @latest_analysis.summary %></dd>
+        <div class="col" style="gap:var(--space-4)">
+          <div><div class="micro">Summary</div><div class="rl-sm" style="margin-top:4px"><%= @latest_analysis.summary %></div></div>
+
+          <div>
+            <div class="micro">Interest score</div>
+            <div class="row" style="gap:3px;margin-top:6px;align-items:center">
+              <% 5.times do |i| %>
+                <span style="width:18px;height:8px;border-radius:3px;background:<%= i < @latest_analysis.interest_score.to_i ? "#f5a623" : "var(--color-border-strong)" %>"></span>
+              <% end %>
+              <span class="rl-sm tnum" style="margin-left:8px"><%= @latest_analysis.interest_score %>/5</span>
             </div>
-            
-            <div class="sm:col-span-1">
-              <dt class="text-sm font-medium text-gray-500">Interest Score</dt>
-              <dd class="mt-1 text-sm text-gray-900">
-                <div class="flex items-center">
-                  <% @latest_analysis.interest_score.to_i.times do %>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  <% end %>
-                  <% (5 - @latest_analysis.interest_score.to_i).times do %>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  <% end %>
-                  <span class="ml-2"><%= @latest_analysis.interest_score %>/5</span>
-                </div>
-              </dd>
+          </div>
+
+          <div><div class="micro">Improvement points</div><div class="rl-sm" style="margin-top:4px;white-space:pre-line"><%= @latest_analysis.improvement_points %></div></div>
+          <div><div class="micro">Next steps</div><div class="rl-sm" style="margin-top:4px;white-space:pre-line"><%= @latest_analysis.next_steps %></div></div>
+
+          <div>
+            <div class="micro">Follow-up message (WhatsApp/Text)</div>
+            <div class="rl-sm" style="margin-top:4px;white-space:pre-line;padding:12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)">
+              <%= @latest_analysis.followup_message %>
+              <div class="row" style="margin-top:10px">
+                <button type="button" onclick="copyToClipboard('<%= j(@latest_analysis.followup_message) %>')" class="rl-btn rl-btn--secondary rl-btn--sm">
+                  <%= relay_icon("copy", size: 14) %>Copy
+                </button>
+              </div>
             </div>
-            
-            <div class="sm:col-span-2">
-              <dt class="text-sm font-medium text-gray-500">Improvement Points</dt>
-              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line"><%= @latest_analysis.improvement_points %></dd>
+          </div>
+
+          <div>
+            <div class="micro">Follow-up email</div>
+            <div class="rl-sm" style="margin-top:4px;white-space:pre-line;padding:12px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md)">
+              <%= @latest_analysis.followup_email %>
+              <div class="row" style="margin-top:10px">
+                <button type="button" onclick="copyToClipboard('<%= j(@latest_analysis.followup_email) %>')" class="rl-btn rl-btn--secondary rl-btn--sm">
+                  <%= relay_icon("copy", size: 14) %>Copy
+                </button>
+              </div>
             </div>
-            
-            <div class="sm:col-span-2">
-              <dt class="text-sm font-medium text-gray-500">Next Steps</dt>
-              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line"><%= @latest_analysis.next_steps %></dd>
-            </div>
-            
-            <div class="sm:col-span-2">
-              <dt class="text-sm font-medium text-gray-500">Follow-up Message (WhatsApp/Text)</dt>
-              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line bg-white p-3 border border-gray-200 rounded">
-                <%= @latest_analysis.followup_message %>
-                
-                <div class="mt-3 flex">
-                  <button onclick="copyToClipboard('<%= j(@latest_analysis.followup_message) %>')" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </div>
-              </dd>
-            </div>
-            
-            <div class="sm:col-span-2">
-              <dt class="text-sm font-medium text-gray-500">Follow-up Email</dt>
-              <dd class="mt-1 text-sm text-gray-900 whitespace-pre-line bg-white p-3 border border-gray-200 rounded">
-                <%= @latest_analysis.followup_email %>
-                
-                <div class="mt-3 flex">
-                  <button onclick="copyToClipboard('<%= j(@latest_analysis.followup_email) %>')" class="inline-flex items-center px-3 py-1 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                </div>
-              </dd>
-            </div>
-          </dl>
-          
+          </div>
+
           <% if @analyses.count > 1 %>
-            <div class="mt-6 border-t border-gray-200 pt-4">
-              <h4 class="text-sm font-medium text-gray-500">Previous Analyses</h4>
-              <ul class="mt-2 space-y-2">
+            <div style="border-top:1px solid var(--color-border);padding-top:var(--space-3)">
+              <div class="micro" style="margin-bottom:8px">Previous analyses</div>
+              <div class="col" style="gap:6px">
                 <% @analyses.offset(1).each do |analysis| %>
-                  <li>
-                    <%= link_to recording_ai_analysis_path(@recording, analysis), class: "text-sm text-indigo-600 hover:text-indigo-900" do %>
-                      Analysis from <%= analysis.created_at.strftime("%b %d, %Y %H:%M") %> 
-                      (Interest Score: <%= analysis.interest_score %>/5)
-                    <% end %>
-                  </li>
+                  <%= link_to recording_ai_analysis_path(@recording, analysis), class: "rl-sm", style: "color:var(--brand-primary)" do %>
+                    Analysis from <%= analysis.created_at.strftime("%b %-d, %Y %H:%M") %> (Interest score: <%= analysis.interest_score %>/5)
+                  <% end %>
                 <% end %>
-              </ul>
+              </div>
             </div>
           <% end %>
         </div>
       <% else %>
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <p class="text-sm text-gray-500 text-center py-6">
-            <% if @recording.transcribed? %>
-              No AI analysis has been generated yet. Click the "Generate AI Analysis" button to create one.
-            <% else %>
-              AI analysis requires a transcript. Once the transcript is available, you can generate an AI analysis.
-            <% end %>
-          </p>
-        </div>
+        <p class="muted rl-sm" style="text-align:center;padding:24px 0">
+          <% if @recording.transcribed? %>
+            No AI analysis has been generated yet. Click "Generate AI analysis" to create one.
+          <% else %>
+            AI analysis requires a transcript. Once the transcript is available, you can generate an AI analysis.
+          <% end %>
+        </p>
       <% end %>
     </div>
   </div>
@@ -241,10 +150,9 @@
 <script>
   function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(function() {
-      // Show toast or notification
       alert('Copied to clipboard!');
     }, function(err) {
       console.error('Could not copy text: ', err);
     });
   }
-</script> 
+</script>

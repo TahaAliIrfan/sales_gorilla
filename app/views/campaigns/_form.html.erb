@@ -1,213 +1,84 @@
-<%= form_with(model: campaign, class: "space-y-6") do |form| %>
+<%# Campaign form — relay DS. Preserves the message_template Stimulus contract
+    (textarea target + insertVariable buttons with data-variable) and the
+    campaign_customer_selector contract on new records (via _customer_picker).
+    Params unchanged: campaign[name], campaign[message], campaign[scheduled_at],
+    campaign[customer_ids][]. %>
+<%= form_with(model: campaign, class: "col", html: { style: "gap:var(--space-5)" }) do |form| %>
   <% if campaign.errors.any? %>
-    <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded">
-      <h2 class="font-bold"><%= pluralize(campaign.errors.count, "error") %> prohibited this campaign from being saved:</h2>
-      <ul class="mt-2 list-disc list-inside">
-        <% campaign.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
+    <%= render "settings/errors", record: campaign %>
   <% end %>
 
-  <div>
-    <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "e.g., New Product Launch" %>
-  </div>
+  <div class="sect">
+    <div class="sect__body col" style="gap:var(--space-5)">
+      <%= render "shared/relay_field", f: form, field: :name, required: true,
+            placeholder: "e.g., New Product Launch" %>
 
-  <div data-controller="message-template">
-    <%= form.label :message, "WhatsApp Message", class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%= form.text_area :message, rows: 12,
-        class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 font-sans text-base leading-relaxed",
-        style: "resize: vertical; min-height: 200px;",
-        placeholder: "Type your message here...\n\nPress Enter or Shift+Enter for new line.\nClick buttons below to insert customer data.",
-        data: { message_template_target: "textarea" } %>
+      <div data-controller="message-template" class="rl-field">
+        <%= form.label :message, "WhatsApp message", class: "rl-label" %>
+        <%= form.text_area :message, rows: 12,
+              class: "rl-textarea",
+              style: "resize:vertical;min-height:200px",
+              placeholder: "Type your message here…\n\nPress Enter or Shift+Enter for a new line.\nClick the buttons below to insert customer data.",
+              data: { message_template_target: "textarea" } %>
 
-    <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-      <p class="text-sm font-medium text-blue-900 mb-2">📝 Click to insert customer data:</p>
-      <div class="flex flex-wrap gap-2">
-        <button type="button"
-                data-variable="{{name}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + Name
-        </button>
-        <button type="button"
-                data-variable="{{first_name}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + First Name
-        </button>
-        <button type="button"
-                data-variable="{{email}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + Email
-        </button>
-        <button type="button"
-                data-variable="{{phone}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + Phone
-        </button>
-        <button type="button"
-                data-variable="{{company}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + Company
-        </button>
-        <button type="button"
-                data-variable="{{lead_source}}"
-                data-action="click->message-template#insertVariable"
-                class="px-3 py-1 bg-white hover:bg-blue-100 border border-blue-300 rounded-md text-sm font-medium text-blue-900 transition-colors">
-          + Lead Source
-        </button>
+        <div style="margin-top:var(--space-3);padding:14px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+          <div class="micro" style="margin-bottom:8px">Click to insert customer data</div>
+          <div class="row row--wrap" style="gap:6px">
+            <% [["{{name}}", "Name"], ["{{first_name}}", "First name"], ["{{email}}", "Email"],
+                ["{{phone}}", "Phone"], ["{{company}}", "Company"], ["{{lead_source}}", "Lead source"]].each do |variable, label| %>
+              <button type="button"
+                      data-variable="<%= variable %>"
+                      data-action="click->message-template#insertVariable"
+                      class="rl-btn rl-btn--secondary rl-btn--sm">
+                <%= relay_icon("plus", size: 13) %><%= label %>
+              </button>
+            <% end %>
+          </div>
+          <p class="rl-help" style="margin-top:8px">Placeholders are replaced with each customer's data when the campaign is sent.</p>
+        </div>
       </div>
-      <p class="mt-2 text-xs text-blue-700">💡 Click any button to insert that field into your message. It will be replaced with actual customer data when sent.</p>
-    </div>
-  </div>
 
-  <div>
-    <%= form.label :scheduled_at, "Schedule For (Optional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-    <%
-      # Convert to local time for display
-      local_time = campaign.scheduled_at&.in_time_zone("Islamabad")
-    %>
-    <%= form.datetime_field :scheduled_at,
-        value: (local_time ? local_time.strftime("%Y-%m-%dT%H:%M") : nil),
-        class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-    <p class="mt-1 text-sm text-gray-500">Pakistan Time (PKT). Use 24-hour format (e.g., 15:50 for 3:50 PM). Leave blank to send immediately.</p>
+      <% local_time = campaign.scheduled_at&.in_time_zone("Islamabad") %>
+      <div class="rl-field">
+        <%= form.label :scheduled_at, "Schedule for (optional)", class: "rl-label" %>
+        <%= form.datetime_field :scheduled_at,
+              value: (local_time ? local_time.strftime("%Y-%m-%dT%H:%M") : nil),
+              class: "rl-input" %>
+        <p class="rl-help">Pakistan Time (PKT), 24-hour format (e.g. 15:50 for 3:50 PM). Leave blank to send immediately.</p>
+      </div>
+    </div>
   </div>
 
   <% if campaign.new_record? && @customers.present? %>
-    <div data-controller="campaign-customer-selector">
-      <%= form.label :customer_ids, "Select Customers (Optional)", class: "block text-sm font-medium text-gray-700 mb-2" %>
-      <p class="text-sm text-gray-600 mb-3">You can add customers now or after creating the campaign.</p>
-
-      <!-- Search and Filter Bar -->
-      <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <!-- Search Input -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Search</label>
-            <input
-              type="text"
-              placeholder="Search by name, email, or phone..."
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-              data-campaign-customer-selector-target="searchInput"
-              data-action="input->campaign-customer-selector#filter">
-          </div>
-
-          <!-- Lead Source Filter -->
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Lead Source</label>
-            <select
-              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
-              data-campaign-customer-selector-target="leadSourceFilter"
-              data-action="change->campaign-customer-selector#filter">
-              <option value="">All Lead Sources</option>
-              <% Customer::LEAD_SOURCES.keys.each do |source| %>
-                <option value="<%= source %>"><%= source %></option>
-              <% end %>
-            </select>
-          </div>
-        </div>
-
-        <!-- Selected Count and Select All -->
-        <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-300">
-          <div class="flex items-center">
-            <%= check_box_tag "select_all", "1", false,
-                class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded",
-                data: {
-                  campaign_customer_selector_target: "selectAllCheckbox",
-                  action: "change->campaign-customer-selector#toggleSelectAll"
-                } %>
-            <%= label_tag "select_all", "Select All Visible", class: "ml-2 text-sm font-medium text-gray-700" %>
-          </div>
-          <div class="text-sm text-gray-600">
-            Selected: <span class="font-semibold text-blue-600" data-campaign-customer-selector-target="selectedCount">0</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Customer List -->
-      <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-lg">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50 sticky top-0">
-            <tr>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase w-12"></th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-              <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Lead Source</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <% @customers.each do |customer| %>
-              <tr
-                class="hover:bg-gray-50"
-                data-campaign-customer-selector-target="customerItem"
-                data-customer-name="<%= customer.name || '' %>"
-                data-customer-email="<%= customer.email || '' %>"
-                data-customer-phone="<%= customer.phone || '' %>"
-                data-customer-lead-source="<%= customer.lead_source || '' %>">
-                <td class="px-3 py-3">
-                  <%= check_box_tag "campaign[customer_ids][]", customer.id, false,
-                      id: "campaign_customer_ids_#{customer.id}",
-                      class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded",
-                      data: { action: "change->campaign-customer-selector#updateSelectedCount change->campaign-customer-selector#updateSelectAllState" } %>
-                </td>
-                <td class="px-3 py-3">
-                  <div class="text-sm font-medium text-gray-900"><%= customer.name || 'N/A' %></div>
-                </td>
-                <td class="px-3 py-3">
-                  <div class="text-sm text-gray-600"><%= customer.email || 'N/A' %></div>
-                </td>
-                <td class="px-3 py-3">
-                  <div class="text-sm text-gray-600"><%= customer.phone || 'N/A' %></div>
-                </td>
-                <td class="px-3 py-3">
-                  <% if customer.lead_source.present? %>
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                      <%= customer.lead_source %>
-                    </span>
-                  <% else %>
-                    <span class="text-sm text-gray-400">N/A</span>
-                  <% end %>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+    <div class="sect">
+      <div class="sect__head"><div class="sect__title">Select customers (optional)</div></div>
+      <div class="sect__body">
+        <p class="muted rl-sm" style="margin-bottom:var(--space-3)">You can add customers now or after creating the campaign.</p>
+        <%= render "campaigns/customer_picker", customers: @customers,
+              checkbox_name: "campaign[customer_ids][]", checkbox_id_prefix: "campaign_customer_ids_" %>
       </div>
     </div>
   <% end %>
 
-  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-    <div class="flex">
-      <div class="flex-shrink-0">
-        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-      </div>
-      <div class="ml-3">
-        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
-        <div class="mt-2 text-sm text-yellow-700">
-          <p>Messages will be sent with random delays (15-55 seconds) between each customer to avoid spamming and appear more natural. For example:</p>
-          <ul class="list-disc list-inside mt-1">
-            <li>Customer 1: Sent at scheduled time</li>
-            <li>Customer 2: Sent at scheduled time + ~25 seconds</li>
-            <li>Customer 3: Sent at scheduled time + ~68 seconds</li>
-          </ul>
-        </div>
+  <div class="sect" style="background:var(--color-warning-subtle);border-color:var(--color-warning-border)">
+    <div class="sect__body row" style="gap:12px;align-items:flex-start">
+      <span style="color:var(--color-warning-text);flex-shrink:0"><%= relay_icon("alert-triangle", size: 18) %></span>
+      <div class="rl-sm" style="color:var(--color-warning-text)">
+        <b>Important notice</b>
+        <p style="margin-top:4px">Messages are sent with random delays (15–55 seconds) between customers to appear natural and avoid spamming. For example:</p>
+        <ul style="margin:6px 0 0;padding-left:18px">
+          <li>Customer 1: sent at the scheduled time</li>
+          <li>Customer 2: sent at the scheduled time + ~25 seconds</li>
+          <li>Customer 3: sent at the scheduled time + ~68 seconds</li>
+        </ul>
       </div>
     </div>
   </div>
 
-  <div class="flex gap-3">
-    <%= form.submit campaign.new_record? ? "Create Campaign" : "Update Campaign",
-        class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded cursor-pointer" %>
+  <div class="row" style="justify-content:flex-end;gap:8px">
     <%= link_to "Cancel", campaign.persisted? ? campaign_path(campaign) : campaigns_path,
-        class: "bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded" %>
+          class: "rl-btn rl-btn--secondary" %>
+    <%= form.submit (campaign.new_record? ? "Create campaign" : "Save changes"),
+          class: "rl-btn rl-btn--primary", data: { turbo_submits_with: "Saving…" } %>
   </div>
 <% end %>

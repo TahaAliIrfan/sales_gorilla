@@ -1,0 +1,6 @@
+<%# One toast. Render into #relay_toasts (server-side flash loop or a Turbo
+    Stream append) — relay--toast's itemTargetConnected auto-dismisses it. %>
+<div class="toast toast--<%= kind %>" data-relay--toast-target="item">
+  <%= relay_icon(kind == "success" ? "check-circle-2" : kind == "danger" ? "alert-circle" : "info", size: 17) %>
+  <%= message %>
+</div>

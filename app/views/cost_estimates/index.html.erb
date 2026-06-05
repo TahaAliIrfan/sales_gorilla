@@ -1,107 +1,190 @@
-<div class="max-w-7xl mx-auto">
-  <div class="md:flex md:items-center md:justify-between mb-8">
-    <div class="flex-1 min-w-0">
-      <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-        Cost Estimates
-      </h2>
-      <p class="mt-2 text-sm text-gray-600">
-        View and manage your project cost estimates
-      </p>
+<%# Cost estimates — relay DS. The "New estimate" buttons drive the
+    cost_calculator_controller (data-action click->cost-calculator#openModal); the
+    modal below is wired to every target the controller declares (modal / form /
+    loadingState / results / featuresDisplay / costSummary / calculateButton /
+    saveButton / proposalButton / customerNameField / designInfo) and posts to the
+    existing /cost_estimates/analyze + /cost_estimates endpoints. View / PDF /
+    Delete row actions keep the existing endpoints. %>
+<% content_for :title, "Cost estimates — #{current_organization&.name}" %>
+
+<div class="page page--wide" data-controller="cost-calculator">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Cost estimates</div>
+      <div class="pagehead__sub">View and manage your AI project cost estimates.</div>
     </div>
-    <div class="mt-4 flex md:mt-0 md:ml-4">
-      <button 
-        type="button" 
-        data-action="click->cost-calculator#openModal"
-        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        New Estimate
+    <div class="pagehead__actions">
+      <button type="button" data-action="click->cost-calculator#openModal" class="rl-btn rl-btn--primary">
+        <%= relay_icon("plus", size: 15) %>New estimate
       </button>
     </div>
   </div>
 
-  <div class="bg-white shadow overflow-hidden sm:rounded-md">
-    <% if @cost_estimates.any? %>
-      <ul role="list" class="divide-y divide-gray-200">
-        <% @cost_estimates.each do |estimate| %>
-          <li>
-            <div class="px-4 py-4 flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <div class="flex items-center">
-                    <p class="text-sm font-medium text-gray-900 truncate">
-                      <%= estimate.app_type_display %>
-                    </p>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      <%= estimate.scale_display %>
-                    </span>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <%= estimate.total_hours %> hours
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-500 max-w-xl truncate">
-                    <%= estimate.description %>
-                  </p>
-                  <p class="text-xs text-gray-400 mt-1">
-                    Created <%= time_ago_in_words(estimate.created_at) %> ago
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="text-right">
-                  <p class="text-lg font-semibold text-gray-900">
+  <% if @cost_estimates.any? %>
+    <div class="sect">
+      <div class="sect__body--flush">
+        <div class="rl-table-scroll">
+          <table class="rl-table">
+            <thead>
+              <tr>
+                <th>Application</th>
+                <th>Scale</th>
+                <th>Hours</th>
+                <th>Created</th>
+                <th style="text-align:right">Total</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @cost_estimates.each do |estimate| %>
+                <tr>
+                  <td>
+                    <div class="rl-cell-strong"><%= estimate.app_type_display %></div>
+                    <% if estimate.description.present? %>
+                      <div class="muted rl-sm" style="max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= estimate.description %></div>
+                    <% end %>
+                  </td>
+                  <td><span class="rl-badge rl-badge--info"><%= estimate.scale_display %></span></td>
+                  <td class="mono rl-sm"><%= estimate.total_hours %>h</td>
+                  <td class="mono rl-sm"><%= estimate.created_at.strftime("%b %-d, %Y") %></td>
+                  <td class="rl-cell-num">
                     <%= estimate.formatted_total_cost %>
-                  </p>
-                  <p class="text-sm text-gray-500">
-                    $<%= estimate.hourly_rate %>/hour
-                  </p>
-                </div>
-                <div class="flex-shrink-0 flex items-center space-x-2">
-                  <%= link_to estimate, class: "text-blue-600 hover:text-blue-900 text-sm font-medium" do %>
-                    View
-                  <% end %>
-                  <%= link_to generate_proposal_cost_estimate_path(estimate), target: "_blank", 
-                      class: "text-purple-600 hover:text-purple-900 text-sm font-medium" do %>
-                    PDF
-                  <% end %>
-                  <%= link_to estimate, method: :delete, 
-                      confirm: "Are you sure you want to delete this estimate?",
-                      class: "text-red-600 hover:text-red-900 text-sm font-medium" do %>
-                    Delete
-                  <% end %>
-                </div>
-              </div>
-            </div>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <div class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No cost estimates</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating your first project estimate.</p>
-        <div class="mt-6">
-          <button 
-            type="button" 
-            data-action="click->cost-calculator#openModal"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Create Estimate
-          </button>
+                    <div class="muted rl-sm" style="font-weight:400">$<%= estimate.hourly_rate %>/hr</div>
+                  </td>
+                  <td>
+                    <div class="row" style="gap:6px;justify-content:flex-end">
+                      <%= link_to estimate, class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+                        <%= relay_icon("eye", size: 14) %>View
+                      <% end %>
+                      <%= link_to generate_proposal_cost_estimate_path(estimate), target: "_blank",
+                            class: "rl-iconbtn rl-iconbtn--sm", title: "Generate proposal PDF" do %>
+                        <%= relay_icon("file-text", size: 15) %>
+                      <% end %>
+                      <%= button_to estimate, method: :delete,
+                            form: { data: { turbo_confirm: "Are you sure you want to delete this estimate?" } },
+                            class: "rl-iconbtn rl-iconbtn--sm", title: "Delete" do %>
+                        <%= relay_icon("trash-2", size: 15) %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
         </div>
       </div>
+    </div>
+    <% if @cost_estimates.respond_to?(:total_pages) && @cost_estimates.total_pages > 1 %>
+      <div class="rl-pagebtns" style="margin-top:var(--space-4)"><%= paginate @cost_estimates, theme: "relay" %></div>
     <% end %>
+  <% else %>
+    <div class="sect"><div class="sect__body" style="text-align:center;padding:48px 16px">
+      <span class="iccircle" style="width:48px;height:48px;margin:0 auto 12px;background:var(--color-surface-2);color:var(--color-fg-3)"><%= relay_icon("calculator", size: 22) %></span>
+      <div class="rl-h4">No cost estimates</div>
+      <div class="muted rl-sm" style="margin-top:6px">Get started by creating your first project estimate.</div>
+      <div style="margin-top:16px">
+        <button type="button" data-action="click->cost-calculator#openModal" class="rl-btn rl-btn--primary rl-btn--sm">
+          <%= relay_icon("plus", size: 14) %>Create estimate
+        </button>
+      </div>
+    </div></div>
+  <% end %>
+
+  <%# ── Estimator modal — wired to the cost_calculator_controller targets ──── %>
+  <div data-cost-calculator-target="modal" class="hidden ce-overlay">
+    <div class="ce-modal sect">
+      <div class="sect__head">
+        <div class="sect__title grow">New cost estimate</div>
+        <button type="button" class="rl-iconbtn rl-iconbtn--sm" data-action="click->cost-calculator#closeModal" title="Close">
+          <%= relay_icon("x", size: 16) %>
+        </button>
+      </div>
+      <div class="sect__body" style="max-height:70vh;overflow:auto">
+        <form data-cost-calculator-target="form" class="col" style="gap:var(--space-4)">
+          <div class="grid grid-2">
+            <div class="rl-field">
+              <label class="rl-label">Application type</label>
+              <select name="app_type" class="rl-select">
+                <option value="">Select…</option>
+                <% CostEstimate::APP_TYPES.each do |key, label| %>
+                  <option value="<%= key %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+            <div class="rl-field">
+              <label class="rl-label">Project scale</label>
+              <select name="scale" class="rl-select">
+                <option value="">Select…</option>
+                <% CostEstimate::SCALES.each do |key, label| %>
+                  <option value="<%= key %>"><%= label %></option>
+                <% end %>
+              </select>
+            </div>
+          </div>
+
+          <div class="rl-field">
+            <label class="rl-label">Existing customer</label>
+            <select name="customer_id" class="rl-select" data-action="change->cost-calculator#toggleCustomerName">
+              <option value="">— New / one-off —</option>
+              <%= options_from_collection_for_select(current_user.customers.order(:name), :id, :name) %>
+            </select>
+          </div>
+
+          <div class="rl-field" data-cost-calculator-target="customerNameField">
+            <label class="rl-label">Customer name</label>
+            <input type="text" name="customer_name" class="rl-input" placeholder="e.g. Acme Inc.">
+          </div>
+
+          <div class="rl-field">
+            <label class="rl-label">Project description</label>
+            <textarea name="description" rows="4" class="rl-textarea" placeholder="Describe the scope, features and requirements (min. 10 characters)…"></textarea>
+          </div>
+
+          <div class="grid grid-2">
+            <div class="rl-field">
+              <label class="rl-label">Hourly rate (USD)</label>
+              <input type="number" name="hourly_rate" step="0.01" min="0" class="rl-input mono" placeholder="0.00">
+            </div>
+            <div class="rl-field" style="justify-content:flex-end">
+              <label class="rl-check">
+                <input type="checkbox" name="include_design" value="1" data-action="change->cost-calculator#toggleDesignInfo">
+                <span class="rl-box"><%= relay_icon("check", size: 13) %></span>
+                <span><span class="rl-label" style="display:inline">Include design work</span></span>
+              </label>
+            </div>
+          </div>
+
+          <div data-cost-calculator-target="designInfo" class="hidden rl-help">Design hours will be added to the estimate.</div>
+        </form>
+
+        <div data-cost-calculator-target="loadingState" class="hidden" style="text-align:center;padding:24px">
+          <div class="muted rl-sm">Analyzing project requirements…</div>
+        </div>
+
+        <div data-cost-calculator-target="results" class="hidden col" style="gap:var(--space-4);margin-top:var(--space-4)">
+          <div>
+            <div class="micro" style="margin-bottom:8px">Features</div>
+            <div data-cost-calculator-target="featuresDisplay"></div>
+          </div>
+          <div style="padding:14px;background:var(--color-surface-2);border-radius:var(--radius-md)">
+            <div data-cost-calculator-target="costSummary"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sect__body" style="border-top:1px solid var(--color-border)">
+        <div class="row" style="justify-content:flex-end;gap:8px">
+          <button type="button" class="rl-btn rl-btn--secondary" data-action="click->cost-calculator#closeModal">Cancel</button>
+          <button type="button" data-cost-calculator-target="calculateButton" data-action="click->cost-calculator#calculateCost" class="rl-btn rl-btn--secondary">Calculate Cost</button>
+          <button type="button" data-cost-calculator-target="saveButton" data-action="click->cost-calculator#saveEstimate" class="hidden rl-btn rl-btn--primary">Save estimate</button>
+          <button type="button" data-cost-calculator-target="proposalButton" data-action="click->cost-calculator#generateProposal" class="hidden rl-btn rl-btn--secondary">Generate proposal</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<style>
+  .ce-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,.4); display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; overflow:auto; }
+  .ce-overlay.hidden { display: none; }
+  .ce-modal { width: 100%; max-width: 640px; box-shadow: var(--shadow-lg); }
+</style>
