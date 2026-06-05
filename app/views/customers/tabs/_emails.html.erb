@@ -112,9 +112,19 @@
               <% if email.snippet.present? %>
                 <p class="mt-1 truncate text-xs text-ink-soft"><%= email.snippet %></p>
               <% end %>
-              <div class="mt-2">
+              <div class="mt-2 flex flex-wrap items-center gap-1.5">
                 <% if email.sent? %>
                   <%= render "shared/status_pill", label: "Sent", tone: "ok" %>
+                  <% if email.opened? %>
+                    <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                          style="color: var(--brand-accent, #16a34a); background: color-mix(in srgb, var(--brand-accent, #16a34a) 12%, transparent);"
+                          title="First opened <%= email.first_opened_at.strftime('%b %-d %H:%M') %> · Last <%= email.last_opened_at.strftime('%b %-d %H:%M') %>">
+                      <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      Opened<% if email.open_count.to_i > 1 %> × <%= email.open_count %><% end %>
+                    </span>
+                  <% end %>
                 <% elsif email.received? %>
                   <%= render "shared/status_pill", label: "Inbox", tone: "info" %>
                 <% end %>

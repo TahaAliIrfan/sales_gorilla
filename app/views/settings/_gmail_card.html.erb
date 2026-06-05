@@ -1,0 +1,75 @@
+<%# Gmail send/receive connection state. Uses the same Google OAuth token as
+    the Calendar card — Gmail and Calendar scopes are granted together at
+    sign-in, so connecting/disconnecting is one shared flow. This card is the
+    user-visible signal that "I can send customer emails from my own Gmail." %>
+<%
+  sent_count    = @user.emails.where(status: "sent").count rescue 0
+  opened_count  = @user.emails.where(status: "sent").where.not(first_opened_at: nil).count rescue 0
+  last_sent_at  = @user.emails.where(status: "sent").maximum(:sent_at) rescue nil
+%>
+<div class="sect">
+  <div class="sect__head"><div class="sect__title">Gmail (send + open tracking)</div></div>
+  <div class="sect__body">
+    <div class="spread" style="margin-bottom:14px">
+      <div class="row" style="gap:12px">
+        <span class="iccircle" style="width:40px;height:40px;background:color-mix(in oklch, var(--cat-2, var(--cat-1)) 14%, transparent);color:var(--cat-2, var(--cat-1))">
+          <%= relay_icon("mail", size: 19) %>
+        </span>
+        <div>
+          <b style="font-weight:700">Gmail</b>
+          <div class="muted rl-sm">
+            Outbound customer emails are sent from your Gmail account
+            (<span class="mono"><%= @user.email %></span>) with open tracking.
+          </div>
+        </div>
+      </div>
+      <% if @user.google_auth_configured? %>
+        <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Connected</span>
+      <% else %>
+        <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Not connected</span>
+      <% end %>
+    </div>
+
+    <% if @user.google_auth_configured? %>
+      <div class="row" style="gap:24px;margin-bottom:12px;font-size:var(--text-sm)">
+        <div>
+          <div class="muted rl-sm">Emails sent</div>
+          <div class="mono" style="font-weight:600"><%= sent_count %></div>
+        </div>
+        <div>
+          <div class="muted rl-sm">Opened</div>
+          <div class="mono" style="font-weight:600"><%= opened_count %><% if sent_count.positive? %><span class="muted"> · <%= ((opened_count.to_f / sent_count) * 100).round %>%</span><% end %></div>
+        </div>
+        <% if last_sent_at %>
+          <div>
+            <div class="muted rl-sm">Last sent</div>
+            <div class="mono" style="font-weight:600"><%= time_ago_in_words(last_sent_at) %> ago</div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="row" style="gap:8px">
+        <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+          <%= relay_icon("plug", size: 14) %>Reconnect Gmail
+        <% end %>
+        <%= link_to disconnect_google_path,
+              data: { turbo_method: :delete, turbo_confirm: "Disconnect Gmail? This also disconnects Calendar — they share a single Google token." },
+              class: "rl-btn rl-btn--ghost rl-btn--sm" do %>
+          Disconnect
+        <% end %>
+      </div>
+      <p class="muted rl-sm" style="margin-top:10px">
+        Open tracking embeds a 1×1 transparent pixel in your sent emails. Gmail and Apple Mail
+        prefetch images, so opens approximate "delivered and rendered" rather than literal eyeballs.
+      </p>
+    <% else %>
+      <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+        <%= relay_icon("plug", size: 14) %>Connect Gmail
+      <% end %>
+      <p class="muted rl-sm" style="margin-top:10px">
+        Connecting grants Calendar + Gmail send/receive access. We use your Gmail account so the
+        recipient sees emails coming from you, not a generic CRM sender.
+      </p>
+    <% end %>
+  </div>
+</div>

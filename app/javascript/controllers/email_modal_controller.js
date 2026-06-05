@@ -144,12 +144,17 @@ export default class extends Controller {
   }
 
   renderEmail(email) {
-    const senderName = email.status === 'received' 
-      ? (email.from_name || email.from_email) 
+    const senderName = email.status === 'received'
+      ? (email.from_name || email.from_email)
       : (email.to_name || email.to_email)
     const senderInitial = senderName ? senderName.charAt(0).toUpperCase() : '?'
     const avatarColor = email.status === 'received' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500'
     const emailDate = new Date(email.sent_at || email.received_at || email.created_at)
+
+    // Open-tracking state. Only meaningful for sent emails — received ones
+    // don't have a tracking pixel, so we never render the badge there.
+    const openedBadge = this.buildOpenedBadge(email)
+    const openedDetail = this.buildOpenedDetail(email)
 
     // Get email body with multiple fallbacks
     let emailBody = ''
@@ -191,9 +196,13 @@ export default class extends Controller {
               <div class="flex-1">
                 <div class="flex items-center justify-between">
                   <div>
-                    <div class="font-semibold text-gray-900">${this.escapeHtml(senderName)}</div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <div class="font-semibold text-gray-900">${this.escapeHtml(senderName)}</div>
+                      ${openedBadge}
+                    </div>
                     <div class="text-sm text-gray-600">${email.status === 'received' ? 'From' : 'To'}: ${this.escapeHtml(email.status === 'received' ? email.from_email : email.to_email)}</div>
                     <div class="text-sm text-gray-500">${emailDate.toLocaleDateString()} at ${emailDate.toLocaleTimeString()}</div>
+                    ${openedDetail}
                   </div>
                   <div class="flex items-center space-x-2">
                     <button data-action="click->email-modal#reply" class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
@@ -224,6 +233,60 @@ export default class extends Controller {
 
     // Update reply form fields
     this.updateReplyForm(email)
+  }
+
+  // Renders the "Opened" pill shown next to the sender name. Only meaningful
+  // for outbound emails — incoming emails carry their own read_at field for
+  // OUR own reading, not the recipient's.
+  buildOpenedBadge(email) {
+    if (email.status !== "sent") return ""
+
+    if (email.first_opened_at) {
+      const count = (email.open_count || 0) > 1 ? ` × ${email.open_count}` : ""
+      return `
+        <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style="color:#15803d;background:#dcfce7">
+          <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          Opened${count}
+        </span>
+      `
+    }
+    return `
+      <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-gray-600 bg-gray-100">
+        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+        Not opened yet
+      </span>
+    `
+  }
+
+  // Extra-detail line under the date. Sticky timestamps for opened mail,
+  // soft hint for unopened.
+  buildOpenedDetail(email) {
+    if (email.status !== "sent") return ""
+
+    if (email.first_opened_at) {
+      const first = new Date(email.first_opened_at).toLocaleString()
+      const last  = new Date(email.last_opened_at || email.first_opened_at).toLocaleString()
+      const sameTime = first === last
+      const tail = sameTime ? "" : `, latest ${last}`
+      return `
+        <div class="text-xs text-emerald-700 mt-1">
+          ✓ Read first at ${first}${tail}
+        </div>
+      `
+    }
+    return `
+      <div class="text-xs text-gray-400 mt-1">
+        Recipient hasn't opened this yet — opens are tracked via a 1×1 pixel and may be delayed by Gmail's image proxy.
+      </div>
+    `
   }
 
   buildThreadHtml(threadEmails) {

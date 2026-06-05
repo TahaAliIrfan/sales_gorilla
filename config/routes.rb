@@ -40,6 +40,11 @@ Rails.application.routes.draw do
     post "twilio/whatsapp/status",  to: "twilio_whatsapp#status"
     get  "wa/media/:signed_id", to: "whatsapp_media#show", as: :wa_media
 
+    # Email open-tracking pixel. Short path keeps the URL small in emails; the
+    # .gif suffix makes it look like a static image to recipient mail clients.
+    get "/e/o/:token.gif", to: "email_tracking#open", as: :email_open_tracking,
+        constraints: { token: %r{[A-Za-z0-9_-]+} }
+
     # API namespaces (JWT-authenticated, tenant resolved via header in future).
     namespace :api do
       namespace :pk do

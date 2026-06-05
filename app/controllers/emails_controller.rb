@@ -2,7 +2,7 @@ class EmailsController < ApplicationController
   before_action :require_login
   before_action :set_customer
   before_action :authorize_customer
-  before_action :set_email, only: [ :show, :mark_as_read ]
+  before_action :set_email, only: [ :show, :mark_as_read, :export_pdf ]
 
   def index
     respond_to do |format|
@@ -37,12 +37,15 @@ class EmailsController < ApplicationController
             .limit(20)
         end
 
-        # Build email JSON with attachments
+        # Build email JSON with attachments. Open-tracking fields (first_opened_at,
+        # last_opened_at, open_count) are surfaced so the modal renderer can show
+        # the recipient's read state to the sender.
         email_json = @email.as_json(
           only: [ :id, :subject, :from_email, :to_email, :from_name, :to_name,
                  :body_html, :body_text, :snippet, :status, :message_id,
-                 :gmail_thread_id, :read_at, :sent_at, :received_at, :created_at, :has_attachments ],
-          methods: [ :display_subject, :sender_name, :receiver_name, :formatted_date ]
+                 :gmail_thread_id, :read_at, :sent_at, :received_at, :created_at, :has_attachments,
+                 :first_opened_at, :last_opened_at, :open_count ],
+          methods: [ :display_subject, :sender_name, :receiver_name, :formatted_date, :opened? ]
         )
 
         # Add attachments
@@ -52,8 +55,9 @@ class EmailsController < ApplicationController
         thread_emails_json = thread_emails.map do |thread_email|
           te_json = thread_email.as_json(
             only: [ :id, :subject, :from_email, :to_email, :from_name, :to_name,
-                   :body_html, :body_text, :snippet, :status, :sent_at, :received_at, :created_at, :has_attachments ],
-            methods: [ :display_subject, :sender_name, :receiver_name, :formatted_date ]
+                   :body_html, :body_text, :snippet, :status, :sent_at, :received_at, :created_at, :has_attachments,
+                   :first_opened_at, :last_opened_at, :open_count ],
+            methods: [ :display_subject, :sender_name, :receiver_name, :formatted_date, :opened? ]
           )
           te_json["attachments"] = thread_email.attachments_json
           te_json
@@ -195,6 +199,25 @@ class EmailsController < ApplicationController
       format.html { redirect_to customer_path(@customer, anchor: "emails") }
       format.json { render json: { success: true } }
     end
+  end
+
+  # GET /customers/:customer_id/emails/:id/export_pdf
+  # Renders the email (header + body + attachments list + open status) as a
+  # standalone PDF. Used by the "Export PDF" button on each email card.
+  def export_pdf
+    pdf = EmailPdfService.new(@email).generate
+
+    safe_subject = @email.subject.to_s.gsub(/[^0-9A-Za-z\s]/, "").gsub(/\s+/, "_").presence || "Email"
+    filename = "#{safe_subject}_#{@email.id}.pdf"
+
+    send_data pdf,
+              filename: filename,
+              type: "application/pdf",
+              disposition: "attachment"
+  rescue => e
+    Rails.logger.error("[EmailPDF] export failed for email=#{@email.id}: #{e.message}")
+    redirect_to customer_path(@customer, anchor: "emails"),
+                alert: "Couldn't generate PDF: #{e.message}"
   end
 
   private

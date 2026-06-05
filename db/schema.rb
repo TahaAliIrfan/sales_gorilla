@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_05_031519) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_05_183624) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -459,10 +459,15 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_031519) do
     t.text "snippet"
     t.string "label_ids"
     t.bigint "organization_id", null: false
+    t.string "tracking_token"
+    t.datetime "first_opened_at"
+    t.datetime "last_opened_at"
+    t.integer "open_count", default: 0, null: false
     t.index ["customer_id"], name: "index_emails_on_customer_id"
     t.index ["label_ids"], name: "index_emails_on_label_ids"
     t.index ["message_id"], name: "index_emails_on_message_id"
     t.index ["organization_id"], name: "index_emails_on_organization_id"
+    t.index ["tracking_token"], name: "index_emails_on_tracking_token", unique: true, where: "(tracking_token IS NOT NULL)"
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
 
@@ -586,6 +591,30 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_031519) do
     t.index ["customer_id", "created_at"], name: "index_meta_conversion_logs_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_meta_conversion_logs_on_customer_id"
     t.index ["organization_id"], name: "index_meta_conversion_logs_on_organization_id"
+  end
+
+  create_table "meta_inbound_leads", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id"
+    t.string "leadgen_id", null: false
+    t.string "page_id"
+    t.string "form_id"
+    t.string "ad_id"
+    t.string "adset_id"
+    t.string "campaign_id"
+    t.string "status", default: "received", null: false
+    t.text "error_message"
+    t.jsonb "webhook_payload"
+    t.jsonb "lead_data"
+    t.datetime "received_at", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_meta_inbound_leads_on_customer_id"
+    t.index ["form_id"], name: "index_meta_inbound_leads_on_form_id"
+    t.index ["organization_id", "leadgen_id"], name: "index_meta_inbound_leads_on_organization_id_and_leadgen_id", unique: true
+    t.index ["organization_id"], name: "index_meta_inbound_leads_on_organization_id"
+    t.index ["status"], name: "index_meta_inbound_leads_on_status"
   end
 
   create_table "milestone_items", force: :cascade do |t|
@@ -1003,6 +1032,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_031519) do
   add_foreign_key "messages", "users"
   add_foreign_key "meta_conversion_logs", "customers"
   add_foreign_key "meta_conversion_logs", "organizations"
+  add_foreign_key "meta_inbound_leads", "customers"
+  add_foreign_key "meta_inbound_leads", "organizations"
   add_foreign_key "milestone_items", "milestones"
   add_foreign_key "milestone_items", "organizations"
   add_foreign_key "milestones", "customers"

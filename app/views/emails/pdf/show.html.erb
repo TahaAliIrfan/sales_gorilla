@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= @email.subject.presence || "(no subject)" %></title>
+  <style>
+    @page { size: A4; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1a1a1a;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+    .mono { font-family: "SF Mono", Menlo, Consolas, monospace; }
+    .muted { color: #6b7280; }
+
+    header.doc {
+      border-bottom: 2px solid #111;
+      padding-bottom: 14px;
+      margin-bottom: 22px;
+    }
+    header.doc .kicker {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    header.doc h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      line-height: 1.25;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 4px 14px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    .meta dt {
+      color: #6b7280;
+      font-weight: 500;
+    }
+    .meta dd {
+      margin: 0;
+      color: #1a1a1a;
+      word-break: break-word;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .pill--sent { background: #dbeafe; color: #1d4ed8; }
+    .pill--received { background: #e9d5ff; color: #6b21a8; }
+    .pill--opened { background: #dcfce7; color: #15803d; }
+    .pill--unopened { background: #f3f4f6; color: #4b5563; }
+
+    section.body {
+      margin-top: 18px;
+      padding: 8px 0;
+      font-size: 12.5px;
+    }
+    section.body img { max-width: 100%; height: auto; }
+    section.body a { color: #1d4ed8; word-break: break-word; }
+    section.body blockquote {
+      border-left: 3px solid #d1d5db;
+      padding-left: 12px;
+      color: #4b5563;
+      margin: 12px 0;
+    }
+    section.body pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      background: #f9fafb;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin: 26px 0 10px 0;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .attachments {
+      display: grid;
+      gap: 6px;
+    }
+    .attachments .att {
+      padding: 8px 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .attachments .att .name { color: #1a1a1a; font-weight: 500; }
+    .attachments .att .size { color: #6b7280; font-family: "SF Mono", Menlo, Consolas, monospace; }
+
+    footer {
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 1px solid #e5e7eb;
+      font-size: 10px;
+      color: #9ca3af;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <header class="doc">
+    <div class="kicker">Email — exported <%= Time.current.strftime("%b %-d, %Y") %></div>
+    <h1><%= @email.subject.presence || "(no subject)" %></h1>
+
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">
+      <% if @email.sent? %>
+        <span class="pill pill--sent">Sent</span>
+        <% if @email.opened? %>
+          <span class="pill pill--opened">
+            Opened<% if @email.open_count.to_i > 1 %> × <%= @email.open_count %><% end %>
+          </span>
+        <% else %>
+          <span class="pill pill--unopened">Not opened yet</span>
+        <% end %>
+      <% elsif @email.received? %>
+        <span class="pill pill--received">Received</span>
+      <% end %>
+    </div>
+
+    <dl class="meta">
+      <dt>From</dt>
+      <dd><%= [@email.from_name, "<#{@email.from_email}>"].reject(&:blank?).join(" ") %></dd>
+
+      <dt>To</dt>
+      <dd><%= [@email.to_name, "<#{@email.to_email}>"].reject(&:blank?).join(" ") %></dd>
+
+      <% if @email.sent_at.present? %>
+        <dt>Sent</dt>
+        <dd><%= @email.sent_at.strftime("%A, %B %-d, %Y at %-I:%M %p %Z") %></dd>
+      <% elsif @email.received_at.present? %>
+        <dt>Received</dt>
+        <dd><%= @email.received_at.strftime("%A, %B %-d, %Y at %-I:%M %p %Z") %></dd>
+      <% end %>
+
+      <% if @email.sent? && @email.opened? %>
+        <dt>First opened</dt>
+        <dd><%= @email.first_opened_at.strftime("%A, %B %-d, %Y at %-I:%M %p %Z") %></dd>
+        <% if @email.last_opened_at && @email.last_opened_at != @email.first_opened_at %>
+          <dt>Last opened</dt>
+          <dd><%= @email.last_opened_at.strftime("%A, %B %-d, %Y at %-I:%M %p %Z") %></dd>
+        <% end %>
+      <% end %>
+
+      <% if @email.gmail_thread_id.present? %>
+        <dt>Thread</dt>
+        <dd class="mono"><%= @email.gmail_thread_id %></dd>
+      <% end %>
+    </dl>
+  </header>
+
+  <section class="body">
+    <% if @email.body_html.present? %>
+      <%= @email.body_html.html_safe %>
+    <% elsif @email.body_text.present? %>
+      <pre><%= @email.body_text %></pre>
+    <% else %>
+      <p class="muted"><em>No content available.</em></p>
+    <% end %>
+  </section>
+
+  <%
+    has_real_attachments = @email.attachments.attached? && @email.attachments.any?
+  %>
+  <% if has_real_attachments %>
+    <p class="section-title">Attachments (<%= @email.attachments.count %>)</p>
+    <div class="attachments">
+      <% @email.attachments.each do |att| %>
+        <div class="att">
+          <span class="name"><%= att.filename %></span>
+          <span class="size"><%= number_to_human_size(att.byte_size) %> · <%= att.content_type %></span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <footer>
+    <span><%= @email.customer&.name.presence ? "Customer: #{@email.customer.name}" : "" %></span>
+    <span class="mono">Email ID <%= @email.id %></span>
+  </footer>
+</body>
+</html>

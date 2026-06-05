@@ -13,6 +13,26 @@ class Email < ApplicationRecord
   scope :received, -> { where(status: "received") }
   scope :unread, -> { where(read_at: nil).where(status: "received") }
   scope :recent, -> { order(created_at: :desc) }
+  scope :opened, -> { where(status: "sent").where.not(first_opened_at: nil) }
+  scope :unopened, -> { where(status: "sent", first_opened_at: nil) }
+
+  before_create :assign_tracking_token, if: :should_track_opens?
+
+  # Records a tracking pixel hit. Stamps the first open, bumps the counter,
+  # updates last_opened_at. Idempotent enough to handle Gmail's image-proxy
+  # prefetch firing the pixel repeatedly.
+  def record_open!
+    now = Time.current
+    Email.where(id: id).update_all([
+      "first_opened_at = COALESCE(first_opened_at, ?), last_opened_at = ?, open_count = open_count + 1, updated_at = ?",
+      now, now, now
+    ])
+    reload
+  end
+
+  def opened?
+    first_opened_at.present?
+  end
 
   # Check if this is a received email
   def received?
@@ -72,5 +92,17 @@ class Email < ApplicationRecord
         created_at: attachment.created_at
       }
     end
+  end
+
+  private
+
+  # Outbound emails get a tracking pixel; inbound emails are someone else's
+  # message and we don't rewrite their bodies.
+  def should_track_opens?
+    status.to_s == "sent"
+  end
+
+  def assign_tracking_token
+    self.tracking_token ||= SecureRandom.urlsafe_base64(24)
   end
 end

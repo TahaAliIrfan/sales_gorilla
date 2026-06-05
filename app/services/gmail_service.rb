@@ -70,6 +70,16 @@ class GmailService
     Rails.logger.info("Sending email to #{customer.email} with #{attachments.length} attachments")
 
     begin
+      # Inject the open-tracking pixel before building the MIME structure.
+      # The token is generated here and re-used when the Email row is created
+      # so the pixel hit (which carries the token) maps to this exact email.
+      tracking_token = SecureRandom.urlsafe_base64(24)
+      body_html = EmailTrackingPixel.inject(
+        body_html,
+        tracking_token: tracking_token,
+        base_url: tracking_base_url
+      )
+
       # Generate plain text from HTML if not provided
       plain_text = body_text.presence || strip_html(body_html)
 
@@ -203,7 +213,8 @@ class GmailService
       result = gmail.send_user_message("me", **send_options)
 
       if result
-        # Create an Email record in the database
+        # Create an Email record in the database. Use the token we generated
+        # before injecting the pixel so opens map back to this row.
         email = Email.create!(
           customer: customer,
           user: user,
@@ -218,7 +229,8 @@ class GmailService
           to_name: customer.name,
           status: "sent",
           sent_at: Time.current,
-          has_attachments: attachment_data.any?
+          has_attachments: attachment_data.any?,
+          tracking_token: tracking_token
         )
 
         # Attach files directly using Active Storage
@@ -804,5 +816,26 @@ class GmailService
 
     # Update the Gmail client authorization
     @gmail.authorization = client
+  end
+
+  # Absolute base URL for the open-tracking pixel. Tries (in order):
+  #   1. credentials[:email_tracking_base_url] — explicit override
+  #   2. ActionMailer's default_url_options — usually set per env
+  #   3. "https://crm.tecaudex.com" — production fallback
+  def tracking_base_url
+    return @tracking_base_url if defined?(@tracking_base_url)
+
+    explicit = Rails.application.credentials.dig(:email_tracking_base_url)
+    return @tracking_base_url = explicit if explicit.present?
+
+    mailer = Rails.application.config.action_mailer.default_url_options || {}
+    host = mailer[:host]
+    if host.present?
+      protocol = mailer[:protocol].presence || (host.include?("localhost") ? "http" : "https")
+      port = mailer[:port].present? ? ":#{mailer[:port]}" : ""
+      return @tracking_base_url = "#{protocol}://#{host}#{port}"
+    end
+
+    @tracking_base_url = "https://crm.tecaudex.com"
   end
 end
