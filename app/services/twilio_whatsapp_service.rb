@@ -63,7 +63,7 @@ class TwilioWhatsappService
     message = @client.messages.create(**params)
     { success: true, sid: message.sid, status: message.status }
   rescue Twilio::REST::RestError => e
-    Rails.logger.error("[TwilioWhatsapp] send_template failed (#{e.code}): #{e.message}")
+    Rails.logger.error("[TwilioWhatsapp] send_template failed (#{e.code}) sid=#{content_sid} vars=#{content_variables.inspect}: #{e.message}")
     { success: false, error: twilio_error_message(e), code: e.code }
   rescue StandardError => e
     Rails.logger.error("[TwilioWhatsapp] send_template error: #{e.message}")

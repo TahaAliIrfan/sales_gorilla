@@ -35,7 +35,7 @@ module Relay
       # Memoized: the sidebar calls this on every relay page render, and the
       # count is a real query against whatsapp_messages.
       @_relay_inbox_unread_count ||= WhatsappMessage
-        .where(direction: "inbound", read: false)
+        .where(direction: "inbound", status: "received")
         .where(customer_id: policy_scope(Customer).select(:id))
         .count
     end

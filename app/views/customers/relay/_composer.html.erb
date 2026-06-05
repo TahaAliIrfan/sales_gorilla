@@ -22,14 +22,40 @@
   </div>
 
   <%# WhatsApp panel %>
-  <div data-channel="whatsapp" data-relay--composer-target="panel">
+  <div data-channel="whatsapp" data-relay--composer-target="panel"
+       data-controller="relay--whatsapp-templates"
+       data-relay--whatsapp-templates-customer-id-value="<%= customer.id %>"
+       data-relay--whatsapp-templates-is-admin-value="<%= current_user&.admin? ? true : false %>"
+       data-relay--whatsapp-templates-customer-fields-value='<%= { name: customer.name, phone: customer.phone, email: customer.email, company: customer.company }.compact.to_json %>'>
+    <% unless wa_open %>
+      <%# When the 24h reply window is closed, freeform sends fail server-side.
+          Surface the templates path prominently so it's obvious what to do. %>
+      <div class="row spread rl-sm"
+           style="margin:0 0 var(--space-2);padding:10px 12px;border:1px solid var(--color-warning-border);background:var(--color-warning-subtle);color:var(--color-warning-text);border-radius:var(--radius-md);gap:var(--space-3)">
+        <div class="row" style="gap:8px;align-items:flex-start">
+          <%= relay_icon("clock", size: 16) %>
+          <div>
+            <div style="font-weight:var(--weight-semibold)">24-hour reply window is closed</div>
+            <div style="margin-top:2px">Send an approved template to reach <%= customer.name.to_s.split.first %>.</div>
+          </div>
+        </div>
+        <button type="button" class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--channel-whatsapp);color:#fff;flex:none"
+                data-action="click->relay--whatsapp-templates#open">
+          <%= relay_icon("layout-template", size: 14) %>Use a template
+        </button>
+      </div>
+    <% end %>
     <%= form_with url: customer_whatsapp_us_path(customer), method: :post do |f| %>
       <div class="composer__box">
         <textarea name="body" class="composer__input" rows="1" placeholder="Message <%= customer.name.to_s.split.first %> on WhatsApp…"
                   data-relay--composer-target="input"
                   data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
         <div class="composer__bar">
-          <%= link_to customer_whatsapp_us_path(customer, anchor: "whatsapp-us"), class: "rl-iconbtn rl-iconbtn--sm", title: "Templates & media (full WhatsApp)" do %><%= relay_icon("layout-template", size: 16) %><% end %>
+          <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                  title="Send an approved WhatsApp template (works whether the 24h window is open or closed)"
+                  data-action="click->relay--whatsapp-templates#open">
+            <%= relay_icon("layout-template", size: 14) %>Template
+          </button>
           <% if wa_open %>
             <span class="rl-badge rl-badge--success" style="margin-left:4px"><%= relay_icon("circle-check", size: 11) %>Session open</span>
           <% else %>
@@ -43,6 +69,53 @@
         </div>
       </div>
     <% end %>
+
+    <%# Template picker modal — canonical Relay DS overlay pattern (scrim +
+        rl-modal pop, header/body/foot). Works whether the 24h window is open
+        or closed. On success the page reloads so the new outbound bubble joins
+        the conversation canvas. %>
+    <div data-relay--whatsapp-templates-target="modal" class="hidden scrim"
+         data-action="mousedown->relay--whatsapp-templates#backdrop">
+      <div class="rl-modal pop" style="width:min(640px,94%);max-height:85vh;display:flex;flex-direction:column">
+        <div class="rl-modal__head">
+          <span class="rl-modal__icon" style="background:color-mix(in oklch, var(--channel-whatsapp) 16%, transparent);color:var(--channel-whatsapp)">
+            <%= relay_icon("layout-template", size: 20) %>
+          </span>
+          <div style="flex:1;min-width:0">
+            <div class="rl-modal__title">Send a WhatsApp template</div>
+            <div class="muted rl-sm" style="margin-top:2px">Approved Twilio Content templates · works whether the 24-hour window is open or closed.</div>
+          </div>
+          <button type="button" class="rl-iconbtn rl-modal__close"
+                  data-action="click->relay--whatsapp-templates#close" title="Close">
+            <%= relay_icon("x", size: 18) %>
+          </button>
+        </div>
+
+        <div data-relay--whatsapp-templates-target="error" class="hidden rl-sm"
+             style="margin:0 var(--space-5) var(--space-2);padding:8px 12px;background:var(--color-danger-subtle);border:1px solid var(--color-danger-border);color:var(--color-danger-text);border-radius:var(--radius-md)"></div>
+        <div data-relay--whatsapp-templates-target="notice" class="hidden rl-sm"
+             style="margin:0 var(--space-5) var(--space-2);padding:8px 12px;background:var(--color-success-subtle);border:1px solid var(--color-success-border);color:var(--color-success-text);border-radius:var(--radius-md)"></div>
+
+        <div data-relay--whatsapp-templates-target="list" class="rl-modal__body"
+             style="overflow-y:auto;flex:1;min-height:0;padding-top:var(--space-2)">
+          <div class="muted rl-sm" style="text-align:center;padding:32px 0">Loading templates…</div>
+        </div>
+
+        <% if current_user&.admin? %>
+          <div class="rl-modal__foot">
+            <span class="muted rl-sm grow" style="display:flex;align-items:center;gap:6px">
+              <%= relay_icon("info", size: 13) %>
+              Pull the latest approved templates from Twilio.
+            </span>
+            <button type="button" class="rl-btn rl-btn--secondary rl-btn--sm"
+                    data-action="click->relay--whatsapp-templates#sync"
+                    data-relay--whatsapp-templates-target="syncButton">
+              <%= relay_icon("refresh-cw", size: 13) %>Sync from Twilio
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </div>
   </div>
 
   <%# Email panel %>

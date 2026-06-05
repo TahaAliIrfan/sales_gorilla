@@ -43,9 +43,9 @@ class InboxController < TenantController
               .select(
                 :customer_id,
                 Arel.sql("MAX(COALESCE(timestamp, created_at)) AS last_at"),
-                Arel.sql("COUNT(*) FILTER (WHERE direction = 'inbound' AND read = FALSE) AS unread_count")
+                Arel.sql("COUNT(*) FILTER (WHERE direction = 'inbound' AND status = 'received') AS unread_count")
               )
-    grouped = grouped.having(Arel.sql("COUNT(*) FILTER (WHERE direction = 'inbound' AND read = FALSE) > 0")) if @filter == "unread"
+    grouped = grouped.having(Arel.sql("COUNT(*) FILTER (WHERE direction = 'inbound' AND status = 'received') > 0")) if @filter == "unread"
     grouped = grouped.order(Arel.sql("last_at DESC")).limit(LIST_LIMIT).to_a
 
     return [] if grouped.empty?

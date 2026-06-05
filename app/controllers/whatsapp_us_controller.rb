@@ -186,14 +186,20 @@ class WhatsappUsController < ApplicationController
 
   private
 
-  # Keep only the variable keys the template actually declares, and coerce
-  # whatever the client sent into strings.
+  # Build the content_variables hash Twilio expects. Twilio rejects the request
+  # (error 21656) unless the keys EXACTLY match the template's declared
+  # placeholders, so we always emit every declared key — falling back to the
+  # template's stored sample default, then to empty string. Twilio accepts
+  # empty-string substitutions; what it can't tolerate is a missing or extra key.
   def sanitize_variables(template, raw)
-    return {} if raw.blank?
     raw = raw.to_unsafe_h if raw.respond_to?(:to_unsafe_h)
+    raw ||= {}
+    defaults = template.variables.is_a?(Hash) ? template.variables : {}
+
     template.variable_keys.each_with_object({}) do |k, h|
-      val = raw[k] || raw[k.to_sym] || raw[k.to_i]
-      h[k] = val.to_s if val.present?
+      user_val = raw[k] || raw[k.to_s] || raw[k.to_sym] || raw[k.to_i]
+      default  = defaults[k] || defaults[k.to_s]
+      h[k.to_s] = (user_val.presence || default.to_s)
     end
   end
 

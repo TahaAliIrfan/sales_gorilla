@@ -29,6 +29,9 @@ export default class extends Controller {
     this.currentCall = null
     this.timerId = null
     this.token = null // cached across calls within this page lifetime
+    this.callConnected = false
+    this.callFailed = false
+    this.callEnded = false
   }
 
   disconnect() {
@@ -48,12 +51,16 @@ export default class extends Controller {
     }
 
     this.customerId = customerId
+    this.callConnected = false
+    this.callFailed = false
+    this.callEnded = false
     this.renderIdentity(name, phone)
     this.show()
     this.setStatus("Connecting…")
     this.resetControls()
 
     try {
+      await this.ensureMicAccess()
       const token = await this.fetchToken()
       await this.waitForTwilioSdk()
       await this.ensureDevice(token)
@@ -61,9 +68,67 @@ export default class extends Controller {
       await this.connectCall(phone, customerId)
     } catch (error) {
       console.error("CallBar start failed:", error)
-      this.toast(`Unable to start call: ${error.message || error}`, "danger")
-      this.teardown()
-      this.hide()
+      this.callFailed = true
+      const msg = error.message || String(error) || "Unable to start call"
+      this.setStatus(msg)
+      this.toast(msg, "danger")
+      this.stopTimer()
+      // Keep the widget visible so the user can read the error and click End to
+      // dismiss. Teardown the device so a retry re-initializes cleanly.
+      if (this.currentCall) {
+        try { this.currentCall.disconnect() } catch (_) {}
+        this.currentCall = null
+      }
+    }
+  }
+
+  // Ask the browser for mic access up-front so a denied/missing/busy mic
+  // produces a clear, actionable message *before* Twilio tries to acquire the
+  // device. Without this the SDK throws AcquisitionFailedError (31402), which
+  // is opaque to end-users. We immediately stop the tracks — the SDK will
+  // acquire its own stream once the call connects.
+  async ensureMicAccess() {
+    this.setStatus("Requesting microphone access…")
+    if (!navigator.mediaDevices?.getUserMedia) {
+      // Chrome/Edge/Firefox all hide mediaDevices on insecure origins (anything
+      // that isn't HTTPS or localhost). On this app that's the lvh.me dev host
+      // over HTTP — the fix is to use localhost:3000, an HTTPS tunnel (ngrok),
+      // or whitelist the origin in chrome://flags#unsafely-treat-insecure-origin-as-secure.
+      if (window.isSecureContext === false) {
+        throw new Error(
+          `Calling requires a secure origin (HTTPS or localhost). This page is ${window.location.origin}. ` +
+          `Open the app at http://localhost:3000 or via your HTTPS tunnel and try again.`
+        )
+      }
+      throw new Error("Your browser doesn't expose microphone access on this page. Try Chrome, Edge, or Firefox over HTTPS.")
+    }
+    let stream
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    } catch (err) {
+      throw new Error(this.micErrorMessage(err))
+    }
+    stream.getTracks().forEach((t) => t.stop())
+  }
+
+  micErrorMessage(err) {
+    switch (err?.name) {
+      case "NotAllowedError":
+      case "PermissionDeniedError":
+        return "Microphone access was blocked. Click the 🔒 icon in your address bar, allow microphone, then try again."
+      case "NotFoundError":
+      case "DevicesNotFoundError":
+        return "No microphone detected. Plug one in (or enable a built-in mic) and try again."
+      case "NotReadableError":
+      case "TrackStartError":
+        return "Your microphone is being used by another app (Zoom, Meet, etc.). Close it and try again."
+      case "OverconstrainedError":
+      case "ConstraintNotSatisfiedError":
+        return "Your microphone settings aren't compatible with calling. Check the site's mic settings in your browser."
+      case "SecurityError":
+        return "Microphone access requires HTTPS. Reload over HTTPS and try again."
+      default:
+        return `Couldn't access your microphone (${err?.name || "unknown error"}).`
     }
   }
 
@@ -149,31 +214,53 @@ export default class extends Controller {
     if (!this.currentCall) return
 
     this.currentCall.on("accept", () => {
+      this.callConnected = true
       this.setStatus("In call")
       this.startTimer()
     })
-    this.currentCall.on("disconnect", () => this.onCallEnded("logged"))
+    this.currentCall.on("disconnect", () => this.onCallEnded("disconnect"))
     this.currentCall.on("cancel", () => this.onCallEnded("cancel"))
     this.currentCall.on("reject", () => this.onCallEnded("reject"))
     this.currentCall.on("error", (error) => {
       console.error("Call error:", error)
-      this.toast(`Call failed: ${error.message || "Unknown error"}`, "danger")
+      this.callFailed = true
+      const msg = this.callErrorMessage(error)
+      this.setStatus(msg)
+      this.toast(msg, "danger")
       this.onCallEnded("error")
     })
   }
 
+  callErrorMessage(error) {
+    // 31402 = AcquisitionFailedError: getUserMedia rejected the constraints.
+    // Usually a stale input-device id, a mic in use by another app, or no mic.
+    if (error?.code === 31402) {
+      return "Couldn't access your microphone. Close other apps using the mic (Zoom, Meet, etc.), check the site's mic permission, then try again."
+    }
+    return `Call failed: ${error?.message || "Unknown error"}`
+  }
+
   onCallEnded(reason) {
+    if (this.callEnded) return // idempotent: error + disconnect both fire
+    this.callEnded = true
     this.stopTimer()
     this.currentCall = null
-    this.setStatus("Ended")
-    if (reason === "logged") {
-      // Recording + transcript are produced server-side via the voice TwiML
-      // recording_status callback.
+    // Only claim the call was logged if it actually connected and didn't error.
+    // Twilio fires `disconnect` after `error`, so without this guard a failed
+    // call (e.g. AcquisitionFailedError) would show a false "saved" toast.
+    if (reason === "disconnect" && this.callConnected && !this.callFailed) {
+      this.setStatus("Ended")
       this.toast("Call logged · recording + transcript saved", "success")
+      setTimeout(() => this.hide(), 1200)
+      return
     }
-    // The design navigates to the lead; we're usually already in-context, so we
-    // just close the bar shortly after.
-    setTimeout(() => this.hide(), 1200)
+    // Failure / cancel / reject — keep the widget open so the user can read the
+    // status and dismiss with End. (Previously this auto-hid after 1.2s, which
+    // made the bar feel like it never opened when getUserMedia failed.)
+    if (!this.callFailed) {
+      this.setStatus(reason === "cancel" ? "Cancelled" : reason === "reject" ? "Rejected" : "Ended")
+      setTimeout(() => this.hide(), 1200)
+    }
   }
 
   // --- controls -----------------------------------------------------------
