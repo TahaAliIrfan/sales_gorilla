@@ -63,6 +63,67 @@ class GmailService
     end
   end
 
+  # Lists Gmail messages received since the given timestamp, resolves each to
+  # a Customer (by gmail_thread_id first, then sender email), and persists new
+  # Email records via process_message. Returns a summary hash:
+  #   { imported: N, skipped: M, scanned: K, last_internal_date: <Time> }
+  #
+  # Used by GmailInboxSyncWorker for periodic auto-ingestion of customer
+  # replies. The `since` cursor lets us avoid re-walking the entire inbox on
+  # every poll. Pass nil to do an initial 24h backfill.
+  def fetch_new_inbox_since(since, max_results: 100)
+    cutoff = since || 24.hours.ago
+    query = "after:#{cutoff.to_i}"
+
+    summary = { imported: 0, skipped: 0, scanned: 0, last_internal_date: nil, error: nil }
+
+    begin
+      messages = gmail.list_user_messages("me", q: query, max_results: max_results)
+      return summary unless messages&.messages
+
+      messages.messages.each do |message_data|
+        summary[:scanned] += 1
+        begin
+          # Skip cheaply if we've already imported this message_id.
+          if Email.exists?(message_id: message_data.id)
+            summary[:skipped] += 1
+            next
+          end
+
+          message = gmail.get_user_message("me", message_data.id, format: "full")
+
+          customer = resolve_customer_for(message)
+          unless customer
+            summary[:skipped] += 1
+            next
+          end
+
+          email = process_message(message, customer)
+          if email
+            summary[:imported] += 1
+            internal = Time.at(message.internal_date / 1000.0) rescue nil
+            summary[:last_internal_date] = [ summary[:last_internal_date], internal ].compact.max
+          else
+            summary[:skipped] += 1
+          end
+        rescue Google::Apis::ClientError, StandardError => e
+          Rails.logger.warn("[GmailInboxSync] error on message=#{message_data.id}: #{e.class}: #{e.message}")
+          summary[:skipped] += 1
+        end
+      end
+
+      summary
+    rescue Google::Apis::AuthorizationError => e
+      Rails.logger.error("[GmailInboxSync] auth error: #{e.message}")
+      refresh_token
+      retry
+    rescue => e
+      Rails.logger.error("[GmailInboxSync] error: #{e.message}")
+      summary[:error] = e.message
+      summary
+    end
+  end
+
   # Send an email to a customer
   def send_email(customer, subject, body_html, body_text = nil, attachments = [], thread_options = {})
     return false unless customer.email.present?
@@ -315,6 +376,52 @@ class GmailService
   private
 
   # Process a message from Gmail API
+  # Resolves which Customer a Gmail message belongs to.
+  # Strategy:
+  #   1. If we've already stored an Email with this gmail_thread_id, the
+  #      message is a reply on that thread — use its customer (most reliable).
+  #   2. Else, parse the message's From header and match by email address
+  #      (case-insensitive) against the Customer table for THIS user's org.
+  #   3. Else, look at the To header too — handles cases where the user
+  #      manually forwarded a customer email to themselves.
+  # Returns nil if nothing matches; the inbox sync will skip the message.
+  def resolve_customer_for(message)
+    return nil unless message&.thread_id
+
+    # 1. Thread match
+    existing_email = Email.where(gmail_thread_id: message.thread_id).first
+    return existing_email.customer if existing_email&.customer
+
+    # Pull headers once for the from/to fallbacks.
+    headers = message.payload&.headers || []
+    from_email = parse_email_address(headers.find { |h| h.name.downcase == "from" }&.value || "").first
+    to_email   = parse_email_address(headers.find { |h| h.name.downcase == "to" }&.value || "").first
+
+    org_id = user.organizations.first&.id || ActsAsTenant.current_tenant&.id
+
+    # 2. Sender match (incoming message — the customer is the "from")
+    if from_email.present? && from_email.downcase != user.email.downcase
+      ActsAsTenant.without_tenant do
+        c = Customer.where(organization_id: org_id)
+                    .where("LOWER(email) = ?", from_email.downcase)
+                    .first
+        return c if c
+      end
+    end
+
+    # 3. Recipient match (outgoing message from user's "Sent" — customer is the "to")
+    if to_email.present? && to_email.downcase != user.email.downcase
+      ActsAsTenant.without_tenant do
+        c = Customer.where(organization_id: org_id)
+                    .where("LOWER(email) = ?", to_email.downcase)
+                    .first
+        return c if c
+      end
+    end
+
+    nil
+  end
+
   def process_message(message, customer)
     # Skip if we already have this message in our database
     return if Email.exists?(message_id: message.id)

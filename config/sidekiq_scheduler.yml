@@ -21,4 +21,11 @@ server_health_monitor:
   queue: default
   description: "Monitors server health and sends Google Chat alerts if issues detected"
 
-# You can add more scheduled jobs here as needed 
+# Gmail inbox sync - runs every 5 minutes for every connected user
+gmail_inbox_sync:
+  cron: "*/5 * * * *"  # Every 5 minutes
+  class: GmailInboxSyncSchedulerWorker
+  queue: default
+  description: "Enqueues a per-user Gmail inbox sync to ingest customer replies into the CRM"
+
+# You can add more scheduled jobs here as needed
