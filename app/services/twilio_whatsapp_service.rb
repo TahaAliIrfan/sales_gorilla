@@ -10,17 +10,42 @@
 #     inbound message; otherwise Twilio returns error 63016.
 #   - Outside that window an approved Content template (content_sid) is required.
 class TwilioWhatsappService
-  # Twilio WhatsApp sender (hardcoded for now).
-  FROM = "whatsapp:+13022067878".freeze
+  class NotConfigured < StandardError; end
 
-  def initialize
-    account_sid = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
-    auth_token  = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+  # Caller may pass `organization:` explicitly (workers should), otherwise we
+  # fall back to ActsAsTenant.current_tenant. Credentials + sender number are
+  # read from the org's `whatsapp` feature (Settings > Features).
+  def initialize(organization: nil)
+    @organization = organization || ActsAsTenant.current_tenant ||
+                    raise(ArgumentError, "TwilioWhatsappService needs an organization (ActsAsTenant.current_tenant or `organization:` arg)")
 
-    raise "Twilio credentials not configured" unless account_sid && auth_token
+    feature = @organization.feature(:whatsapp)
+    raise NotConfigured, "WhatsApp not enabled for #{@organization.subdomain}" unless feature&.enabled?
 
-    @client      = Twilio::REST::Client.new(account_sid, auth_token)
-    @status_callback = "#{app_url}/twilio/whatsapp/status"
+    settings = feature.settings_hash
+    @account_sid   = settings["account_sid"].presence ||
+                     raise(NotConfigured, "WhatsApp: account_sid missing for #{@organization.subdomain}")
+    @auth_token    = settings["auth_token"].presence ||
+                     raise(NotConfigured, "WhatsApp: auth_token missing for #{@organization.subdomain}")
+    @sender_number = settings["sender_number"].presence ||
+                     raise(NotConfigured, "WhatsApp: sender_number missing for #{@organization.subdomain}")
+
+    @from = to_whatsapp(@sender_number)
+    @app_url = settings["app_url"].presence || "https://crm.tecaudex.com"
+    @client = Twilio::REST::Client.new(@account_sid, @auth_token)
+    @status_callback = "#{@app_url}/twilio/whatsapp/status"
+  end
+
+  # Public accessor for the configured sender (used by the webhook router and
+  # the Settings UI to display the value).
+  attr_reader :sender_number
+
+  # Convenience for callers that only need the `whatsapp:+NNN` string (e.g.
+  # to store on a WhatsappMessage's metadata) without instantiating the
+  # service. Returns nil if the org hasn't configured a sender.
+  def self.from_for(organization)
+    sender = organization&.feature(:whatsapp)&.settings_hash&.dig("sender_number")
+    sender.present? ? "whatsapp:#{sender}" : nil
   end
 
   # Send a freeform text message. Returns a result hash; on success includes the
@@ -30,7 +55,7 @@ class TwilioWhatsappService
     return { success: false, error: "Message cannot be blank" }  if body.blank?
 
     message = @client.messages.create(
-      from: FROM,
+      from: @from,
       to:   to_whatsapp(to_phone),
       body: body,
       status_callback: @status_callback
@@ -53,7 +78,7 @@ class TwilioWhatsappService
     return { success: false, error: "Template is missing" }    if content_sid.blank?
 
     params = {
-      from: FROM,
+      from: @from,
       to:   to_whatsapp(to_phone),
       content_sid: content_sid,
       status_callback: @status_callback
@@ -77,8 +102,8 @@ class TwilioWhatsappService
     return [] if phone.blank?
 
     to_addr = to_whatsapp(phone)
-    outbound = @client.messages.list(from: FROM, to: to_addr, limit: limit)
-    inbound  = @client.messages.list(from: to_addr, to: FROM, limit: limit)
+    outbound = @client.messages.list(from: @from, to: to_addr, limit: limit)
+    inbound  = @client.messages.list(from: to_addr, to: @from, limit: limit)
 
     (outbound + inbound).sort_by { |m| (m.date_sent || m.date_created || Time.current).to_i }
   rescue Twilio::REST::RestError => e
@@ -110,7 +135,7 @@ class TwilioWhatsappService
     return { success: false, error: "Media URL is missing" }    if media_url.blank?
 
     params = {
-      from: FROM,
+      from: @from,
       to:   to_whatsapp(to_phone),
       media_url: [ media_url ],
       status_callback: @status_callback
@@ -143,7 +168,4 @@ class TwilioWhatsappService
     end
   end
 
-  def app_url
-    "https://crm.tecaudex.com"
-  end
 end

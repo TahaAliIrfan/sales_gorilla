@@ -11,6 +11,23 @@
 #   POST   /api/v2/whatsapp_us/templates/sync             — admin-only: pull from Twilio
 class Api::V2::WhatsappUsController < Api::V2::BaseController
   before_action :set_customer, only: [ :messages, :send_message, :send_template, :mark_read ]
+  before_action :require_whatsapp_enabled, except: [ :conversations, :latest, :templates ]
+
+  rescue_from TwilioWhatsappService::NotConfigured,
+              TwilioWhatsappTemplatesService::NotConfigured do |e|
+    Rails.logger.warn("[TwilioWhatsapp API] #{e.class}: #{e.message}")
+    render_error("WhatsApp messaging isn't fully configured for your organization.", nil, :service_unavailable)
+  end
+
+  private
+
+  def require_whatsapp_enabled
+    return if current_organization&.feature_enabled?(:whatsapp)
+
+    render_error("WhatsApp messaging is not enabled for this organization.", nil, :forbidden)
+  end
+
+  public
 
   # GET /api/v2/whatsapp_us/conversations
   # Customers the caller can see who have at least one WhatsApp message,
@@ -283,7 +300,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
     metadata = {
       provider: "twilio",
       to:       "whatsapp:#{@customer.phone}",
-      from:     TwilioWhatsappService::FROM,
+      from:     TwilioWhatsappService.from_for(current_organization),
       sent_by_user_id: current_user&.id
     }.merge(extra)
 

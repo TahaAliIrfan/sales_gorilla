@@ -10,10 +10,20 @@ require "json"
 class TwilioWhatsappTemplatesService
   CONTENT_AND_APPROVALS_URL = "https://content.twilio.com/v1/ContentAndApprovals".freeze
 
-  def initialize
-    @account_sid = Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
-    @auth_token  = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-    raise "Twilio credentials not configured" unless @account_sid && @auth_token
+  class NotConfigured < StandardError; end
+
+  def initialize(organization: nil)
+    @organization = organization || ActsAsTenant.current_tenant ||
+                    raise(ArgumentError, "TwilioWhatsappTemplatesService needs an organization")
+
+    feature = @organization.feature(:whatsapp)
+    raise NotConfigured, "WhatsApp not enabled for #{@organization.subdomain}" unless feature&.enabled?
+
+    settings = feature.settings_hash
+    @account_sid = settings["account_sid"].presence ||
+                   raise(NotConfigured, "WhatsApp: account_sid missing for #{@organization.subdomain}")
+    @auth_token  = settings["auth_token"].presence ||
+                   raise(NotConfigured, "WhatsApp: auth_token missing for #{@organization.subdomain}")
   end
 
   # Fetches approved WhatsApp templates from Twilio and upserts them.

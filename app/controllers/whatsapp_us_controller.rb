@@ -5,7 +5,16 @@
 class WhatsappUsController < ApplicationController
   before_action :require_login
   before_action :set_customer
+  before_action :require_whatsapp_enabled
   after_action :verify_authorized
+
+  # When the org's WhatsApp feature is disabled or unconfigured, the underlying
+  # TwilioWhatsappService raises NotConfigured. Catch it and respond in the
+  # format the caller asked for (JSON for the chat composer, HTML/turbo for
+  # normal navigations) so the frontend doesn't get an HTML error page.
+  rescue_from TwilioWhatsappService::NotConfigured,
+              TwilioWhatsappTemplatesService::NotConfigured,
+              with: :whatsapp_not_configured
 
   # GET /customers/:customer_id/whatsapp_us.json
   def index
@@ -292,7 +301,7 @@ class WhatsappUsController < ApplicationController
       direction:  "outbound",
       status:     status || "queued",
       timestamp:  Time.current,
-      metadata:   { provider: "twilio", to: "whatsapp:#{@customer.phone}", from: TwilioWhatsappService::FROM, sent_by_user_id: current_user&.id }
+      metadata:   { provider: "twilio", to: "whatsapp:#{@customer.phone}", from: TwilioWhatsappService.from_for(current_organization), sent_by_user_id: current_user&.id }
     )
   end
 
@@ -472,5 +481,29 @@ class WhatsappUsController < ApplicationController
       format.turbo_stream { redirect_to customer_path(@customer), alert: message }
       format.html { redirect_to customer_path(@customer), alert: message }
     end
+  end
+
+  # Pundit `verify_authorized` runs as an after_action. For routes that no-op
+  # because the feature is disabled we don't authorize anything, so the
+  # verifier would complain. Skip it on the disabled path.
+  def require_whatsapp_enabled
+    return if feature_enabled?(:whatsapp)
+
+    @_pundit_policy_authorized = true
+    @_pundit_policy_scoped = true
+    render_error(
+      "WhatsApp messaging is not enabled for this organization. Enable it in Settings > Features.",
+      :forbidden
+    )
+  end
+
+  def whatsapp_not_configured(exception)
+    Rails.logger.warn("[TwilioWhatsapp] #{exception.class}: #{exception.message}")
+    @_pundit_policy_authorized = true
+    @_pundit_policy_scoped = true
+    render_error(
+      "WhatsApp messaging isn't fully configured. Open Settings > Features > WhatsApp Messaging and add your Twilio credentials.",
+      :service_unavailable
+    )
   end
 end

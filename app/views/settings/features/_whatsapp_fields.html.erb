@@ -1,0 +1,62 @@
+<%# Twilio WhatsApp credentials. Same secrecy pattern as the calling/deepgram
+    partials: secret fields show "•••••• (saved)" when set; submitting a
+    blank value preserves the stored one.
+
+    Two non-secret fields are visible:
+      sender_number — your Twilio WhatsApp sender (e.g. +13022067878). Inbound
+                      webhooks are routed to this org by matching this number.
+      app_url       — base URL Twilio reaches us at for the status callback
+                      (defaults to https://crm.tecaudex.com). %>
+<% s = feature.settings_hash %>
+
+<div class="col" style="gap:14px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px">
+  <p class="rl-label" style="margin:0">Twilio WhatsApp credentials</p>
+
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_account_sid", "Account SID", class: "rl-label" %>
+    <%= password_field_tag "organization_feature[settings][account_sid]", "",
+          id: "organization_feature_settings_account_sid",
+          autocomplete: "new-password",
+          placeholder: s["account_sid"].present? ? "•••••• (saved)" : "Required",
+          class: "rl-input" %>
+  </div>
+
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_auth_token", "Auth token", class: "rl-label" %>
+    <%= password_field_tag "organization_feature[settings][auth_token]", "",
+          id: "organization_feature_settings_auth_token",
+          autocomplete: "new-password",
+          placeholder: s["auth_token"].present? ? "•••••• (saved)" : "Required",
+          class: "rl-input" %>
+  </div>
+
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_sender_number", "WhatsApp sender number", class: "rl-label" %>
+    <%= text_field_tag "organization_feature[settings][sender_number]", s["sender_number"],
+          id: "organization_feature_settings_sender_number",
+          placeholder: "+13022067878",
+          class: "rl-input mono" %>
+    <p class="muted" style="font-size:12px;margin:0">
+      Your Twilio WhatsApp sender in <code>+E.164</code> format (no <code>whatsapp:</code> prefix).
+      Inbound messages to this number route to this organization.
+    </p>
+  </div>
+
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_app_url", "Status callback host (optional)", class: "rl-label" %>
+    <%= text_field_tag "organization_feature[settings][app_url]", s["app_url"],
+          id: "organization_feature_settings_app_url",
+          placeholder: "https://crm.tecaudex.com",
+          class: "rl-input" %>
+    <p class="muted" style="font-size:12px;margin:0">
+      Base URL Twilio uses for delivery-status callbacks. Defaults to <code>https://crm.tecaudex.com</code>.
+    </p>
+  </div>
+
+  <p class="muted" style="font-size:12px;margin:0">
+    In the Twilio Console, set the sender's <b>"When a message comes in"</b> webhook to
+    <code><%= request.protocol %><%= request.host_with_port %>/twilio/whatsapp/inbound</code>
+    and its <b>"Status callback URL"</b> to
+    <code><%= request.protocol %><%= request.host_with_port %>/twilio/whatsapp/status</code>.
+  </p>
+</div>

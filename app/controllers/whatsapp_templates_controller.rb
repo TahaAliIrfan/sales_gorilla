@@ -21,5 +21,8 @@ class WhatsappTemplatesController < ApplicationController
     else
       redirect_to whatsapp_templates_path, alert: "Sync failed: #{result[:error]}"
     end
+  rescue TwilioWhatsappTemplatesService::NotConfigured => e
+    redirect_to whatsapp_templates_path,
+                alert: "WhatsApp messaging isn't configured. Set credentials in Settings > Features > WhatsApp Messaging. (#{e.message})"
   end
 end

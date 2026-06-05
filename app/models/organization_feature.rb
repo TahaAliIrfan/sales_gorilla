@@ -1,10 +1,11 @@
 class OrganizationFeature < ApplicationRecord
-  KEYS = %w[calling transcription meta_conversions].freeze
+  KEYS = %w[calling transcription meta_conversions whatsapp].freeze
 
   PROVIDERS = {
     "calling" => %w[twilio].freeze,
     "transcription" => %w[deepgram].freeze,
-    "meta_conversions" => %w[meta].freeze
+    "meta_conversions" => %w[meta].freeze,
+    "whatsapp" => %w[twilio].freeze
   }.freeze
 
   # Defaults applied at backfill time for a fresh meta_conversions row. Mirror

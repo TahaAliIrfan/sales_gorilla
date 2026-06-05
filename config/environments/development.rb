@@ -35,9 +35,6 @@ Rails.application.configure do
 
   # Allow any ngrok tunnel host (subdomain rotates each session) so Twilio
   # webhooks reach the dev server without editing this line every time.
-  config.hosts << "https://59f0-203-101-178-41.ngrok-free.app"
-  config.hosts << /.*\.ngrok-free\.app/
-
   # Multi-tenant subdomain dev: use lvh.me (resolves to 127.0.0.1) so
   # `acme.lvh.me:3000` reaches the dev server as a tenant subdomain without
   # touching /etc/hosts.

@@ -76,14 +76,16 @@ class Settings::FeaturesController < TenantController
   ALLOWED_SETTING_KEYS = %w[
     pixel_id access_token test_event_code events_enabled eligible_sources
     customer_status_mappings deal_stage_mappings source_action_sources
+    lead_form_mappings
     api_key
     account_sid auth_token application_sid api_secret default_caller_id app_url
+    sender_number
   ].freeze
 
   # Setting keys whose VALUES are hashes (status->event, source->{...}). These
   # round-trip differently from scalars/arrays: blank inner values mean "unmap
   # this entry", and the submitted hash REPLACES the saved one in full.
-  HASH_SETTING_KEYS = %w[customer_status_mappings deal_stage_mappings source_action_sources].freeze
+  HASH_SETTING_KEYS = %w[customer_status_mappings deal_stage_mappings source_action_sources lead_form_mappings].freeze
 
   # Merge submitted settings into the existing hash so that:
   #   - Blank scalar values (secret fields) PRESERVE the saved value

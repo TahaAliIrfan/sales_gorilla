@@ -32,6 +32,7 @@ class TwilioWhatsappMediaWorker
   }.freeze
 
   def perform(message_id)
+    @message_id = message_id
     message = WhatsappMessage.find_by(id: message_id)
     return unless message
     return if message.media.attached?
@@ -143,11 +144,22 @@ class TwilioWhatsappMediaWorker
     File.basename(name).gsub(%r{[/\\]}, "_").strip
   end
 
+  # Pulls Twilio credentials from the message's organization's `whatsapp`
+  # feature settings. The message has been persisted with acts_as_tenant
+  # scoping, so its organization is known.
   def account_sid
-    Rails.application.credentials.dig(:TWILIO_ACCOUNT_SID)
+    whatsapp_settings["account_sid"]
   end
 
   def auth_token
-    Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
+    whatsapp_settings["auth_token"]
+  end
+
+  def whatsapp_settings
+    @whatsapp_settings ||= begin
+      message = WhatsappMessage.find_by(id: @message_id)
+      org = message&.organization
+      org&.feature(:whatsapp)&.settings_hash || {}
+    end
   end
 end

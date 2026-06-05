@@ -1,74 +1,91 @@
 # Receives Twilio WhatsApp webhooks (incoming messages + delivery status callbacks)
 # and persists them into the whatsapp_messages table.
 #
-# This is a standalone, parallel path to the existing green-api WhatsApp
-# integration (WhatsappMessageService / Whatsapp::ApiService) and does not
-# touch it.
-#
-# Configure in the Twilio Console for the WhatsApp sender (whatsapp:+13022067878):
-#   "When a message comes in"  -> POST https://crm.tecaudex.com/twilio/whatsapp/inbound
-#   "Status callback URL"      -> POST https://crm.tecaudex.com/twilio/whatsapp/status
+# Multi-tenant by sender number: the `To` field on the inbound payload is the
+# org's configured WhatsApp sender. We look it up against connected_pages-style
+# settings on each org's `whatsapp` feature and switch ActsAsTenant accordingly
+# before persisting. Status callbacks are routed by `MessageSid` → existing
+# WhatsappMessage (which already carries its org via acts_as_tenant).
 class TwilioWhatsappController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :inbound, :status ]
+  before_action :find_org_for_inbound, only: :inbound
   before_action :verify_twilio_signature, only: [ :inbound, :status ]
 
-  # Incoming WhatsApp message from a customer.
   def inbound
-    from_phone = phone_from_whatsapp(params[:From])
-    customer   = find_customer_by_phone(from_phone)
+    ActsAsTenant.with_tenant(@org) do
+      from_phone = phone_from_whatsapp(params[:From])
+      customer   = find_customer_by_phone(from_phone)
 
-    if customer.nil?
-      # whatsapp_messages.customer_id is NOT NULL, so we can't persist an
-      # inbound message from a number that isn't a known customer. Log it so
-      # it isn't silently lost.
-      Rails.logger.warn("[TwilioWhatsapp] inbound from unknown number #{from_phone.inspect} " \
-                        "(MessageSid=#{params[:MessageSid]}): #{params[:Body].to_s.truncate(120)}")
-      return head :ok
+      if customer.nil?
+        Rails.logger.warn("[TwilioWhatsapp] inbound from unknown number #{from_phone.inspect} " \
+                          "in org=#{@org.subdomain} (MessageSid=#{params[:MessageSid]}): " \
+                          "#{params[:Body].to_s.truncate(120)}")
+        return head :ok
+      end
+
+      message = customer.whatsapp_messages.find_or_initialize_by(message_id: params[:MessageSid])
+      message.assign_attributes(
+        remote_id: params[:WaId].presence || from_phone,
+        body:      params[:Body].presence || media_summary,
+        direction: "inbound",
+        status:    "received",
+        timestamp: Time.current,
+        metadata:  inbound_metadata
+      )
+      message.save!
+
+      TwilioWhatsappMediaWorker.perform_async(message.id) if params[:NumMedia].to_i.positive?
+      WhatsappInboundPushWorker.perform_async(message.id)
+      WhatsappUsBroadcaster.broadcast(message)
+
+      Rails.logger.info("[TwilioWhatsapp] stored inbound message #{params[:MessageSid]} for customer #{customer.id}")
+      head :ok
     end
-
-    message = customer.whatsapp_messages.find_or_initialize_by(message_id: params[:MessageSid])
-    message.assign_attributes(
-      remote_id: params[:WaId].presence || from_phone,
-      body:      params[:Body].presence || media_summary,
-      direction: "inbound",
-      status:    "received",
-      timestamp: Time.current,
-      metadata:  inbound_metadata
-    )
-    message.save!
-
-    # Download any attached media out-of-band (Twilio media URLs need auth).
-    TwilioWhatsappMediaWorker.perform_async(message.id) if params[:NumMedia].to_i.positive?
-
-    # Push a Firebase notification to the customer's assigned user.
-    WhatsappInboundPushWorker.perform_async(message.id)
-
-    # Live-push the message to subscribed ActionCable clients.
-    WhatsappUsBroadcaster.broadcast(message)
-
-    Rails.logger.info("[TwilioWhatsapp] stored inbound message #{params[:MessageSid]} for customer #{customer.id}")
-    head :ok
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid => e
-    # Twilio retries on non-2xx, which can race a duplicate insert. Treat an
-    # already-stored message as success so Twilio stops retrying.
     Rails.logger.warn("[TwilioWhatsapp] inbound persist skipped (#{e.class}): #{e.message}")
     head :ok
   end
 
-  # Delivery status callback for an outbound message (queued/sent/delivered/read/failed).
+  # Delivery status callback for an outbound message. The message itself
+  # carries its org via acts_as_tenant, so we don't need to route by `To`.
   def status
-    message = WhatsappMessage.find_by(message_id: params[:MessageSid])
-    if message
-      message.update(status: params[:MessageStatus], metadata: (message.metadata || {}).merge(status_metadata))
-      # Push the new tick (delivered/read/failed) to subscribed clients so the
-      # message bubble updates without a poll. Clients upsert by id.
-      WhatsappUsBroadcaster.broadcast(message)
-      Rails.logger.info("[TwilioWhatsapp] status #{params[:MessageStatus]} for #{params[:MessageSid]}")
+    ActsAsTenant.without_tenant do
+      message = WhatsappMessage.find_by(message_id: params[:MessageSid])
+      if message
+        message.update(status: params[:MessageStatus], metadata: (message.metadata || {}).merge(status_metadata))
+        WhatsappUsBroadcaster.broadcast(message)
+        Rails.logger.info("[TwilioWhatsapp] status #{params[:MessageStatus]} for #{params[:MessageSid]}")
+      end
     end
     head :ok
   end
 
   private
+
+  # Match the `To` field (the org's sender number) to whichever org has it
+  # configured in their `whatsapp` feature settings. If none, drop the message
+  # (return 200 so Twilio stops retrying, and log it).
+  def find_org_for_inbound
+    to_phone = phone_from_whatsapp(params[:To])
+    return head(:ok) if to_phone.blank?
+
+    @org = lookup_org_by_sender(to_phone)
+    unless @org
+      Rails.logger.warn("[TwilioWhatsapp] inbound to unknown sender #{to_phone.inspect} — no org has this number configured")
+      head :ok
+    end
+  end
+
+  def lookup_org_by_sender(to_phone)
+    normalized = to_phone.to_s.strip
+    ActsAsTenant.without_tenant do
+      OrganizationFeature.where(key: "whatsapp", enabled: true).find_each do |f|
+        sender = f.settings_hash["sender_number"].to_s.strip
+        return f.organization if sender == normalized
+      end
+    end
+    nil
+  end
 
   def inbound_metadata
     {
@@ -104,10 +121,8 @@ class TwilioWhatsappController < ApplicationController
     count.positive? ? "[#{count} media attachment(s)]" : nil
   end
 
-  # "whatsapp:+923004363534" -> "+923004363534"
   def phone_from_whatsapp(value)
     return nil if value.blank?
-
     value.to_s.sub(/\Awhatsapp:/, "").strip
   end
 
@@ -118,14 +133,18 @@ class TwilioWhatsappController < ApplicationController
       Customer.where("phone LIKE ?", "%#{phone.gsub(/\D/, '').last(10)}").first
   end
 
-  # Reject forged requests. Twilio signs each webhook with the account auth
-  # token; only enforced in production so local/test posting stays easy.
+  # Reject forged requests. Twilio signs each webhook with the org's auth
+  # token; verify against the org we routed to (status uses any org's token
+  # since signatures aren't org-specific in a way we can easily check there).
   def verify_twilio_signature
     return true unless Rails.env.production?
 
-    auth_token = Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN)
-    validator  = Twilio::Security::RequestValidator.new(auth_token)
-    signature  = request.headers["X-Twilio-Signature"]
+    auth_token = @org&.feature(:whatsapp)&.settings_hash&.dig("auth_token") ||
+                 Rails.application.credentials.dig(:TWILIO_AUTH_TOKEN) # status-only fallback
+    return head(:forbidden) if auth_token.blank?
+
+    validator = Twilio::Security::RequestValidator.new(auth_token)
+    signature = request.headers["X-Twilio-Signature"]
 
     unless validator.validate(request.original_url, request.request_parameters, signature)
       Rails.logger.error("[TwilioWhatsapp] invalid Twilio signature for #{request.original_url}")

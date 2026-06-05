@@ -18,6 +18,11 @@
       title: "Meta Conversions API",
       blurb: "Server-side conversion tracking for Meta Lead Ads, CCR, and website signups.",
       icon:  "megaphone"
+    },
+    "whatsapp" => {
+      title: "WhatsApp Messaging",
+      blurb: "Send/receive WhatsApp messages and templates through Twilio. Inbound routing uses your sender number.",
+      icon:  "megaphone"
     }
   }.fetch(feature.key, { title: feature.key.titleize, blurb: "", icon: "grid" })
 
@@ -83,6 +88,8 @@
         <%= render "settings/features/deepgram_fields", f: f, feature: feature %>
       <% when "meta_conversions" %>
         <%= render "settings/features/meta_fields", f: f, feature: feature %>
+      <% when "whatsapp" %>
+        <%= render "settings/features/whatsapp_fields", f: f, feature: feature %>
       <% end %>
 
       <div class="row">
