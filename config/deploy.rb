@@ -6,7 +6,7 @@ set :repo_url, "git@github.com:tahairfan13/crm.git"
 set :user,            "ubuntu"
 set :puma_threads,    [ 4, 16 ]
 set :puma_workers,    0
-set :branch,          "master"
+set :branch,          "revamp"
 set :passenger_restart_with_touch, true
 # Don't change these unless you know what you're doing
 set :pty,             true
@@ -29,7 +29,8 @@ append :linked_files, "config/database.yml"
 # PDF generation (Grover/Puppeteer) needs a real Chrome binary on the server.
 # Installed via `apt install google-chrome-stable`; OdooProposalHtmlPdfService reads this env var.
 set :default_env, fetch(:default_env, {}).merge(
-  "GROVER_CHROME_PATH" => "/usr/bin/google-chrome"
+  "GROVER_CHROME_PATH" => "/usr/bin/google-chrome",
+  "PUPPETEER_EXECUTABLE_PATH" => "/usr/bin/google-chrome"
 )
 # Default branch is :master
 # ask :branch, `git rev-parse --abbrev-ref HEAD`.chomp

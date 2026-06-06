@@ -1,48 +1,45 @@
 namespace :systemd do
-  desc "Setup systemd services"
+  desc "Install systemd unit files for puma and sidekiq"
   task :setup do
     on roles(:app) do
-      # Copy the Sidekiq service file to the server
-      upload! StringIO.new(File.read("config/systemd/sidekiq.service")), "/tmp/sidekiq.service"
-      sudo :mv, "/tmp/sidekiq.service", "/etc/systemd/system/sidekiq.service"
-
-      # Reload systemd
+      %w[puma sidekiq].each do |svc|
+        upload! StringIO.new(File.read("config/systemd/#{svc}.service")), "/tmp/#{svc}.service"
+        sudo :mv, "/tmp/#{svc}.service", "/etc/systemd/system/#{svc}.service"
+      end
       sudo :systemctl, "daemon-reload"
-
-      # Enable the Sidekiq service to start at boot
-      sudo :systemctl, "enable", "sidekiq"
+      sudo :systemctl, "enable", "puma", "sidekiq"
     end
   end
 
-  desc "Start systemd services"
+  desc "Start puma and sidekiq"
   task :start do
     on roles(:app) do
-      sudo :systemctl, "start", "sidekiq"
+      sudo :systemctl, "start", "puma", "sidekiq"
     end
   end
 
-  desc "Stop systemd services"
+  desc "Stop puma and sidekiq"
   task :stop do
     on roles(:app) do
-      sudo :systemctl, "stop", "sidekiq"
+      sudo :systemctl, "stop", "puma", "sidekiq"
     end
   end
 
-  desc "Restart systemd services"
+  desc "Restart puma and sidekiq"
   task :restart do
     on roles(:app) do
-      sudo :systemctl, "restart", "sidekiq"
+      sudo :systemctl, "restart", "puma", "sidekiq"
     end
   end
 
-  desc "Check status of systemd services"
+  desc "Status of puma and sidekiq"
   task :status do
     on roles(:app) do
-      puts capture("sudo systemctl status sidekiq")
+      execute :sudo, :systemctl, "status", "puma", "--no-pager"
+      execute :sudo, :systemctl, "status", "sidekiq", "--no-pager"
     end
   end
 end
 
-# Add hooks to deploy process
 after "deploy:published", "systemd:setup"
 after "systemd:setup", "systemd:restart"

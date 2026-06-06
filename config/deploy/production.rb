@@ -9,15 +9,15 @@
 
 set :stage, :production
 set :rails_env, :production
-set :branch, "master"
+set :branch, "revamp"
 set :ssh_options, {
   forward_agent: false,
   auth_methods: %w[publickey],
   user: "ubuntu",
-  keys: %w[~/Desktop/crm_real.pem],
+  keys: %w[~/Desktop/relay_crm.pem],
   keys_only: true
 }
-server "54.91.79.118", port: 22, roles: [ :web, :app, :db ], primary: true
+server "ec2-54-205-191-119.compute-1.amazonaws.com", port: 22, roles: [ :web, :app, :db ], primary: true
 
 # role-based syntax
 # ==================
