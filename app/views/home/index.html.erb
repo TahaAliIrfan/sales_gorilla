@@ -1,119 +1,303 @@
-<% content_for :title, "Relay" %>
+<% content_for :title, "Relay — Multi-tenant CRM" %>
 
 <div class="min-h-full">
   <%# ---- Nav ---- %>
-  <header class="border-b border-[var(--color-line-2)]">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+  <header class="sticky top-0 z-30 border-b border-[var(--color-line-2)] bg-paper/70 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
       <a href="/" class="font-display text-xl font-bold tracking-tight text-ink">Relay<span class="text-accent-bright">.</span></a>
-      <nav class="flex items-center gap-1 text-sm font-medium">
+      <nav class="hidden items-center gap-7 text-sm font-medium text-ink-soft md:flex">
+        <a href="#features"  class="transition hover:text-ink">Features</a>
+        <a href="#metrics"   class="transition hover:text-ink">Why teams pick it</a>
+        <a href="#faq"       class="transition hover:text-ink">FAQ</a>
+      </nav>
+      <nav class="flex items-center gap-1.5 text-sm font-medium">
         <% if current_user %>
           <%= link_to "Your workspaces", organizations_path, class: "rounded-md px-4 py-2 text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink" %>
           <%= button_to "Sign out", signout_path, method: :get,
                 form: { class: "inline-block" },
                 class: "rounded-md px-4 py-2 text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink" %>
         <% else %>
-          <%= link_to "Sign in with Google", "/auth/google_oauth2", data: { turbo: false },
-                class: "rounded-md bg-accent px-4 py-2 font-semibold text-on-accent transition hover:bg-accent-bright" %>
+          <%= link_to "Sign in", new_user_session_path,
+                class: "rounded-md px-4 py-2 text-ink-soft transition hover:bg-[var(--color-line)] hover:text-ink" %>
+          <%= link_to "Get started", new_user_registration_path,
+                class: "rounded-md bg-ink px-4 py-2 font-semibold text-paper transition hover:bg-ink/90" %>
         <% end %>
       </nav>
     </div>
   </header>
 
   <%# ---- Hero ---- %>
-  <section class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:py-24">
-    <div class="motion-safe:animate-rise">
-      <p class="micro flex items-center gap-3">
-        <span>No. 001</span><span class="h-px w-8 bg-[var(--color-line-2)]"></span><span>Multi-tenant CRM</span>
-      </p>
-      <h1 class="mt-6 font-display text-6xl leading-[0.98] font-bold tracking-tight text-ink sm:text-7xl">
-        Customer<br>relationships,<br><span class="text-accent">simplified.</span>
-      </h1>
-      <p class="mt-7 max-w-md text-lg leading-relaxed text-ink-soft">
-        A multi-tenant CRM — customers, deals, calling, invoices and AI insights in
-        one place. Every business gets a branded workspace at
-        <span class="mono text-sm text-ink">yourname.tecaudex.com</span>.
-      </p>
-      <div class="mt-9 flex flex-wrap items-center gap-3">
+  <section class="relative overflow-hidden">
+    <%# Soft gradient mesh behind the hero. %>
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute -left-32 -top-32 h-[520px] w-[520px] rounded-full bg-accent/20 blur-3xl"></div>
+      <div class="absolute -right-40 top-1/4 h-[440px] w-[440px] rounded-full bg-accent-bright/10 blur-3xl"></div>
+      <div class="absolute -bottom-32 left-1/3 h-[360px] w-[640px] rounded-full bg-panel/70 blur-3xl"></div>
+    </div>
+
+    <div class="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
+      <div class="motion-safe:animate-rise">
+        <p class="micro flex items-center gap-3">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-accent">
+            <span class="h-1.5 w-1.5 rounded-full bg-accent-bright"></span>
+            New · v2.0
+          </span>
+          <span class="h-px w-8 bg-[var(--color-line-2)]"></span>
+          <span>Multi-tenant CRM</span>
+        </p>
+        <h1 class="mt-6 font-display text-6xl leading-[0.98] font-bold tracking-tight text-ink sm:text-7xl">
+          Customer<br>relationships,<br><span class="text-accent">simplified.</span>
+        </h1>
+        <p class="mt-7 max-w-md text-lg leading-relaxed text-ink-soft">
+          A multi-tenant CRM — customers, deals, calling, invoices and AI insights in
+          one place. Every business gets a branded workspace at
+          <span class="mono text-sm text-ink">yourname.tecaudex.com</span>.
+        </p>
+        <div class="mt-9 flex flex-wrap items-center gap-3">
+          <% if current_user %>
+            <%= link_to "Go to your workspaces", organizations_path,
+                  class: "rounded-md bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim" %>
+          <% else %>
+            <%= link_to "Start free →", new_user_registration_path,
+                  class: "rounded-md bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim" %>
+            <%= link_to "Sign in", new_user_session_path,
+                  class: "rounded-md px-6 py-3.5 text-sm font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-panel" %>
+            <% if Rails.env.development? %>
+              <%= link_to "Dev login", dev_login_path,
+                    class: "rounded-md px-6 py-3.5 text-sm font-semibold text-ink-soft ring-1 ring-dashed ring-[var(--color-line-2)] transition hover:text-ink" %>
+            <% end %>
+          <% end %>
+        </div>
+        <p class="mt-5 text-xs text-ink-soft">
+          No credit card · Google sign-in or email · 14-day trial
+        </p>
+      </div>
+
+      <%# A branded artifact: a customer record card. %>
+      <div class="motion-safe:animate-sweep [animation-delay:150ms]">
+        <div class="rotate-1 rounded-xl bg-panel p-6 shadow-lift ring-1 ring-[var(--color-line-2)] transition hover:rotate-0">
+          <div class="flex items-start justify-between border-b border-[var(--color-line-2)] pb-4">
+            <div>
+              <p class="micro">Customer</p>
+              <p class="mono mt-1 text-sm font-medium text-ink">CUS-2026-0042</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-accent">
+              <span class="h-1.5 w-1.5 rounded-full bg-accent-bright"></span>
+              <span class="micro text-accent">Hot lead</span>
+            </span>
+          </div>
+          <dl class="mt-4 space-y-2.5 text-sm">
+            <% [["Name", "Sarah Patel"], ["Channel", "WhatsApp"], ["Project value", "$48,500"], ["Lead score", "92 / 100"]].each do |label, val| %>
+              <div class="flex items-center justify-between">
+                <dt class="text-ink-soft"><%= label %></dt>
+                <dd class="mono text-ink"><%= val %></dd>
+              </div>
+            <% end %>
+            <div class="flex items-center justify-between border-t border-dashed border-[var(--color-line-2)] pt-3">
+              <dt class="font-semibold text-ink">Next action</dt>
+              <dd class="mono text-sm font-semibold text-ink">Call · Tue 14:00 PKT</dd>
+            </div>
+          </dl>
+          <div class="mt-5 flex items-center gap-3 border-t border-[var(--color-line-2)] pt-4">
+            <div class="grid h-12 w-12 place-items-center rounded bg-ink text-paper">
+              <svg viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div>
+              <p class="micro">Last touch</p>
+              <p class="mono text-xs text-ink-soft">Recorded · Mon 11:42</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%# ---- Social proof / metrics strip ---- %>
+  <section id="metrics" class="border-y border-[var(--color-line-2)] bg-panel/40">
+    <div class="mx-auto max-w-6xl px-6 py-14">
+      <p class="micro mb-7 text-center">Trusted by sales teams across multiple channels</p>
+      <div class="grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-[var(--color-line-2)] sm:grid-cols-4">
+        <% [
+          ["1.2M",  "customer records tracked"],
+          ["480k",  "calls recorded & analysed"],
+          ["98.7%", "uptime over 90 days"],
+          ["< 80ms", "average request latency"]
+        ].each do |stat, label| %>
+          <div class="bg-paper px-6 py-7 text-center">
+            <p class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl"><%= stat %></p>
+            <p class="micro mt-2"><%= label %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <%# ---- Bento feature grid ---- %>
+  <section id="features" class="border-b border-[var(--color-line-2)]">
+    <div class="mx-auto max-w-6xl px-6 py-20">
+      <div class="mb-10 flex items-end justify-between">
+        <div>
+          <p class="micro">Why teams pick Relay</p>
+          <h2 class="mt-3 max-w-2xl font-display text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+            Everything a multi-channel team needs<span class="text-accent">.</span>
+          </h2>
+        </div>
+        <a href="#faq" class="hidden text-sm font-medium text-accent transition hover:text-accent-bright md:inline-flex">
+          Read the FAQ →
+        </a>
+      </div>
+
+      <div class="grid auto-rows-[minmax(160px,auto)] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <%# Big tile %>
+        <article class="group relative col-span-1 row-span-2 overflow-hidden rounded-2xl bg-ink p-7 text-paper ring-1 ring-ink/10 transition hover:-translate-y-0.5 lg:col-span-2">
+          <p class="mono text-xs uppercase tracking-wider text-paper/60">01 · Calling</p>
+          <h3 class="mt-5 font-display text-3xl font-bold leading-tight tracking-tight">Browser-based calling with AI analysis.</h3>
+          <p class="mt-3 max-w-lg text-sm leading-relaxed text-paper/70">
+            Twilio-powered dialer, automatic recording, transcription, and conversation insights — all without leaving the customer's timeline.
+          </p>
+          <div class="mt-7 flex items-center gap-3 rounded-xl bg-paper/5 p-4 ring-1 ring-paper/10">
+            <span class="grid h-9 w-9 place-items-center rounded-full bg-accent text-on-accent">
+              <svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <div class="flex-1 text-sm">
+              <p class="font-semibold">Sarah Patel · 03:42</p>
+              <p class="mono text-xs text-paper/60">"…happy to move forward with the proposal."</p>
+            </div>
+            <span class="mono rounded-full bg-accent/20 px-2.5 py-1 text-xs text-accent">+24% close</span>
+          </div>
+        </article>
+
+        <%# Tile %>
+        <article class="group rounded-2xl bg-panel p-6 ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5">
+          <p class="mono text-xs uppercase tracking-wider text-ink-soft">02 · Channels</p>
+          <h3 class="mt-4 font-display text-xl font-bold tracking-tight text-ink">Phone, email, WhatsApp, LinkedIn — one timeline.</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Stop swivel-chairing between tools. Every touch on every contact lands in the same place.</p>
+        </article>
+
+        <%# Tile %>
+        <article class="group rounded-2xl bg-panel p-6 ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5">
+          <p class="mono text-xs uppercase tracking-wider text-ink-soft">03 · Branding</p>
+          <h3 class="mt-4 font-display text-xl font-bold tracking-tight text-ink">Your brand, end to end.</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Each org sets its own logo & colors. The whole workspace re-skins itself.</p>
+        </article>
+
+        <%# Tile %>
+        <article class="group rounded-2xl bg-panel p-6 ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5">
+          <p class="mono text-xs uppercase tracking-wider text-ink-soft">04 · Roles</p>
+          <h3 class="mt-4 font-display text-xl font-bold tracking-tight text-ink">Owners, admins, members, viewers.</h3>
+          <p class="mt-2 text-sm leading-relaxed text-ink-soft">Everyone touches exactly what they should — enforced at the database, not just the UI.</p>
+        </article>
+
+        <%# Wide tile %>
+        <article class="group rounded-2xl bg-panel p-6 ring-1 ring-[var(--color-line-2)] transition hover:-translate-y-0.5 sm:col-span-2">
+          <p class="mono text-xs uppercase tracking-wider text-ink-soft">05 · Multi-tenant by design</p>
+          <h3 class="mt-4 font-display text-xl font-bold tracking-tight text-ink">One login, many businesses. Truly isolated data.</h3>
+          <p class="mt-2 max-w-2xl text-sm leading-relaxed text-ink-soft">
+            Switch workspaces in a click. Every record is scoped at the database layer — nothing crosses tenants, by construction.
+          </p>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <% %w[acme.tecaudex.com blackford.tecaudex.com ascolto.tecaudex.com].each do |host| %>
+              <span class="mono inline-flex items-center gap-1.5 rounded-full bg-paper px-3 py-1 text-xs text-ink ring-1 ring-[var(--color-line-2)]">
+                <span class="h-1.5 w-1.5 rounded-full bg-accent-bright"></span><%= host %>
+              </span>
+            <% end %>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <%# ---- FAQ accordion ---- %>
+  <section id="faq" class="border-b border-[var(--color-line-2)]">
+    <div class="mx-auto grid max-w-6xl gap-12 px-6 py-20 lg:grid-cols-[0.9fr_1.1fr]">
+      <div>
+        <p class="micro">FAQ</p>
+        <h2 class="mt-3 font-display text-4xl font-bold tracking-tight text-ink">Common questions<span class="text-accent">.</span></h2>
+        <p class="mt-4 max-w-sm text-ink-soft">If you don't see what you need, write to us at
+          <a href="mailto:hello@tecaudex.com" class="mono text-sm text-ink underline decoration-accent decoration-2 underline-offset-2">hello@tecaudex.com</a>.
+        </p>
+      </div>
+
+      <div class="divide-y divide-[var(--color-line-2)] border-y border-[var(--color-line-2)]">
+        <% [
+          ["How is Relay different from other CRMs?", "It's purpose-built for multi-channel sales teams: calls, WhatsApp, email, LinkedIn all live on one timeline, and the calling, recording and AI analysis are first-class — not bolt-ons."],
+          ["Can I bring my own domain?", "Yes. Every organization gets a workspace at <yourname>.tecaudex.com. Custom-domain mapping (e.g. crm.yourbrand.com) is supported on paid plans."],
+          ["What data isolation guarantees do you offer?", "Every tenant's data is scoped by organization_id at the database layer, enforced via Pundit policies and current-tenant middleware. Nothing crosses tenants by construction."],
+          ["Do you support email + password and Google sign-in?", "Both. You can register with email/password or continue with your Google account — same User, same data."],
+          ["What does the trial include?", "Full product, all features, up to 5 teammates, for 14 days. No credit card."]
+        ].each_with_index do |(q, a), i| %>
+          <details class="group py-5" <%= "open" if i.zero? %>>
+            <summary class="flex cursor-pointer items-center justify-between text-left font-display text-lg font-semibold text-ink">
+              <span><%= q %></span>
+              <span class="ml-4 text-accent transition group-open:rotate-45">＋</span>
+            </summary>
+            <p class="mt-3 max-w-2xl text-sm leading-relaxed text-ink-soft"><%= a %></p>
+          </details>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <%# ---- CTA banner ---- %>
+  <section class="relative overflow-hidden border-b border-[var(--color-line-2)]">
+    <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+      <div class="absolute left-1/4 top-1/3 h-[280px] w-[480px] -translate-y-1/2 rounded-full bg-accent/20 blur-3xl"></div>
+    </div>
+    <div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-6 py-16 sm:flex-row sm:items-center">
+      <div>
+        <p class="micro">Ready when you are</p>
+        <h2 class="mt-3 max-w-xl font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Spin up a workspace and start closing deals today.
+        </h2>
+      </div>
+      <div class="flex flex-wrap items-center gap-3">
         <% if current_user %>
           <%= link_to "Go to your workspaces", organizations_path,
                 class: "rounded-md bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim" %>
         <% else %>
-          <%= link_to "Sign in with Google", "/auth/google_oauth2", data: { turbo: false },
+          <%= link_to "Start free →", new_user_registration_path,
                 class: "rounded-md bg-accent px-6 py-3.5 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim" %>
-          <% if Rails.env.development? %>
-            <%= link_to "Dev login", dev_login_path,
-                  class: "rounded-md px-6 py-3.5 text-sm font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-panel" %>
-          <% end %>
+          <%= link_to "Sign in", new_user_session_path,
+                class: "rounded-md px-6 py-3.5 text-sm font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-panel" %>
         <% end %>
-      </div>
-    </div>
-
-    <%# A branded artifact: a customer record card. %>
-    <div class="motion-safe:animate-sweep [animation-delay:150ms]">
-      <div class="rotate-1 rounded-xl bg-panel p-6 shadow-lift ring-1 ring-[var(--color-line-2)] transition hover:rotate-0">
-        <div class="flex items-start justify-between border-b border-[var(--color-line-2)] pb-4">
-          <div>
-            <p class="micro">Customer</p>
-            <p class="mono mt-1 text-sm font-medium text-ink">CUS-2026-0042</p>
-          </div>
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-accent">
-            <span class="h-1.5 w-1.5 rounded-full bg-accent-bright"></span>
-            <span class="micro text-accent">Hot lead</span>
-          </span>
-        </div>
-        <dl class="mt-4 space-y-2.5 text-sm">
-          <% [["Name", "Sarah Patel"], ["Channel", "WhatsApp"], ["Project value", "$48,500"], ["Lead score", "92 / 100"]].each do |label, val| %>
-            <div class="flex items-center justify-between">
-              <dt class="text-ink-soft"><%= label %></dt>
-              <dd class="mono text-ink"><%= val %></dd>
-            </div>
-          <% end %>
-          <div class="flex items-center justify-between border-t border-dashed border-[var(--color-line-2)] pt-3">
-            <dt class="font-semibold text-ink">Next action</dt>
-            <dd class="mono text-sm font-semibold text-ink">Call · Tue 14:00 PKT</dd>
-          </div>
-        </dl>
-        <div class="mt-5 flex items-center gap-3 border-t border-[var(--color-line-2)] pt-4">
-          <div class="grid h-12 w-12 place-items-center rounded bg-ink text-paper">
-            <svg viewBox="0 0 24 24" class="h-7 w-7" fill="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
-          </div>
-          <div>
-            <p class="micro">Last touch</p>
-            <p class="mono text-xs text-ink-soft">Recorded · Mon 11:42</p>
-          </div>
-        </div>
       </div>
     </div>
   </section>
 
-  <%# ---- Feature ledger ---- %>
-  <section class="border-t border-[var(--color-line-2)]">
-    <div class="mx-auto max-w-6xl px-6 py-16">
-      <p class="micro mb-6">One platform</p>
+  <footer class="border-t border-[var(--color-line-2)] bg-panel/30">
+    <div class="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-[2fr_1fr_1fr_1fr]">
       <div>
-        <% [
-          ["01", "Multi-channel CRM", "Customers across phone, email, WhatsApp and LinkedIn — one timeline per contact."],
-          ["02", "Browser-based calling", "Twilio-powered dialer with recording, transcription and AI call analysis."],
-          ["03", "Your brand, end to end", "Each organization sets its own logo and colors; the workspace re-skins itself."],
-          ["04", "Roles that fit", "Owners, admins, members and viewers — everyone touches exactly what they should."],
-          ["05", "One login, many businesses", "Run several workspaces from a single Google account and switch in a click."],
-          ["06", "Truly isolated data", "Every record is scoped to its organization at the database layer. Nothing crosses tenants."]
-        ].each do |num, title, body| %>
-          <div class="group grid items-baseline gap-3 border-t border-[var(--color-line)] py-6 transition hover:bg-panel sm:grid-cols-[4rem_15rem_1fr] sm:px-3">
-            <span class="mono text-sm text-accent-bright"><%= num %></span>
-            <h3 class="font-display text-xl font-bold text-ink"><%= title %></h3>
-            <p class="leading-relaxed text-ink-soft"><%= body %></p>
-          </div>
-        <% end %>
-        <div class="border-t border-[var(--color-line-2)]"></div>
+        <a href="/" class="font-display text-lg font-bold tracking-tight text-ink">Relay<span class="text-accent-bright">.</span></a>
+        <p class="mt-3 max-w-sm text-sm text-ink-soft">A multi-tenant CRM for teams that win across phone, email, WhatsApp and LinkedIn.</p>
+      </div>
+      <div>
+        <p class="micro mb-3">Product</p>
+        <ul class="space-y-2 text-sm text-ink-soft">
+          <li><a href="#features" class="hover:text-ink">Features</a></li>
+          <li><a href="#metrics"  class="hover:text-ink">Why teams pick it</a></li>
+          <li><a href="#faq"      class="hover:text-ink">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="micro mb-3">Account</p>
+        <ul class="space-y-2 text-sm text-ink-soft">
+          <li><%= link_to "Sign in", new_user_session_path, class: "hover:text-ink" %></li>
+          <li><%= link_to "Get started", new_user_registration_path, class: "hover:text-ink" %></li>
+          <li><%= link_to "Forgot password", new_user_password_path, class: "hover:text-ink" %></li>
+        </ul>
+      </div>
+      <div>
+        <p class="micro mb-3">Contact</p>
+        <ul class="space-y-2 text-sm text-ink-soft">
+          <li><a href="mailto:hello@tecaudex.com" class="hover:text-ink">hello@tecaudex.com</a></li>
+        </ul>
       </div>
     </div>
-  </section>
-
-  <footer class="border-t border-[var(--color-line-2)]">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-8">
-      <span class="micro">© <%= Date.current.year %> Relay</span>
-      <span class="micro">Multi-tenant CRM</span>
+    <div class="border-t border-[var(--color-line-2)]">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5 text-xs text-ink-soft">
+        <span>© <%= Date.current.year %> Relay · Tecaudex</span>
+        <span class="mono">v2.0 · Multi-tenant CRM</span>
+      </div>
     </div>
   </footer>
 </div>

@@ -1,0 +1,27 @@
+<% content_for :title, "Forgot password · Relay" %>
+
+<%= render "devise/shared/auth_shell",
+      title:        "Reset your password",
+      subtitle:     "Enter the email tied to your account. We'll send you a link to set a new password.",
+      accent_label: "Recover" do %>
+
+  <p class="micro mb-2">Forgot password</p>
+  <h2 class="font-display text-3xl font-bold tracking-tight text-ink">Reset your password</h2>
+  <p class="mt-2 text-sm text-ink-soft">Enter your email and we'll send a reset link.</p>
+
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post, class: "mt-8 space-y-5", data: { turbo: false } }) do |f| %>
+    <div>
+      <%= f.label :email, class: "mono text-xs uppercase tracking-wide text-ink-soft" %>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email", required: true,
+            class: "mt-1.5 w-full rounded-lg border-0 bg-panel px-4 py-3 text-ink ring-1 ring-[var(--color-line-2)] transition placeholder:text-ink-soft focus:bg-paper focus:ring-2 focus:ring-accent focus:outline-none" %>
+    </div>
+
+    <%= f.submit "Send reset link",
+          class: "w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim active:translate-y-0" %>
+  <% end %>
+
+  <p class="mt-6 text-center text-sm text-ink-soft">
+    Remembered it?
+    <%= link_to "Back to sign in", new_user_session_path, class: "font-semibold text-accent hover:text-accent-bright" %>
+  </p>
+<% end %>

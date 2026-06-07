@@ -1,0 +1,57 @@
+<% content_for :title, "Sign in · Relay" %>
+
+<%= render "devise/shared/auth_shell",
+      title:        "Welcome back",
+      subtitle:     "Sign in to your workspace. Use email & password, or continue with your Google account.",
+      accent_label: "Sign in" do %>
+
+  <p class="micro mb-2">Sign in</p>
+  <h2 class="font-display text-3xl font-bold tracking-tight text-ink">Welcome back</h2>
+  <p class="mt-2 text-sm text-ink-soft">Don't have an account?
+    <%= link_to "Sign up", new_user_registration_path, class: "font-semibold text-accent hover:text-accent-bright" %>
+  </p>
+
+  <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "mt-8 space-y-5", data: { turbo: false } }) do |f| %>
+    <div>
+      <%= f.label :email, class: "mono text-xs uppercase tracking-wide text-ink-soft" %>
+      <%= f.email_field :email, autofocus: true, autocomplete: "email", required: true,
+            class: "mt-1.5 w-full rounded-lg border-0 bg-panel px-4 py-3 text-ink ring-1 ring-[var(--color-line-2)] transition placeholder:text-ink-soft focus:bg-paper focus:ring-2 focus:ring-accent focus:outline-none" %>
+    </div>
+
+    <div>
+      <div class="flex items-baseline justify-between">
+        <%= f.label :password, class: "mono text-xs uppercase tracking-wide text-ink-soft" %>
+        <%= link_to "Forgot?", new_user_password_path, class: "text-xs font-medium text-accent hover:text-accent-bright" %>
+      </div>
+      <%= f.password_field :password, autocomplete: "current-password", required: true,
+            class: "mt-1.5 w-full rounded-lg border-0 bg-panel px-4 py-3 text-ink ring-1 ring-[var(--color-line-2)] transition placeholder:text-ink-soft focus:bg-paper focus:ring-2 focus:ring-accent focus:outline-none" %>
+    </div>
+
+    <% if devise_mapping.rememberable? %>
+      <label class="flex items-center gap-2 text-sm text-ink-soft">
+        <%= f.check_box :remember_me, class: "h-4 w-4 rounded border-[var(--color-line-2)] text-accent focus:ring-accent" %>
+        Keep me signed in
+      </label>
+    <% end %>
+
+    <%= f.submit "Sign in",
+          class: "w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim active:translate-y-0" %>
+  <% end %>
+
+  <div class="my-6 flex items-center gap-3">
+    <span class="h-px flex-1 bg-[var(--color-line-2)]"></span>
+    <span class="micro">or continue with</span>
+    <span class="h-px flex-1 bg-[var(--color-line-2)]"></span>
+  </div>
+
+  <%= link_to "/auth/google_oauth2", data: { turbo: false },
+        class: "flex w-full items-center justify-center gap-3 rounded-lg bg-paper px-4 py-3 text-sm font-semibold text-ink ring-1 ring-[var(--color-line-2)] transition hover:bg-panel" do %>
+    <svg viewBox="0 0 24 24" class="h-4 w-4" aria-hidden="true">
+      <path fill="#4285F4" d="M22.56 12.25c0-.79-.07-1.54-.2-2.26H12v4.28h5.92a5.07 5.07 0 0 1-2.2 3.32v2.76h3.55c2.08-1.92 3.29-4.74 3.29-8.1z"/>
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.55-2.76c-.98.66-2.24 1.05-3.73 1.05-2.87 0-5.3-1.94-6.16-4.54H2.18v2.85A11 11 0 0 0 12 23z"/>
+      <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.85z"/>
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.07.56 4.21 1.65l3.15-3.15A11 11 0 0 0 2.18 7.07l3.66 2.84C6.7 7.32 9.13 5.38 12 5.38z"/>
+    </svg>
+    Continue with Google
+  <% end %>
+<% end %>

@@ -64,7 +64,34 @@ class ApplicationController < ActionController::Base
   end
 
   def current_user
-    @current_user ||= User.find_by(id: session[:user_id]) if session[:user_id]
+    @current_user ||= if session[:user_id]
+                        User.find_by(id: session[:user_id])
+                      elsif respond_to?(:warden) && warden.authenticated?(:user)
+                        warden.user(:user)
+                      end
+  end
+
+  # Devise calls these when a user signs in/out via the email-password flow.
+  # We mirror the existing session[:user_id] convention so the rest of the
+  # app (which reads session[:user_id] directly) continues to work, and we
+  # ensure new accounts land in a workspace.
+  def after_sign_in_path_for(resource)
+    session[:user_id]    = resource.id
+    session[:user_email] = resource.email
+    if resource.is_a?(User)
+      default_org = Organization.find_by(subdomain: "tecaudex") || Organization.first
+      if default_org && !resource.member_of?(default_org)
+        role = resource.admin? ? "owner" : "admin"
+        resource.memberships.create(organization: default_org, role: role)
+      end
+    end
+    organizations_path
+  end
+
+  def after_sign_out_path_for(_resource_or_scope)
+    session[:user_id]    = nil
+    session[:user_email] = nil
+    root_path
   end
 
   def current_user_admin?

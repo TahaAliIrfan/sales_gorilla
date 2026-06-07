@@ -1,0 +1,40 @@
+<% content_for :title, "Set a new password · Relay" %>
+
+<%= render "devise/shared/auth_shell",
+      title:        "Choose a new password",
+      subtitle:     "Pick something only you would know. We'll sign you in right after.",
+      accent_label: "Recover" do %>
+
+  <p class="micro mb-2">New password</p>
+  <h2 class="font-display text-3xl font-bold tracking-tight text-ink">Set a new password</h2>
+
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "mt-8 space-y-5", data: { turbo: false } }) do |f| %>
+    <%= f.hidden_field :reset_password_token %>
+
+    <% if resource.errors.any? %>
+      <div class="rounded-lg bg-accent/10 px-4 py-3 text-sm text-accent">
+        <p class="font-semibold">Couldn't update your password:</p>
+        <ul class="ml-4 mt-1 list-disc">
+          <% resource.errors.full_messages.each do |msg| %><li><%= msg %></li><% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div>
+      <%= f.label :password, "New password", class: "mono text-xs uppercase tracking-wide text-ink-soft" %>
+      <%= f.password_field :password, autocomplete: "new-password", required: true,
+            minlength: Devise.password_length.min, autofocus: true,
+            class: "mt-1.5 w-full rounded-lg border-0 bg-panel px-4 py-3 text-ink ring-1 ring-[var(--color-line-2)] transition placeholder:text-ink-soft focus:bg-paper focus:ring-2 focus:ring-accent focus:outline-none" %>
+      <p class="mt-1 text-xs text-ink-soft">At least <%= Devise.password_length.min %> characters.</p>
+    </div>
+
+    <div>
+      <%= f.label :password_confirmation, "Confirm new password", class: "mono text-xs uppercase tracking-wide text-ink-soft" %>
+      <%= f.password_field :password_confirmation, autocomplete: "new-password", required: true,
+            class: "mt-1.5 w-full rounded-lg border-0 bg-panel px-4 py-3 text-ink ring-1 ring-[var(--color-line-2)] transition placeholder:text-ink-soft focus:bg-paper focus:ring-2 focus:ring-accent focus:outline-none" %>
+    </div>
+
+    <%= f.submit "Save and sign in",
+          class: "w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-on-accent shadow-card transition hover:-translate-y-0.5 hover:bg-accent-dim active:translate-y-0" %>
+  <% end %>
+<% end %>

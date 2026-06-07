@@ -11,11 +11,28 @@ Rails.application.routes.draw do
     # Marketing landing.
     root "home#index"
 
-    # Authentication.
+    # Devise email/password sign-in. We skip all auto-generated routes and
+    # define the ones we want explicitly so we get clean paths (/signin,
+    # /signup, /password) without polluting the root with /edit, /cancel,
+    # POST /, etc. that `path: ""` would create.
+    devise_for :users, skip: :all
+    devise_scope :user do
+      get  "signin", to: "users/sessions#new",        as: :new_user_session
+      post "signin", to: "users/sessions#create",     as: :user_session
+
+      get  "signup", to: "users/registrations#new",   as: :new_user_registration
+      post "signup", to: "users/registrations#create", as: :user_registration
+
+      get   "password/new",  to: "users/passwords#new",    as: :new_user_password
+      get   "password/edit", to: "users/passwords#edit",   as: :edit_user_password
+      patch "password",      to: "users/passwords#update", as: :user_password
+      post  "password",      to: "users/passwords#create"
+    end
+
+    # Google OAuth (omniauth) — still wired through SessionsController.
     get "/auth/:provider/callback", to: "sessions#create"
     get "/auth/failure", to: "sessions#failure"
     get "/signout", to: "sessions#destroy", as: :signout
-    get "/signin", to: "sessions#new", as: :signin
     get "/auth/google_oauth2", to: "sessions#new", as: :google_oauth2
 
     # Organization management (signed-in users only — enforced in controller).

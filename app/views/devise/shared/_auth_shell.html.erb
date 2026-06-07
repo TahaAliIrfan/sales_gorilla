@@ -1,0 +1,65 @@
+<%# Centered auth card used by Devise's signin / signup / password screens. %>
+<%# Pass via locals: title:, subtitle:, footer:, accent_label: %>
+<div class="relative min-h-full overflow-hidden">
+  <%# Decorative gradient mesh behind the card. %>
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10">
+    <div class="absolute -left-32 -top-32 h-[420px] w-[420px] rounded-full bg-accent/20 blur-3xl"></div>
+    <div class="absolute -right-32 top-1/3 h-[360px] w-[360px] rounded-full bg-accent-bright/10 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/2 h-[300px] w-[640px] -translate-x-1/2 rounded-full bg-panel/60 blur-3xl"></div>
+  </div>
+
+  <header class="border-b border-[var(--color-line-2)]">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+      <%= link_to root_path, class: "font-display text-xl font-bold tracking-tight text-ink" do %>
+        Relay<span class="text-accent-bright">.</span>
+      <% end %>
+      <% if local_assigns[:footer] != :signup %>
+        <%= link_to "New here? Create an account", new_user_registration_path,
+              class: "text-sm font-medium text-ink-soft transition hover:text-ink" %>
+      <% else %>
+        <%= link_to "Already have an account? Sign in", new_user_session_path,
+              class: "text-sm font-medium text-ink-soft transition hover:text-ink" %>
+      <% end %>
+    </div>
+  </header>
+
+  <section class="mx-auto grid min-h-[calc(100vh-72px)] max-w-6xl items-center px-6 py-12 lg:grid-cols-[1fr_1fr] lg:gap-16">
+    <%# Left: brand promise (hidden on small screens). %>
+    <div class="hidden lg:block motion-safe:animate-rise">
+      <p class="micro flex items-center gap-3">
+        <span><%= accent_label %></span><span class="h-px w-8 bg-[var(--color-line-2)]"></span><span>Ascolto · Multi-channel CRM</span>
+      </p>
+      <h1 class="mt-6 font-display text-5xl leading-[1.04] font-bold tracking-tight text-ink">
+        <%= title %><span class="text-accent">.</span>
+      </h1>
+      <p class="mt-5 max-w-md text-lg leading-relaxed text-ink-soft">
+        <%= subtitle %>
+      </p>
+
+      <%# Tiny product preview reused from the landing — keeps brand presence. %>
+      <div class="mt-10 rotate-1 max-w-md rounded-xl bg-panel/70 p-5 shadow-lift ring-1 ring-[var(--color-line-2)] backdrop-blur transition hover:rotate-0">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="micro">Customer</p>
+            <p class="mono mt-1 text-sm font-medium text-ink">CUS-2026-0042</p>
+          </div>
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1">
+            <span class="h-1.5 w-1.5 rounded-full bg-accent-bright"></span>
+            <span class="micro text-accent">Hot lead</span>
+          </span>
+        </div>
+        <div class="mt-4 flex items-center justify-between border-t border-dashed border-[var(--color-line-2)] pt-3 text-sm">
+          <span class="text-ink-soft">Next action</span>
+          <span class="mono font-semibold text-ink">Call · Tue 14:00</span>
+        </div>
+      </div>
+    </div>
+
+    <%# Right: the actual form (yielded). %>
+    <div class="mx-auto w-full max-w-md motion-safe:animate-rise [animation-delay:100ms]">
+      <div class="rounded-2xl bg-paper/90 p-8 shadow-lift ring-1 ring-[var(--color-line-2)] backdrop-blur sm:p-10">
+        <%= yield %>
+      </div>
+    </div>
+  </section>
+</div>

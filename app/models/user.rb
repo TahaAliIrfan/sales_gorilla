@@ -1,4 +1,17 @@
 class User < ApplicationRecord
+  # Devise modules. database_authenticatable enables email+password sign-in,
+  # which coexists with the existing Google OAuth flow (sessions_controller).
+  # Validatable is skipped because legacy OAuth-only rows may have been
+  # created without an email; we enforce email/password validations ourselves
+  # only when a password is set.
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :trackable
+
+  validates :email, presence: true, uniqueness: { case_sensitive: false },
+            format: { with: URI::MailTo::EMAIL_REGEXP },
+            if: -> { encrypted_password.present? || will_save_change_to_encrypted_password? }
+  validates :password, length: { minimum: 8 },
+            if: -> { password.present? }
+
   # Organization memberships (Slack/Notion-style: one global user, many orgs).
   has_many :memberships, dependent: :destroy
   has_many :organizations, through: :memberships

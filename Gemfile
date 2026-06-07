@@ -65,6 +65,9 @@ gem "tailwindcss-rails"
 gem "omniauth-google-oauth2"
 gem "omniauth"
 gem "omniauth-rails_csrf_protection"
+
+# Authentication via email/password (coexists with Google OAuth).
+gem "devise", "~> 4.9"
 gem "aws-sdk-s3"
 
 # Google API client for Calendar and Gmail integration

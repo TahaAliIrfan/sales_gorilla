@@ -49,7 +49,8 @@
       "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)",
       "Bash(bundle exec rails runner ' *)",
       "Bash(git check-ignore *)",
-      "Bash(RAILS_ENV=development bin/rails runner 'Rails.application.eager_load!; File.write\\(\"/tmp/eager.txt\", \"OK - all classes loaded\"\\)')"
+      "Bash(RAILS_ENV=development bin/rails runner 'Rails.application.eager_load!; File.write\\(\"/tmp/eager.txt\", \"OK - all classes loaded\"\\)')",
+      "Bash(rsync -avz --exclude=.git/ --exclude=.git* --exclude=node_modules/ --exclude=log/ --exclude=tmp/ --exclude=storage/ --exclude=.bundle/ --exclude=.env --exclude=.claude/ --exclude=.cursor/ --exclude=.idea/ --exclude=.playwright-mcp/ --exclude=dump.rdb --exclude=spec/ --exclude=test/ --exclude=vendor/bundle/ --exclude=public/assets/ --exclude=public/packs/ --exclude=config/database.yml --exclude=config/master.key -e 'ssh -i /Users/taha/Desktop/relay_crm.pem -o StrictHostKeyChecking=no' ./ ubuntu@ec2-54-205-191-119.compute-1.amazonaws.com:/home/ubuntu/crm/releases/20260605162223/)"
     ],
     "additionalDirectories": [
       "/tmp"
