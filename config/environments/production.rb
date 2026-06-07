@@ -3,6 +3,11 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # Treat tecaudex.com as a 2-part TLD so that ascolto.tecaudex.com has no
+  # subdomain (and is handled by RootDomain) while <tenant>.ascolto.tecaudex.com
+  # exposes <tenant> as request.subdomain for tenant routing.
+  config.action_dispatch.tld_length = 2
+
   # Code is not reloaded between requests.
   config.enable_reloading = false
 
