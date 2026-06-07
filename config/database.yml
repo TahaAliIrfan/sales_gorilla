@@ -79,7 +79,7 @@ test:
 #
 production:
   <<: *default
-  database: tecaudex_crm_production
+  database: ascolto_production
   username: postgres
   password: <%= Rails.application.credentials.dig(:TECAUDEX_CRM_DATABASE_PASSWORD) %>
   host: <%= Rails.application.credentials.dig(:CRM_DB_URL) %>
