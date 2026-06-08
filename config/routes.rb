@@ -280,7 +280,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'website_lead', to: 'website_lead#create'
-      post 'inbound_lead', to: 'cost_calculator#inbound_lead'
+      post 'inbound_lead', to: 'cost_calculatodr#inbound_lead'
       post 'init_estimates', to: 'cost_calculator#init_estimates'
       post 'submit_estimate', to: 'cost_calculator#submit_estimate'
 
@@ -394,8 +394,8 @@ Rails.application.routes.draw do
 
   
   # Development login gateway (only available in development)
-  if Rails.env.development?
+  #if Rails.env.development?
     get '/dev_login', to: 'dev_login#show', as: :dev_login
     post '/dev_login', to: 'dev_login#create'
-  end
+  #end
 end
