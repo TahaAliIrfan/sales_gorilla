@@ -19,7 +19,7 @@ class UsersController < ApplicationController
   # Set a member's capability role within the current organization.
   def update_role
     role_key = params[:role_key].to_s
-    role     = current_organization.roles.system_roles.find_by(key: role_key)
+    role     = current_organization.roles.find_by(key: role_key)
 
     unless role
       return render json: { success: false, message: "Invalid role" }, status: :unprocessable_entity
@@ -116,9 +116,9 @@ class UsersController < ApplicationController
     current_organization.roles.system_roles.find_by(key: key)&.id
   end
 
-  # Roles this admin may hand out, highest-authority first.
+  # Roles this admin may hand out (system + custom), highest-authority first.
   def assignable_roles
-    current_organization.roles.system_roles
+    current_organization.roles
                         .order(hierarchy_level: :desc)
                         .map { |r| { key: r.key, name: r.name } }
                         .select { |r| current_user.can_assign_role?(r[:key]) }

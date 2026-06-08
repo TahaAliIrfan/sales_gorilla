@@ -16,6 +16,12 @@ Implemented:
   call sites use `User#legacy_role_key` for the old `admin/manager/associate` vocab.
   User-management screens (`users#index/show/associates/managers/manage_associates`,
   Settings → Team) operate on memberships.
+- **Roles & Permissions UI:** per-org `RolesController` + `resources :roles` —
+  list/show/create/edit/delete org roles, edit each role's granted permissions via
+  checkboxes grouped by `Permission::CATALOG`. System roles lock name/key/rank
+  (permissions still editable); owner always retains all permissions
+  (`Role#owner_keeps_all_permissions`); custom roles are fully editable and
+  assignable to users. Gated on `can?("roles.manage")`.
 
 ---
 

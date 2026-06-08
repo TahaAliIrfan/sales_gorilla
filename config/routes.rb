@@ -217,6 +217,9 @@ Rails.application.routes.draw do
       end
     end
 
+    # Per-org roles & permissions management.
+    resources :roles
+
     get "tasks/index"
     get "tasks/show"
     get "tasks/new"

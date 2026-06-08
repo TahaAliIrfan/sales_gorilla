@@ -135,8 +135,11 @@ class User < ApplicationRecord
   def grant_org_role!(organization, role_key)
     return false unless organization
     role_key = role_key.to_s
-    membership = membership_for(organization) || memberships.build(organization: organization)
-    membership.access_role = organization.roles.system_roles.find_by(key: role_key)
+    # Find among ALL org roles (system + custom).
+    membership = membership_for(organization) || memberships.build(organization: organization, role: "member")
+    membership.access_role = organization.roles.find_by(key: role_key)
+    # The legacy string column only knows the system vocabulary; leave it
+    # untouched for custom roles (access_role is the source of truth).
     membership.role = role_key if Membership::ROLES.include?(role_key)
     membership.save!
     membership

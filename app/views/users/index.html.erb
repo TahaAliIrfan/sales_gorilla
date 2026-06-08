@@ -15,6 +15,9 @@
       <div class="pagehead__sub">Manage all users, roles, and access control in one place.</div>
     </div>
     <div class="pagehead__actions">
+      <%= link_to roles_path, class: "rl-btn rl-btn--secondary" do %>
+        <%= relay_icon("shield", size: 15) %>Roles &amp; permissions
+      <% end %>
       <%= link_to managers_users_path, class: "rl-btn rl-btn--secondary" do %>
         <%= relay_icon("building-2", size: 15) %>Managers
       <% end %>

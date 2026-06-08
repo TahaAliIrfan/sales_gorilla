@@ -1,0 +1,86 @@
+<% content_for :title, "Roles & permissions — #{current_organization&.name}" %>
+<%
+  system_count = @roles.count(&:system?)
+  custom_count = @roles.size - system_count
+%>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Roles &amp; permissions</div>
+      <div class="pagehead__sub">Define what each role can do in <%= current_organization&.name %>. Assign roles to people from <%= link_to "User management", users_path, style: "color:var(--color-primary-text)" %>.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to new_role_path, class: "rl-btn rl-btn--primary" do %>
+        <%= relay_icon("plus", size: 15) %>New role
+      <% end %>
+    </div>
+  </div>
+
+  <% if notice.present? %>
+    <div class="rl-sm" style="background:var(--color-success-subtle);border:1px solid var(--color-success-border);color:var(--color-success-text);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:var(--space-4)"><%= notice %></div>
+  <% end %>
+  <% if alert.present? %>
+    <div class="rl-sm" style="background:var(--color-danger-subtle);border:1px solid var(--color-danger-border);color:var(--color-danger-text);border-radius:var(--radius-lg);padding:10px 14px;margin-bottom:var(--space-4)"><%= alert %></div>
+  <% end %>
+
+  <div class="grid grid-4" style="margin-bottom:var(--space-5)">
+    <%= render "user_dashboard/stat", label: "Roles", value: @roles.size, sub: "in this org", icon: "shield" %>
+    <%= render "user_dashboard/stat", label: "System roles", value: system_count, sub: "built-in", icon: "lock" %>
+    <%= render "user_dashboard/stat", label: "Custom roles", value: custom_count, sub: "you created", icon: "sliders-horizontal" %>
+    <%= render "user_dashboard/stat", label: "Permissions", value: Permission::ALL_KEYS.size, sub: "available", icon: "list-checks" %>
+  </div>
+
+  <div class="sect">
+    <div class="sect__head">
+      <div class="sect__title">All roles</div>
+      <div class="muted rl-sm">Higher roles appear first. System roles can't be renamed or deleted, but their permissions are editable.</div>
+    </div>
+    <div class="sect__body--flush">
+      <div class="rl-table-wrap">
+        <table class="rl-table">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>Description</th>
+              <th>Permissions</th>
+              <th>Members</th>
+              <th style="text-align:right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @roles.each do |role| %>
+              <tr>
+                <td>
+                  <div class="row" style="gap:8px;align-items:center">
+                    <span class="rl-badge <%= settings_role_badge(role.key) %>" style="text-transform:capitalize"><%= role.name %></span>
+                    <% if role.system? %><span class="rl-badge rl-badge--neutral" style="font-size:10px">System</span><% end %>
+                  </div>
+                  <div class="muted" style="font-size:11px;margin-top:2px">Level <%= role.hierarchy_level %></div>
+                </td>
+                <td class="rl-sm muted"><%= role.description.presence || "—" %></td>
+                <td>
+                  <% if role.key == "owner" %>
+                    <span class="rl-badge rl-badge--primary">All permissions</span>
+                  <% else %>
+                    <span class="rl-badge rl-badge--info"><%= role.permissions.size %> / <%= Permission::ALL_KEYS.size %></span>
+                  <% end %>
+                </td>
+                <td><span class="rl-badge rl-badge--neutral"><%= role.memberships.count %></span></td>
+                <td style="text-align:right">
+                  <div class="row" style="gap:6px;justify-content:flex-end">
+                    <%= link_to "Edit", edit_role_path(role), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+                    <% unless role.system? %>
+                      <%= button_to "Delete", role_path(role), method: :delete, class: "rl-btn rl-btn--ghost rl-btn--sm",
+                            form: { data: { turbo_confirm: "Delete the “#{role.name}” role?" } } %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

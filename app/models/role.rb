@@ -7,6 +7,7 @@ class Role < ApplicationRecord
   validates :key, presence: true, uniqueness: { scope: :organization_id }
   validates :hierarchy_level, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
   validate :permissions_are_known
+  before_save :owner_keeps_all_permissions
 
   scope :system_roles, -> { where(system: true) }
   scope :custom_roles, -> { where(system: false) }
@@ -53,6 +54,11 @@ class Role < ApplicationRecord
   end
 
   private
+
+  # The org owner is all-powerful by definition; never let it lose permissions.
+  def owner_keeps_all_permissions
+    self.permissions = Permission::ALL_KEYS.dup if system? && key == "owner"
+  end
 
   def permissions_are_known
     bad = Array(permissions).reject { |k| Permission.valid?(k) }

@@ -28,7 +28,7 @@
 
     <div style="flex:1"></div>
     <div class="rl-navgroup-label">System</div>
-    <%= link_to settings_path, class: class_names("rl-navlink", "is-active" => %w[settings users branding features].include?(controller_name)), title: "Settings" do %>
+    <%= link_to settings_path, class: class_names("rl-navlink", "is-active" => %w[settings users roles branding features].include?(controller_name)), title: "Settings" do %>
       <%= relay_icon("settings", size: 18) %><span>Settings</span>
     <% end %>
     <button type="button" class="rl-navlink" data-action="click->relay--sidebar#toggle" title="Collapse" style="background:none;border:none;width:100%;font:inherit;text-align:left;">

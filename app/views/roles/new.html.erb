@@ -1,0 +1,17 @@
+<% content_for :title, "New role — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">New role</div>
+      <div class="pagehead__sub">Create a custom role for <%= current_organization&.name %>.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to roles_path, class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back to roles
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "form" %>
+</div>

@@ -1,0 +1,17 @@
+<% content_for :title, "Edit #{@role.name} — #{current_organization&.name}" %>
+
+<div class="page">
+  <div class="pagehead">
+    <div>
+      <div class="pagehead__title">Edit role: <%= @role.name %></div>
+      <div class="pagehead__sub"><%= @role.memberships.count %> member(s) currently have this role.</div>
+    </div>
+    <div class="pagehead__actions">
+      <%= link_to role_path(@role), class: "rl-btn rl-btn--ghost" do %>
+        <%= relay_icon("arrow-left", size: 15) %>Back
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "form" %>
+</div>
