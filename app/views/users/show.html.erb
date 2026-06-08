@@ -1,5 +1,5 @@
 <% content_for :title, "#{@user.name.presence || @user.email} — #{current_organization&.name}" %>
-<% role_key = @user.admin? ? "admin" : (@user.manager? ? "manager" : "associate") %>
+<% role_key = @user.primary_role&.key || "member" %>
 
 <div class="page">
   <div class="pagehead">
@@ -46,74 +46,65 @@
           <dd><span class="rl-badge <%= settings_role_badge(role_key) %>" style="text-transform:capitalize"><%= role_key %></span></dd>
         </div>
         <div class="kvline">
-          <dt>Highest role</dt>
+          <dt>Reports to</dt>
           <dd>
-            <% if @user.highest_role %>
-              <%= @user.highest_role.name %> <span class="muted" style="font-size:11px">(Level <%= @user.highest_role.hierarchy_level %>)</span>
+            <% if @manager %>
+              <%= link_to @manager.name.presence || @manager.email, user_path(@manager), style: "color:var(--color-primary-text)" %>
             <% else %>
-              <span class="muted">No role assigned</span>
+              <span class="muted">No manager</span>
             <% end %>
           </dd>
         </div>
-        <% if @user.manager? %>
-          <div class="kvline"><dt>Manages associates</dt><dd><span class="rl-badge rl-badge--info"><%= @user.associates.count %> team members</span></dd></div>
+        <% if @reports.any? %>
+          <div class="kvline"><dt>Direct reports</dt><dd><span class="rl-badge rl-badge--info"><%= @reports.count %> team members</span></dd></div>
         <% end %>
       </div>
     </div>
 
-    <%# The legacy "Assign new role" / per-assignment "Remove" controls posted to
-        RoleAssignmentsController, which has no routes in this app — the legacy
-        markup referenced undefined helpers (role_assignments_path) and ivars
-        (@available_roles/@resources) and never worked. Role changes are made via
-        the working update_role endpoint on the users list / Settings → Team. %>
+    <%# Capability role is set per-organization via the update_role endpoint on
+        the users list / Settings → Team. %>
     <div class="sect">
       <div class="sect__head"><div class="sect__title"><%= relay_icon("user-cog", size: 18) %>Manage role</div></div>
       <div class="sect__body">
-        <div class="muted rl-sm">Change this user's role from the <%= link_to "user list", users_path, style: "color:var(--color-primary-text)" %> or the Team tab in Settings.</div>
+        <div class="muted rl-sm">
+          Current role:
+          <span class="rl-badge <%= settings_role_badge(role_key) %>" style="text-transform:capitalize"><%= role_key %></span>.
+          Change it from the <%= link_to "user list", users_path, style: "color:var(--color-primary-text)" %> or the Team tab in Settings.
+        </div>
       </div>
     </div>
   </div>
 
   <div class="sect">
-    <div class="sect__head"><div class="sect__title"><%= relay_icon("shield", size: 18) %>Current role assignments</div></div>
+    <div class="sect__head">
+      <div class="sect__title"><%= relay_icon("users", size: 18) %>Team &amp; reporting</div>
+      <% if @user.manager? %>
+        <%= link_to "Manage team", manage_associates_user_path(@user), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+      <% end %>
+    </div>
     <div class="sect__body--flush">
-      <% if @role_assignments.any? %>
+      <% if @reports.any? %>
         <div class="rl-table-wrap">
           <table class="rl-table">
             <thead>
-              <tr>
-                <th>Role</th>
-                <th>Scope</th>
-                <th>Assigned by</th>
-                <th>Assigned at</th>
-              </tr>
+              <tr><th>Direct report</th><th>Role</th><th>Status</th></tr>
             </thead>
             <tbody>
-              <% @role_assignments.each do |assignment| %>
+              <% @reports.order(:name).each do |report| %>
                 <tr>
-                  <td><span class="rl-badge <%= settings_role_badge(assignment.role.key) %>"><%= assignment.role.name %></span></td>
-                  <td class="rl-sm">
-                    <% if assignment.resource.present? %>
-                      <span class="muted"><%= assignment.resource_type %>:</span> <%= assignment.resource.name %>
-                    <% else %>
-                      <span class="rl-badge rl-badge--neutral">Global</span>
-                    <% end %>
+                  <td><%= link_to report.name.presence || report.email, user_path(report), style: "color:var(--color-primary-text)" %></td>
+                  <td><span class="rl-badge <%= settings_role_badge(report.primary_role&.key) %>" style="text-transform:capitalize"><%= report.primary_role&.key || "member" %></span></td>
+                  <td>
+                    <% if report.active? %><span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Active</span>
+                    <% else %><span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Inactive</span><% end %>
                   </td>
-                  <td class="rl-sm">
-                    <% if assignment.assigned_by %>
-                      <%= link_to assignment.assigned_by.name, user_path(assignment.assigned_by), style: "color:var(--color-primary-text)" %>
-                    <% else %>
-                      <span class="muted">System</span>
-                    <% end %>
-                  </td>
-                  <td class="muted rl-sm"><%= time_ago_in_words(assignment.created_at) %> ago</td>
                 </tr>
               <% end %>
             </tbody>
           </table>
         </div>
       <% else %>
-        <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)">This user doesn't have any role assignments yet.</div>
+        <div class="muted rl-sm" style="text-align:center;padding:var(--space-6)">This user has no direct reports.</div>
       <% end %>
     </div>
   </div>

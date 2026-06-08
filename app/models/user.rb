@@ -32,15 +32,6 @@ class User < ApplicationRecord
   has_many :user_pipeline_assignments, dependent: :destroy
   has_many :assigned_pipelines, through: :user_pipeline_assignments, source: :pipeline
 
-  # Role relationships
-  has_many :role_assignments, dependent: :destroy
-  has_many :roles, through: :role_assignments
-  has_many :assigned_roles, class_name: "RoleAssignment", foreign_key: "assigned_by_id"
-
-  # Associate relationships
-  has_many :manager_assignments, -> { where(role: Role.associate) }, class_name: "RoleAssignment", foreign_key: "assigned_by_id"
-  has_many :associates, through: :manager_assignments, source: :user
-
   # Campaign relationships
   has_many :customer_groups, dependent: :destroy
   has_many :campaigns, dependent: :destroy
@@ -82,146 +73,103 @@ class User < ApplicationRecord
     !active?
   end
 
-  # Role methods
+  # ---- Per-organization roles & hierarchy (membership-based) --------------
+  # These replace the retired global Role/RoleAssignment system. They resolve
+  # against the active tenant (ActsAsTenant.current_tenant) by default, so the
+  # existing call sites (current_user.admin?, .associates, …) become org-aware
+  # without changes. When no tenant is set (background jobs, console) the
+  # capability predicates fall back to "in ANY org".
 
-  # Assign a role to user
-  def assign_role(role_key, assigned_by: nil, resource: nil)
-    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
-    return false unless role
-
-    role_assignments.create(
-      role: role,
-      assigned_by: assigned_by,
-      resource: resource
-    )
+  # The membership for the active tenant (or a specified org).
+  def org_membership(org = ActsAsTenant.current_tenant)
+    org && membership_for(org)
   end
 
-  # Remove a role from user
-  def remove_role(role_key, resource: nil)
-    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
-    return false unless role
+  # Per-org capability role record. Has #key / #name / #hierarchy_level /
+  # #outranks? — preserves the old highest_role contract for views.
+  def primary_role(org = ActsAsTenant.current_tenant)
+    org_membership(org)&.access_role
+  end
+  alias_method :highest_role, :primary_role
 
-    assignment = role_assignments.find_by(role: role, resource: resource)
-    assignment&.destroy.present?
+  # Maps the per-org role to the legacy {admin,manager,associate} vocabulary
+  # for the v2 API and `case role.key` call sites. Falls back to the user's
+  # highest-privilege membership when no tenant is active (e.g. at sign-in).
+  LEGACY_ROLE_MAP = {
+    "owner" => "admin", "admin" => "admin", "manager" => "manager",
+    "member" => "associate", "viewer" => "associate"
+  }.freeze
+
+  def legacy_role_key(org = ActsAsTenant.current_tenant)
+    role = primary_role(org) || best_membership_role
+    LEGACY_ROLE_MAP[role&.key] || "associate"
   end
 
-  # Check if user has a specific role
-  def has_role?(role_key, resource: nil)
-    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
-    return false unless role
+  def best_membership_role
+    memberships.joins(:access_role).order("roles.hierarchy_level DESC").first&.access_role
+  end
 
-    if resource
-      role_assignments.exists?(role: role, resource: resource)
+  # Admin-equivalent: can administer the org (owner or admin).
+  def admin?(org = ActsAsTenant.current_tenant)
+    if org
+      org_membership(org)&.can?("org.administer") || false
     else
-      role_assignments.exists?(role: role)
+      memberships.joins(:access_role).where(roles: { key: %w[owner admin] }).exists?
     end
   end
 
-  # Get highest role based on hierarchy_level
-  def highest_role
-    roles.order(hierarchy_level: :desc).first
+  def owner?(org = ActsAsTenant.current_tenant)
+    primary_role(org)&.key == "owner"
   end
 
-  # Admin methods - based solely on roles
-  def admin?
-    has_role?(:admin)
-  end
-
-  # Method to make a user an admin
-  def make_admin!(assigned_by: nil)
-    assign_role(:admin, assigned_by: assigned_by)
-  end
-
-  # Method to revoke admin privileges
-  def revoke_admin!
-    remove_role(:admin)
-  end
-
-  # Manager methods
-  def manager?
-    has_role?(:manager)
-  end
-
-  # Make user a manager
-  def make_manager!(assigned_by: nil)
-    assign_role(:manager, assigned_by: assigned_by)
-  end
-
-  # Revoke manager role
-  def revoke_manager!
-    remove_role(:manager)
-  end
-
-  # Associate-Manager Assignment methods
-
-  # Assign an associate to a manager
-  # This method is used by admins to establish manager-associate relationships
-  def assign_associate(associate, assigned_by: nil)
-    return false unless manager?
-    return false unless associate.is_a?(User)
-
-    # Ensure the user has associate role
-    unless associate.has_role?(:associate)
-      associate.assign_role(:associate, assigned_by: assigned_by || self)
-    end
-
-    # Create the relationship by assigning the associate role with the manager as assigned_by
-    associate_role = Role.associate
-
-    # Check if this manager is already managing this associate
-    existing = RoleAssignment.where(
-      user: associate,
-      role: associate_role,
-      assigned_by: self
-    ).first
-
-    # If relationship exists, return true
-    return true if existing.present?
-
-    # Create new relationship
-    existing_role =  RoleAssignment.find_by(user: associate, role: associate_role)
-
-    if existing_role.present?
-      existing_role.update(assigned_by: self)
+  def manager?(org = ActsAsTenant.current_tenant)
+    if org
+      primary_role(org)&.key == "manager"
     else
-      RoleAssignment.create(
-        user: associate,
-        role: associate_role,
-        assigned_by: self
-      )
+      memberships.joins(:access_role).where(roles: { key: "manager" }).exists?
     end
   end
 
-  # Remove an associate from a manager
-  def remove_associate(associate)
-    return false unless manager?
-    return false unless associate.is_a?(User)
-
-    # Find and destroy the role assignment
-    assignment = RoleAssignment.find_by(
-      user: associate,
-      role: Role.associate,
-      assigned_by: self
-    )
-
-    assignment&.destroy.present?
+  # Set (or create) this user's capability role in an org. Used by the user
+  # management screen and the sign-in auto-promotion of internal admins.
+  def grant_org_role!(organization, role_key)
+    return false unless organization
+    role_key = role_key.to_s
+    membership = membership_for(organization) || memberships.build(organization: organization)
+    membership.access_role = organization.roles.system_roles.find_by(key: role_key)
+    membership.role = role_key if Membership::ROLES.include?(role_key)
+    membership.save!
+    membership
   end
 
-  # Associate methods - get all users who are associates of this manager
-  def managed_associates
-    return User.none unless manager? || admin?
-    User.joins(:role_assignments)
-        .where(role_assignments: { role: Role.associate })
+  # ---- Manager hierarchy (reports_to) -------------------------------------
+
+  # Direct reports of this user within the active org.
+  def associates(org = ActsAsTenant.current_tenant)
+    membership = org_membership(org)
+    return User.none unless membership
+    User.where(id: membership.direct_reports.select(:user_id))
+  end
+  alias_method :managed_associates, :associates
+
+  # Make `associate` report to this user within the org.
+  def assign_associate(associate, org: ActsAsTenant.current_tenant, assigned_by: nil)
+    return false unless org && associate.is_a?(User)
+    manager_m = org_membership(org)
+    assoc_m   = associate.membership_for(org)
+    return false unless manager_m && assoc_m
+
+    assoc_m.update(reports_to: manager_m)
   end
 
-  # Get all managers of this user
-  def managers
-    User.joins(:role_assignments)
-        .where(role_assignments: {
-          role: Role.manager,
-          assigned_by_id: RoleAssignment.where(user: self, role: Role.associate).select(:assigned_by_id)
-        })
-        .distinct
+  # Detach `associate` from reporting to this user.
+  def remove_associate(associate, org: ActsAsTenant.current_tenant)
+    return false unless org && associate.is_a?(User)
+    manager_m = org_membership(org)
+    assoc_m   = associate.membership_for(org)
+    return false unless manager_m && assoc_m && assoc_m.reports_to_id == manager_m.id
+
+    assoc_m.update(reports_to_id: nil)
   end
 
   # Task methods
@@ -289,28 +237,28 @@ class User < ApplicationRecord
 
   # Resource access methods for role-based authorization
 
-  # Can user access recordings for a given user?
-  def can_access_recordings_for?(target_user)
-    return true if admin?
+  # Can user access recordings for a given user (within the active org)?
+  def can_access_recordings_for?(target_user, org = ActsAsTenant.current_tenant)
     return true if self == target_user
-    return true if manager? && associates.include?(target_user)
-    false
+    return true if admin?(org)
+    manager?(org) && associates(org).exists?(id: target_user.id)
   end
 
-  # Can user access customers for a given user?
-  def can_access_customers_for?(target_user)
-    return true if admin?
+  # Can user access customers for a given user (within the active org)?
+  def can_access_customers_for?(target_user, org = ActsAsTenant.current_tenant)
     return true if self == target_user
-    return true if manager? && associates.include?(target_user)
-    false
+    return true if admin?(org)
+    manager?(org) && associates(org).exists?(id: target_user.id)
   end
 
-  # Can user assign roles?
-  def can_assign_role?(role_key)
-    role = role_key.is_a?(Role) ? role_key : Role.find_by(key: role_key.to_s)
-    return false unless role
-
-    admin? || (highest_role && highest_role.outranks?(role))
+  # Can this user assign the given role within the org? Owners may assign any
+  # role; admins/user-managers may assign anything except owner.
+  def can_assign_role?(role_key, org = ActsAsTenant.current_tenant)
+    key = role_key.respond_to?(:key) ? role_key.key : role_key.to_s
+    membership = org_membership(org)
+    return false unless membership
+    return true if membership.access_role&.key == "owner"
+    membership.can?("users.manage") && key != "owner"
   end
 
   # Pipeline access methods

@@ -26,7 +26,7 @@ class Api::V2::UsersController < Api::V2::BaseController
     render_success({
       users: @users.map do |user|
         user.as_json(only: [ :id, :name, :email, :phone, :timezone, :created_at, :updated_at ])
-            .merge(role: user.highest_role&.key || "associate")
+            .merge(role: user.legacy_role_key)
       end,
       pagination: {
         current_page: @users.current_page,
@@ -41,7 +41,7 @@ class Api::V2::UsersController < Api::V2::BaseController
     authorize @user
     render_success({
       user: @user.as_json(only: [ :id, :name, :email, :phone, :timezone, :fcm_token, :created_at, :updated_at ])
-                  .merge(role: @user.highest_role&.key || "associate")
+                  .merge(role: @user.legacy_role_key)
     })
   end
 

@@ -1,10 +1,14 @@
 class Organization < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :users, through: :memberships
+  has_many :roles, dependent: :destroy
   has_many :features, class_name: "OrganizationFeature", dependent: :destroy
   has_many :taxonomies, dependent: :destroy
 
   has_one_attached :logo
+
+  # Every new org gets the standard set of per-org system roles.
+  after_create :seed_system_roles
 
   RESERVED_SUBDOMAINS = %w[www admin app api mail ftp blog help support staging crm].freeze
   HEX_COLOR = /\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\z/
@@ -53,6 +57,10 @@ class Organization < ApplicationRecord
   end
 
   private
+
+  def seed_system_roles
+    Role.seed_system_roles!(self)
+  end
 
   def normalize_subdomain
     self.subdomain = subdomain.to_s.strip.downcase.presence

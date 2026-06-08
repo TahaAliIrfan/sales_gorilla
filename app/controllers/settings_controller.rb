@@ -110,10 +110,13 @@ class SettingsController < ApplicationController
     @organization = current_organization
   end
 
-  # User list for the Team & roles tab. Mirrors UsersController#index.
+  # User list for the Team & roles tab. Mirrors UsersController#index — scoped
+  # to the current organization's members and its per-org system roles.
   def load_team
-    @users = User.all.order(:name)
-    @roles = UsersController::ROLES
+    @users = current_organization.users.order(:name)
+    @roles = current_organization.roles.system_roles
+                                 .order(hierarchy_level: :desc)
+                                 .map { |r| { key: r.key, name: r.name } }
   end
 
   def user_params

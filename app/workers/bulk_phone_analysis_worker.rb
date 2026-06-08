@@ -68,9 +68,9 @@ class BulkPhoneAnalysisWorker
 
     # Optionally create a system notification for admins
     begin
-      admin_user = User.joins(:role_assignments)
-                      .joins("JOIN roles ON roles.id = role_assignments.role_id")
-                      .where(roles: { key: "admin" })
+      admin_user = User.joins(:memberships)
+                      .joins("JOIN roles ON roles.id = memberships.role_id")
+                      .where(roles: { key: %w[owner admin] })
                       .first
 
       if admin_user

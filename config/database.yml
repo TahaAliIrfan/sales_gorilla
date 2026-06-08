@@ -21,7 +21,10 @@ default: &default
 
 development:
   <<: *default
-  database: tecaudex_crm_development
+  # Fresh DB for the revamp branch (per-org multi-tenant schema). The old
+  # tecaudex_crm_development drifted from schema.rb (org tables dropped, ledger
+  # not reverted), so revamp uses its own clean database loaded from schema.rb.
+  database: tecaudex_crm_revamp_development
 
   # The specified database role being used to connect to PostgreSQL.
   # To create additional roles in PostgreSQL see `$ createuser --help`.

@@ -27,6 +27,14 @@ class UserContext
   def org_member? = role == "member"
   def org_viewer? = role == "viewer"
 
+  # Capability check (per-org RBAC). New policies should prefer this over
+  # user.admin?/manager?. Global CRM admins keep blanket access during the
+  # transition off the legacy RoleAssignment system.
+  def can?(permission_key)
+    return true if user&.admin?
+    membership&.can?(permission_key) || false
+  end
+
   # Can manage organization data: everyone except read-only viewers.
   def can_write?
     membership.present? && !org_viewer?

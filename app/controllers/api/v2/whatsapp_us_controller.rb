@@ -236,7 +236,7 @@ class Api::V2::WhatsappUsController < Api::V2::BaseController
   def accessible_customers
     return Customer.none unless current_user
 
-    case current_user.highest_role&.key
+    case current_user.legacy_role_key
     when "admin"
       Customer.all
     when "manager"

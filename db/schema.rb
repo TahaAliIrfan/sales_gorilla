@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_08_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -551,7 +551,11 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
     t.string "role", default: "member", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "role_id"
+    t.bigint "reports_to_id"
     t.index ["organization_id"], name: "index_memberships_on_organization_id"
+    t.index ["reports_to_id"], name: "index_memberships_on_reports_to_id"
+    t.index ["role_id"], name: "index_memberships_on_role_id"
     t.index ["user_id", "organization_id"], name: "index_memberships_on_user_id_and_organization_id", unique: true
     t.index ["user_id"], name: "index_memberships_on_user_id"
   end
@@ -781,21 +785,6 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
     t.index ["user_id"], name: "index_recordings_on_user_id"
   end
 
-  create_table "role_assignments", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "role_id", null: false
-    t.bigint "assigned_by_id"
-    t.string "resource_type"
-    t.bigint "resource_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assigned_by_id"], name: "index_role_assignments_on_assigned_by_id"
-    t.index ["resource_type", "resource_id"], name: "index_role_assignments_on_resource"
-    t.index ["role_id"], name: "index_role_assignments_on_role_id"
-    t.index ["user_id", "role_id", "resource_type", "resource_id"], name: "index_role_assignments_on_user_role_and_resource", unique: true
-    t.index ["user_id"], name: "index_role_assignments_on_user_id"
-  end
-
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -803,8 +792,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
     t.datetime "updated_at", null: false
     t.string "key", null: false
     t.integer "hierarchy_level", default: 0
+    t.bigint "organization_id"
+    t.jsonb "permissions", default: [], null: false
+    t.boolean "system", default: false, null: false
     t.index ["hierarchy_level"], name: "index_roles_on_hierarchy_level"
-    t.index ["key"], name: "index_roles_on_key", unique: true
+    t.index ["organization_id", "key"], name: "index_roles_on_organization_id_and_key", unique: true
+    t.index ["organization_id"], name: "index_roles_on_organization_id"
   end
 
   create_table "sms", force: :cascade do |t|
@@ -921,8 +914,19 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
     t.datetime "google_token_expires_at"
     t.boolean "active", default: true, null: false
     t.datetime "last_gmail_sync_at"
+    t.string "encrypted_password", default: "", null: false
+    t.string "reset_password_token"
+    t.datetime "reset_password_sent_at"
+    t.datetime "remember_created_at"
+    t.integer "sign_in_count", default: 0, null: false
+    t.datetime "current_sign_in_at"
+    t.datetime "last_sign_in_at"
+    t.string "current_sign_in_ip"
+    t.string "last_sign_in_ip"
     t.index ["active"], name: "index_users_on_active"
+    t.index ["email"], name: "index_users_on_email", unique: true, where: "(email IS NOT NULL)"
     t.index ["fcm_token"], name: "index_users_on_fcm_token"
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["voip_device_id"], name: "index_users_on_voip_device_id"
   end
 
@@ -1026,7 +1030,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
   add_foreign_key "meeting_participants", "google_meets"
   add_foreign_key "meeting_participants", "organizations"
   add_foreign_key "meeting_participants", "users"
+  add_foreign_key "memberships", "memberships", column: "reports_to_id"
   add_foreign_key "memberships", "organizations"
+  add_foreign_key "memberships", "roles"
   add_foreign_key "memberships", "users"
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "organizations"
@@ -1056,9 +1062,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_05_202838) do
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "organizations"
   add_foreign_key "recordings", "users"
-  add_foreign_key "role_assignments", "roles"
-  add_foreign_key "role_assignments", "users"
-  add_foreign_key "role_assignments", "users", column: "assigned_by_id"
+  add_foreign_key "roles", "organizations"
   add_foreign_key "sms", "customers"
   add_foreign_key "sms", "organizations"
   add_foreign_key "sms", "users"

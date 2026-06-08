@@ -13,8 +13,11 @@ module SettingsHelper
   # DS badge modifier for a role key (admin → danger, manager → info,
   # associate → neutral), mirroring view-settings.jsx ROLE_BADGE.
   ROLE_BADGES = {
+    "owner"     => "rl-badge--danger",
     "admin"     => "rl-badge--danger",
     "manager"   => "rl-badge--info",
+    "member"    => "rl-badge--neutral",
+    "viewer"    => "rl-badge--neutral",
     "associate" => "rl-badge--neutral"
   }.freeze
 

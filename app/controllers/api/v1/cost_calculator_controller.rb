@@ -91,8 +91,8 @@ module Api
           end
 
           # Find the first admin or manager user to assign the estimate to
-          default_user = User.joins(:role_assignments)
-                            .where(role_assignments: { role_id: Role.where(key: [ "admin", "manager" ]).pluck(:id) })
+          default_user = User.joins(:memberships)
+                            .where(memberships: { role_id: Role.where(key: %w[owner admin manager]).pluck(:id) })
                             .first || User.first
 
           # Extract and convert parameters to proper types
@@ -196,8 +196,8 @@ module Api
           end
 
           # Find the first admin or manager user to assign the estimate to
-          default_user = User.joins(:role_assignments)
-                            .where(role_assignments: { role_id: Role.where(key: [ "admin", "manager" ]).pluck(:id) })
+          default_user = User.joins(:memberships)
+                            .where(memberships: { role_id: Role.where(key: %w[owner admin manager]).pluck(:id) })
                             .first || User.first
 
           # Check if an init status estimate already exists for this customer

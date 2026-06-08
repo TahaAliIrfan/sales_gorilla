@@ -2,6 +2,11 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
   skip_before_action :authenticate_request,    only: %i[login google_sign_in]
   skip_before_action :resolve_current_tenant,  only: %i[login google_sign_in logout]
 
+  INTERNAL_ADMIN_EMAILS = %w[
+    sarmad.mansoor@tecaudex.com taha.irfan@tecaudex.com arham.anwaar@tecaudex.com
+  ].freeze
+  ALLOWED_EMAILS = %w[ifrah.khurram97@gmail.com tahairfan1993@gmail.com].freeze
+
   def login
     user = User.find_by(email: params[:email])
 
@@ -34,15 +39,8 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
         u.email = payload["email"]
       end
 
-      admin_emails   = [ "sarmad.mansoor@tecaudex.com", "taha.irfan@tecaudex.com", "arham.anwaar@tecaudex.com" ]
-      allowed_emails = [ "ifrah.khurram97@gmail.com", "tahairfan1993@gmail.com" ]
-
-      unless user.email.ends_with?("@tecaudex.com") || allowed_emails.include?(user.email.downcase)
+      unless user.email.ends_with?("@tecaudex.com") || ALLOWED_EMAILS.include?(user.email.downcase)
         return render_error("Access restricted to authorized email addresses", nil, :forbidden)
-      end
-
-      if admin_emails.include?(user.email.downcase) && !user.admin?
-        user.make_admin!
       end
 
       ensure_membership_in_default_org(user)
@@ -82,7 +80,7 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
       id:    user.id,
       name:  user.name,
       email: user.email,
-      role:  user.highest_role&.key || "associate",
+      role:  user.legacy_role_key,
       phone: user.phone_number
     }
   end
@@ -111,10 +109,12 @@ class Api::V2::AuthenticationController < Api::V2::BaseController
   def ensure_membership_in_default_org(user)
     default_org = Organization.find_by(subdomain: "tecaudex")
     return unless default_org
-    return if user.member_of?(default_org)
+    internal_admin = INTERNAL_ADMIN_EMAILS.include?(user.email.to_s.downcase)
 
-    role = user.admin? ? "owner" : "admin"
-    user.memberships.create(organization: default_org, role: role)
+    unless user.member_of?(default_org)
+      user.memberships.create(organization: default_org, role: internal_admin ? "owner" : "member")
+    end
+    user.grant_org_role!(default_org, "owner") if internal_admin && !user.owner?(default_org)
   end
 
   def verify_google_token(id_token)

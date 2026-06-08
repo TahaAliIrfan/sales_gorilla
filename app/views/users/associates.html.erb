@@ -36,13 +36,14 @@
                 <th>Contact</th>
                 <th>Manager</th>
                 <th>Performance</th>
-                <th>Assigned at</th>
+                <th>Member since</th>
                 <th style="text-align:right"></th>
               </tr>
             </thead>
             <tbody>
               <% @users.each_with_index do |user, i| %>
-                <% assignment = user.role_assignments.find_by(role: Role.associate) %>
+                <% membership = user.membership_for(current_organization) %>
+                <% manager = membership&.reports_to&.user %>
                 <tr>
                   <td>
                     <div class="row" style="gap:10px">
@@ -58,10 +59,10 @@
                     <% if user.phone_number.present? %><div class="muted" style="font-size:11px"><%= user.phone_number %></div><% end %>
                   </td>
                   <td class="rl-sm">
-                    <% if assignment&.assigned_by %>
-                      <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), style: "color:var(--color-primary-text)" %>
+                    <% if manager %>
+                      <%= link_to (manager.name.presence || manager.email), user_path(manager), style: "color:var(--color-primary-text)" %>
                     <% else %>
-                      <span class="rl-badge rl-badge--neutral">System</span>
+                      <span class="rl-badge rl-badge--neutral">No manager</span>
                     <% end %>
                   </td>
                   <td>
@@ -70,7 +71,7 @@
                       <span class="rl-badge rl-badge--success"><%= user.deals.count %> deals</span>
                     </div>
                   </td>
-                  <td class="muted rl-sm"><%= assignment ? "#{time_ago_in_words(assignment.created_at)} ago" : "-" %></td>
+                  <td class="muted rl-sm"><%= membership ? "#{time_ago_in_words(membership.created_at)} ago" : "-" %></td>
                   <td style="text-align:right">
                     <%= link_to "View", user_path(user), class: "rl-btn rl-btn--secondary rl-btn--sm" %>
                   </td>

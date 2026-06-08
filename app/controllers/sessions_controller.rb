@@ -1,4 +1,9 @@
 class SessionsController < ApplicationController
+  # Internal accounts auto-promoted to owner of the default org on sign-in.
+  INTERNAL_ADMIN_EMAILS = %w[
+    sarmad.mansoor@tecaudex.com taha.irfan@tecaudex.com arham.anwaar@tecaudex.com
+  ].freeze
+
   # GET /auth/google_oauth2  →  kicks off OmniAuth (redirect handled there).
   # The /signin page itself is owned by Users::SessionsController now.
   def new
@@ -12,12 +17,6 @@ class SessionsController < ApplicationController
     user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
       u.name  = auth.info.name
       u.email = auth.info.email
-    end
-
-    # Auto-promote known internal accounts.
-    admin_emails = [ "sarmad.mansoor@tecaudex.com", "taha.irfan@tecaudex.com", "arham.anwaar@tecaudex.com" ]
-    if admin_emails.include?(user.email.to_s.downcase) && !user.admin?
-      user.make_admin!
     end
 
     if auth.credentials.present?
@@ -55,13 +54,16 @@ class SessionsController < ApplicationController
   private
 
   # New users created via OAuth need a default-org membership so they land in
-  # the default workspace automatically.
+  # the default workspace automatically. New members default to least-privilege
+  # "member"; internal admin emails are promoted to owner.
   def ensure_membership_in_default_org(user)
     default_org = Organization.find_by(subdomain: "tecaudex") || Organization.first
     return unless default_org
-    return if user.member_of?(default_org)
+    internal_admin = INTERNAL_ADMIN_EMAILS.include?(user.email.to_s.downcase)
 
-    role = user.admin? ? "owner" : "admin"
-    user.memberships.create(organization: default_org, role: role)
+    unless user.member_of?(default_org)
+      user.memberships.create(organization: default_org, role: internal_admin ? "owner" : "member")
+    end
+    user.grant_org_role!(default_org, "owner") if internal_admin && !user.owner?(default_org)
   end
 end

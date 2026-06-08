@@ -44,13 +44,12 @@
                 <th>Contact</th>
                 <th>Team size</th>
                 <th>Performance</th>
-                <th>Assigned by</th>
+                <th>Status</th>
                 <th style="text-align:right"></th>
               </tr>
             </thead>
             <tbody>
               <% @users.each_with_index do |user, i| %>
-                <% assignment = user.role_assignments.find_by(role: Role.manager) %>
                 <% associates_count = user.associates.count %>
                 <% team_customers = user.associates.sum { |a| a.customers.count } %>
                 <% team_deals = user.associates.sum { |a| a.deals.count } %>
@@ -80,10 +79,10 @@
                     </div>
                   </td>
                   <td class="rl-sm">
-                    <% if assignment&.assigned_by %>
-                      <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), style: "color:var(--color-primary-text)" %>
+                    <% if user.active? %>
+                      <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Active</span>
                     <% else %>
-                      <span class="rl-badge rl-badge--neutral">System</span>
+                      <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Inactive</span>
                     <% end %>
                   </td>
                   <td style="text-align:right">

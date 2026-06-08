@@ -43,7 +43,6 @@
                data-team-management-target="currentTeam">
             <% if @current_associates.any? %>
               <% @current_associates.each do |associate| %>
-                <% assignment = associate.role_assignments.find_by(role: Role.associate, assigned_by: @user) %>
                 <div class="associate-card rl-card" style="padding:12px;cursor:move"
                      data-team-management-target="associateCard"
                      data-associate-id="<%= associate.id %>"
@@ -65,8 +64,8 @@
                   <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" style="margin-top:8px" data-action="team-management#toggleDetails">Show details</button>
                   <div class="associate-details hidden rl-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border)">
                     <div class="row" style="gap:16px">
-                      <div><span class="muted">Assigned on:</span> <b><%= assignment&.created_at&.strftime("%b %d, %Y") || "N/A" %></b></div>
-                      <div><span class="muted">Assigned by:</span> <b><%= assignment&.assigned_by&.name || "System" %></b></div>
+                      <div><span class="muted">Reports to:</span> <b><%= @user.name.presence || @user.email %></b></div>
+                      <div><span class="muted">Role:</span> <b style="text-transform:capitalize"><%= associate.primary_role&.key || "member" %></b></div>
                     </div>
                     <div class="row" style="gap:8px;margin-top:8px">
                       <span class="rl-badge rl-badge--neutral"><%= associate.customers.count %> customers</span>
@@ -119,7 +118,7 @@
                   <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm" style="margin-top:8px" data-action="team-management#toggleDetails">Show details</button>
                   <div class="associate-details hidden rl-sm" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--color-border)">
                     <div class="row" style="gap:16px">
-                      <div><span class="muted">Role assigned:</span> <b><%= associate.role_assignments.find_by(role: Role.associate)&.created_at&.strftime("%b %d, %Y") || "N/A" %></b></div>
+                      <div><span class="muted">Role:</span> <b style="text-transform:capitalize"><%= associate.primary_role&.key || "member" %></b></div>
                       <div><span class="muted">Current manager:</span> <b>None</b></div>
                     </div>
                     <div class="row" style="gap:8px;margin-top:8px">

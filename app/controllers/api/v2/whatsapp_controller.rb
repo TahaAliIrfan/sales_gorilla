@@ -239,7 +239,7 @@ class Api::V2::WhatsappController < Api::V2::BaseController
     return Customer.none unless current_user
 
     begin
-      role_key = current_user.highest_role&.key
+      role_key = current_user.legacy_role_key
       case role_key
       when "admin"
         Customer.all

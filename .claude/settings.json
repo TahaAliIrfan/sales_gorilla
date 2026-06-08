@@ -50,7 +50,25 @@
       "Bash(bundle exec rails runner ' *)",
       "Bash(git check-ignore *)",
       "Bash(RAILS_ENV=development bin/rails runner 'Rails.application.eager_load!; File.write\\(\"/tmp/eager.txt\", \"OK - all classes loaded\"\\)')",
-      "Bash(rsync -avz --exclude=.git/ --exclude=.git* --exclude=node_modules/ --exclude=log/ --exclude=tmp/ --exclude=storage/ --exclude=.bundle/ --exclude=.env --exclude=.claude/ --exclude=.cursor/ --exclude=.idea/ --exclude=.playwright-mcp/ --exclude=dump.rdb --exclude=spec/ --exclude=test/ --exclude=vendor/bundle/ --exclude=public/assets/ --exclude=public/packs/ --exclude=config/database.yml --exclude=config/master.key -e 'ssh -i /Users/taha/Desktop/relay_crm.pem -o StrictHostKeyChecking=no' ./ ubuntu@ec2-54-205-191-119.compute-1.amazonaws.com:/home/ubuntu/crm/releases/20260605162223/)"
+      "Bash(rsync -avz --exclude=.git/ --exclude=.git* --exclude=node_modules/ --exclude=log/ --exclude=tmp/ --exclude=storage/ --exclude=.bundle/ --exclude=.env --exclude=.claude/ --exclude=.cursor/ --exclude=.idea/ --exclude=.playwright-mcp/ --exclude=dump.rdb --exclude=spec/ --exclude=test/ --exclude=vendor/bundle/ --exclude=public/assets/ --exclude=public/packs/ --exclude=config/database.yml --exclude=config/master.key -e 'ssh -i /Users/taha/Desktop/relay_crm.pem -o StrictHostKeyChecking=no' ./ ubuntu@ec2-54-205-191-119.compute-1.amazonaws.com:/home/ubuntu/crm/releases/20260605162223/)",
+      "Bash(dig +short @8.8.8.8 TXT _acme-challenge.ascolto.tecaudex.com)",
+      "Bash(dig +short @1.0.0.1 TXT _acme-challenge.ascolto.tecaudex.com)",
+      "Bash(ruby -ryaml -e 'c=YAML.load_file\\(\"config/database.yml\", aliases: true\\)[\"development\"]; puts c.slice\\(\"adapter\",\"database\",\"host\"\\).inspect')",
+      "Bash(createdb tecaudex_crm_revamp_development)",
+      "Bash(sed -n '1,40p' app/controllers/sessions_controller.rb)",
+      "Bash(sed -n '30,90p' app/controllers/api/v2/authentication_controller.rb)",
+      "Bash(sed -n '136,160p;200,220p' config/routes.rb)",
+      "Bash(sed -n '236,248p' app/controllers/api/v2/whatsapp_us_controller.rb)",
+      "Bash(sed -n '240,252p' app/controllers/api/v2/whatsapp_controller.rb)",
+      "Bash(sed -n '54,62p' app/channels/whatsapp_us_channel.rb)",
+      "Bash(sed -n '40,50p' app/views/users/managers.html.erb)",
+      "Bash(sed -n '44,50p' app/views/users/manage_associates.html.erb)",
+      "Bash(sed -n '118,126p' app/views/users/manage_associates.html.erb)",
+      "Bash(sed -n '66,76p' app/workers/bulk_phone_analysis_worker.rb)",
+      "Bash(sed -n '90,98p' app/controllers/api/v1/cost_calculator_controller.rb)",
+      "Bash(sed -n '70,85p' app/views/dev_login/show.html.erb)",
+      "Bash(sed -n '33,43p' app/views/users/associates.html.erb)",
+      "Bash(sed -n '76,78p' app/views/dev_login/show.html.erb)"
     ],
     "additionalDirectories": [
       "/tmp"

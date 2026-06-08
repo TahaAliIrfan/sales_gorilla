@@ -54,7 +54,7 @@ class WhatsappUsChannel < ApplicationCable::Channel
   # Same role gates as Api::V2::WhatsappController#accessible_customers.
   def find_accessible_customer(id)
     scope =
-      case current_user.highest_role&.key
+      case current_user.legacy_role_key
       when "admin"   then Customer.all
       when "manager" then Customer.where(user_id: [ current_user.id ] + current_user.associates.pluck(:id))
       else                current_user.customers
