@@ -57,8 +57,13 @@ class ReportsController < TenantController
 
   private
 
+  # IDs of users who administer the active org (owner/admin), via the per-org
+  # membership role. Replaces the retired global Role/RoleAssignment join.
   def admin_user_ids
-    User.joins(:roles).where(roles: { name: "admin" }).select(:id)
+    User.joins(memberships: :access_role)
+        .where(memberships: { organization_id: ActsAsTenant.current_tenant&.id })
+        .where(roles: { key: %w[owner admin] })
+        .select(:id)
   end
 
   def load_dashboard

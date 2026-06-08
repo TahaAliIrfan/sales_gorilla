@@ -8,8 +8,8 @@ class Api::V2::UsersController < Api::V2::BaseController
 
     # Apply filters
     if params[:role].present?
-      role = Role.find_by(key: params[:role])
-      @users = @users.joins(:roles).where(roles: { id: role.id }) if role
+      role = Role.find_by(key: params[:role], organization_id: current_organization&.id)
+      @users = @users.joins(memberships: :access_role).where(roles: { id: role.id }) if role
     end
     @users = @users.where("name ILIKE ? OR email ILIKE ?", "%#{params[:search]}%", "%#{params[:search]}%") if params[:search].present?
 

@@ -47,7 +47,13 @@ class WhatsappInboundPushWorker
   def recipients(customer)
     list = []
     list << customer.user if customer.user&.active?
-    list.concat(User.active_users.joins(:roles).where(roles: { key: "admin" }).distinct.to_a)
+    list.concat(
+      User.active_users
+          .joins(memberships: :access_role)
+          .where(memberships: { organization_id: customer.organization_id })
+          .where(roles: { key: %w[owner admin] })
+          .distinct.to_a
+    )
     list.uniq
   end
 end
