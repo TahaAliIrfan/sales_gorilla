@@ -12,8 +12,11 @@ class Organization < ApplicationRecord
 
   RESERVED_SUBDOMAINS = %w[www admin app api mail ftp blog help support staging crm].freeze
   HEX_COLOR = /\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\z/
-  DEFAULT_PRIMARY_COLOR = "#1E3A8A".freeze
-  DEFAULT_ACCENT_COLOR  = "#10B981".freeze
+  # Sales Gorilla default palette (HubSpot-inspired):
+  # primary = action orange, accent = deep navy for headings/secondary chrome.
+  # Existing orgs keep whatever they chose; this only sets the seed for new ones.
+  DEFAULT_PRIMARY_COLOR = "#FF5C35".freeze
+  DEFAULT_ACCENT_COLOR  = "#1B2640".freeze
 
   validates :name, presence: true
   validates :subdomain,

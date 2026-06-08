@@ -14,23 +14,25 @@
   --font-sans:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono:    "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
-  /* ---- LIGHT (default) ---- cool neutral, deliberately not warm/cream ---- */
-  --color-paper:    #eef1f0;
-  --color-panel:    #ffffff;
-  --color-panel-2:  #e4e9e7;
+  /* ---- LIGHT (default) ---- HubSpot-inspired warm orange on deep navy.
+     Paper goes pure white so the Sales Gorilla black/white mark sits cleanly.
+     Accent is the HubSpot signature orange; ink is the HubSpot body navy. ---- */
+  --color-paper:    #ffffff;
+  --color-panel:    #f5f8fa;
+  --color-panel-2:  #eaf0f6;
   --color-deep:     #ffffff;
-  --color-ink:      #0e1513;
-  --color-ink-soft: #5c655f;
-  --color-line:     #0e151312;
-  --color-line-2:   #0e151524;
+  --color-ink:      #1b2640;
+  --color-ink-soft: #4f6680;
+  --color-line:     rgba(27, 38, 64, 0.08);
+  --color-line-2:   rgba(27, 38, 64, 0.16);
 
-  --color-accent:        #0c7a52;
-  --color-accent-bright: #109468;
-  --color-accent-dim:    #0a5f40;
+  --color-accent:        #ff5c35;   /* HubSpot primary orange */
+  --color-accent-bright: #ff7a59;   /* hover lift / lighter */
+  --color-accent-dim:    #e5562f;   /* pressed / dim */
   --color-on-accent:     #ffffff;
 
-  --shadow-card: 0 1px 2px rgba(14, 21, 19, 0.04), 0 10px 24px -14px rgba(14, 21, 19, 0.16);
-  --shadow-lift: 0 2px 4px rgba(14, 21, 19, 0.05), 0 24px 48px -18px rgba(14, 21, 19, 0.22);
+  --shadow-card: 0 1px 2px rgba(27, 38, 64, 0.04), 0 10px 24px -14px rgba(27, 38, 64, 0.14);
+  --shadow-lift: 0 2px 4px rgba(27, 38, 64, 0.06), 0 24px 48px -18px rgba(27, 38, 64, 0.22);
 
   --animate-rise:  rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade:  fade 0.5s ease-out both;
@@ -38,19 +40,19 @@
 }
 
 [data-theme="dark"] {
-  --color-paper:    #0d1210;
-  --color-panel:    #151c19;
-  --color-panel-2:  #1d2622;
-  --color-deep:     #090d0b;
-  --color-ink:      #e9ece6;
-  --color-ink-soft: #8d958d;
+  --color-paper:    #0e1320;
+  --color-panel:    #161e30;
+  --color-panel-2:  #1f293e;
+  --color-deep:     #0a101c;
+  --color-ink:      #f3f5fa;
+  --color-ink-soft: #93a0b8;
   --color-line:     #ffffff14;
   --color-line-2:   #ffffff26;
 
-  --color-accent:        #34e29b;
-  --color-accent-bright: #5cf3b6;
-  --color-accent-dim:    #1f9d6b;
-  --color-on-accent:     #06140d;
+  --color-accent:        #ff7a59;
+  --color-accent-bright: #ff9d80;
+  --color-accent-dim:    #e5562f;
+  --color-on-accent:     #1b2640;
 
   --shadow-card: 0 1px 0 rgba(255,255,255,0.03) inset, 0 12px 32px -16px rgba(0,0,0,0.7);
   --shadow-lift: 0 1px 0 rgba(255,255,255,0.04) inset, 0 28px 56px -20px rgba(0,0,0,0.8);
