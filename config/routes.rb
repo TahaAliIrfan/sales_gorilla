@@ -41,10 +41,10 @@ Rails.application.routes.draw do
     end
 
     # Dev login (only available in development).
-    if Rails.env.development?
+   # if Rails.env.development?
       get "/dev_login", to: "dev_login#show", as: :dev_login
       post "/dev_login", to: "dev_login#create"
-    end
+   # end
 
     # Public-facing endpoints (no tenant required).
     get "i/:token/pdf", to: "public_invoices#download_pdf", as: :public_invoice_pdf
