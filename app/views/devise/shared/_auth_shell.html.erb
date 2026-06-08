@@ -10,8 +10,9 @@
 
   <header class="border-b border-[var(--color-line-2)]">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <%= link_to root_path, class: "font-display text-xl font-bold tracking-tight text-ink" do %>
-        Sales Gorilla<span class="text-accent-bright">.</span>
+      <%= link_to root_path, class: "flex items-center gap-2.5" do %>
+        <%= render "shared/brand_mark", size: "h-8 w-8" %>
+        <span class="font-display text-xl font-bold tracking-tight text-ink">Sales Gorilla<span class="text-accent-bright">.</span></span>
       <% end %>
       <% if local_assigns[:footer] != :signup %>
         <%= link_to "New here? Create an account", new_user_registration_path,

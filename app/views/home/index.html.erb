@@ -4,8 +4,9 @@
   <%# ---- Nav ---- %>
   <header class="sticky top-0 z-30 border-b border-[var(--color-line-2)] bg-paper/70 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-      <a href="/" class="font-display text-xl font-bold tracking-tight text-ink">
-        Sales Gorilla<span class="text-accent-bright">.</span>
+      <a href="/" class="flex items-center gap-2.5">
+        <%= render "shared/brand_mark", size: "h-8 w-8" %>
+        <span class="font-display text-xl font-bold tracking-tight text-ink">Sales Gorilla<span class="text-accent-bright">.</span></span>
       </a>
       <nav class="hidden items-center gap-7 text-sm font-medium text-ink-soft md:flex">
         <a href="#features" class="transition hover:text-ink">Product</a>
@@ -317,8 +318,9 @@
   <footer class="border-t border-[var(--color-line-2)] bg-panel/30">
     <div class="mx-auto grid max-w-6xl gap-8 px-6 py-12 sm:grid-cols-[2fr_1fr_1fr_1fr]">
       <div>
-        <a href="/" class="font-display text-lg font-bold tracking-tight text-ink">
-          Sales Gorilla<span class="text-accent-bright">.</span>
+        <a href="/" class="flex items-center gap-2.5">
+          <%= render "shared/brand_mark", size: "h-7 w-7" %>
+          <span class="font-display text-lg font-bold tracking-tight text-ink">Sales Gorilla<span class="text-accent-bright">.</span></span>
         </a>
         <p class="mt-3 max-w-sm text-sm text-ink-soft">The CRM built for multi-channel sales teams — phone, email, WhatsApp, LinkedIn, one timeline.</p>
       </div>

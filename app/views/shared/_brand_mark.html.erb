@@ -1,0 +1,6 @@
+<%# Sales Gorilla mark — black rounded square with stylized gorilla face.
+    Lives in /public/sales-gorilla-mark.svg so it's also the favicon.
+    Pass `size:` (tailwind classes, default "h-7 w-7"). %>
+<img src="/sales-gorilla-mark.svg"
+     alt="Sales Gorilla"
+     class="<%= local_assigns.fetch(:size, 'h-7 w-7') %> shrink-0 rounded-md">
