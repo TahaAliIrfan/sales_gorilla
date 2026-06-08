@@ -14,7 +14,7 @@
   <% if @organizations.any? %>
     <div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
       <% @organizations.each_with_index do |org, i| %>
-        <%= link_to tenant_root_url(subdomain: org.subdomain, host: tenant_host_for(org.subdomain)),
+        <%= link_to tenant_root_url(host: tenant_host_for(org.subdomain)),
               data: { turbo: false },
               style: "animation-delay: #{i * 60}ms",
               class: "group flex items-center gap-4 border-b border-[var(--color-line)] px-5 py-4 transition last:border-b-0 hover:bg-[var(--color-line)] motion-safe:animate-fade" do %>

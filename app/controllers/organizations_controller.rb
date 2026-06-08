@@ -34,7 +34,7 @@ class OrganizationsController < ApplicationController
       @organization.memberships.create!(user: current_user, role: "owner")
     end
 
-    redirect_to tenant_root_url(subdomain: @organization.subdomain, host: tenant_host(@organization.subdomain)),
+    redirect_to tenant_root_url(host: tenant_host(@organization.subdomain)),
                 allow_other_host: true,
                 notice: "Organization created."
   rescue ActiveRecord::RecordInvalid

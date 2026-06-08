@@ -8,7 +8,7 @@
        class="hidden absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-lg bg-panel p-1.5 shadow-lift ring-1 ring-[var(--color-line-2)] motion-safe:animate-fade">
     <p class="micro px-2.5 py-2">Your workspaces</p>
     <% current_member_orgs.each do |org| %>
-      <%= link_to tenant_root_url(subdomain: org.subdomain, host: tenant_host_for(org.subdomain)), data: { turbo: false },
+      <%= link_to tenant_root_url(host: tenant_host_for(org.subdomain)), data: { turbo: false },
             class: "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition hover:bg-[var(--color-line)] #{'bg-[var(--color-line)] font-semibold' if org == current_organization}" do %>
         <span class="grid h-8 w-8 place-items-center rounded-md font-display text-xs font-bold text-white"
               style="background: <%= org.primary_color %>"><%= org.initial %></span>
