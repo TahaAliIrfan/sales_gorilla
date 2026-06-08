@@ -50,7 +50,7 @@ export default class extends Controller {
 
   syncName(event) {
     if (this.hasLogoLabelTarget) {
-      this.logoLabelTarget.textContent = (event.target.value || "Relay").slice(0, 7)
+      this.logoLabelTarget.textContent = (event.target.value || "SG").slice(0, 7)
     }
   }
 
