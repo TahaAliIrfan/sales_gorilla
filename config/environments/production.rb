@@ -110,7 +110,7 @@ Rails.application.configure do
     enable_starttls_auto: true
   }
 
-  config.action_mailer.default_url_options = { host: "crm.tecaudex.com", protocol: "https" }
+  config.action_mailer.default_url_options = { host: "salesgorilla.app", protocol: "https" }
 
   config.active_storage.routes_prefix = "/rails/active_storage"
   config.active_storage.replace_on_assign_to_many = true

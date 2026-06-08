@@ -10,8 +10,9 @@
 
   <header class="border-b border-[var(--color-line-2)]">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <%= link_to root_path, class: "font-display text-xl font-bold tracking-tight text-ink" do %>
-        Relay<span class="text-accent-bright">.</span>
+      <%= link_to root_path, class: "flex items-center gap-2" do %>
+        <span class="grid h-7 w-7 place-items-center rounded-md bg-ink font-display text-xs font-bold text-paper">SG</span>
+        <span class="font-display text-xl font-bold tracking-tight text-ink">Sales Gorilla<span class="text-accent-bright">.</span></span>
       <% end %>
       <% if local_assigns[:footer] != :signup %>
         <%= link_to "New here? Create an account", new_user_registration_path,
@@ -27,7 +28,7 @@
     <%# Left: brand promise (hidden on small screens). %>
     <div class="hidden lg:block motion-safe:animate-rise">
       <p class="micro flex items-center gap-3">
-        <span><%= accent_label %></span><span class="h-px w-8 bg-[var(--color-line-2)]"></span><span>Ascolto · Multi-channel CRM</span>
+        <span><%= accent_label %></span><span class="h-px w-8 bg-[var(--color-line-2)]"></span><span>Sales Gorilla · Multi-channel CRM</span>
       </p>
       <h1 class="mt-6 font-display text-5xl leading-[1.04] font-bold tracking-tight text-ink">
         <%= title %><span class="text-accent">.</span>
