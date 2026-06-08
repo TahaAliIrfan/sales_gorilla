@@ -1,7 +1,7 @@
 class Api::V2::UsersController < Api::V2::BaseController
   before_action :set_user, only: [:show, :update, :destroy]
-  after_action :verify_authorized, except: [:index, :update_fcm_token]
-  after_action :verify_policy_scoped, only: [:index, :update_fcm_token]
+  after_action :verify_authorized, except: [:index]
+  after_action :verify_policy_scoped, only: [:index]
 
   def index
     @users = policy_scope(User)
