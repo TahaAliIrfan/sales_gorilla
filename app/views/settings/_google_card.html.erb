@@ -28,7 +28,7 @@
         <p class="muted rl-sm" style="margin-bottom:12px">We have your Google credentials but couldn't reach Calendar. Reconnect to refresh access.</p>
       <% end %>
       <div class="row" style="gap:8px">
-        <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+        <%= link_to google_oauth_connect_url, data: { turbo: false }, class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
           <%= relay_icon("plug", size: 14) %>Reconnect
         <% end %>
         <%= link_to disconnect_google_path,
@@ -38,7 +38,7 @@
         <% end %>
       </div>
     <% else %>
-      <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+      <%= link_to google_oauth_connect_url, data: { turbo: false }, class: "rl-btn rl-btn--primary rl-btn--sm" do %>
         <%= relay_icon("plug", size: 14) %>Connect Google Calendar
       <% end %>
     <% end %>

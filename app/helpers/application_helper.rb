@@ -80,6 +80,22 @@ module ApplicationHelper
     parts.join(".")
   end
 
+  # URL that kicks off the Google OAuth (sign-in / Gmail / Calendar connect).
+  #
+  # Google only allows a fixed set of redirect URIs and no wildcards, so the
+  # whole OAuth handshake must run on the apex host (salesgorilla.app), whose
+  # callback is the one registered. When a user clicks "Connect Gmail" from
+  # inside a tenant workspace (a subdomain), we send them to the apex host and
+  # pass `origin` so the callback can return them to where they started.
+  def google_oauth_connect_url
+    apex = root_host_for_request
+    return "/auth/google_oauth2" if request.host == apex # already on apex — relative is fine
+
+    default_port = request.ssl? ? 443 : 80
+    hostport = (request.port && request.port != default_port) ? "#{apex}:#{request.port}" : apex
+    "#{request.protocol}#{hostport}/auth/google_oauth2?origin=#{CGI.escape(request.original_url)}"
+  end
+
   def format_activity_action(action)
     case action
     when "created" then "Deal Created"

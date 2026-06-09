@@ -46,7 +46,7 @@ class SessionsController < ApplicationController
     sign_in(user) if user.persisted?  # Warden session so Devise helpers also work
     ensure_membership_in_default_org(user)
     flash[:success] = "Successfully signed in!"
-    redirect_to organizations_path
+    redirect_to after_oauth_path, allow_other_host: true
   rescue => e
     flash[:error] = "Authentication error: #{e.message}"
     redirect_to root_path
@@ -66,6 +66,22 @@ class SessionsController < ApplicationController
   end
 
   private
+
+  # Where to send the user after a successful OAuth callback.
+  #
+  # OAuth always runs on the apex host (see ApplicationHelper#google_oauth_connect_url).
+  # When the flow was started from a tenant workspace — e.g. "Connect Gmail" in
+  # settings — OmniAuth carries the originating subdomain URL in `omniauth.origin`,
+  # so we return the user there. Plain sign-ins on the apex have no cross-host
+  # origin and land on the workspace picker as before.
+  def after_oauth_path
+    origin = request.env["omniauth.origin"].presence
+    return organizations_path if origin.blank?
+
+    URI.parse(origin).host != request.host ? origin : organizations_path
+  rescue URI::InvalidURIError
+    organizations_path
+  end
 
   # New users created via OAuth need a default-org membership so they land in
   # the default workspace automatically. New members default to least-privilege

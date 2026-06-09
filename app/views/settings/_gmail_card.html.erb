@@ -49,7 +49,7 @@
       </div>
 
       <div class="row" style="gap:8px">
-        <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
+        <%= link_to google_oauth_connect_url, data: { turbo: false }, class: "rl-btn rl-btn--secondary rl-btn--sm" do %>
           <%= relay_icon("plug", size: 14) %>Reconnect Gmail
         <% end %>
         <%= link_to disconnect_google_path,
@@ -63,7 +63,7 @@
         prefetch images, so opens approximate "delivered and rendered" rather than literal eyeballs.
       </p>
     <% else %>
-      <%= link_to "/auth/google_oauth2", class: "rl-btn rl-btn--primary rl-btn--sm" do %>
+      <%= link_to google_oauth_connect_url, data: { turbo: false }, class: "rl-btn rl-btn--primary rl-btn--sm" do %>
         <%= relay_icon("plug", size: 14) %>Connect Gmail
       <% end %>
       <p class="muted rl-sm" style="margin-top:10px">
