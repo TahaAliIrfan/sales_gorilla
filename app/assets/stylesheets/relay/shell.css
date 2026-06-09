@@ -180,3 +180,71 @@
 .border-green-100 { border: 1px solid var(--color-success); }
 .text-red-700 { color: var(--color-danger-text); }
 .border-red-100 { border: 1px solid var(--color-danger); }
+
+/* ============================================================
+   Mobile responsiveness (app-owned; DS files stay verbatim).
+   Desktop is a fixed sidebar + main grid. On small screens the
+   sidebar becomes an off-canvas drawer toggled by the topbar
+   hamburger (relay--sidebar#toggleMobile), with a tap-to-close
+   scrim. Dashboard/section grids collapse to single column.
+   ============================================================ */
+
+/* Hidden on desktop; revealed inside the mobile media query. */
+.app__navtoggle { display: none; }
+.app__scrim     { display: none; }
+
+/* The dashboard's main two-column body (was an inline grid-template). */
+.dash-split { grid-template-columns: 1.55fr 1fr; }
+
+@media (max-width: 860px) {
+  /* Main takes the full width; the sidebar leaves the grid flow. */
+  .app { grid-template-columns: 1fr; }
+
+  /* Off-canvas drawer. */
+  .app .rl-sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: min(82vw, 300px);
+    z-index: var(--z-drawer);
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+  .app.is-nav-open .rl-sidebar { transform: translateX(0); box-shadow: var(--shadow-lg); }
+
+  /* In the drawer always show the full sidebar, even if the user left it
+     collapsed on desktop (neutralize the icon-rail styling). */
+  .app .rl-sidebar.is-collapsed { width: min(82vw, 300px); }
+  .app .rl-sidebar.is-collapsed .rl-navlink { justify-content: flex-start; padding: 8px var(--space-2); }
+  .app .rl-sidebar.is-collapsed .rl-navlink span,
+  .app .rl-sidebar.is-collapsed .rl-sidebar__brand b,
+  .app .rl-sidebar.is-collapsed .rl-userchip__main { display: revert; }
+  .app .rl-sidebar.is-collapsed .rl-navgroup-label { font-size: revert; text-align: left; }
+
+  /* Tap-to-close scrim behind the drawer. */
+  .app__scrim {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: var(--z-overlay);
+    opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-base) var(--ease-out);
+  }
+  .app.is-nav-open .app__scrim { opacity: 1; pointer-events: auto; }
+
+  /* Topbar: show hamburger, tighten spacing, shrink search to an icon button. */
+  .app__navtoggle { display: inline-flex; }
+  .app__top { padding: 0 var(--space-3); gap: var(--space-2); }
+  .app__search { width: 40px; padding: 0; justify-content: center; }
+  .app__search input, .app__search .rl-kbd { display: none; }
+
+  /* Content reflow. */
+  .page { padding: var(--space-4); }
+  .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .dash-split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .pagehead__title { font-size: var(--text-h2); }
+  .pagehead__actions { width: 100%; }
+}

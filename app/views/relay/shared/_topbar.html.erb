@@ -1,5 +1,11 @@
 <%# app/views/relay/shared/_topbar.html.erb %>
 <header class="app__top">
+  <%# Mobile-only hamburger — opens the off-canvas sidebar drawer (relay--sidebar). %>
+  <button type="button" class="app__navtoggle rl-iconbtn rl-iconbtn--bordered"
+          data-action="click->relay--sidebar#toggleMobile" aria-label="Open menu" title="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+  </button>
+
   <div class="app__search" role="button" data-action="click->relay--command-palette#open">
     <%= relay_icon("search", size: 16) %>
     <input readonly placeholder="Search leads, deals, actions…">

@@ -22,6 +22,8 @@
         data-action="keydown@window->relay--command-palette#keydown">
     <div class="app" data-controller="relay--sidebar">
       <%= render "relay/shared/sidebar" %>
+      <%# Mobile drawer scrim — tap to close the sidebar (CSS hides it on desktop). %>
+      <div class="app__scrim" data-action="click->relay--sidebar#closeMobile"></div>
       <div class="app__main">
         <%= render "relay/shared/topbar" %>
         <main class="app__body <%= yield :body_class %>" id="relay_body"><%= yield %></main>
