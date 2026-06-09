@@ -153,7 +153,9 @@ class Customer < ApplicationRecord
 
   # validations
   validates :name, presence: { message: "is required" }
-  validates :email, uniqueness: { case_sensitive: false, allow_blank: true }, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
+  # Email is unique per organization, not globally — the same customer email
+  # can legitimately exist in different tenants (acts_as_tenant :organization).
+  validates :email, uniqueness: { case_sensitive: false, allow_blank: true, scope: :organization_id }, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
   validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
   validate :acceptable_documents
   validates :customer_type, inclusion: { in: CUSTOMER_TYPES.values }
