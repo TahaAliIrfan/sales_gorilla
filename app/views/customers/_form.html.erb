@@ -162,8 +162,6 @@
               options: current_organization.taxonomy_options("whatsapp_status") %>
         <%= render "shared/relay_field", f: form, field: :linkedin_status, type: "select",
               options: current_organization.taxonomy_options("linkedin_status") %>
-        <%= render "shared/relay_field", f: form, field: :upwork_profile, type: "select",
-              options: Customer::UPWORK_PROFILES.keys.zip(Customer::UPWORK_PROFILES.values) %>
         <%= render "shared/relay_field", f: form, field: :exhaust_status, type: "select",
               options: current_organization.taxonomy_options("exhaust_status") %>
 

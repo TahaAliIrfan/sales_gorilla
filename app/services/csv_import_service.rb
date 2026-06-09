@@ -286,8 +286,6 @@ class CsvImportService
       map_to_valid_option(value, Customer::PROJECT_SCOPES)
     when "customer_type"
       map_to_valid_option(value, Customer::CUSTOMER_TYPES)
-    when "upwork_profile"
-      map_to_valid_option(value, Customer::UPWORK_PROFILES)
     else
       value.strip
     end
@@ -327,7 +325,6 @@ class CsvImportService
     attributes[:project_type] ||= "Not Applicable"
     attributes[:platform] ||= "Not Applicable"
     attributes[:project_scope] ||= "Not Applicable"
-    attributes[:upwork_profile] ||= "Not Applicable"
     attributes[:exhaust_status] ||= "NA"
   end
 
@@ -416,7 +413,6 @@ class CsvImportService
       "project_scope" => "Project Scope",
       "linkedin_url" => "LinkedIn URL",
       "ccr_link" => "CCR Link",
-      "upwork_profile" => "Upwork Profile",
       "notes" => "Notes",
       "idea_description" => "Project Description",
       "project_estimated_cost" => "Estimated Cost"
