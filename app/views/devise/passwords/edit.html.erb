@@ -8,7 +8,7 @@
   <p class="micro mb-2">New password</p>
   <h2 class="font-display text-3xl font-bold tracking-tight text-ink">Set a new password</h2>
 
-  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "mt-8 space-y-5", data: { turbo: false } }) do |f| %>
+  <%= form_for(resource, as: resource_name, url: user_password_path, html: { method: :patch, class: "mt-8 space-y-5", data: { turbo: false } }) do |f| %>
     <%= f.hidden_field :reset_password_token %>
 
     <% if resource.errors.any? %>
