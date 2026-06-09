@@ -1,15 +1,17 @@
-Hello <%= @user.name %>,
+New lead assigned to you
 
-You have been assigned a new lead in the CRM system.
+Hi <%= @user.name %>,
 
-Lead Information:
+A new lead has just been assigned to you in Sales Gorilla.
+
+Lead information:
 - Name: <%= @customer.name %>
-- Country: <%= @customer.country || 'Not specified' %>
+- Country: <%= @customer.country.presence || 'Not specified' %>
 
-Please log in to the CRM to see the complete details and take appropriate action.
-
-Thank you,
-TecAudex Team
+Log in to see the complete profile, timeline and take the next action:
+https://salesgorilla.app/
 
 -----
-This is an automated message from the TecAudex CRM system. 
+Sales Gorilla — the CRM built for multi-channel sales teams.
+salesgorilla.app
+This is an automated message. Please do not reply directly to this email.
