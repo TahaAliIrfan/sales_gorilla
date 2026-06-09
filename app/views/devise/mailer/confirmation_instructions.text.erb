@@ -1,0 +1,11 @@
+Confirm your email
+
+Hi <%= @resource.name.presence || @resource.email %>,
+
+Welcome to Sales Gorilla! Please confirm your email address to activate your account.
+You won't be able to sign in until your email is confirmed.
+
+Confirm your email:
+<%= confirmation_url(@resource, confirmation_token: @token) %>
+
+If you didn't create a Sales Gorilla account, you can safely ignore this email.

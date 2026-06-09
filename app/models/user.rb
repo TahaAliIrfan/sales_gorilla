@@ -4,7 +4,7 @@ class User < ApplicationRecord
   # Validatable is skipped because legacy OAuth-only rows may have been
   # created without an email; we enforce email/password validations ourselves
   # only when a password is set.
-  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :trackable
+  devise :database_authenticatable, :registerable, :recoverable, :rememberable, :trackable, :confirmable
 
   validates :email, presence: true, uniqueness: { case_sensitive: false },
             format: { with: URI::MailTo::EMAIL_REGEXP },

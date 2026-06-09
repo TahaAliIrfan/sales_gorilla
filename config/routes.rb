@@ -27,6 +27,10 @@ Rails.application.routes.draw do
       get   "password/edit", to: "users/passwords#edit",   as: :edit_user_password
       patch "password",      to: "users/passwords#update", as: :user_password
       post  "password",      to: "users/passwords#create"
+
+      get  "confirmation/new", to: "users/confirmations#new",  as: :new_user_confirmation
+      get  "confirmation",     to: "users/confirmations#show", as: :user_confirmation
+      post "confirmation",     to: "users/confirmations#create"
     end
 
     # Google OAuth (omniauth) — still wired through SessionsController.
