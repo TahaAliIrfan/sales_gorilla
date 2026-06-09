@@ -211,6 +211,7 @@ Rails.application.routes.draw do
       member do
         post   :update_role
         post   :toggle_active
+        post   :resend_invite
         get    :manage_associates
         post   :assign_associate
         delete :remove_associate

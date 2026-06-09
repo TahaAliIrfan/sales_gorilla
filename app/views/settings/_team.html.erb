@@ -77,21 +77,30 @@
               <% end %>
             </td>
             <td>
-              <% if user.active? %>
+              <% if user.sign_in_count.to_i.zero? %>
+                <span class="rl-pill rl-pill--warning" title="Invitation sent — not accepted yet"><i class="rl-dot"></i>Pending invite</span>
+              <% elsif user.active? %>
                 <span class="rl-pill rl-pill--success"><i class="rl-dot"></i>Active</span>
               <% else %>
                 <span class="rl-pill"><i class="rl-dot" style="background:var(--color-fg-4)"></i>Inactive</span>
               <% end %>
             </td>
             <td style="text-align:right">
-              <% unless user == current_user %>
-                <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm"
-                        data-action="relay--user-admin#toggleActive"
-                        data-relay--user-admin-id-param="<%= user.id %>"
-                        data-active="<%= user.active? %>">
-                  <%= user.active? ? "Deactivate" : "Activate" %>
-                </button>
-              <% end %>
+              <div class="row" style="gap:6px;justify-content:flex-end">
+                <% if user.sign_in_count.to_i.zero? %>
+                  <%= button_to "Resend invite", resend_invite_user_path(user),
+                        method: :post, form: { data: { turbo: false } },
+                        class: "rl-btn rl-btn--secondary rl-btn--sm" %>
+                <% end %>
+                <% unless user == current_user %>
+                  <button type="button" class="rl-btn rl-btn--ghost rl-btn--sm"
+                          data-action="relay--user-admin#toggleActive"
+                          data-relay--user-admin-id-param="<%= user.id %>"
+                          data-active="<%= user.active? %>">
+                    <%= user.active? ? "Deactivate" : "Activate" %>
+                  </button>
+                <% end %>
+              </div>
             </td>
           </tr>
         <% end %>

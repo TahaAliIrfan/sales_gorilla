@@ -2,7 +2,7 @@ class UsersController < ApplicationController
   layout "relay"
   before_action :require_login
   before_action :require_admin
-  before_action :set_user, only: [ :show, :update_role, :toggle_active, :manage_associates, :assign_associate, :remove_associate ]
+  before_action :set_user, only: [ :show, :update_role, :toggle_active, :resend_invite, :manage_associates, :assign_associate, :remove_associate ]
 
   # Org members and the roles assignable within the current organization.
   def index
@@ -95,6 +95,22 @@ class UsersController < ApplicationController
     redirect_to back, notice: "Invitation sent to #{email}."
   rescue ActiveRecord::RecordInvalid => e
     redirect_to back, alert: "Could not invite #{email}: #{e.record.errors.full_messages.to_sentence}"
+  end
+
+  # Re-send the set-password invitation to a member who hasn't accepted yet
+  # (never signed in). Generates a fresh reset-password token each time.
+  def resend_invite
+    back = settings_path(tab: "team")
+    unless pundit_user.can?("users.invite")
+      return redirect_to back, alert: "You don't have permission to invite users."
+    end
+    if @user.sign_in_count.to_i.positive?
+      return redirect_to back, alert: "#{@user.email} has already accepted their invitation."
+    end
+
+    raw_token = @user.send(:set_reset_password_token)
+    UserMailer.organization_invitation(@user, current_organization, current_user, raw_token).deliver_later
+    redirect_to back, notice: "Invitation re-sent to #{@user.email}."
   end
 
   # Members with the "member" role in the current org.
