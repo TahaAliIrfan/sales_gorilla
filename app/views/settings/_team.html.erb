@@ -14,6 +14,29 @@
     <% end %>
   </div>
 
+  <%# Invite a teammate by email. New emails get a set-password invitation;
+      existing Sales Gorilla accounts are added to this org and notified. %>
+  <form action="<%= invite_users_path %>" method="post" data-turbo="false"
+        class="rl-card" style="padding:var(--space-4);display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--space-3)">
+    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+    <div class="col" style="gap:4px;flex:1 1 240px;min-width:220px">
+      <label class="muted rl-sm" for="invite_email">Invite a teammate</label>
+      <input type="email" name="email" id="invite_email" required placeholder="name@company.com"
+             class="rl-input" style="width:100%">
+    </div>
+    <div class="col" style="gap:4px">
+      <label class="muted rl-sm" for="invite_role">Role</label>
+      <select name="role_key" id="invite_role" class="rl-select" style="width:auto">
+        <% @roles.each do |r| %>
+          <option value="<%= r[:key] %>" <%= "selected" if r[:key] == "member" %>><%= r[:name] %></option>
+        <% end %>
+      </select>
+    </div>
+    <button type="submit" class="rl-btn rl-btn--primary rl-btn--sm">
+      <%= relay_icon("mail", size: 14) %>Send invite
+    </button>
+  </form>
+
   <div class="rl-table-wrap">
     <table class="rl-table">
       <thead>

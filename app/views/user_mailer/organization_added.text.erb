@@ -1,0 +1,10 @@
+You've been added to <%= @organization.name %>
+
+Hi <%= @user.name.presence || @user.email %>,
+
+<%= @inviter.name.presence || @inviter.email %> added you to <%= @organization.name %> on Sales Gorilla.
+Sign in with your existing account and you'll find it ready in your workspace list:
+
+<%= new_user_session_url %>
+
+If you don't recognize this organization, you can safely ignore this email.

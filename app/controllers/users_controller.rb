@@ -45,6 +45,58 @@ class UsersController < ApplicationController
     end
   end
 
+  # Invite (or add) a person to the current organization by email.
+  #   - Unknown email  -> create a confirmed, password-less User and email a
+  #     set-password invitation (Devise recoverable token).
+  #   - Known email    -> just add a Membership and email a "you've been added"
+  #     notice (users are global; one account spans many orgs).
+  def invite
+    email    = params[:email].to_s.strip.downcase
+    role_key = params[:role_key].to_s.presence || "member"
+    back     = settings_path(tab: "team")
+
+    unless pundit_user.can?("users.invite")
+      return redirect_to back, alert: "You don't have permission to invite users."
+    end
+    unless current_user.can_assign_role?(role_key)
+      return redirect_to back, alert: "You can't assign the #{role_key} role."
+    end
+    unless email.match?(URI::MailTo::EMAIL_REGEXP)
+      return redirect_to back, alert: "Please enter a valid email address."
+    end
+
+    existing  = User.find_by("lower(email) = ?", email)
+    new_user  = existing.nil?
+
+    if existing&.member_of?(current_organization)
+      return redirect_to back, alert: "#{email} is already a member of this organization."
+    end
+
+    user = nil
+    User.transaction do
+      if new_user
+        user = User.new(email: email, name: email.split("@").first.tr(".", " ").humanize,
+                        password: SecureRandom.base58(24))
+        user.skip_confirmation! # the invitation email itself proves email ownership
+        user.save!
+      else
+        user = existing
+      end
+      user.grant_org_role!(current_organization, role_key)
+    end
+
+    if new_user
+      raw_token = user.send(:set_reset_password_token)
+      UserMailer.organization_invitation(user, current_organization, current_user, raw_token).deliver_later
+    else
+      UserMailer.organization_added(user, current_organization, current_user).deliver_later
+    end
+
+    redirect_to back, notice: "Invitation sent to #{email}."
+  rescue ActiveRecord::RecordInvalid => e
+    redirect_to back, alert: "Could not invite #{email}: #{e.record.errors.full_messages.to_sentence}"
+  end
+
   # Members with the "member" role in the current org.
   def associates
     @users = org_users.where(memberships: { role_id: role_id_for("member") }).order(:name)

@@ -218,6 +218,7 @@ Rails.application.routes.draw do
       collection do
         get :associates
         get :managers
+        post :invite
       end
     end
 

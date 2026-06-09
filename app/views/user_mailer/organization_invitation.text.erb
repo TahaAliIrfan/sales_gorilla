@@ -1,0 +1,11 @@
+You're invited to join <%= @organization.name %>
+
+Hi <%= @user.name.presence || @user.email %>,
+
+<%= @inviter.name.presence || @inviter.email %> has invited you to join <%= @organization.name %> on Sales Gorilla.
+Set a password to activate your account and get started:
+
+<%= edit_user_password_url(reset_password_token: @token) %>
+
+This invitation link expires in <%= (Devise.reset_password_within / 1.hour).to_i %> hours. If it expires,
+use "Forgot password" on the sign-in page — your account will already be waiting.
