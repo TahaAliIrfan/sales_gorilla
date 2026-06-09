@@ -1,17 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sales Gorilla">
   <rect width="64" height="64" rx="14" fill="#FAFAFA"/>
-  <g>
-    <!-- Head silhouette -->
-    <path d="M16 26 C16 19 22 14 32 14 C42 14 48 19 48 26 L48 41 C48 47 42 51 32 51 C22 51 16 47 16 41 Z" fill="#111111"/>
-    <!-- Brow ridge -->
-    <rect x="19" y="25" width="26" height="4.5" rx="2.25" fill="#FAFAFA"/>
-    <!-- Eyes -->
-    <circle cx="26" cy="34" r="2.4" fill="#FAFAFA"/>
-    <circle cx="38" cy="34" r="2.4" fill="#FAFAFA"/>
-    <!-- Snout / muzzle plate -->
-    <ellipse cx="32" cy="44" rx="9" ry="4.6" fill="#e6e6e6"/>
-    <!-- Nostrils -->
-    <circle cx="29" cy="44" r="1.1" fill="#111111"/>
-    <circle cx="35" cy="44" r="1.1" fill="#111111"/>
-  </g>
+  <path d="M12 26 C12 17 20 10 32 10 C44 10 52 17 52 26 L52 44 C52 51 44 56 32 56 C20 56 12 51 12 44 Z" fill="#111111"/>
+  <rect x="16" y="24" width="32" height="6" rx="3" fill="#FAFAFA"/>
+  <circle cx="24" cy="36" r="3" fill="#FAFAFA"/>
+  <circle cx="40" cy="36" r="3" fill="#FAFAFA"/>
+  <rect x="20" y="46" width="24" height="3" rx="1.5" fill="#FAFAFA" opacity="0.85"/>
 </svg>
