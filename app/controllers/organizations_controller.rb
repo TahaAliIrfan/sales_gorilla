@@ -5,7 +5,10 @@ class OrganizationsController < ApplicationController
   before_action :require_login
 
   def index
-    @organizations = current_user.organizations.order(:name)
+    @organizations = current_user.organizations.order(:name).includes(logo_attachment: :blob)
+    org_ids = @organizations.map(&:id)
+    @members_count_by_org = Membership.where(organization_id: org_ids).group(:organization_id).count
+    @roles_by_org = current_user.memberships.where(organization_id: org_ids).pluck(:organization_id, :role).to_h
   end
 
   def new
