@@ -14,10 +14,23 @@ class SessionsController < ApplicationController
   # Users::SessionsController instead.
   def create
     auth = request.env["omniauth.auth"]
-    user = User.find_or_create_by(provider: auth.provider, uid: auth.uid) do |u|
-      u.name  = auth.info.name
-      u.email = auth.info.email
-      u.skip_confirmation! # Google already verified the email; no confirmation needed
+
+    # Resolve the user in three steps so Google sign-in links to an existing
+    # account instead of creating a duplicate (which would collide on the
+    # unique email index — e.g. when the user first signed up with a password):
+    #   1. by Google identity (provider + uid)
+    #   2. by email — link the Google identity onto that account
+    #   3. otherwise create a fresh, already-confirmed Google account
+    user = User.find_by(provider: auth.provider, uid: auth.uid)
+    user ||= User.where("lower(email) = ?", auth.info.email.to_s.downcase).first
+
+    if user
+      user.update(provider: auth.provider, uid: auth.uid) if user.provider.blank? || user.uid.blank?
+    else
+      user = User.new(name: auth.info.name, email: auth.info.email,
+                      provider: auth.provider, uid: auth.uid)
+      user.skip_confirmation! # Google already verified the email; no confirmation needed
+      user.save!
     end
 
     if auth.credentials.present?
