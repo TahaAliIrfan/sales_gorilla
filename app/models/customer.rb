@@ -137,14 +137,6 @@ class Customer < ApplicationRecord
     "Not Applicable" => "Not Applicable"
   }.freeze
 
-  UPWORK_PROFILES = {
-    "Taha" => "Taha",
-    "Arham" => "Arham",
-    "Sarmad" => "Sarmad",
-    "Tecaudex" => "Tecaudex",
-    "Not Applicable" => "Not Applicable"
-  }.freeze
-
   EXHAUST_STATUSES = {
     "NA" => "NA",
     "Exhausted" => "Exhausted",
@@ -156,7 +148,9 @@ class Customer < ApplicationRecord
   # Email is unique per organization, not globally — the same customer email
   # can legitimately exist in different tenants (acts_as_tenant :organization).
   validates :email, uniqueness: { case_sensitive: false, allow_blank: true, scope: :organization_id }, format: { with: URI::MailTo::EMAIL_REGEXP, message: "must be a valid email address", allow_blank: true }
-  validates :phone, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
+  # Phone, like email, is unique per organization (not globally) so the same
+  # number can exist across different tenants but not be duplicated within one.
+  validates :phone, uniqueness: { allow_blank: true, scope: :organization_id }, format: { with: /\A\+\d{6,15}\z/, message: "must be a valid phone number with country code (e.g. +923001234567)", allow_blank: true }
   validate :acceptable_documents
   validates :customer_type, inclusion: { in: CUSTOMER_TYPES.values }
   # Taxonomy-backed fields (per-org editable lists at Settings > Taxonomies).
@@ -168,7 +162,6 @@ class Customer < ApplicationRecord
   # Platform / project_scope / upwork_profile remain frozen-constant for now —
   # they're rarely changed and not requested by admins. Leaving the existing
   # inclusion validators in place.
-  validates :upwork_profile, inclusion: { in: UPWORK_PROFILES.values }, allow_blank: true
   validates :platform, inclusion: { in: PLATFORMS.values }, allow_blank: true
   validates :project_scope, inclusion: { in: PROJECT_SCOPES.values }, allow_blank: true
 
