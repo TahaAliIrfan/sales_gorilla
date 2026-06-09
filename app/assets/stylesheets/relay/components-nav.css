@@ -20,7 +20,7 @@
 .rl-navlink.is-active { background: var(--color-primary); color: var(--color-on-primary); }
 .rl-navlink .rl-navbadge { margin-left: auto; font-size: 11px; font-weight: 700; background: var(--color-success); color: #fff; border-radius: var(--radius-pill); padding: 1px 7px; }
 .rl-navlink.is-active .rl-navbadge { background: rgba(255,255,255,0.25); }
-.rl-sidebar.is-collapsed .rl-navlink span, .rl-sidebar.is-collapsed .rl-navlink .rl-navbadge { display: none; }
+.rl-sidebar.is-collapsed .rl-navlink span:not(.rl-navico), .rl-sidebar.is-collapsed .rl-navlink .rl-navbadge { display: none; }
 .rl-sidebar.is-collapsed .rl-navlink { justify-content: center; padding: 8px; }
 .rl-sidebar__foot { padding: var(--space-3); border-top: 1px solid var(--color-border-sidebar); }
 .rl-userchip { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: var(--radius-md); cursor: pointer; }
