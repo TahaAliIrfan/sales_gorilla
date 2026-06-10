@@ -113,6 +113,9 @@ module MetaLeadAds
       return nil if token.blank?
       data = verifier.verify(token, purpose: :meta_lead_ads_oauth)
       return nil unless data.is_a?(Hash)
+      # MessageVerifier serializes with JSON, so keys round-trip as strings —
+      # use indifferent access so data[:nonce]/[:user_id]/[:org_id] all resolve.
+      data = data.with_indifferent_access
       return nil unless ActiveSupport::SecurityUtils.secure_compare(
         data[:nonce].to_s, session[:meta_lead_ads_nonce].to_s
       )
