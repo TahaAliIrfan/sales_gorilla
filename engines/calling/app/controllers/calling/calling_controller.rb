@@ -196,7 +196,11 @@ module Calling
     private
 
     def provider
-      @provider ||= current_organization.calling.provider!
+      @provider ||= current_organization.calling.provider!.tap do |p|
+        # Status callbacks (recordings) must hit this tenant's own host, not the
+        # provider's hardcoded default. Derive it from the live request.
+        p.app_url = request.base_url if p.respond_to?(:app_url=)
+      end
     end
 
     def handle_calling_error(exception)

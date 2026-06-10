@@ -7,6 +7,11 @@ module Calling
     class Twilio < Base
       ALLOWED_US_NUMBER = "+16562700320".freeze
 
+      # Base URL used for Twilio status callbacks (recordings). Defaults from
+      # config below, but the controller overrides it with the live request
+      # host so callbacks always hit the correct tenant domain.
+      attr_accessor :app_url
+
       def initialize(organization, config)
         super
         required!(:account_sid, :auth_token, :application_sid)
