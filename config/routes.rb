@@ -50,6 +50,11 @@ Rails.application.routes.draw do
       post "/dev_login", to: "dev_login#create"
    # end
 
+    # Legal pages (public; required for Meta App Review / going Live).
+    get "privacy",       to: "legal#privacy",       as: :privacy
+    get "terms",         to: "legal#terms",         as: :terms
+    get "data-deletion", to: "legal#data_deletion", as: :data_deletion
+
     # Public-facing endpoints (no tenant required).
     get "i/:token/pdf", to: "public_invoices#download_pdf", as: :public_invoice_pdf
     get "i/:token",     to: "public_invoices#show",         as: :public_invoice
