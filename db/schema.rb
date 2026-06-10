@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_09_152208) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_10_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -621,6 +621,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_09_152208) do
     t.index ["status"], name: "index_meta_inbound_leads_on_status"
   end
 
+  create_table "meta_page_connections", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "page_id", null: false
+    t.string "page_name"
+    t.text "page_access_token"
+    t.string "lead_source", default: "Inbound", null: false
+    t.string "status", default: "active", null: false
+    t.text "last_error"
+    t.datetime "subscribed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id", "status"], name: "index_meta_page_connections_on_organization_id_and_status"
+    t.index ["organization_id"], name: "index_meta_page_connections_on_organization_id"
+    t.index ["page_id"], name: "index_meta_page_connections_on_page_id", unique: true
+  end
+
   create_table "milestone_items", force: :cascade do |t|
     t.bigint "milestone_id", null: false
     t.decimal "amount", precision: 12, scale: 2, null: false
@@ -1046,6 +1062,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_09_152208) do
   add_foreign_key "meta_conversion_logs", "organizations"
   add_foreign_key "meta_inbound_leads", "customers"
   add_foreign_key "meta_inbound_leads", "organizations"
+  add_foreign_key "meta_page_connections", "organizations"
   add_foreign_key "milestone_items", "milestones"
   add_foreign_key "milestone_items", "organizations"
   add_foreign_key "milestones", "customers"

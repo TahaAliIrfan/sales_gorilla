@@ -1,0 +1,25 @@
+<%# In-form portion of the Meta Lead Ads card. Only a GET "Connect" link lives
+    here (anchors are valid inside the surrounding feature form); the connected-
+    pages management forms render outside the form via _lead_ads_connections. %>
+<div class="col" style="gap:var(--space-3)">
+  <p class="muted rl-sm">
+    Connect your Facebook Page and every new Lead Ads lead is created here
+    automatically — no exports, no Zapier. You authorize once; we subscribe the
+    Page and assign new leads the source you choose per page below.
+  </p>
+
+  <% if MetaLeadAdsService.configured? %>
+    <div class="row" style="gap:10px">
+      <%= link_to "Connect Facebook Page",
+            meta_lead_ads_connect_url(host: root_host, org: current_organization.subdomain),
+            class: "rl-btn rl-btn--primary",
+            data: { turbo: false } %>
+      <span class="muted rl-sm">Opens Facebook to authorize the Pages you manage.</span>
+    </div>
+  <% else %>
+    <p class="muted rl-sm" style="color:var(--color-danger-text)">
+      Meta app credentials aren’t configured on the server yet, so connecting is
+      unavailable. Contact your administrator.
+    </p>
+  <% end %>
+</div>

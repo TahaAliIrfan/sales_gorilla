@@ -61,6 +61,22 @@ Rails.application.routes.draw do
     post "twilio/whatsapp/status",  to: "twilio_whatsapp#status"
     get  "wa/media/:signed_id", to: "whatsapp_media#show", as: :wa_media
 
+    # Meta Lead Ads webhook (single global endpoint for ALL orgs; org resolved
+    # by page_id). GET = subscription verification, POST = leadgen delivery.
+    # `/webhooks/facebook` is the canonical URL registered in the Meta App
+    # dashboard; `/webhooks/meta/lead_ads` is kept as an alias.
+    namespace :webhooks do
+      get  "facebook",      to: "meta_lead_ads#verify"
+      post "facebook",      to: "meta_lead_ads#receive"
+      get  "meta/lead_ads", to: "meta_lead_ads#verify"
+      post "meta/lead_ads", to: "meta_lead_ads#receive"
+    end
+
+    # Self-service Facebook connect flow (fixed redirect URI required by Meta,
+    # so it lives on the root host and carries the org via signed state).
+    get "meta_lead_ads/connect",  to: "meta_lead_ads/connections#connect",  as: :meta_lead_ads_connect
+    get "meta_lead_ads/callback", to: "meta_lead_ads/connections#callback", as: :meta_lead_ads_callback
+
     # Email open-tracking pixel. Short path keeps the URL small in emails; the
     # .gif suffix makes it look like a static image to recipient mail clients.
     get "/e/o/:token.gif", to: "email_tracking#open", as: :email_open_tracking,
@@ -388,6 +404,10 @@ Rails.application.routes.draw do
           post :verify  # provider-specific credential verification
         end
       end
+
+      # Connected Facebook Pages for Lead Ads (set per-page lead source /
+      # disconnect). The OAuth connect itself lives on the root host.
+      resources :meta_page_connections, only: %i[update destroy]
 
       # Editable lookup lists (lead sources, statuses, project types …).
       # Admin-only via TaxonomyPolicy.

@@ -19,6 +19,11 @@
       blurb: "Server-side conversion tracking for Meta Lead Ads, CCR, and website signups.",
       icon:  "megaphone"
     },
+    "meta_lead_ads" => {
+      title: "Meta Lead Ads",
+      blurb: "Connect your Facebook Page so new Lead Ads leads flow into the CRM automatically.",
+      icon:  "megaphone"
+    },
     "whatsapp" => {
       title: "WhatsApp Messaging",
       blurb: "Send/receive WhatsApp messages and templates through Twilio. Inbound routing uses your sender number.",
@@ -88,6 +93,8 @@
         <%= render "settings/features/deepgram_fields", f: f, feature: feature %>
       <% when "meta_conversions" %>
         <%= render "settings/features/meta_fields", f: f, feature: feature %>
+      <% when "meta_lead_ads" %>
+        <%= render "settings/features/lead_ads_fields", f: f, feature: feature %>
       <% when "whatsapp" %>
         <%= render "settings/features/whatsapp_fields", f: f, feature: feature %>
       <% end %>
@@ -97,6 +104,12 @@
               data: { turbo_submits_with: "Saving…" },
               class: "rl-btn rl-btn--primary" %>
       </div>
+    <% end %>
+
+    <%# Page-connection management uses its own forms, so it lives OUTSIDE the
+        feature form above (nested forms are invalid). %>
+    <% if feature.key == "meta_lead_ads" %>
+      <%= render "settings/features/lead_ads_connections", feature: feature %>
     <% end %>
   </div>
 </div>

@@ -1,0 +1,53 @@
+<%# Connected Facebook Pages for the current org. Each row has its own forms
+    (set lead source / disconnect), so this block renders OUTSIDE the feature
+    form in _feature_card. %>
+<%
+  connections = MetaPageConnection.where(organization: current_organization).order(:page_name)
+  source_options = current_organization.taxonomy_options("lead_source").presence ||
+                   Customer::LEAD_SOURCES.values.map { |v| [ v, v ] }
+%>
+
+<div class="col" style="gap:var(--space-3);margin-top:var(--space-4)">
+  <h4 style="font-size:var(--text-h5);font-weight:700">Connected Pages</h4>
+
+  <% if connections.empty? %>
+    <p class="muted rl-sm">No Pages connected yet.</p>
+  <% else %>
+    <% connections.each do |conn| %>
+      <div class="sect" style="padding:var(--space-3)">
+        <div class="spread" style="gap:16px;align-items:flex-start">
+          <div>
+            <strong><%= conn.page_name.presence || "Page #{conn.page_id}" %></strong>
+            <p class="muted rl-sm" style="margin-top:2px">
+              ID <%= conn.page_id %>
+              <% if conn.status == "active" %>
+                · <span style="color:var(--color-success-text)">active</span>
+              <% else %>
+                · <span style="color:var(--color-danger-text)"><%= conn.status %></span>
+                <%= " — #{conn.last_error}" if conn.last_error.present? %>
+              <% end %>
+            </p>
+          </div>
+
+          <%= button_to "Disconnect",
+                settings_meta_page_connection_path(conn),
+                method: :delete,
+                form: { data: { turbo_confirm: "Disconnect #{conn.page_name}? New leads will stop syncing." } },
+                class: "rl-btn rl-btn--ghost" %>
+        </div>
+
+        <%= form_with model: conn,
+              url: settings_meta_page_connection_path(conn),
+              method: :patch,
+              class: "row", html: { style: "gap:10px;align-items:flex-end;margin-top:10px" } do |cf| %>
+          <div class="rl-field" style="margin:0">
+            <label class="rl-label">Lead source for this Page</label>
+            <%= cf.select :lead_source, source_options,
+                  { selected: conn.lead_source }, class: "rl-select" %>
+          </div>
+          <%= cf.submit "Save", class: "rl-btn rl-btn--secondary" %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
