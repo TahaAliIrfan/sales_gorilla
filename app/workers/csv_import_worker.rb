@@ -36,9 +36,8 @@ class CsvImportWorker
 
         Notification.create!(
           user: user,
-          title: "CSV Import Completed",
-          message: message,
-          notification_type: "success",
+          content: "CSV Import Completed — #{message}",
+          notification_type: "system",
           read: false
         )
 
@@ -46,18 +45,16 @@ class CsvImportWorker
           error_message = "Some rows had errors: #{result[:errors].first(5).join(', ')}"
           Notification.create!(
             user: user,
-            title: "CSV Import Warnings",
-            message: error_message,
-            notification_type: "warning",
+            content: "CSV Import Warnings — #{error_message}",
+            notification_type: "system",
             read: false
           )
         end
       else
         Notification.create!(
           user: user,
-          title: "CSV Import Failed",
-          message: "CSV import failed: #{result[:error]}",
-          notification_type: "error",
+          content: "CSV Import Failed — #{result[:error]}",
+          notification_type: "system",
           read: false
         )
       end
@@ -69,9 +66,8 @@ class CsvImportWorker
       # Create error notification
       Notification.create!(
         user: User.find(user_id),
-        title: "CSV Import Error",
-        message: "CSV import encountered an error: #{e.message}",
-        notification_type: "error",
+        content: "CSV Import Error — #{e.message}",
+        notification_type: "system",
         read: false
       )
 
