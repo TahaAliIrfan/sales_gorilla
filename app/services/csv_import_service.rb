@@ -193,12 +193,14 @@ class CsvImportService
   private
 
   def suggest_field_mappings(headers)
-    mappings = {}
-
-    # Define mapping patterns for common field names
+    # Patterns per field. The more specific multi-word fields (e.g. "email
+    # status", "call status") are listed so an exact match wins BEFORE a loose
+    # substring match — otherwise "Email Status" would be matched by the bare
+    # "email" pattern and clobber the real Email column with a status value,
+    # making every row fail email validation.
     field_patterns = {
-      "name" => [ "name", "full name", "customer name", "client name", "contact name", "first name" ],
-      "email" => [ "email", "email address", "e-mail", "mail" ],
+      "name" => [ "name", "full name", "customer name", "client name", "contact name" ],
+      "email" => [ "email", "email address", "e-mail" ],
       "phone" => [ "phone", "phone number", "mobile", "contact number", "tel", "telephone" ],
       "company" => [ "company", "organization", "business", "firm", "company name" ],
       "address" => [ "address", "location", "street address", "full address" ],
@@ -207,24 +209,48 @@ class CsvImportService
       "city" => [ "city", "town", "locality" ],
       "lead_source" => [ "lead source", "source", "origin", "channel" ],
       "status" => [ "status", "customer status", "lead status" ],
-      "project_type" => [ "project type", "project", "service" ],
+      "call_status" => [ "call status" ],
+      "email_status" => [ "email status" ],
+      "whatsapp_status" => [ "whatsapp status", "wa status" ],
+      "linkedin_status" => [ "linkedin status" ],
+      "exhaust_status" => [ "exhaust status" ],
+      "project_type" => [ "project type" ],
+      "project_scope" => [ "project scope" ],
       "platform" => [ "platform", "technology" ],
-      "linkedin_url" => [ "linkedin", "linkedin url", "linkedin profile" ],
+      "linkedin_url" => [ "linkedin url", "linkedin profile", "linkedin" ],
       "notes" => [ "notes", "comments", "description", "details" ],
       "idea_description" => [ "idea", "project description", "requirements" ],
-      "project_estimated_cost" => [ "cost", "budget", "estimated cost", "price" ]
+      "project_estimated_cost" => [ "estimated cost", "cost", "budget", "price" ]
     }
 
+    mappings = {}
+    used_fields = []
+
+    # Pass 1 — exact (normalized) matches win, so the most specific header
+    # claims its field first.
     headers.each do |header|
       next if header.blank?
+      nh = header.downcase.strip
+      field = field_patterns.find { |_f, patterns| patterns.include?(nh) }&.first
+      next unless field && !used_fields.include?(field)
 
-      normalized_header = header.downcase.strip
+      mappings[header] = field
+      used_fields << field
+    end
+
+    # Pass 2 — substring fallback for still-unmapped headers, never reusing a
+    # field that's already taken (so two columns can't collide on one field).
+    headers.each do |header|
+      next if header.blank? || mappings.key?(header)
+      nh = header.downcase.strip
 
       field_patterns.each do |field, patterns|
-        if patterns.any? { |pattern| normalized_header.include?(pattern) }
-          mappings[header] = field
-          break
-        end
+        next if used_fields.include?(field)
+        next unless patterns.any? { |pattern| nh.include?(pattern) }
+
+        mappings[header] = field
+        used_fields << field
+        break
       end
     end
 
