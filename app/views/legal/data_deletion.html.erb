@@ -4,6 +4,17 @@
 <p class="mt-2 text-sm text-ink-soft">Last updated: June 10, 2026</p>
 
 <div class="legal mt-8">
+  <% if params[:code].present? %>
+    <div class="rounded-md border border-[var(--color-line-2)] bg-panel/60 px-4 py-3">
+      <p class="m-0">
+        <strong>Deletion request received.</strong> Your reference code is
+        <strong><%= params[:code] %></strong>. We will complete the deletion within
+        30 days. Questions? Email
+        <a href="mailto:privacy@salesgorilla.app">privacy@salesgorilla.app</a> with this code.
+      </p>
+    </div>
+  <% end %>
+
   <p>
     Sales Gorilla (operated by <strong>Tecaudex</strong>) lets you delete data you have
     stored, and request deletion of personal information we hold. This page explains how,

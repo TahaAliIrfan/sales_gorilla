@@ -51,9 +51,11 @@ Rails.application.routes.draw do
    # end
 
     # Legal pages (public; required for Meta App Review / going Live).
-    get "privacy",       to: "legal#privacy",       as: :privacy
-    get "terms",         to: "legal#terms",         as: :terms
-    get "data-deletion", to: "legal#data_deletion", as: :data_deletion
+    get  "privacy",       to: "legal#privacy",       as: :privacy
+    get  "terms",         to: "legal#terms",         as: :terms
+    get  "data-deletion", to: "legal#data_deletion", as: :data_deletion
+    # Meta Data Deletion Request callback (programmatic; signed POST -> JSON).
+    post "data-deletion/callback", to: "legal#data_deletion_callback", as: :data_deletion_callback
 
     # Public-facing endpoints (no tenant required).
     get "i/:token/pdf", to: "public_invoices#download_pdf", as: :public_invoice_pdf
