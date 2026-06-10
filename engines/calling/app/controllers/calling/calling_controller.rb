@@ -1,6 +1,12 @@
 module Calling
   class CallingController < ApplicationController
     skip_before_action :verify_authenticity_token, only: %i[voice recording_status]
+    # voice/recording_status are server-to-server webhooks from Twilio: no user
+    # session, no CSRF token. Skip the host's login/membership gate (the tenant
+    # is still resolved from the subdomain, so current_organization works) —
+    # otherwise Twilio's POST is 302'd to sign-in and the gateway hangs up
+    # (ConnectionError 31005) instead of receiving TwiML.
+    skip_before_action :authorize_tenant_request!, only: %i[voice recording_status], raise: false
     layout "relay"
     # The relay shell (sidebar/topbar/brand ramp) is built from host helpers
     # that the isolated engine doesn't inherit automatically.
