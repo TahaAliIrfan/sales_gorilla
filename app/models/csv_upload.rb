@@ -1,4 +1,6 @@
 class CsvUpload < ApplicationRecord
+  acts_as_tenant(:organization)
+
   belongs_to :user
 
   validates :upload_token, presence: true, uniqueness: true

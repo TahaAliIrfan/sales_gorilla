@@ -2,16 +2,20 @@
     existing endpoint and responding with a turbo_stream that appends to the
     conversation canvas. locals: customer %>
 <% wa_open = customer.respond_to?(:whatsapp_us_window_open?) && customer.whatsapp_us_window_open? %>
+<% wa_on = feature_enabled?(:whatsapp) %>
 <div class="lead__compose"
      data-action="turbo:submit-end->relay--composer#reset">
 
-  <%# Tabs %>
+  <%# Tabs — WhatsApp only when the feature is configured for this org. When it
+      isn't, Email becomes the default channel. %>
   <div class="composer__tabs">
-    <button type="button" class="composer__tab is-active" data-channel="whatsapp"
-            data-relay--composer-target="tab" data-action="click->relay--composer#switch">
-      <span style="color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 15) %></span>WhatsApp
-    </button>
-    <button type="button" class="composer__tab" data-channel="email"
+    <% if wa_on %>
+      <button type="button" class="composer__tab is-active" data-channel="whatsapp"
+              data-relay--composer-target="tab" data-action="click->relay--composer#switch">
+        <span style="color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 15) %></span>WhatsApp
+      </button>
+    <% end %>
+    <button type="button" class="composer__tab <%= "is-active" unless wa_on %>" data-channel="email"
             data-relay--composer-target="tab" data-action="click->relay--composer#switch">
       <span style="color:var(--channel-email)"><%= relay_icon("mail", size: 15) %></span>Email
     </button>
@@ -21,7 +25,8 @@
     </button>
   </div>
 
-  <%# WhatsApp panel %>
+  <%# WhatsApp panel — only when the feature is configured for this org. %>
+  <% if wa_on %>
   <div data-channel="whatsapp" data-relay--composer-target="panel"
        data-controller="relay--whatsapp-templates"
        data-relay--whatsapp-templates-customer-id-value="<%= customer.id %>"
@@ -118,8 +123,10 @@
     </div>
   </div>
 
-  <%# Email panel %>
-  <div data-channel="email" data-relay--composer-target="panel" hidden>
+  <% end %>
+
+  <%# Email panel — hidden by default unless WhatsApp is off (then it's the default channel). %>
+  <div data-channel="email" data-relay--composer-target="panel" <%= "hidden" if wa_on %>>
     <%= form_with url: customer_emails_path(customer), method: :post do |f| %>
       <div class="composer__box">
         <input type="text" name="subject" placeholder="Subject"
