@@ -160,8 +160,15 @@ class ApplicationController < ActionController::Base
     redirect_to root_url(subdomain: nil, host: root_host), allow_other_host: true
   end
 
-  # Strip any subdomain to produce the bare host (used for cross-host redirects).
+  # Strip any tenant/platform subdomain to produce the registrable (root) host
+  # used for cross-host redirects — e.g. toasty.salesgorilla.app -> salesgorilla.app.
+  # Domain-agnostic (works for salesgorilla.app, tecaudex.com, lvh.me); IPv4 and
+  # bare hosts are returned unchanged.
   def root_host
-    request.host.split(".").drop_while { |part| part != "tecaudex" && !part.match?(/\A\d+\z/) }.join(".").presence || request.host
+    host = request.host
+    return host if host.match?(/\A\d{1,3}(\.\d{1,3}){3}\z/)
+    parts = host.split(".")
+    parts = parts.last(2) if parts.length > 2
+    parts.join(".")
   end
 end
