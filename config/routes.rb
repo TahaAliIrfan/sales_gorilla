@@ -287,6 +287,10 @@ Rails.application.routes.draw do
       end
     end
 
+    # Open inbound lead webhook (no auth; org resolved from the subdomain).
+    # e.g. POST https://<org>.salesgorilla.app/campaigns/meta_inbound
+    post "campaigns/meta_inbound", to: "campaigns/meta_inbound#create"
+
     get "invoices", to: "all_invoices#index", as: :invoices
 
     resources :customers do
