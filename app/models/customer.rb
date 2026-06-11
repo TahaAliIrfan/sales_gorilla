@@ -1,4 +1,8 @@
 class Customer < ApplicationRecord
+  # Transient flag: when true, the assignment email is skipped on save
+  # (the in-app notification is still created). Used by bulk assign.
+  attr_accessor :skip_assignment_email
+
   #relationship
   belongs_to :user, optional: true
   has_one :customer_location, dependent: :destroy
@@ -647,9 +651,10 @@ class Customer < ApplicationRecord
   def notify_user_of_assignment
     # Skip if no user is assigned
     return unless user_id.present?
-    
-    # Queue the notification job
-    CustomerAssignmentNotificationWorker.perform_async(user_id, id)
+
+    # Queue the notification job. When set (e.g. during bulk assign) the in-app
+    # notification is still created but the assignment email is suppressed.
+    CustomerAssignmentNotificationWorker.perform_async(user_id, id, skip_assignment_email ? true : false)
   end
   
   # Queue phone analysis when phone number is added or changed

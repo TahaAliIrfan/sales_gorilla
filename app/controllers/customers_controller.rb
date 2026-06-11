@@ -419,6 +419,9 @@ class CustomersController < ApplicationController
     customers.each do |customer|
       begin
         Rails.logger.info("Assigning customer #{customer.id}: #{customer.name} to user #{user.id}")
+        # Suppress the per-lead assignment email on bulk assign (in-app
+        # notification is still created); avoids flooding the assignee's inbox.
+        customer.skip_assignment_email = true
         if customer.update(user_id: user.id)
           success_count += 1
           Rails.logger.info("Successfully assigned customer #{customer.id}")
