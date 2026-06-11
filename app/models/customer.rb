@@ -326,19 +326,9 @@ class Customer < ApplicationRecord
     if user.google_auth_configured? && add_to_calendar
       user.schedule_customer_followup(self, followup_date, notes)
     else
-      # Just create a task without Google Calendar integration
+      # Record the follow-up without auto-creating a task
       update(followup_date: followup_date, followup_notes: notes)
-      
-      Task.create!(
-        user: user,
-        customer: self,
-        title: "Follow up with #{name}",
-        description: notes,
-        due_date: followup_date,
-        priority: 'Medium',
-        status: 'pending'
-      )
-      
+
       true
     end
   end

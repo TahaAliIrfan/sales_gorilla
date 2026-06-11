@@ -30,18 +30,7 @@ class CustomerFollowupWorker
           google_calendar_event_id: result[:event_id],
           google_calendar_event_link: result[:html_link]
         )
-        
-        # Create a task for the follow-up
-        task = Task.create!(
-          user: user,
-          customer: customer,
-          title: "Follow up with #{customer.name}",
-          description: notes,
-          due_date: followup_date,
-          priority: 'Medium',
-          status: 'pending'
-        )
-        
+
         # Log successful scheduling
         Rails.logger.info "Successfully scheduled followup with Google Calendar for customer #{customer.name}"
         
@@ -52,10 +41,9 @@ class CustomerFollowupWorker
           user_id: user.id
         )
       else
-        # Log failure and fallback to regular task
+        # Log failure and fall back to recording the follow-up without calendar
         Rails.logger.error "Failed to create Google Calendar event: #{result[:error]}"
-        
-        # Fallback to creating just a task without calendar integration
+
         process_followup_without_calendar(customer, user, followup_date, notes)
       end
     else
@@ -69,18 +57,7 @@ class CustomerFollowupWorker
   def process_followup_without_calendar(customer, user, followup_date, notes)
     # Update customer with followup information
     customer.update(followup_date: followup_date, followup_notes: notes)
-    
-    # Create a task for the follow-up
-    task = Task.create!(
-      user: user,
-      customer: customer,
-      title: "Follow up with #{customer.name}",
-      description: notes,
-      due_date: followup_date,
-      priority: 'Medium',
-      status: 'pending'
-    )
-    
+
     # Create an activity entry for the follow-up
     customer.customer_activities.create!(
       action: 'follow_up_scheduled',
@@ -88,7 +65,7 @@ class CustomerFollowupWorker
       user_id: user.id
     )
     
-    # Log successful task creation
-    Rails.logger.info "Successfully created followup task for customer #{customer.name} (without calendar integration)"
+    # Log successful follow-up scheduling
+    Rails.logger.info "Successfully recorded followup for customer #{customer.name} (without calendar integration)"
   end
 end 

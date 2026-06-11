@@ -65,7 +65,9 @@ class Api::V2::TasksController < Api::V2::BaseController
   def create
     @task = Task.new(task_params)
     @task.user_id ||= current_user.id
-    
+    # Restrict assignment to self or subordinates
+    @task.user_id = current_user.id unless current_user.can_assign_tasks_to?(@task.user)
+
     authorize @task
     
     if @task.save

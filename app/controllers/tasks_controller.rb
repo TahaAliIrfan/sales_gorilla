@@ -80,15 +80,15 @@ class TasksController < ApplicationController
     end
     
     @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-    @users = current_user.admin? ? User.all : [current_user]
+    @users = current_user.task_assignable_users
   end
 
   def create
     @task = Task.new(task_params)
     authorize @task
     
-    # Ensure task is assigned to current user if not admin
-    if !current_user.admin? && @task.user_id != current_user.id
+    # Restrict assignment to self or subordinates
+    unless current_user.can_assign_tasks_to?(@task.user)
       @task.user_id = current_user.id
     end
 
@@ -108,7 +108,7 @@ class TasksController < ApplicationController
   def edit
     authorize @task
     @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-    @users = current_user.admin? ? User.all : [current_user]
+    @users = current_user.task_assignable_users
   end
 
   def show
@@ -118,9 +118,10 @@ class TasksController < ApplicationController
   def update
     authorize @task
     
-    # Ensure task is assigned to current user if not admin
+    # Restrict reassignment to self or subordinates
     update_params = task_params
-    if !current_user.admin? && update_params[:user_id].to_i != current_user.id
+    target_user = User.find_by(id: update_params[:user_id])
+    unless current_user.can_assign_tasks_to?(target_user)
       update_params = update_params.merge(user_id: current_user.id)
     end
     

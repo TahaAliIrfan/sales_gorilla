@@ -5,37 +5,46 @@ class TaskPolicy < ApplicationPolicy
     def resolve
       if user.admin?
         scope.all
+      elsif user.manager?
+        scope.where(user_id: [user.id] + user.associates.pluck(:id))
       else
         scope.where(user_id: user.id)
       end
     end
   end
-  
+
   def index?
     user.admin? # Only admins can see all tasks
   end
-  
+
   def my_tasks?
     true # All users can see their own tasks
   end
-  
+
   def show?
-    user.admin? || record.user_id == user.id
+    manage_record?
   end
-  
+
   def create?
-    true # All authenticated users can create tasks
+    true # All authenticated users can create tasks (for self or subordinates)
   end
-  
+
   def update?
-    user.admin? || record.user_id == user.id
+    manage_record?
   end
-  
+
   def destroy?
-    user.admin? || record.user_id == user.id
+    manage_record?
   end
-  
+
   def complete?
-    user.admin? || record.user_id == user.id
+    manage_record?
   end
-end 
+
+  private
+
+  # Owner, admin, or manager of the task's assignee may manage it
+  def manage_record?
+    user.can_assign_tasks_to?(record.user)
+  end
+end

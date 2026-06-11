@@ -244,18 +244,7 @@ class User < ApplicationRecord
         google_calendar_event_id: result[:event_id],
         google_calendar_event_link: result[:html_link]
       )
-      
-      # Create a task for the follow-up
-      Task.create!(
-        user: self,
-        customer: customer,
-        title: "Follow up with #{customer.name}",
-        description: notes,
-        due_date: followup_date,
-        priority: 'Medium',
-        status: 'pending'
-      )
-      
+
       true
     else
       false
@@ -278,6 +267,22 @@ class User < ApplicationRecord
     return true if self == target_user
     return true if manager? && associates.include?(target_user)
     false
+  end
+
+  # Can user assign/manage tasks for a given user? (self or subordinates)
+  def can_assign_tasks_to?(target_user)
+    return false if target_user.nil?
+    return true if admin?
+    return true if self == target_user
+    return true if manager? && associates.include?(target_user)
+    false
+  end
+
+  # Users this user may assign tasks to (self + subordinates)
+  def task_assignable_users
+    return User.all if admin?
+    return [self] + associates if manager?
+    [self]
   end
   
   # Can user assign roles?
