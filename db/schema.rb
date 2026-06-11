@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_11_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -162,6 +162,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.text "details"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["customer_id", "created_at"], name: "index_customer_activities_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
     t.index ["user_id"], name: "index_customer_activities_on_user_id"
   end
@@ -426,9 +427,14 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.datetime "updated_at", null: false
     t.text "snippet"
     t.string "label_ids"
+    t.string "tracking_token"
+    t.datetime "first_opened_at"
+    t.datetime "last_opened_at"
+    t.integer "open_count", default: 0, null: false
     t.index ["customer_id"], name: "index_emails_on_customer_id"
     t.index ["label_ids"], name: "index_emails_on_label_ids"
     t.index ["message_id"], name: "index_emails_on_message_id"
+    t.index ["tracking_token"], name: "index_emails_on_tracking_token", unique: true, where: "(tracking_token IS NOT NULL)"
     t.index ["user_id"], name: "index_emails_on_user_id"
   end
 
@@ -529,6 +535,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.jsonb "request_payload"
     t.index ["customer_id", "created_at"], name: "index_meta_conversion_logs_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_meta_conversion_logs_on_customer_id"
+  end
+
+  create_table "meta_inbound_leads", force: :cascade do |t|
+    t.bigint "customer_id"
+    t.string "leadgen_id", null: false
+    t.string "page_id"
+    t.string "form_id"
+    t.string "ad_id"
+    t.string "adset_id"
+    t.string "campaign_id"
+    t.string "status", default: "received", null: false
+    t.text "error_message"
+    t.jsonb "webhook_payload"
+    t.jsonb "lead_data"
+    t.datetime "received_at", null: false
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_meta_inbound_leads_on_customer_id"
+    t.index ["form_id"], name: "index_meta_inbound_leads_on_form_id"
+    t.index ["status"], name: "index_meta_inbound_leads_on_status"
   end
 
   create_table "milestone_items", force: :cascade do |t|
@@ -735,6 +762,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.index ["user_id"], name: "index_tasks_on_user_id"
   end
 
+  create_table "taxonomies", force: :cascade do |t|
+    t.string "kind", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "archived", default: false, null: false
+    t.boolean "system_default", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "user_kpi_records", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "record_date", null: false
@@ -774,6 +811,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
     t.string "google_refresh_token"
     t.datetime "google_token_expires_at"
     t.boolean "active", default: true, null: false
+    t.datetime "last_gmail_sync_at"
     t.index ["active"], name: "index_users_on_active"
     t.index ["fcm_token"], name: "index_users_on_fcm_token"
     t.index ["voip_device_id"], name: "index_users_on_voip_device_id"
@@ -814,7 +852,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "calls", "customers"
+  add_foreign_key "calls", "customers", on_delete: :cascade
   add_foreign_key "calls", "users", column: "caller_id"
   add_foreign_key "calls", "users", column: "receiver_id"
   add_foreign_key "campaign_executions", "campaigns"
@@ -842,7 +880,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
   add_foreign_key "deals", "customers"
   add_foreign_key "deals", "deal_stages"
   add_foreign_key "deals", "users"
-  add_foreign_key "eleven_labs_calls", "customers"
+  add_foreign_key "eleven_labs_calls", "customers", on_delete: :cascade
   add_foreign_key "eleven_labs_calls", "users"
   add_foreign_key "emails", "customers"
   add_foreign_key "emails", "users"
@@ -857,22 +895,23 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_02_182418) do
   add_foreign_key "messages", "customers"
   add_foreign_key "messages", "users"
   add_foreign_key "meta_conversion_logs", "customers"
+  add_foreign_key "meta_inbound_leads", "customers"
   add_foreign_key "milestone_items", "milestones"
   add_foreign_key "milestones", "customers"
   add_foreign_key "milestones", "users"
-  add_foreign_key "ndas", "customers"
+  add_foreign_key "ndas", "customers", on_delete: :cascade
   add_foreign_key "ndas", "users"
-  add_foreign_key "notification_logs", "customers"
+  add_foreign_key "notification_logs", "customers", on_delete: :cascade
   add_foreign_key "notification_logs", "users"
   add_foreign_key "notifications", "users"
-  add_foreign_key "odoo_proposals", "customers"
+  add_foreign_key "odoo_proposals", "customers", on_delete: :cascade
   add_foreign_key "odoo_proposals", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
   add_foreign_key "role_assignments", "roles"
   add_foreign_key "role_assignments", "users"
   add_foreign_key "role_assignments", "users", column: "assigned_by_id"
-  add_foreign_key "sms", "customers"
+  add_foreign_key "sms", "customers", on_delete: :cascade
   add_foreign_key "sms", "users"
   add_foreign_key "tasks", "customers"
   add_foreign_key "tasks", "users"
