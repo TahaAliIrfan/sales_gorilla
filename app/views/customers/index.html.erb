@@ -246,6 +246,14 @@
               </svg>
               Change Status
             </button>
+            <% if current_user&.admin? %>
+            <button id="bulk-delete-btn" class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-red-700 transition-colors shadow-sm">
+              <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete Selected
+            </button>
+            <% end %>
           </div>
           </div>
         </div>
@@ -313,6 +321,39 @@
             <% end %>
           </div>
         </div>
+
+        <!-- Bulk Delete Confirmation Modal -->
+        <% if current_user&.admin? %>
+        <div id="bulk-delete-modal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div class="flex items-start mb-4">
+              <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div class="ml-4">
+                <h3 class="text-lg font-semibold text-gray-900">Delete customers?</h3>
+                <p class="mt-1 text-sm text-gray-600">
+                  You are about to permanently delete <span id="bulk-delete-count" class="font-semibold">0</span> selected customer(s).
+                  This will also remove their deals, recordings, tasks, messages and other related records. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <%= form_tag bulk_destroy_customers_path, method: :delete, id: "bulk-delete-form" do %>
+              <input type="hidden" name="customer_ids" id="bulk-delete-customer-ids">
+              <div class="flex justify-end space-x-3">
+                <button type="button" id="cancel-bulk-delete" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                  Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-red-600 border border-transparent rounded-lg text-sm font-medium text-white hover:bg-red-700">
+                  Delete
+                </button>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <% end %>
       <% end %>
 
     <!-- Main Content -->

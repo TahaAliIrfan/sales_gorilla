@@ -151,6 +151,7 @@ Rails.application.routes.draw do
     collection do
       post 'bulk_assign'
       post 'bulk_status_change'
+      delete 'bulk_destroy'
       get 'export_csv'
     end
   end

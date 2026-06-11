@@ -85,6 +85,10 @@ class CustomerPolicy < ApplicationPolicy
     user.admin? || user.manager?
   end
 
+  def bulk_destroy?
+    user.admin?
+  end
+
   def assign_to_self?
     # Allow any user to assign unassigned customers to themselves
     record.user_id.nil?

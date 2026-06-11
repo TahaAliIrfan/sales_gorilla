@@ -52,6 +52,21 @@ export default class extends Controller {
     } else {
       console.error("Bulk status change button not found")
     }
+
+    const bulkDeleteButton = document.getElementById("bulk-delete-btn")
+    if (bulkDeleteButton) {
+      bulkDeleteButton.addEventListener("click", this.openBulkDeleteModal.bind(this))
+    }
+
+    const cancelBulkDeleteButton = document.getElementById("cancel-bulk-delete")
+    if (cancelBulkDeleteButton) {
+      cancelBulkDeleteButton.addEventListener("click", this.closeBulkDeleteModal.bind(this))
+    }
+
+    const bulkDeleteForm = document.getElementById("bulk-delete-form")
+    if (bulkDeleteForm) {
+      bulkDeleteForm.addEventListener("submit", this.handleDeleteFormSubmit.bind(this))
+    }
     
     // Add event listeners for the bulk assign modal
     const closeModalButton = document.getElementById("close-modal")
@@ -127,21 +142,25 @@ export default class extends Controller {
     const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
     const bulkCustomerIdsInput = document.getElementById("bulk-customer-ids")
     const bulkStatusCustomerIdsInput = document.getElementById("bulk-status-customer-ids")
-    
+    const bulkDeleteCustomerIdsInput = document.getElementById("bulk-delete-customer-ids")
+
     if (selectedCustomerCheckboxes.length > 0) {
       const selectedCustomerIds = Array.from(selectedCustomerCheckboxes)
           .map(checkbox => checkbox.getAttribute("data-id"))
           .filter(id => id && id !== "")
-      
+
       if (selectedCustomerIds.length > 0) {
         const customerIdsString = selectedCustomerIds.join(",")
         console.log(`Setting customer IDs: ${customerIdsString}`)
-        
+
         if (bulkCustomerIdsInput) {
           bulkCustomerIdsInput.value = customerIdsString
         }
         if (bulkStatusCustomerIdsInput) {
           bulkStatusCustomerIdsInput.value = customerIdsString
+        }
+        if (bulkDeleteCustomerIdsInput) {
+          bulkDeleteCustomerIdsInput.value = customerIdsString
         }
       }
     } else {
@@ -150,6 +169,9 @@ export default class extends Controller {
       }
       if (bulkStatusCustomerIdsInput) {
         bulkStatusCustomerIdsInput.value = ""
+      }
+      if (bulkDeleteCustomerIdsInput) {
+        bulkDeleteCustomerIdsInput.value = ""
       }
     }
   }
@@ -313,11 +335,61 @@ export default class extends Controller {
   
   closeBulkStatusChangeModal(event) {
     event.preventDefault()
-    
+
     // Hide the bulk status change modal
     const bulkStatusChangeModal = document.getElementById("bulk-status-change-modal")
     if (bulkStatusChangeModal) {
       bulkStatusChangeModal.classList.add("hidden")
     }
+  }
+
+  openBulkDeleteModal(event) {
+    event.preventDefault()
+
+    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
+    const totalSelected = selectedCustomerCheckboxes.length
+
+    if (totalSelected === 0) {
+      alert("Please select at least one customer to delete.")
+      return
+    }
+
+    // Update hidden fields with current selection just before opening modal
+    this.updateHiddenFields()
+
+    // Reflect the selected count in the confirmation message
+    const countElement = document.getElementById("bulk-delete-count")
+    if (countElement) {
+      countElement.textContent = totalSelected
+    }
+
+    const bulkDeleteModal = document.getElementById("bulk-delete-modal")
+    if (bulkDeleteModal) {
+      bulkDeleteModal.classList.remove("hidden")
+    }
+  }
+
+  closeBulkDeleteModal(event) {
+    event.preventDefault()
+
+    const bulkDeleteModal = document.getElementById("bulk-delete-modal")
+    if (bulkDeleteModal) {
+      bulkDeleteModal.classList.add("hidden")
+    }
+  }
+
+  handleDeleteFormSubmit(event) {
+    event.preventDefault()
+
+    // Get all selected IDs just before submission
+    this.updateHiddenFields()
+
+    const deleteCustomerIdsField = document.getElementById("bulk-delete-customer-ids")
+    if (!deleteCustomerIdsField || !deleteCustomerIdsField.value) {
+      alert("Please select at least one customer to delete.")
+      return
+    }
+
+    event.target.submit()
   }
 } 

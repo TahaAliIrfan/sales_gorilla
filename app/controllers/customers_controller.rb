@@ -500,6 +500,49 @@ class CustomersController < ApplicationController
     end
   end
 
+  def bulk_destroy
+    authorize Customer, :bulk_destroy?
+
+    if params[:customer_ids].blank?
+      redirect_to customers_path, alert: 'Please select customers to delete.'
+      return
+    end
+
+    customer_ids = params[:customer_ids].to_s.split(',').map(&:strip).reject(&:blank?).map(&:to_i).reject(&:zero?)
+
+    if customer_ids.empty?
+      redirect_to customers_path, alert: 'No valid customers selected.'
+      return
+    end
+
+    customers = Customer.where(id: customer_ids)
+
+    if customers.empty?
+      redirect_to customers_path, alert: 'No customers found with the selected IDs.'
+      return
+    end
+
+    success_count = 0
+    failed_ids = []
+
+    customers.each do |customer|
+      begin
+        customer.destroy!
+        success_count += 1
+      rescue => e
+        failed_ids << customer.id
+        Rails.logger.error("Exception deleting customer #{customer.id}: #{e.message}")
+      end
+    end
+
+    if failed_ids.empty?
+      redirect_to customers_path, notice: "Successfully deleted #{success_count} #{'customer'.pluralize(success_count)}."
+    elsif success_count > 0
+      redirect_to customers_path, alert: "Deleted #{success_count} of #{customers.count} customers. #{failed_ids.count} could not be deleted."
+    else
+      redirect_to customers_path, alert: 'Failed to delete the selected customers.'
+    end
+  end
 
   def analyze_phone
     authorize @customer
