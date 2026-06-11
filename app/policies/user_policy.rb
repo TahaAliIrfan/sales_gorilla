@@ -29,6 +29,11 @@ class UserPolicy < ApplicationPolicy
     user.admin? && record != user
   end
 
+  # "Remove" = reassign leads, revoke roles, deactivate
+  def remove?
+    user.admin? && record != user
+  end
+
   def update_fcm_token?
     # Users can update their own FCM token, admins can update any user's FCM token
     user.admin? || record == user

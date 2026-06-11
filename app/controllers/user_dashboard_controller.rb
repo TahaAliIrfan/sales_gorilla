@@ -12,16 +12,10 @@ class UserDashboardController < ApplicationController
     @total_customers = current_user.customers.count
     @customers_this_month = current_user.customers.where(created_at: @this_month_start..Time.current).count
     
-    # Customer status breakdown
-    @customer_status_counts = {
-      pending: current_user.customers.where(status: 'Pending').count,
-      contact_established: current_user.customers.where(status: 'Contact Established').count,
-      contact_not_established: current_user.customers.where(status: ['Contact Not Established', 'Unresponsive']).count,
-      not_interested: current_user.customers.where(status: 'Not Interested').count,
-      converted: current_user.customers.where(status: 'Converted').count,
-      exhausted: current_user.customers.where(status: 'Exhausted').count
-    }
-    
+    # Customer status breakdown — single grouped query covering every status,
+    # so the breakdown always sums to @total_customers
+    @customer_status_counts = current_user.customers.group(:status).count
+
     # === DEAL STATS ===
     @total_deals = current_user.deals.count
     @active_deals = current_user.deals.active.count
@@ -29,6 +23,7 @@ class UserDashboardController < ApplicationController
     @lost_deals = current_user.deals.lost.count
     @total_deal_value = current_user.deals.sum(:amount)
     @won_deal_value = current_user.deals.won.sum(:amount)
+    @lost_deal_value = current_user.deals.lost.sum(:amount)
     @active_deal_value = current_user.deals.active.sum(:amount)
     
     # Deals this month
@@ -73,15 +68,17 @@ class UserDashboardController < ApplicationController
     @call_success_rate = @calls_this_month > 0 ? ((@connected_calls_this_month.to_f / @calls_this_month) * 100).round(1) : 0
     
     # === TASK STATS ===
+    open_tasks = current_user.tasks.where(status: %w[pending in_progress])
     @pending_tasks_count = current_user.tasks.pending.count
-    @today_tasks_count = current_user.tasks.for_today.count
+    @today_tasks_count = open_tasks.for_today.count
     @overdue_tasks_count = current_user.tasks.overdue.count
     @completed_tasks_this_month = current_user.tasks.where(status: 'completed', updated_at: @this_month_start..Time.current).count
-    
-    # Task lists
-    @today_tasks = current_user.tasks.for_today.order(due_date: :asc).limit(5)
+
+    # Task lists. "Upcoming" excludes overdue tasks (they have their own panel).
+    @today_tasks = open_tasks.for_today.order(due_date: :asc).limit(5)
     @overdue_tasks = current_user.tasks.overdue.order(due_date: :asc).limit(5)
-    @pending_tasks = current_user.tasks.pending.order(due_date: :asc).limit(5)
+    @upcoming_tasks_count = open_tasks.upcoming.count
+    @upcoming_tasks = open_tasks.upcoming.order(due_date: :asc).limit(5)
     
     # === ITEMS NEEDING ATTENTION ===
     @deals_needing_attention = deals_needing_attention
@@ -90,7 +87,8 @@ class UserDashboardController < ApplicationController
     
     # === RECENT ACTIVITY ===
     @recent_customers = current_user.customers.order(updated_at: :desc).limit(5)
-    @recent_deals = current_user.deals.order(updated_at: :desc).limit(5)
+    # The panel is titled "My Active Deals" — only show active ones
+    @recent_deals = current_user.deals.active.includes(:customer, :deal_stage).order(updated_at: :desc).limit(5)
   end
 
   private

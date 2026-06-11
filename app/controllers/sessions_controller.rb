@@ -25,9 +25,16 @@ class SessionsController < ApplicationController
       )
     end
 
+    # Deactivated (removed) users may not sign in
+    unless user.active?
+      flash[:error] = 'This account has been deactivated. Contact an administrator.'
+      redirect_to root_path
+      return
+    end
+
     # Allow specific email addresses or @tecaudex.com domain
     allowed_emails = ['ifrah.khurram97@gmail.com', 'tahairfan1993@gmail.com']
-    
+
     if user.email.ends_with?('@tecaudex.com') || allowed_emails.include?(user.email.downcase)
       session[:user_id] = user.id
       session[:user_email] = user.email

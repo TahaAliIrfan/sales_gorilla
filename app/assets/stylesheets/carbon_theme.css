@@ -1,0 +1,341 @@
+/*
+ * Carbon theme — dark "ops console" skin for the dashboard layout.
+ * Scoped under body.theme-carbon (set in layouts/dashboard.html.erb).
+ *
+ * Strategy: the app consistently uses a small Tailwind vocabulary
+ * (bg-white cards, bg-gray-50 canvas, gray text ramp, blue/green/red
+ * buttons, -100/-800 badge pairs). This file remaps that vocabulary to
+ * the Carbon palette instead of restyling hundreds of templates.
+ * Selectors are .theme-carbon .utility (0,2,0) so they win over the
+ * single-class Tailwind utilities (0,1,0) without !important.
+ *
+ * Palette:
+ *   bg      #0D0F12   panel  #14171C   panel2 #191D23
+ *   text    #E8EAED   dim    #8B919A   line   rgba(255,255,255,.07)
+ *   volt    #C6F432   cyan   #4AD7D1   red    #FF5C57
+ */
+
+.theme-carbon {
+  background-color: #0D0F12;
+  color: #E8EAED;
+  font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Atmosphere: faint volt/cyan glow in the corners */
+.theme-carbon::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(900px 500px at 80% -10%, rgba(198, 244, 50, .04), transparent 60%),
+    radial-gradient(700px 400px at 0% 110%, rgba(74, 215, 209, .04), transparent 60%);
+}
+
+.theme-carbon ::selection { background: #C6F432; color: #0D0F12; }
+
+/* Utility classes for carbon-native views */
+.theme-carbon .cb-mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-feature-settings: "tnum" 1; }
+.theme-carbon .cb-eyebrow {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #5C636C;
+}
+.theme-carbon .cb-panel {
+  background: #14171C;
+  border: 1px solid rgba(255, 255, 255, .07);
+  border-radius: 10px;
+}
+.theme-carbon .cb-meter { height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.theme-carbon .cb-meter > span { display: block; height: 100%; border-radius: 3px; background: linear-gradient(90deg, #4AD7D1, #C6F432); }
+.theme-carbon .cb-pill {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .08em;
+  padding: 2.5px 8px;
+  border: 1px solid;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.theme-carbon ::-webkit-scrollbar { width: 9px; height: 9px; }
+.theme-carbon ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .12); border-radius: 99px; }
+.theme-carbon ::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- Canvas & panels ---------- */
+
+.theme-carbon .bg-white   { background-color: #14171C; }
+.theme-carbon .bg-gray-50 { background-color: #0D0F12; }
+.theme-carbon .bg-gray-100{ background-color: #191D23; }
+.theme-carbon .bg-gray-200{ background-color: #1F242B; }
+
+/* Cards get a hairline so they read against the dark canvas */
+.theme-carbon .shadow,
+.theme-carbon .shadow-sm,
+.theme-carbon .shadow-md,
+.theme-carbon .shadow-lg,
+.theme-carbon .shadow-xl {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .06), 0 10px 30px -18px rgba(0, 0, 0, .8);
+}
+
+/* ---------- Text ramp ---------- */
+
+.theme-carbon .text-gray-900 { color: #E8EAED; }
+.theme-carbon .text-gray-800 { color: #DDE0E4; }
+.theme-carbon .text-gray-700 { color: #C6CAD1; }
+.theme-carbon .text-gray-600 { color: #9AA1AA; }
+.theme-carbon .text-gray-500 { color: #8B919A; }
+.theme-carbon .text-gray-400 { color: #6E747D; }
+.theme-carbon .text-black    { color: #E8EAED; }
+
+.theme-carbon .hover\:text-gray-900:hover,
+.theme-carbon .hover\:text-gray-700:hover,
+.theme-carbon .hover\:text-gray-600:hover { color: #E8EAED; }
+
+/* ---------- Hairlines ---------- */
+
+.theme-carbon .border-gray-100 { border-color: rgba(255, 255, 255, .05); }
+.theme-carbon .border-gray-200 { border-color: rgba(255, 255, 255, .07); }
+.theme-carbon .border-gray-300 { border-color: rgba(255, 255, 255, .12); }
+.theme-carbon .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255, 255, 255, .07); }
+.theme-carbon .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(255, 255, 255, .05); }
+
+/* ---------- Tables ---------- */
+
+/* Mono uppercase column headers — the "ops console" tell */
+.theme-carbon th {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  letter-spacing: .14em;
+  font-weight: 500;
+}
+.theme-carbon thead.bg-gray-50,
+.theme-carbon tr.bg-gray-50 { background-color: rgba(255, 255, 255, .02); }
+.theme-carbon .hover\:bg-gray-50:hover  { background-color: rgba(198, 244, 50, .035); }
+.theme-carbon .hover\:bg-gray-100:hover { background-color: rgba(255, 255, 255, .05); }
+
+/* High Value rows (bg-amber-50 in the customers table) */
+.theme-carbon .bg-amber-50 { background-color: rgba(245, 158, 11, .07); }
+
+/* ---------- Forms ---------- */
+
+.theme-carbon input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+.theme-carbon select,
+.theme-carbon textarea {
+  background-color: #14171C;
+  color: #E8EAED;
+  border-color: rgba(255, 255, 255, .12);
+}
+.theme-carbon input::placeholder,
+.theme-carbon textarea::placeholder { color: #6E747D; }
+.theme-carbon input:focus,
+.theme-carbon select:focus,
+.theme-carbon textarea:focus {
+  border-color: #C6F432;
+  --tw-ring-color: rgba(198, 244, 50, .35);
+  outline-color: #C6F432;
+}
+.theme-carbon select option { background-color: #14171C; color: #E8EAED; }
+
+.theme-carbon input[type="checkbox"],
+.theme-carbon input[type="radio"] { accent-color: #C6F432; }
+
+/* The customers-table checkboxes are Tailwind-forms styled; recolor them */
+.theme-carbon input[type="checkbox"].text-blue-600,
+.theme-carbon .customer-checkbox {
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, .25);
+  color: #C6F432; /* checked fill for tailwindcss-forms */
+}
+.theme-carbon .customer-checkbox:checked,
+.theme-carbon input[type="checkbox"].text-blue-600:checked {
+  background-color: #C6F432;
+  border-color: #C6F432;
+}
+
+/* ---------- Buttons ---------- */
+
+/* Primary (blue) → volt with dark text */
+.theme-carbon .bg-blue-600,
+.theme-carbon .bg-blue-500 { background-color: #C6F432; color: #0D0F12; }
+.theme-carbon .hover\:bg-blue-700:hover,
+.theme-carbon .hover\:bg-blue-600:hover {
+  background-color: #D4FA55;
+  color: #0D0F12;
+  box-shadow: 0 0 22px -6px rgba(198, 244, 50, .55);
+}
+
+/* Secondary (indigo) → cyan */
+.theme-carbon .bg-indigo-600 { background-color: #4AD7D1; color: #0D0F12; }
+.theme-carbon .hover\:bg-indigo-700:hover { background-color: #63E2DC; color: #0D0F12; }
+
+/* Success (green) → cyan family */
+.theme-carbon .bg-green-600 { background-color: #4AD7D1; color: #0D0F12; }
+.theme-carbon .hover\:bg-green-700:hover { background-color: #63E2DC; color: #0D0F12; }
+
+/* Danger (red) → signal red */
+.theme-carbon .bg-red-600 { background-color: #FF5C57; color: #0D0F12; }
+.theme-carbon .hover\:bg-red-700:hover {
+  background-color: #FF7470;
+  color: #0D0F12;
+  box-shadow: 0 0 22px -6px rgba(255, 92, 87, .55);
+}
+
+/* Buttons mapped above carry text-white in markup; force dark label */
+.theme-carbon .bg-blue-600.text-white,
+.theme-carbon .bg-blue-500.text-white,
+.theme-carbon .bg-indigo-600.text-white,
+.theme-carbon .bg-green-600.text-white,
+.theme-carbon .bg-red-600.text-white { color: #0D0F12; }
+
+/* Ghost buttons (white bg + gray border) */
+.theme-carbon .bg-white.border-gray-300,
+.theme-carbon .bg-white.border { border-color: rgba(255, 255, 255, .12); }
+.theme-carbon .hover\:bg-gray-50.bg-white:hover { background-color: rgba(255, 255, 255, .06); }
+
+/* Focus rings */
+.theme-carbon .focus\:ring-blue-500:focus,
+.theme-carbon .focus\:ring-indigo-500:focus,
+.theme-carbon .focus\:ring-green-500:focus { --tw-ring-color: rgba(198, 244, 50, .4); }
+.theme-carbon .focus\:border-blue-500:focus,
+.theme-carbon .focus\:border-indigo-500:focus,
+.theme-carbon .focus\:border-green-500:focus { border-color: #C6F432; }
+
+/* ---------- Links ---------- */
+
+.theme-carbon .text-blue-600,
+.theme-carbon .text-blue-700,
+.theme-carbon .text-blue-800,
+.theme-carbon .text-indigo-600 { color: #4AD7D1; }
+.theme-carbon .hover\:text-blue-800:hover,
+.theme-carbon .hover\:text-blue-900:hover,
+.theme-carbon .hover\:text-blue-700:hover,
+.theme-carbon .hover\:text-indigo-900:hover { color: #C6F432; }
+
+/* ---------- Badges / status pill tints (-50/-100 bg + -700/-800 text) ---------- */
+
+.theme-carbon .bg-blue-50,
+.theme-carbon .bg-blue-100   { background-color: rgba(74, 215, 209, .12); }
+.theme-carbon .text-blue-900 { color: #4AD7D1; }
+
+.theme-carbon .bg-green-50,
+.theme-carbon .bg-green-100   { background-color: rgba(198, 244, 50, .12); }
+.theme-carbon .text-green-800,
+.theme-carbon .text-green-700,
+.theme-carbon .text-green-600 { color: #C6F432; }
+
+.theme-carbon .bg-red-50,
+.theme-carbon .bg-red-100   { background-color: rgba(255, 92, 87, .12); }
+.theme-carbon .text-red-800,
+.theme-carbon .text-red-700,
+.theme-carbon .text-red-600 { color: #FF5C57; }
+.theme-carbon .hover\:text-red-800:hover { color: #FF7470; }
+
+.theme-carbon .bg-yellow-50,
+.theme-carbon .bg-yellow-100,
+.theme-carbon .bg-amber-100   { background-color: rgba(245, 158, 11, .14); }
+.theme-carbon .text-yellow-800,
+.theme-carbon .text-yellow-700,
+.theme-carbon .text-amber-800 { color: #F5B445; }
+.theme-carbon .hover\:text-yellow-800:hover { color: #F5B445; }
+
+.theme-carbon .bg-purple-50,
+.theme-carbon .bg-purple-100,
+.theme-carbon .bg-indigo-50,
+.theme-carbon .bg-indigo-100   { background-color: rgba(166, 138, 255, .13); }
+.theme-carbon .text-purple-800,
+.theme-carbon .text-purple-700,
+.theme-carbon .text-purple-600,
+.theme-carbon .text-indigo-800 { color: #A68AFF; }
+.theme-carbon .hover\:text-purple-800:hover { color: #BCA6FF; }
+
+.theme-carbon .bg-teal-50,
+.theme-carbon .bg-teal-100   { background-color: rgba(74, 215, 209, .12); }
+.theme-carbon .text-teal-800,
+.theme-carbon .text-teal-600 { color: #4AD7D1; }
+.theme-carbon .hover\:text-teal-800:hover { color: #63E2DC; }
+
+.theme-carbon .bg-gray-100.text-gray-800,
+.theme-carbon .bg-gray-200.text-gray-800 { background-color: rgba(255, 255, 255, .08); color: #C6CAD1; }
+
+/* ---------- Sidebar ---------- */
+
+.theme-carbon [data-mobile-menu-target="sidebar"] {
+  background: #0A0C0F;
+  border-right: 1px solid rgba(255, 255, 255, .07);
+}
+/* Logo bar */
+.theme-carbon [data-mobile-menu-target="sidebar"] .bg-gray-800 {
+  background: #0A0C0F;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+/* Brand wordmark goes mono */
+.theme-carbon [data-mobile-menu-target="sidebar"] > div:first-child span {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 15px;
+  letter-spacing: -.02em;
+}
+
+/* Section headers: mono eyebrows */
+.theme-carbon [data-mobile-menu-target="sidebar"] h3 {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: .22em;
+  color: #5C636C;
+}
+.theme-carbon [data-mobile-menu-target="sidebar"] .border-gray-700 { border-color: rgba(255, 255, 255, .06); }
+
+/* Nav links */
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a {
+  font-size: 13.5px;
+  color: #8B919A;
+  border-left: 2px solid transparent;
+  border-radius: 7px;
+}
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a:hover {
+  color: #E8EAED;
+  background: rgba(255, 255, 255, .04);
+}
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a svg { color: #5C636C; }
+
+/* Active link: volt edge + tint (active links carry bg-gray-800 in markup) */
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a.bg-gray-800 {
+  background: rgba(198, 244, 50, .07);
+  color: #C6F432;
+  border-left-color: #C6F432;
+  border-radius: 0 7px 7px 0;
+}
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a.bg-gray-800 svg { color: #C6F432; }
+.theme-carbon [data-mobile-menu-target="sidebar"] nav a.hover\:bg-gray-800:hover { background: rgba(255, 255, 255, .04); }
+
+/* ---------- Customers bulk-actions bar ---------- */
+
+.theme-carbon #bulk-actions-bar {
+  background: rgba(198, 244, 50, .07);
+  border-color: rgba(198, 244, 50, .35);
+}
+.theme-carbon #bulk-actions-bar #selected-count { color: #C6F432; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+.theme-carbon #bulk-actions-bar #select-all,
+.theme-carbon #bulk-actions-bar #clear-selection { color: #8B919A; }
+.theme-carbon #bulk-actions-bar #select-all:hover,
+.theme-carbon #bulk-actions-bar #clear-selection:hover { color: #E8EAED; }
+
+/* ---------- Modal overlays ---------- */
+
+.theme-carbon .bg-opacity-50.bg-black,
+.theme-carbon .bg-black.bg-opacity-50 { background-color: rgba(0, 0, 0, .72); }
+.theme-carbon .bg-opacity-75.bg-gray-600 { background-color: rgba(0, 0, 0, .72); }
+
+/* ---------- Misc ---------- */
+
+/* Kaminari pagination current page */
+.theme-carbon .pagination .current { background: #C6F432; color: #0D0F12; }
+
+/* Flash messages keep their tint mapping from the badge section above. */
+
+/* Tooltips / dropdown panels that use bg-white pick up the panel color
+   from the .bg-white map; their ring/border comes from border maps. */
