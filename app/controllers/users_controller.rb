@@ -3,6 +3,9 @@ class UsersController < ApplicationController
   before_action :require_login
   before_action :require_admin
   before_action :set_user, only: [:show, :update_role, :toggle_active, :remove]
+  # A deleted account is gone from the system; don't let role/activation
+  # changes silently resurrect it.
+  before_action :reject_deleted_user, only: [:update_role, :toggle_active]
 
   # Hardcoded roles
   ROLES = [
@@ -12,7 +15,7 @@ class UsersController < ApplicationController
   ].freeze
 
   def index
-    @users = User.includes(:roles).order(:name)
+    @users = User.kept.includes(:roles).order(:name)
     @roles = ROLES
     # Per-user counts via two grouped queries instead of 2N COUNTs
     @customer_counts = Customer.group(:user_id).count
@@ -65,17 +68,22 @@ class UsersController < ApplicationController
     end
   end
 
-  # "Remove" a user: reassign their leads (and open tasks) to another user,
-  # revoke all roles, and deactivate the account so they can no longer sign in.
-  # The user row is kept so historical records (recordings, closed deals,
-  # activities) stay correctly attributed.
+  # Delete a user (soft delete): first reassign their leads (and open tasks) to
+  # another user, then revoke all roles and stamp the account as deleted so it
+  # can no longer sign in and drops out of the roster. The row is retained so
+  # historical records (recordings, closed deals, activities) stay attributed.
   def remove
     if @user == current_user
-      render json: { success: false, message: 'You cannot remove your own account.' }, status: :unprocessable_entity
+      render json: { success: false, message: 'You cannot delete your own account.' }, status: :unprocessable_entity
       return
     end
 
-    target = User.find_by(id: params[:reassign_to_user_id])
+    if @user.deleted?
+      render json: { success: false, message: 'This user has already been deleted.' }, status: :unprocessable_entity
+      return
+    end
+
+    target = User.kept.find_by(id: params[:reassign_to_user_id])
 
     if target.nil? || target == @user
       render json: { success: false, message: 'Please choose a valid user to reassign leads to.' }, status: :unprocessable_entity
@@ -97,7 +105,7 @@ class UsersController < ApplicationController
       # we don't want a flood of assignment emails during an offboarding.
       leads_count = @user.customers.update_all(user_id: target.id, updated_at: now)
 
-      # Reassign open tasks; completed/cancelled stay with the removed user
+      # Reassign open tasks; completed/cancelled stay with the deleted user
       tasks_count = @user.tasks.where(status: %w[pending in_progress]).update_all(user_id: target.id, updated_at: now)
 
       # Revoke roles (also detaches any manager→associate links to this user)
@@ -106,20 +114,20 @@ class UsersController < ApplicationController
       # Keep other users' role assignments, but forget who assigned them
       RoleAssignment.where(assigned_by_id: @user.id).update_all(assigned_by_id: nil)
 
-      @user.deactivate! or raise ActiveRecord::Rollback
+      @user.soft_delete!
     end
 
-    Rails.logger.info("User #{@user.id} (#{@user.email}) removed by #{current_user.email}: " \
+    Rails.logger.info("User #{@user.id} (#{@user.email}) deleted by #{current_user.email}: " \
                       "#{leads_count} leads and #{tasks_count} open tasks reassigned to user #{target.id} (#{target.email})")
 
     render json: {
       success: true,
-      message: "#{@user.name.presence || @user.email} removed. " \
+      message: "#{@user.name.presence || @user.email} deleted. " \
                "#{leads_count} #{'lead'.pluralize(leads_count)} and #{tasks_count} open #{'task'.pluralize(tasks_count)} reassigned to #{target.name.presence || target.email}."
     }
   rescue => e
-    Rails.logger.error("Failed to remove user #{@user.id}: #{e.class}: #{e.message}")
-    render json: { success: false, message: 'Failed to remove user. Nothing was changed.' }, status: :unprocessable_entity
+    Rails.logger.error("Failed to delete user #{@user.id}: #{e.class}: #{e.message}")
+    render json: { success: false, message: 'Failed to delete user. Nothing was changed.' }, status: :unprocessable_entity
   end
 
   def associates
@@ -221,6 +229,12 @@ class UsersController < ApplicationController
 
   def set_user
     @user = User.find(params[:id])
+  end
+
+  def reject_deleted_user
+    return unless @user&.deleted?
+
+    render json: { success: false, message: 'This user has been deleted.' }, status: :unprocessable_entity
   end
 
   def require_admin

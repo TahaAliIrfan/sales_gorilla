@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_11_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_11_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -825,7 +825,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_11_120000) do
     t.datetime "google_token_expires_at"
     t.boolean "active", default: true, null: false
     t.datetime "last_gmail_sync_at"
+    t.datetime "deleted_at"
     t.index ["active"], name: "index_users_on_active"
+    t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["fcm_token"], name: "index_users_on_fcm_token"
     t.index ["voip_device_id"], name: "index_users_on_voip_device_id"
   end

@@ -34,6 +34,12 @@ class User < ApplicationRecord
   # Scopes
   scope :active_users, -> { where(active: true) }
   scope :inactive_users, -> { where(active: false) }
+  # Soft delete: kept = present in the system, deleted = removed (the row is
+  # retained so historical records stay attributed). No default_scope on
+  # purpose — callers opt in with User.kept, so existing queries are never
+  # silently narrowed.
+  scope :kept, -> { where(deleted_at: nil) }
+  scope :deleted, -> { where.not(deleted_at: nil) }
 
   # Check if phone number is set
   def phone_number_set?
@@ -55,6 +61,18 @@ class User < ApplicationRecord
 
   def inactive?
     !active?
+  end
+
+  # Soft delete helpers
+  def deleted?
+    deleted_at.present?
+  end
+
+  # Mark the account as removed: deactivate so it can't sign in and stamp
+  # deleted_at so it drops out of User.kept listings. Lead/task reassignment
+  # and role revocation are handled by the caller before this is invoked.
+  def soft_delete!
+    update!(active: false, deleted_at: Time.current)
   end
 
   # Role methods

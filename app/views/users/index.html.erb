@@ -1,10 +1,10 @@
 <% role_pill = lambda do |user|
      if user.admin?
-       ['ADMIN', 'color:#C6F432;border-color:rgba(198,244,50,.45)']
+       ['ADMIN', 'color:#4F46E5;border-color:rgba(79,70,229,.35)']
      elsif user.manager?
-       ['MANAGER', 'color:#4AD7D1;border-color:rgba(74,215,209,.4)']
+       ['MANAGER', 'color:#0D9488;border-color:rgba(13,148,136,.3)']
      else
-       ['ASSOCIATE', 'color:#8B919A;border-color:rgba(139,145,154,.35)']
+       ['ASSOCIATE', 'color:#64748B;border-color:rgba(100,116,139,.3)']
      end
    end %>
 
@@ -14,68 +14,68 @@
   <div class="mb-7 flex items-end justify-between">
     <div>
       <div class="cb-eyebrow mb-1">overview // user_management</div>
-      <h1 class="text-[26px] font-bold tracking-tight text-[#E8EAED]">User Management</h1>
+      <h1 class="text-[26px] font-bold tracking-tight text-[#0F172A]">User Management</h1>
     </div>
-    <div class="cb-mono text-[11px] text-[#5C636C] hidden sm:block"><%= @users.size %> ACCOUNTS</div>
+    <div class="cb-mono text-[11px] text-[#94A3B8] hidden sm:block"><%= @users.size %> ACCOUNTS</div>
   </div>
 
   <% if notice.present? %>
-    <div class="mb-5 cb-panel px-4 py-3 text-[13px]" style="border-color:rgba(198,244,50,.4);color:#C6F432;"><%= notice %></div>
+    <div class="mb-5 cb-panel px-4 py-3 text-[13px]" style="border-color:rgba(79,70,229,.35);color:#4F46E5;"><%= notice %></div>
   <% end %>
 
   <!-- Stats strip -->
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">total_users</div>
-      <div class="cb-mono text-[30px] font-semibold text-[#E8EAED] mt-1.5 leading-none"><%= @users.size %></div>
+      <div class="cb-mono text-[30px] font-semibold text-[#0F172A] mt-1.5 leading-none"><%= @users.size %></div>
     </div>
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">admins</div>
-      <div class="cb-mono text-[30px] font-semibold text-[#C6F432] mt-1.5 leading-none"><%= @users.count(&:admin?) %></div>
+      <div class="cb-mono text-[30px] font-semibold text-[#4F46E5] mt-1.5 leading-none"><%= @users.count(&:admin?) %></div>
     </div>
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">managers</div>
-      <div class="cb-mono text-[30px] font-semibold text-[#4AD7D1] mt-1.5 leading-none"><%= @users.count(&:manager?) %></div>
+      <div class="cb-mono text-[30px] font-semibold text-[#0D9488] mt-1.5 leading-none"><%= @users.count(&:manager?) %></div>
     </div>
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">associates</div>
-      <div class="cb-mono text-[30px] font-semibold text-[#E8EAED] mt-1.5 leading-none"><%= @users.count { |u| !u.admin? && !u.manager? } %></div>
+      <div class="cb-mono text-[30px] font-semibold text-[#0F172A] mt-1.5 leading-none"><%= @users.count { |u| !u.admin? && !u.manager? } %></div>
     </div>
   </div>
 
   <!-- Roster -->
   <div class="cb-panel overflow-hidden">
-    <div class="px-5 py-4 border-b border-white/[.06] flex items-center justify-between">
+    <div class="px-5 py-4 border-b border-[#E9ECF1] flex items-center justify-between">
       <span class="cb-eyebrow">roster // roles &amp; access</span>
     </div>
 
     <div class="overflow-x-auto">
       <table class="min-w-full">
         <thead>
-          <tr class="border-b border-white/[.06] bg-white/[.02] text-left">
-            <th class="px-5 py-3 text-[#5C636C]">User</th>
-            <th class="px-5 py-3 text-[#5C636C]">Role</th>
-            <th class="px-5 py-3 text-[#5C636C]">Status</th>
-            <th class="px-5 py-3 text-[#5C636C]">Book</th>
-            <th class="px-5 py-3 text-[#5C636C] text-right">Actions</th>
+          <tr class="border-b border-[#E9ECF1] bg-[#F8FAFC] text-left">
+            <th class="px-5 py-3 text-[#94A3B8]">User</th>
+            <th class="px-5 py-3 text-[#94A3B8]">Role</th>
+            <th class="px-5 py-3 text-[#94A3B8]">Status</th>
+            <th class="px-5 py-3 text-[#94A3B8]">Book</th>
+            <th class="px-5 py-3 text-[#94A3B8] text-right">Actions</th>
           </tr>
         </thead>
         <tbody>
           <% @users.each do |user| %>
-            <tr class="border-b border-white/[.05] last:border-0 hover:bg-[#C6F432]/[.03] transition-colors" data-user-id="<%= user.id %>">
+            <tr class="border-b border-[#EEF0F3] last:border-0 hover:bg-[#4F46E5]/[.03] transition-colors" data-user-id="<%= user.id %>">
               <!-- User -->
               <td class="px-5 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-3">
                   <div class="h-9 w-9 rounded-lg grid place-items-center cb-mono text-[12px] font-semibold shrink-0
-                              <%= user.active? ? 'bg-[#4AD7D1]/15 text-[#4AD7D1]' : 'bg-white/[.06] text-[#5C636C]' %>">
+                              <%= user.active? ? 'bg-[#0D9488]/15 text-[#0D9488]' : 'bg-[#F1F5F9] text-[#94A3B8]' %>">
                     <%= (user.name.presence || user.email).first.upcase %>
                   </div>
                   <div class="min-w-0">
-                    <div class="text-[13.5px] font-medium text-[#E8EAED]">
-                      <%= link_to (user.name.presence || user.email), user_path(user), class: "hover:text-[#C6F432] transition-colors" %>
-                      <% if user == current_user %><span class="cb-mono text-[9.5px] text-[#5C636C] ml-1">YOU</span><% end %>
+                    <div class="text-[13.5px] font-medium text-[#0F172A]">
+                      <%= link_to (user.name.presence || user.email), user_path(user), class: "hover:text-[#4F46E5] transition-colors" %>
+                      <% if user == current_user %><span class="cb-mono text-[9.5px] text-[#94A3B8] ml-1">YOU</span><% end %>
                     </div>
-                    <div class="cb-mono text-[10.5px] text-[#5C636C] truncate"><%= user.email %></div>
+                    <div class="cb-mono text-[10.5px] text-[#94A3B8] truncate"><%= user.email %></div>
                   </div>
                 </div>
               </td>
@@ -86,7 +86,7 @@
                 <div class="flex items-center gap-2.5">
                   <span class="cb-pill" style="<%= style %>"><%= label %></span>
                   <select
-                    class="role-selector rounded-md bg-[#191D23] border border-white/[.1] text-[12px] text-[#C6CAD1] py-1 pl-2 pr-7 focus:outline-none focus:border-[#C6F432]"
+                    class="role-selector rounded-md bg-[#FFFFFF] border border-[#DCE0E6] text-[12px] text-[#334155] py-1 pl-2 pr-7 focus:outline-none focus:border-[#4F46E5]"
                     data-user-id="<%= user.id %>"
                     data-current-role="<%= user.admin? ? 'admin' : (user.manager? ? 'manager' : 'associate') %>"
                     <%= 'disabled' if user == current_user %>>
@@ -103,17 +103,17 @@
               <!-- Status -->
               <td class="px-5 py-4 whitespace-nowrap">
                 <% if user.active? %>
-                  <span class="cb-pill" style="color:#C6F432;border-color:rgba(198,244,50,.45)">● ACTIVE</span>
+                  <span class="cb-pill" style="color:#4F46E5;border-color:rgba(79,70,229,.35)">● ACTIVE</span>
                 <% else %>
-                  <span class="cb-pill" style="color:#FF5C57;border-color:rgba(255,92,87,.4)">○ INACTIVE</span>
+                  <span class="cb-pill" style="color:#E11D48;border-color:rgba(225,29,72,.3)">○ INACTIVE</span>
                 <% end %>
               </td>
 
               <!-- Book of business -->
               <td class="px-5 py-4 whitespace-nowrap">
-                <div class="cb-mono text-[11.5px] text-[#8B919A]">
-                  <span class="text-[#4AD7D1]"><%= @customer_counts[user.id] || 0 %></span> leads ·
-                  <span class="text-[#C6F432]"><%= @deal_counts[user.id] || 0 %></span> deals
+                <div class="cb-mono text-[11.5px] text-[#64748B]">
+                  <span class="text-[#0D9488]"><%= @customer_counts[user.id] || 0 %></span> leads ·
+                  <span class="text-[#4F46E5]"><%= @deal_counts[user.id] || 0 %></span> deals
                 </div>
               </td>
 
@@ -123,27 +123,27 @@
                   <div class="inline-flex items-center gap-1.5">
                     <% if user.manager? %>
                       <%= link_to manage_associates_user_path(user),
-                            class: "px-2.5 py-1.5 rounded-md border border-white/[.1] text-[11.5px] text-[#8B919A] hover:text-[#4AD7D1] hover:border-[#4AD7D1]/50 transition-colors" do %>
+                            class: "px-2.5 py-1.5 rounded-md border border-[#DCE0E6] text-[11.5px] text-[#64748B] hover:text-[#0D9488] hover:border-[#0D9488]/50 transition-colors" do %>
                         Team
                       <% end %>
                     <% end %>
                     <button
-                      class="toggle-active-btn px-2.5 py-1.5 rounded-md border border-white/[.1] text-[11.5px] transition-colors
-                             <%= user.active? ? 'text-[#8B919A] hover:text-[#F5B445] hover:border-[#F5B445]/50' : 'text-[#8B919A] hover:text-[#C6F432] hover:border-[#C6F432]/50' %>"
+                      class="toggle-active-btn px-2.5 py-1.5 rounded-md border border-[#DCE0E6] text-[11.5px] transition-colors
+                             <%= user.active? ? 'text-[#64748B] hover:text-[#D97706] hover:border-[#D97706]/50' : 'text-[#64748B] hover:text-[#4F46E5] hover:border-[#4F46E5]/50' %>"
                       data-user-id="<%= user.id %>"
                       data-active="<%= user.active? %>">
                       <%= user.active? ? 'Deactivate' : 'Activate' %>
                     </button>
                     <button
-                      class="remove-user-btn px-2.5 py-1.5 rounded-md border border-white/[.1] text-[11.5px] text-[#8B919A] hover:text-[#FF5C57] hover:border-[#FF5C57]/50 transition-colors"
+                      class="remove-user-btn px-2.5 py-1.5 rounded-md border border-[#DCE0E6] text-[11.5px] text-[#64748B] hover:text-[#E11D48] hover:border-[#E11D48]/50 transition-colors"
                       data-user-id="<%= user.id %>"
                       data-user-name="<%= user.name.presence || user.email %>"
                       data-lead-count="<%= @customer_counts[user.id] || 0 %>">
-                      Remove
+                      Delete
                     </button>
                   </div>
                 <% else %>
-                  <span class="cb-mono text-[10px] text-[#5C636C]">CURRENT USER</span>
+                  <span class="cb-mono text-[10px] text-[#94A3B8]">CURRENT USER</span>
                 <% end %>
               </td>
             </tr>
@@ -153,20 +153,20 @@
     </div>
 
     <% if @users.empty? %>
-      <div class="px-6 py-12 text-center text-[13px] text-[#5C636C]">No users in the system yet.</div>
+      <div class="px-6 py-12 text-center text-[13px] text-[#94A3B8]">No users in the system yet.</div>
     <% end %>
   </div>
 </div>
 
 <!-- Remove user modal -->
 <div id="remove-user-modal" class="hidden fixed inset-0 z-50 overflow-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-  <div class="cb-panel w-full max-w-md p-6" style="border-color:rgba(255,92,87,.4);">
-    <div class="cb-eyebrow mb-3" style="color:#FF5C57;">remove_user // reassign_leads</div>
-    <h3 class="text-[18px] font-bold text-[#E8EAED]">
-      Remove <span id="remove-user-name" class="text-[#FF5C57]"></span>?
+  <div class="cb-panel w-full max-w-md p-6" style="border-color:rgba(225,29,72,.3);">
+    <div class="cb-eyebrow mb-3" style="color:#E11D48;">delete_user // reassign_leads</div>
+    <h3 class="text-[18px] font-bold text-[#0F172A]">
+      Delete <span id="remove-user-name" class="text-[#E11D48]"></span>?
     </h3>
-    <p class="text-[13px] text-[#8B919A] mt-2 leading-relaxed">
-      They own <span id="remove-lead-count" class="cb-mono text-[#4AD7D1]">0</span> leads.
+    <p class="text-[13px] text-[#64748B] mt-2 leading-relaxed">
+      They own <span id="remove-lead-count" class="cb-mono text-[#0D9488]">0</span> leads.
       Choose who inherits them — their open tasks move too, their roles are revoked,
       and they can no longer sign in. Call recordings and deal history stay attributed to them.
     </p>
@@ -174,7 +174,7 @@
     <div class="mt-4">
       <label class="cb-eyebrow block mb-1.5">reassign_leads_to</label>
       <select id="reassign-target"
-              class="block w-full rounded-md bg-[#191D23] border border-white/[.12] text-[13px] text-[#E8EAED] py-2.5 px-3 focus:outline-none focus:border-[#C6F432]">
+              class="block w-full rounded-md bg-[#FFFFFF] border border-[#D5DAE1] text-[13px] text-[#0F172A] py-2.5 px-3 focus:outline-none focus:border-[#4F46E5]">
         <% @users.select(&:active?).each do |u| %>
           <option value="<%= u.id %>" data-user-id="<%= u.id %>"><%= u.name.presence || u.email %><%= ' (you)' if u == current_user %></option>
         <% end %>
@@ -183,13 +183,13 @@
 
     <div class="flex justify-end gap-2.5 mt-6">
       <button type="button" id="cancel-remove-user"
-              class="px-4 py-2 rounded-md border border-white/[.12] text-[13px] text-[#C6CAD1] hover:bg-white/[.05] transition-colors">
+              class="px-4 py-2 rounded-md border border-[#D5DAE1] text-[13px] text-[#334155] hover:bg-[#F1F5F9] transition-colors">
         Cancel
       </button>
       <button type="button" id="confirm-remove-user"
-              class="px-4 py-2 rounded-md text-[13px] font-semibold text-[#0D0F12] transition-all"
-              style="background:#FF5C57;">
-        Remove &amp; Reassign
+              class="px-4 py-2 rounded-md text-[13px] font-semibold text-[#FFFFFF] transition-all"
+              style="background:#E11D48;">
+        Delete &amp; Reassign
       </button>
     </div>
   </div>
@@ -319,7 +319,7 @@
       }
 
       this.disabled = true;
-      this.textContent = 'Removing…';
+      this.textContent = 'Deleting…';
 
       fetch(`/users/${removeTargetId}/remove`, {
         method: 'DELETE',
@@ -337,7 +337,7 @@
           setTimeout(() => window.location.reload(), 1500);
         } else {
           this.disabled = false;
-          this.textContent = 'Remove & Reassign';
+          this.textContent = 'Delete & Reassign';
           showNotification(data.message || 'Failed to remove user', 'error');
         }
       })
@@ -351,11 +351,11 @@
     // ----- Toast -----
     function showNotification(message, type) {
       const colors = {
-        success: 'border-[#C6F432] text-[#C6F432]',
-        error: 'border-[#FF5C57] text-[#FF5C57]'
+        success: 'border-[#4F46E5] text-[#4F46E5]',
+        error: 'border-[#E11D48] text-[#E11D48]'
       };
       const notification = document.createElement('div');
-      notification.className = `fixed top-4 right-4 bg-[#14171C] border ${colors[type]} px-4 py-3 rounded-lg shadow-xl z-50 max-w-md text-[13px] font-medium`;
+      notification.className = `fixed top-4 right-4 bg-[#FFFFFF] border ${colors[type]} px-4 py-3 rounded-lg shadow-xl z-50 max-w-md text-[13px] font-medium`;
       notification.textContent = message;
       document.body.appendChild(notification);
       setTimeout(() => notification.remove(), 5000);

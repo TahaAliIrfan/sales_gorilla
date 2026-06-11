@@ -1,13 +1,13 @@
 <%# Carbon dashboard. Status pill styles for customer statuses. %>
-<% customer_status_styles = Hash.new('color:#8B919A;border-color:rgba(139,145,154,.4)').merge(
-     'Pending'                 => 'color:#F5B445;border-color:rgba(245,180,69,.4)',
-     'Lead'                    => 'color:#4AD7D1;border-color:rgba(74,215,209,.4)',
-     'Contact Established'     => 'color:#4AD7D1;border-color:rgba(74,215,209,.4)',
-     'Converted'               => 'color:#C6F432;border-color:rgba(198,244,50,.45)',
-     'Proposal Sent'           => 'color:#C6F432;border-color:rgba(198,244,50,.45)',
-     'Not Interested'          => 'color:#FF5C57;border-color:rgba(255,92,87,.4)',
-     'Contact Not Established' => 'color:#FF5C57;border-color:rgba(255,92,87,.4)',
-     'Unresponsive'            => 'color:#FF5C57;border-color:rgba(255,92,87,.4)'
+<% customer_status_styles = Hash.new('color:#64748B;border-color:rgba(100,116,139,.3)').merge(
+     'Pending'                 => 'color:#D97706;border-color:rgba(217,119,6,.3)',
+     'Lead'                    => 'color:#0D9488;border-color:rgba(13,148,136,.3)',
+     'Contact Established'     => 'color:#0D9488;border-color:rgba(13,148,136,.3)',
+     'Converted'               => 'color:#4F46E5;border-color:rgba(79,70,229,.35)',
+     'Proposal Sent'           => 'color:#4F46E5;border-color:rgba(79,70,229,.35)',
+     'Not Interested'          => 'color:#E11D48;border-color:rgba(225,29,72,.3)',
+     'Contact Not Established' => 'color:#E11D48;border-color:rgba(225,29,72,.3)',
+     'Unresponsive'            => 'color:#E11D48;border-color:rgba(225,29,72,.3)'
    ) %>
 
 <div class="px-4 sm:px-6 lg:px-8 py-8 min-h-screen max-w-[1240px] mx-auto">
@@ -16,11 +16,11 @@
   <div class="mb-7 flex items-end justify-between">
     <div>
       <div class="cb-eyebrow mb-1">overview // dashboard</div>
-      <h1 class="text-[26px] font-bold tracking-tight text-[#E8EAED]">
+      <h1 class="text-[26px] font-bold tracking-tight text-[#0F172A]">
         Welcome back, <%= current_user.name || current_user.email %>
       </h1>
     </div>
-    <div class="cb-mono text-[11px] text-[#5C636C] hidden sm:block">
+    <div class="cb-mono text-[11px] text-[#94A3B8] hidden sm:block">
       <%= @today.strftime('%a %d %b %Y').upcase %>
     </div>
   </div>
@@ -34,12 +34,12 @@
         <div class="flex items-center justify-between">
           <span class="cb-eyebrow">total_customers</span>
           <% if @customers_this_month > 0 %>
-            <span class="cb-pill" style="color:#C6F432;border-color:rgba(198,244,50,.4)">+<%= @customers_this_month %> MTD</span>
+            <span class="cb-pill" style="color:#4F46E5;border-color:rgba(79,70,229,.35)">+<%= @customers_this_month %> MTD</span>
           <% end %>
         </div>
-        <div class="cb-mono text-[32px] font-semibold text-[#E8EAED] mt-2 leading-none"><%= number_with_delimiter(@total_customers) %></div>
+        <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= number_with_delimiter(@total_customers) %></div>
       </div>
-      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW ALL →
       <% end %>
     </div>
@@ -49,11 +49,11 @@
       <div class="p-5">
         <div class="flex items-center justify-between">
           <span class="cb-eyebrow">active_deals</span>
-          <span class="cb-pill" style="color:#4AD7D1;border-color:rgba(74,215,209,.4)"><%= number_to_currency(@active_deal_value, precision: 0) %></span>
+          <span class="cb-pill" style="color:#0D9488;border-color:rgba(13,148,136,.3)"><%= number_to_currency(@active_deal_value, precision: 0) %></span>
         </div>
-        <div class="cb-mono text-[32px] font-semibold text-[#E8EAED] mt-2 leading-none"><%= @active_deals %></div>
+        <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= @active_deals %></div>
       </div>
-      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW DEALS →
       <% end %>
     </div>
@@ -64,12 +64,12 @@
         <div class="flex items-center justify-between">
           <span class="cb-eyebrow">pending_tasks</span>
           <% if @overdue_tasks_count > 0 %>
-            <span class="cb-pill" style="color:#FF5C57;border-color:rgba(255,92,87,.4)"><%= @overdue_tasks_count %> OVERDUE</span>
+            <span class="cb-pill" style="color:#E11D48;border-color:rgba(225,29,72,.3)"><%= @overdue_tasks_count %> OVERDUE</span>
           <% end %>
         </div>
-        <div class="cb-mono text-[32px] font-semibold text-[#E8EAED] mt-2 leading-none"><%= @pending_tasks_count %></div>
+        <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= @pending_tasks_count %></div>
       </div>
-      <%= link_to my_tasks_tasks_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to my_tasks_tasks_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW TASKS →
       <% end %>
     </div>
@@ -79,11 +79,11 @@
       <div class="p-5">
         <div class="flex items-center justify-between">
           <span class="cb-eyebrow">call_success</span>
-          <span class="cb-pill" style="color:#8B919A;border-color:rgba(139,145,154,.35)"><%= @calls_this_month %> CALLS MTD</span>
+          <span class="cb-pill" style="color:#64748B;border-color:rgba(100,116,139,.3)"><%= @calls_this_month %> CALLS MTD</span>
         </div>
-        <div class="cb-mono text-[32px] font-semibold mt-2 leading-none <%= @call_success_rate >= 50 ? 'text-[#C6F432]' : 'text-[#E8EAED]' %>"><%= @call_success_rate %>%</div>
+        <div class="cb-mono text-[32px] font-semibold mt-2 leading-none <%= @call_success_rate >= 50 ? 'text-[#4F46E5]' : 'text-[#0F172A]' %>"><%= @call_success_rate %>%</div>
       </div>
-      <%= link_to my_recordings_recordings_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to my_recordings_recordings_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW RECORDINGS →
       <% end %>
     </div>
@@ -97,28 +97,28 @@
       <div class="cb-eyebrow mb-4">deal_performance</div>
       <div class="space-y-3">
         <div class="flex justify-between items-baseline">
-          <span class="text-[13px] text-[#8B919A]">Won</span>
-          <span class="cb-mono text-[14px] text-[#C6F432] font-semibold"><%= @won_deals %>
-            <span class="text-[#5C636C] text-[11px] font-normal ml-1"><%= number_to_currency(@won_deal_value, precision: 0) %></span>
+          <span class="text-[13px] text-[#64748B]">Won</span>
+          <span class="cb-mono text-[14px] text-[#4F46E5] font-semibold"><%= @won_deals %>
+            <span class="text-[#94A3B8] text-[11px] font-normal ml-1"><%= number_to_currency(@won_deal_value, precision: 0) %></span>
           </span>
         </div>
         <div class="flex justify-between items-baseline">
-          <span class="text-[13px] text-[#8B919A]">Lost</span>
-          <span class="cb-mono text-[14px] text-[#FF5C57] font-semibold"><%= @lost_deals %>
-            <span class="text-[#5C636C] text-[11px] font-normal ml-1"><%= number_to_currency(@lost_deal_value, precision: 0) %></span>
+          <span class="text-[13px] text-[#64748B]">Lost</span>
+          <span class="cb-mono text-[14px] text-[#E11D48] font-semibold"><%= @lost_deals %>
+            <span class="text-[#94A3B8] text-[11px] font-normal ml-1"><%= number_to_currency(@lost_deal_value, precision: 0) %></span>
           </span>
         </div>
-        <div class="pt-3 border-t border-white/[.06]">
+        <div class="pt-3 border-t border-[#E9ECF1]">
           <div class="flex justify-between items-baseline mb-2">
-            <span class="text-[13px] text-[#8B919A]">Win rate</span>
-            <span class="cb-mono text-[20px] text-[#E8EAED] font-semibold"><%= @win_rate %>%</span>
+            <span class="text-[13px] text-[#64748B]">Win rate</span>
+            <span class="cb-mono text-[20px] text-[#0F172A] font-semibold"><%= @win_rate %>%</span>
           </div>
           <div class="cb-meter"><span style="width: <%= [@win_rate, 100].min %>%"></span></div>
         </div>
-        <div class="pt-3 border-t border-white/[.06]">
+        <div class="pt-3 border-t border-[#E9ECF1]">
           <div class="cb-eyebrow mb-1">revenue_mtd</div>
-          <div class="cb-mono text-[20px] font-semibold text-[#E8EAED]"><%= number_to_currency(@revenue_this_month) %></div>
-          <div class="cb-mono text-[10.5px] text-[#5C636C] mt-0.5"><%= @deals_won_this_month %> DEALS CLOSED</div>
+          <div class="cb-mono text-[20px] font-semibold text-[#0F172A]"><%= number_to_currency(@revenue_this_month) %></div>
+          <div class="cb-mono text-[10.5px] text-[#94A3B8] mt-0.5"><%= @deals_won_this_month %> DEALS CLOSED</div>
         </div>
       </div>
     </div>
@@ -134,25 +134,25 @@
           <% top_statuses.each do |status, count| %>
             <div>
               <div class="flex justify-between items-baseline mb-1">
-                <span class="text-[12.5px] text-[#C6CAD1]"><%= status.presence || 'Unset' %></span>
-                <span class="cb-mono text-[12px] text-[#8B919A]"><%= count %></span>
+                <span class="text-[12.5px] text-[#334155]"><%= status.presence || 'Unset' %></span>
+                <span class="cb-mono text-[12px] text-[#64748B]"><%= count %></span>
               </div>
               <div class="cb-meter"><span style="width: <%= ((count.to_f / max_count) * 100).round %>%"></span></div>
             </div>
           <% end %>
           <% if other_count > 0 %>
             <div class="flex justify-between items-baseline pt-1">
-              <span class="text-[12.5px] text-[#5C636C]">Other</span>
-              <span class="cb-mono text-[12px] text-[#5C636C]"><%= other_count %></span>
+              <span class="text-[12.5px] text-[#94A3B8]">Other</span>
+              <span class="cb-mono text-[12px] text-[#94A3B8]"><%= other_count %></span>
             </div>
           <% end %>
         </div>
-        <div class="pt-3 mt-3 border-t border-white/[.06] flex justify-between items-baseline">
+        <div class="pt-3 mt-3 border-t border-[#E9ECF1] flex justify-between items-baseline">
           <span class="cb-eyebrow">total</span>
-          <span class="cb-mono text-[18px] font-semibold text-[#E8EAED]"><%= number_with_delimiter(@total_customers) %></span>
+          <span class="cb-mono text-[18px] font-semibold text-[#0F172A]"><%= number_with_delimiter(@total_customers) %></span>
         </div>
       <% else %>
-        <p class="text-[13px] text-[#5C636C] py-6 text-center">No customers yet</p>
+        <p class="text-[13px] text-[#94A3B8] py-6 text-center">No customers yet</p>
       <% end %>
     </div>
 
@@ -160,25 +160,25 @@
     <div class="cb-panel p-5">
       <div class="cb-eyebrow mb-4">this_month</div>
       <div class="space-y-1">
-        <div class="flex justify-between items-center py-2 border-b border-white/[.06]">
-          <span class="text-[13px] text-[#8B919A]">New customers</span>
-          <span class="cb-mono text-[16px] font-semibold text-[#4AD7D1]"><%= @customers_this_month %></span>
+        <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
+          <span class="text-[13px] text-[#64748B]">New customers</span>
+          <span class="cb-mono text-[16px] font-semibold text-[#0D9488]"><%= @customers_this_month %></span>
         </div>
-        <div class="flex justify-between items-center py-2 border-b border-white/[.06]">
-          <span class="text-[13px] text-[#8B919A]">Deals created</span>
-          <span class="cb-mono text-[16px] font-semibold text-[#C6F432]"><%= @deals_created_this_month %></span>
+        <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
+          <span class="text-[13px] text-[#64748B]">Deals created</span>
+          <span class="cb-mono text-[16px] font-semibold text-[#4F46E5]"><%= @deals_created_this_month %></span>
         </div>
-        <div class="flex justify-between items-center py-2 border-b border-white/[.06]">
-          <span class="text-[13px] text-[#8B919A]">Tasks completed</span>
-          <span class="cb-mono text-[16px] font-semibold text-[#A68AFF]"><%= @completed_tasks_this_month %></span>
+        <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
+          <span class="text-[13px] text-[#64748B]">Tasks completed</span>
+          <span class="cb-mono text-[16px] font-semibold text-[#7C3AED]"><%= @completed_tasks_this_month %></span>
         </div>
-        <div class="flex justify-between items-center py-2 border-b border-white/[.06]">
-          <span class="text-[13px] text-[#8B919A]">Calls made</span>
-          <span class="cb-mono text-[16px] font-semibold text-[#F5B445]"><%= @calls_this_month %></span>
+        <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
+          <span class="text-[13px] text-[#64748B]">Calls made</span>
+          <span class="cb-mono text-[16px] font-semibold text-[#D97706]"><%= @calls_this_month %></span>
         </div>
         <div class="flex justify-between items-center py-2">
-          <span class="text-[13px] text-[#8B919A]">Calls connected <span class="cb-mono text-[10px] text-[#5C636C]">≥120s</span></span>
-          <span class="cb-mono text-[16px] font-semibold text-[#C6F432]"><%= @connected_calls_this_month %></span>
+          <span class="text-[13px] text-[#64748B]">Calls connected <span class="cb-mono text-[10px] text-[#94A3B8]">≥120s</span></span>
+          <span class="cb-mono text-[16px] font-semibold text-[#4F46E5]"><%= @connected_calls_this_month %></span>
         </div>
       </div>
     </div>
@@ -189,15 +189,15 @@
     <div class="cb-panel p-5 mb-6">
       <div class="flex items-center justify-between mb-4">
         <div class="cb-eyebrow">pipeline // active deals by stage</div>
-        <span class="cb-mono text-[10.5px] text-[#5C636C]"><%= @active_deals %> ACTIVE</span>
+        <span class="cb-mono text-[10.5px] text-[#94A3B8]"><%= @active_deals %> ACTIVE</span>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <% @deal_stages.each do |stage| %>
-          <div class="rounded-lg border border-white/[.06] bg-white/[.02] hover:border-[#C6F432]/40 transition-colors p-4 text-center">
-            <div class="cb-mono text-[26px] font-semibold <%= (@deals_by_stage[stage.id] || 0) > 0 ? 'text-[#C6F432]' : 'text-[#3A4048]' %>">
+          <div class="rounded-lg border border-[#E9ECF1] bg-[#F8FAFC] hover:border-[#4F46E5]/40 transition-colors p-4 text-center">
+            <div class="cb-mono text-[26px] font-semibold <%= (@deals_by_stage[stage.id] || 0) > 0 ? 'text-[#4F46E5]' : 'text-[#CBD5E1]' %>">
               <%= @deals_by_stage[stage.id] || 0 %>
             </div>
-            <div class="text-[11px] text-[#8B919A] mt-1 truncate" title="<%= stage.name %>"><%= stage.name %></div>
+            <div class="text-[11px] text-[#64748B] mt-1 truncate" title="<%= stage.name %>"><%= stage.name %></div>
           </div>
         <% end %>
       </div>
@@ -207,15 +207,15 @@
   <!-- Tasks -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <% [
-         { title: 'today',    tasks: @today_tasks,    count: @today_tasks_count,    accent: '#4AD7D1', empty: 'No tasks due today',
+         { title: 'today',    tasks: @today_tasks,    count: @today_tasks_count,    accent: '#0D9488', empty: 'No tasks due today',
            link: my_tasks_tasks_path(due_date: 'today') },
-         { title: 'overdue',  tasks: @overdue_tasks,  count: @overdue_tasks_count,  accent: '#FF5C57', empty: 'Nothing overdue',
+         { title: 'overdue',  tasks: @overdue_tasks,  count: @overdue_tasks_count,  accent: '#E11D48', empty: 'Nothing overdue',
            link: my_tasks_tasks_path(due_date: 'overdue') },
-         { title: 'upcoming', tasks: @upcoming_tasks, count: @upcoming_tasks_count, accent: '#C6F432', empty: 'No upcoming tasks',
+         { title: 'upcoming', tasks: @upcoming_tasks, count: @upcoming_tasks_count, accent: '#4F46E5', empty: 'No upcoming tasks',
            link: my_tasks_tasks_path(due_date: 'upcoming') }
        ].each do |panel| %>
       <div class="cb-panel overflow-hidden flex flex-col">
-        <div class="px-5 py-3.5 border-b border-white/[.06] flex items-center justify-between">
+        <div class="px-5 py-3.5 border-b border-[#E9ECF1] flex items-center justify-between">
           <span class="cb-eyebrow">tasks // <%= panel[:title] %></span>
           <span class="cb-pill" style="color:<%= panel[:accent] %>;border-color:<%= panel[:accent] %>66"><%= panel[:count] %></span>
         </div>
@@ -223,17 +223,17 @@
           <% if panel[:tasks].any? %>
             <ul class="space-y-1.5">
               <% panel[:tasks].each do |task| %>
-                <li class="flex items-start gap-2 px-2.5 py-2 rounded-md hover:bg-white/[.03] transition-colors group">
+                <li class="flex items-start gap-2 px-2.5 py-2 rounded-md hover:bg-[#F6F8FB] transition-colors group">
                   <div class="flex-1 min-w-0">
-                    <p class="text-[13px] font-medium text-[#E8EAED] truncate">
-                      <%= link_to task.title, task_path(task), class: "hover:text-[#C6F432]" %>
+                    <p class="text-[13px] font-medium text-[#0F172A] truncate">
+                      <%= link_to task.title, task_path(task), class: "hover:text-[#4F46E5]" %>
                     </p>
-                    <p class="cb-mono text-[10px] mt-0.5" style="color:<%= panel[:title] == 'overdue' ? '#FF5C57' : '#5C636C' %>">
+                    <p class="cb-mono text-[10px] mt-0.5" style="color:<%= panel[:title] == 'overdue' ? '#E11D48' : '#94A3B8' %>">
                       <%= task.due_date.strftime('%b %d, %H:%M').upcase %><% if task.customer %> · <%= task.customer.name %><% end %>
                     </p>
                   </div>
                   <%= button_to complete_task_path(task), method: :patch,
-                        class: "shrink-0 p-1 rounded border border-white/[.1] text-[#5C636C] hover:text-[#C6F432] hover:border-[#C6F432]/50 transition-colors",
+                        class: "shrink-0 p-1 rounded border border-[#DCE0E6] text-[#94A3B8] hover:text-[#4F46E5] hover:border-[#4F46E5]/50 transition-colors",
                         title: "Mark complete" do %>
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
@@ -243,10 +243,10 @@
               <% end %>
             </ul>
           <% else %>
-            <p class="text-[12.5px] text-[#5C636C] py-8 text-center"><%= panel[:empty] %></p>
+            <p class="text-[12.5px] text-[#94A3B8] py-8 text-center"><%= panel[:empty] %></p>
           <% end %>
         </div>
-        <%= link_to panel[:link], class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-center text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+        <%= link_to panel[:link], class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
           VIEW ALL →
         <% end %>
       </div>
@@ -258,60 +258,60 @@
 
     <!-- My Active Deals -->
     <div class="cb-panel overflow-hidden flex flex-col">
-      <div class="px-5 py-3.5 border-b border-white/[.06]">
+      <div class="px-5 py-3.5 border-b border-[#E9ECF1]">
         <span class="cb-eyebrow">my_active_deals</span>
       </div>
       <div class="p-3 flex-1">
         <% if @recent_deals.any? %>
           <ul class="space-y-1.5">
             <% @recent_deals.each do |deal| %>
-              <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-white/[.03] transition-colors">
+              <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-[#F6F8FB] transition-colors">
                 <div class="flex-1 min-w-0">
-                  <p class="text-[13.5px] font-medium text-[#E8EAED] truncate">
-                    <%= link_to deal.title, deal_path(deal), class: "hover:text-[#C6F432]" %>
+                  <p class="text-[13.5px] font-medium text-[#0F172A] truncate">
+                    <%= link_to deal.title, deal_path(deal), class: "hover:text-[#4F46E5]" %>
                   </p>
-                  <p class="cb-mono text-[10px] text-[#5C636C] mt-0.5 truncate">
+                  <p class="cb-mono text-[10px] text-[#94A3B8] mt-0.5 truncate">
                     <%= deal.customer&.name || 'NO CUSTOMER' %> · <%= deal.deal_stage.name.upcase %>
                   </p>
                 </div>
-                <span class="cb-mono text-[13px] font-semibold text-[#4AD7D1] whitespace-nowrap"><%= number_to_currency(deal.amount, precision: 0) %></span>
+                <span class="cb-mono text-[13px] font-semibold text-[#0D9488] whitespace-nowrap"><%= number_to_currency(deal.amount, precision: 0) %></span>
               </li>
             <% end %>
           </ul>
         <% else %>
-          <p class="text-[12.5px] text-[#5C636C] py-8 text-center">No active deals</p>
+          <p class="text-[12.5px] text-[#94A3B8] py-8 text-center">No active deals</p>
         <% end %>
       </div>
-      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-center text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW ALL DEALS →
       <% end %>
     </div>
 
     <!-- Recent Customers -->
     <div class="cb-panel overflow-hidden flex flex-col">
-      <div class="px-5 py-3.5 border-b border-white/[.06]">
+      <div class="px-5 py-3.5 border-b border-[#E9ECF1]">
         <span class="cb-eyebrow">recent_customers</span>
       </div>
       <div class="p-3 flex-1">
         <% if @recent_customers.any? %>
           <ul class="space-y-1.5">
             <% @recent_customers.each do |customer| %>
-              <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-white/[.03] transition-colors">
+              <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-[#F6F8FB] transition-colors">
                 <div class="flex-1 min-w-0">
-                  <p class="text-[13.5px] font-medium text-[#E8EAED] truncate">
-                    <%= link_to customer.name, customer_path(customer), class: "hover:text-[#C6F432]" %>
+                  <p class="text-[13.5px] font-medium text-[#0F172A] truncate">
+                    <%= link_to customer.name, customer_path(customer), class: "hover:text-[#4F46E5]" %>
                   </p>
-                  <p class="cb-mono text-[10px] text-[#5C636C] mt-0.5 truncate"><%= customer.email.presence || 'NO EMAIL' %></p>
+                  <p class="cb-mono text-[10px] text-[#94A3B8] mt-0.5 truncate"><%= customer.email.presence || 'NO EMAIL' %></p>
                 </div>
                 <span class="cb-pill" style="<%= customer_status_styles[customer.status] %>"><%= (customer.status.presence || 'UNSET').upcase %></span>
               </li>
             <% end %>
           </ul>
         <% else %>
-          <p class="text-[12.5px] text-[#5C636C] py-8 text-center">No recent customers</p>
+          <p class="text-[12.5px] text-[#94A3B8] py-8 text-center">No recent customers</p>
         <% end %>
       </div>
-      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-white/[.06] cb-mono text-[10.5px] text-center text-[#8B919A] hover:text-[#C6F432] transition-colors" do %>
+      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
         VIEW ALL CUSTOMERS →
       <% end %>
     </div>
