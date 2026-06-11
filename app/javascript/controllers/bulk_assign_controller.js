@@ -16,8 +16,18 @@ export default class extends Controller {
   setupEventListeners() {
     // Use event delegation for checkboxes to handle dynamically loaded content
     document.addEventListener('change', (event) => {
-      if (event.target.matches('.customer-checkbox, #select-all-checkbox')) {
-        console.log(`Checkbox changed: ${event.target.className}, checked: ${event.target.checked}, data-id: ${event.target.getAttribute('data-id')}`)
+      if (event.target.matches('.customer-checkbox')) {
+        // Each customer is rendered twice (desktop table + mobile card) with the
+        // same data-id. Keep both copies in sync so unchecking one view also
+        // unchecks the other, otherwise the "unchecked" id leaks back in.
+        const id = event.target.getAttribute('data-id')
+        if (id) {
+          document.querySelectorAll(`.customer-checkbox[data-id="${id}"]`).forEach(cb => {
+            cb.checked = event.target.checked
+          })
+        }
+        this.updateBulkActions()
+      } else if (event.target.matches('#select-all-checkbox')) {
         this.updateBulkActions()
       }
     })
@@ -137,31 +147,38 @@ export default class extends Controller {
     event.target.submit()
   }
   
+  // Unique data-ids of all checked customer checkboxes. Deduped because each
+  // customer has two checkboxes (desktop table + mobile card) sharing a data-id.
+  selectedCustomerIds() {
+    const ids = new Set()
+    document.querySelectorAll(".customer-checkbox:checked").forEach(checkbox => {
+      const id = checkbox.getAttribute("data-id")
+      if (id && id !== "") {
+        ids.add(id)
+      }
+    })
+    return Array.from(ids)
+  }
+
   updateHiddenFields() {
     // Update customer IDs directly on the form input elements
-    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
+    const selectedCustomerIds = this.selectedCustomerIds()
     const bulkCustomerIdsInput = document.getElementById("bulk-customer-ids")
     const bulkStatusCustomerIdsInput = document.getElementById("bulk-status-customer-ids")
     const bulkDeleteCustomerIdsInput = document.getElementById("bulk-delete-customer-ids")
 
-    if (selectedCustomerCheckboxes.length > 0) {
-      const selectedCustomerIds = Array.from(selectedCustomerCheckboxes)
-          .map(checkbox => checkbox.getAttribute("data-id"))
-          .filter(id => id && id !== "")
+    if (selectedCustomerIds.length > 0) {
+      const customerIdsString = selectedCustomerIds.join(",")
+      console.log(`Setting customer IDs: ${customerIdsString}`)
 
-      if (selectedCustomerIds.length > 0) {
-        const customerIdsString = selectedCustomerIds.join(",")
-        console.log(`Setting customer IDs: ${customerIdsString}`)
-
-        if (bulkCustomerIdsInput) {
-          bulkCustomerIdsInput.value = customerIdsString
-        }
-        if (bulkStatusCustomerIdsInput) {
-          bulkStatusCustomerIdsInput.value = customerIdsString
-        }
-        if (bulkDeleteCustomerIdsInput) {
-          bulkDeleteCustomerIdsInput.value = customerIdsString
-        }
+      if (bulkCustomerIdsInput) {
+        bulkCustomerIdsInput.value = customerIdsString
+      }
+      if (bulkStatusCustomerIdsInput) {
+        bulkStatusCustomerIdsInput.value = customerIdsString
+      }
+      if (bulkDeleteCustomerIdsInput) {
+        bulkDeleteCustomerIdsInput.value = customerIdsString
       }
     } else {
       if (bulkCustomerIdsInput) {
@@ -225,9 +242,8 @@ export default class extends Controller {
   }
   
   updateBulkActions() {
-    // Count selected customers
-    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
-    const selectedCustomerCount = selectedCustomerCheckboxes.length
+    // Count selected customers (deduped across desktop + mobile checkboxes)
+    const selectedCustomerCount = this.selectedCustomerIds().length
     
     // Update the selected count in the bulk actions bar
     const selectedCountElement = document.getElementById("selected-count")
@@ -253,9 +269,8 @@ export default class extends Controller {
     event.preventDefault()
     
     // Double check the selection count
-    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
-    const totalSelected = selectedCustomerCheckboxes.length
-    
+    const totalSelected = this.selectedCustomerIds().length
+
     if (totalSelected === 0) {
       console.error("No customers selected for bulk assignment")
       alert("Please select at least one customer to assign.")
@@ -314,9 +329,8 @@ export default class extends Controller {
     event.preventDefault()
     
     // Double check the selection count
-    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
-    const totalSelected = selectedCustomerCheckboxes.length
-    
+    const totalSelected = this.selectedCustomerIds().length
+
     if (totalSelected === 0) {
       console.error("No customers selected for bulk status change")
       alert("Please select at least one customer to change status.")
@@ -346,8 +360,7 @@ export default class extends Controller {
   openBulkDeleteModal(event) {
     event.preventDefault()
 
-    const selectedCustomerCheckboxes = document.querySelectorAll(".customer-checkbox:checked")
-    const totalSelected = selectedCustomerCheckboxes.length
+    const totalSelected = this.selectedCustomerIds().length
 
     if (totalSelected === 0) {
       alert("Please select at least one customer to delete.")
