@@ -273,6 +273,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # Lead webhooks (admin) — self-service Zapier/Meta intake endpoints
+  resources :lead_webhooks, except: [:show] do
+    member do
+      patch :toggle_active
+    end
+  end
+
   # API routes
   namespace :api do
     namespace :pk do
@@ -282,7 +289,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       post 'cost_calculator', to: 'cost_calculator#cost_calculator'
       post 'website_lead', to: 'website_lead#create'
-      post 'inbound_lead', to: 'cost_calculatodr#inbound_lead'
+      post 'inbound_lead', to: 'cost_calculator#inbound_lead'
+      post 'leads/:token', to: 'lead_intake#create', as: :lead_intake
       post 'init_estimates', to: 'cost_calculator#init_estimates'
       post 'submit_estimate', to: 'cost_calculator#submit_estimate'
 

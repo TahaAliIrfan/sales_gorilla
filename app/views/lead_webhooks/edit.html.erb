@@ -1,0 +1,26 @@
+<div class="px-4 sm:px-6 lg:px-8 py-8 min-h-screen max-w-[680px] mx-auto">
+  <div class="mb-7">
+    <div class="cb-eyebrow mb-1">integrations // lead_webhooks // edit</div>
+    <h1 class="text-[26px] font-bold tracking-tight text-[#0F172A]"><%= @lead_webhook.name %></h1>
+  </div>
+
+  <div class="cb-panel p-6 mb-5">
+    <div class="cb-eyebrow mb-2">endpoint_url</div>
+    <code class="cb-mono text-[12px] text-[#334155] bg-[#F1F5F9] rounded px-2.5 py-1.5 block break-all"><%= api_v1_lead_intake_url(token: @lead_webhook.token) %></code>
+    <p class="text-[11.5px] text-[#94A3B8] mt-2">The token is fixed for the life of the webhook. Delete and recreate to rotate it.</p>
+  </div>
+
+  <div class="cb-panel p-6">
+    <%= render 'form' %>
+  </div>
+
+  <% if @lead_webhook.last_payload.present? %>
+    <div class="cb-panel p-6 mt-5">
+      <div class="cb-eyebrow mb-2">last_received_payload <%= "// #{time_ago_in_words(@lead_webhook.last_received_at)} ago" if @lead_webhook.last_received_at %></div>
+      <% if @lead_webhook.last_error.present? %>
+        <div class="cb-mono text-[11px] text-[#E11D48] mb-2">error: <%= @lead_webhook.last_error %></div>
+      <% end %>
+      <pre class="cb-mono text-[11px] text-[#334155] bg-[#F1F5F9] rounded px-3 py-2.5 overflow-x-auto"><%= JSON.pretty_generate(@lead_webhook.last_payload) %></pre>
+    </div>
+  <% end %>
+</div>

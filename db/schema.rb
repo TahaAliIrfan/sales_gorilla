@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_11_160000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_12_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -503,6 +503,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_11_160000) do
     t.index ["public_token"], name: "index_invoices_on_public_token", unique: true
     t.index ["status"], name: "index_invoices_on_status"
     t.index ["user_id"], name: "index_invoices_on_user_id"
+  end
+
+  create_table "lead_webhooks", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "token", null: false
+    t.string "lead_source", null: false
+    t.string "description"
+    t.boolean "active", default: true, null: false
+    t.integer "leads_count", default: 0, null: false
+    t.datetime "last_received_at"
+    t.jsonb "last_payload"
+    t.string "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["token"], name: "index_lead_webhooks_on_token", unique: true
   end
 
   create_table "meeting_participants", force: :cascade do |t|
