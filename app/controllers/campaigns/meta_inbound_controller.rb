@@ -35,11 +35,23 @@ module Campaigns
         lead_source: "Inbound",
         status: "Pending",
         meta_lead_id: params[:meta_lead_id],
-        facebook_click_id: params[:facebook_click_id] || params[:fbclid],
-        browser_id: params[:browser_id],
+        facebook_click_id: resolved_fbc,
+        browser_id: params[:browser_id] || cookies[:_fbp],
         meta_campaign_id: params[:meta_campaign_id],
         meta_adset_id: params[:meta_adset_id],
-        meta_ad_id: params[:meta_ad_id]
+        meta_ad_id: params[:meta_ad_id],
+        # Address identifiers Meta hashes for matching (ct/st/zp/country).
+        city: params[:city],
+        state: params[:state],
+        zip: params[:zip],
+        country: params[:country],
+        # Meta CAPI "website" Lead event match-quality fields. Prefer values the
+        # caller passed explicitly (a server-to-server relay like Zapier knows the
+        # real browser context); fall back to this request when the browser POSTs
+        # the form directly here.
+        client_ip_address: params[:client_ip_address],
+        client_user_agent: params[:client_user_agent],
+        event_source_url: params[:event_source_url]
       )
 
       if customer.save
@@ -47,6 +59,22 @@ module Campaigns
       else
         render json: { success: false, errors: customer.errors.full_messages }, status: :unprocessable_entity
       end
+    end
+
+    private
+
+    # The Meta click identifier (_fbc). Prefer an already-formed fbc value (passed
+    # explicitly or read from the _fbc cookie when the browser POSTs directly).
+    # Otherwise build it from the raw fbclid using Meta's documented format:
+    # fb.<subdomainIndex>.<creationTimeMs>.<fbclid>.
+    def resolved_fbc
+      explicit = params[:fbc].presence || params[:facebook_click_id].presence || cookies[:_fbc].presence
+      return explicit if explicit
+
+      fbclid = params[:fbclid].presence
+      return nil if fbclid.blank?
+
+      "fb.1.#{(Time.now.to_f * 1000).to_i}.#{fbclid}"
     end
   end
 end

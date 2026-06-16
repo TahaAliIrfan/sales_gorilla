@@ -173,7 +173,8 @@
     <%# Ads / UTM (admin only) === %>
     <% if current_user&.admin? %>
       <% has_google_ads   = customer.gclid.present? || customer.gbraid.present? || customer.wbraid.present? %>
-      <% has_facebook_ads = customer.fbclid.present? || customer.facebook_click_id.present? || customer.meta_lead_id.present? || customer.meta_campaign_id.present? %>
+      <% has_meta_match_data = customer.client_ip_address.present? || customer.client_user_agent.present? || customer.event_source_url.present? || customer.zip.present? %>
+      <% has_facebook_ads = customer.fbclid.present? || customer.facebook_click_id.present? || customer.meta_lead_id.present? || customer.meta_campaign_id.present? || customer.browser_id.present? || has_meta_match_data %>
       <% has_utm          = customer.utm_source.present? || customer.utm_medium.present? || customer.utm_campaign.present? %>
       <% if has_google_ads || has_facebook_ads || has_utm %>
         <%= render "shared/panel", eyebrow: "Ads conversion data",
@@ -226,6 +227,22 @@
                   </div>
                 <% end %>
               </dl>
+
+              <%# CAPI match-quality fields — owner only (contains visitor IP / UA PII) %>
+              <% if current_user&.owner? && has_meta_match_data %>
+                <div class="mt-4 border-t border-[var(--color-line)] pt-4">
+                  <p class="mono mb-3 inline-flex items-center rounded-full bg-[var(--color-line)] px-2.5 py-0.5 text-[10px] font-semibold text-ink-soft">Match-quality data · Owner only</p>
+                  <dl class="grid gap-2 text-sm md:grid-cols-2">
+                    <% [ [ "External ID", customer.id ], [ "Client IP", customer.client_ip_address ], [ "Zip", customer.zip ], [ "Event source URL", customer.event_source_url ], [ "Client user agent", customer.client_user_agent ] ].each do |k, v| %>
+                      <% next if v.blank? %>
+                      <div class="flex items-center justify-between gap-3 rounded-md bg-paper px-3 py-2 ring-1 ring-[var(--color-line)]">
+                        <dt class="shrink-0 text-ink-soft"><%= k %></dt>
+                        <dd class="mono truncate text-xs text-ink" title="<%= v %>"><%= v %></dd>
+                      </div>
+                    <% end %>
+                  </dl>
+                </div>
+              <% end %>
             </div>
           <% end %>
 

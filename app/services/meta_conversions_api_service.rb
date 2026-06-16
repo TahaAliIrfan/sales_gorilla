@@ -245,13 +245,20 @@ class MetaConversionsApiService
       event_name: event_name,
       event_time: Time.now.to_i,
       action_source: action_source,
-      user_data: user_data_for(customer),
+      user_data: user_data_for(customer, action_source),
       custom_data: custom_data,
       original_event_data: {
         event_name: event_name,
         event_time: customer.created_at.to_i
       }
     }
+
+    # Browser-sourced events carry the page URL and a deterministic event_id so
+    # Meta can dedupe this server event against the browser pixel's matching hit.
+    if action_source == "website"
+      event[:event_source_url] = customer.event_source_url if customer.respond_to?(:event_source_url) && customer.event_source_url.present?
+      event[:event_id] = "lead_#{customer.id}"
+    end
 
     event[:messaging_channel] = options[:messaging_channel] if options[:messaging_channel].present?
 
@@ -265,13 +272,17 @@ class MetaConversionsApiService
   end
 
   # Assembles user_data hash; only includes keys that have a value on the record.
-  # All PII must be SHA256 hashed before sending (except lead_id, fbc, fbp).
-  def user_data_for(customer)
+  # All PII must be SHA256 hashed before sending (except lead_id, fbc, fbp, and
+  # the un-hashed client_ip_address / client_user_agent on website events).
+  def user_data_for(customer, action_source = nil)
     data = {}
 
     data[:em]      = sha256(customer.email.downcase.strip) if customer.email.present?
     data[:ph]      = sha256(normalize_phone(customer.phone)) if customer.phone.present?
     data[:lead_id] = customer.meta_lead_id.to_i             if customer.meta_lead_id.present?
+
+    # Our internal id, hashed — a stable identifier Meta can match across events.
+    data[:external_id] = sha256(customer.id) if customer.id.present?
 
     first_name, last_name = split_name(customer.name)
     data[:fn] = sha256(first_name) if first_name.present?
@@ -281,10 +292,19 @@ class MetaConversionsApiService
     data[:country] = sha256(country.downcase.strip) if country.present?
     data[:ct]      = sha256(customer.city.downcase.strip)  if customer.city.present?
     data[:st]      = sha256(customer.state.downcase.strip) if customer.state.present?
+    data[:zp]      = sha256(customer.zip.downcase.strip)   if customer.respond_to?(:zip) && customer.zip.present?
 
     fbc_value = customer.facebook_click_id.presence || customer.fbclid.presence
     data[:fbc] = fbc_value if fbc_value.present?
     data[:fbp] = customer.browser_id if customer.browser_id.present?
+
+    # IP and User Agent are sent un-hashed and ONLY on browser-sourced events.
+    # A server (system_generated) event has no browser context to read them from,
+    # and sending stale/relay values there would hurt match quality.
+    if action_source == "website"
+      data[:client_ip_address] = customer.client_ip_address if customer.respond_to?(:client_ip_address) && customer.client_ip_address.present?
+      data[:client_user_agent] = customer.client_user_agent if customer.respond_to?(:client_user_agent) && customer.client_user_agent.present?
+    end
 
     data
   end
