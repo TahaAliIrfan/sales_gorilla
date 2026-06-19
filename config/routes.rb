@@ -44,6 +44,14 @@ Rails.application.routes.draw do
       get :check_subdomain, on: :collection
     end
 
+    # Platform admin panel — cross-org, super-admin only (the app owner).
+    # Lives on the root host (no tenant); access is gated in Admin::BaseController.
+    namespace :admin do
+      root "dashboard#index"
+      resources :organizations, only: %i[index show destroy]
+      resources :users, only: %i[index show destroy]
+    end
+
     # Dev login (only available in development).
    # if Rails.env.development?
       get "/dev_login", to: "dev_login#show", as: :dev_login

@@ -1,0 +1,55 @@
+<div class="mb-8">
+  <p class="micro">Platform admin</p>
+  <h1 class="mt-1 font-display text-2xl font-bold text-ink">Overview</h1>
+</div>
+
+<div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+  <% [
+       [ "Organizations", @organizations_count, admin_organizations_path ],
+       [ "Users", @users_count, admin_users_path ],
+       [ "Super admins", @super_admins_count, nil ],
+       [ "Customers", @customers_count, nil ]
+     ].each do |label, value, path| %>
+    <% card = capture do %>
+      <div class="rounded-xl bg-panel p-5 shadow-card ring-1 ring-[var(--color-line-2)] <%= 'transition hover:ring-[var(--brand-primary)]' if path %>">
+        <p class="micro"><%= label %></p>
+        <p class="mt-2 font-display text-3xl font-bold text-ink"><%= value %></p>
+      </div>
+    <% end %>
+    <% if path %><%= link_to card, path, class: "block" %><% else %><%= card %><% end %>
+  <% end %>
+</div>
+
+<div class="mt-8 grid gap-6 lg:grid-cols-2">
+  <%= render "shared/panel", eyebrow: "Recent", title: "Organizations",
+        actions: link_to("View all", admin_organizations_path, class: "text-[var(--brand-primary)]") do %>
+    <% if @recent_organizations.any? %>
+      <ul class="divide-y divide-[var(--color-line)]">
+        <% @recent_organizations.each do |org| %>
+          <li class="flex items-center justify-between py-2.5">
+            <%= link_to org.name, admin_organization_path(org), class: "font-medium text-ink hover:text-[var(--brand-primary)]" %>
+            <span class="mono text-xs text-ink-soft"><%= org.subdomain %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-ink-soft">No organizations yet.</p>
+    <% end %>
+  <% end %>
+
+  <%= render "shared/panel", eyebrow: "Recent", title: "Users",
+        actions: link_to("View all", admin_users_path, class: "text-[var(--brand-primary)]") do %>
+    <% if @recent_users.any? %>
+      <ul class="divide-y divide-[var(--color-line)]">
+        <% @recent_users.each do |user| %>
+          <li class="flex items-center justify-between py-2.5">
+            <%= link_to (user.name.presence || user.email), admin_user_path(user), class: "min-w-0 truncate font-medium text-ink hover:text-[var(--brand-primary)]" %>
+            <% if user.super_admin? %><%= render "shared/status_pill", label: "Super admin", tone: "info" %><% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-ink-soft">No users yet.</p>
+    <% end %>
+  <% end %>
+</div>

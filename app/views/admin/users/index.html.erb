@@ -1,0 +1,49 @@
+<div class="mb-8 flex items-end justify-between gap-4">
+  <div>
+    <p class="micro">Platform admin</p>
+    <h1 class="mt-1 font-display text-2xl font-bold text-ink">Users</h1>
+  </div>
+  <span class="text-sm text-ink-soft"><%= pluralize(@users.length, "user") %></span>
+</div>
+
+<div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-[var(--color-line)] text-left text-ink-soft">
+        <th class="px-5 py-3 font-medium">User</th>
+        <th class="px-5 py-3 font-medium">Email</th>
+        <th class="px-5 py-3 font-medium">Orgs</th>
+        <th class="px-5 py-3 font-medium">Status</th>
+        <th class="px-5 py-3 font-medium">Created</th>
+        <th class="px-5 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[var(--color-line)]">
+      <% @users.each do |user| %>
+        <tr class="hover:bg-paper">
+          <td class="px-5 py-3">
+            <%= link_to (user.name.presence || "—"), admin_user_path(user), class: "font-medium text-ink hover:text-[var(--brand-primary)]" %>
+          </td>
+          <td class="px-5 py-3"><span class="mono text-xs text-ink-soft"><%= user.email %></span></td>
+          <td class="px-5 py-3 text-ink-soft"><%= user.memberships_count %></td>
+          <td class="px-5 py-3">
+            <% if user.super_admin? %>
+              <%= render "shared/status_pill", label: "Super admin", tone: "info" %>
+            <% elsif !user.active? %>
+              <%= render "shared/status_pill", label: "Inactive", tone: "muted" %>
+            <% else %>
+              <%= render "shared/status_pill", label: "Active", tone: "ok" %>
+            <% end %>
+          </td>
+          <td class="px-5 py-3 text-ink-soft"><%= user.created_at.strftime("%b %-d, %Y") %></td>
+          <td class="px-5 py-3 text-right">
+            <%= link_to "View", admin_user_path(user), class: "text-[var(--brand-primary)] hover:underline" %>
+          </td>
+        </tr>
+      <% end %>
+      <% if @users.empty? %>
+        <tr><td colspan="6" class="px-5 py-8 text-center text-ink-soft">No users yet.</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

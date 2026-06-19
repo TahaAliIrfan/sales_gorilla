@@ -1,0 +1,39 @@
+<div class="mb-8 flex items-end justify-between gap-4">
+  <div>
+    <p class="micro">Platform admin</p>
+    <h1 class="mt-1 font-display text-2xl font-bold text-ink">Organizations</h1>
+  </div>
+  <span class="text-sm text-ink-soft"><%= pluralize(@organizations.length, "organization") %></span>
+</div>
+
+<div class="overflow-hidden rounded-xl bg-panel shadow-card ring-1 ring-[var(--color-line-2)]">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-[var(--color-line)] text-left text-ink-soft">
+        <th class="px-5 py-3 font-medium">Organization</th>
+        <th class="px-5 py-3 font-medium">Subdomain</th>
+        <th class="px-5 py-3 font-medium">Members</th>
+        <th class="px-5 py-3 font-medium">Created</th>
+        <th class="px-5 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-[var(--color-line)]">
+      <% @organizations.each do |org| %>
+        <tr class="hover:bg-paper">
+          <td class="px-5 py-3">
+            <%= link_to org.name, admin_organization_path(org), class: "font-medium text-ink hover:text-[var(--brand-primary)]" %>
+          </td>
+          <td class="px-5 py-3"><span class="mono text-xs text-ink-soft"><%= org.subdomain %></span></td>
+          <td class="px-5 py-3 text-ink-soft"><%= org.members_count %></td>
+          <td class="px-5 py-3 text-ink-soft"><%= org.created_at.strftime("%b %-d, %Y") %></td>
+          <td class="px-5 py-3 text-right">
+            <%= link_to "View", admin_organization_path(org), class: "text-[var(--brand-primary)] hover:underline" %>
+          </td>
+        </tr>
+      <% end %>
+      <% if @organizations.empty? %>
+        <tr><td colspan="5" class="px-5 py-8 text-center text-ink-soft">No organizations yet.</td></tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

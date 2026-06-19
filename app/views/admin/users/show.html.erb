@@ -1,0 +1,83 @@
+<div class="mb-6">
+  <%= link_to "← Users", admin_users_path, class: "text-sm text-ink-soft hover:text-ink" %>
+</div>
+
+<div class="mb-8 flex items-center gap-4">
+  <span class="inline-flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white" style="background: var(--brand-primary)"><%= (@user.name.presence || @user.email).to_s.strip[0]&.upcase %></span>
+  <div>
+    <h1 class="font-display text-2xl font-bold text-ink"><%= @user.name.presence || "—" %></h1>
+    <p class="mono text-sm text-ink-soft"><%= @user.email %></p>
+  </div>
+  <% if @user.super_admin? %><div class="ml-2"><%= render "shared/status_pill", label: "Super admin", tone: "info" %></div><% end %>
+</div>
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="lg:col-span-2 space-y-6">
+    <%= render "shared/panel", eyebrow: "Details", title: "User" do %>
+      <dl class="grid gap-2 text-sm sm:grid-cols-2">
+        <% [
+             [ "ID", @user.id ],
+             [ "Email", @user.email ],
+             [ "Phone", @user.phone_number ],
+             [ "Active", @user.active? ? "Yes" : "No" ],
+             [ "Sign-in count", @user.sign_in_count ],
+             [ "Last sign-in", @user.last_sign_in_at&.strftime("%b %-d, %Y %H:%M") ],
+             [ "Created", @user.created_at.strftime("%b %-d, %Y %H:%M") ]
+           ].each do |k, v| %>
+          <div class="flex items-center justify-between rounded-md bg-paper px-3 py-2 ring-1 ring-[var(--color-line)]">
+            <dt class="text-ink-soft"><%= k %></dt>
+            <dd class="mono truncate text-xs text-ink" title="<%= v %>"><%= v.presence || "—" %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+
+    <%= render "shared/panel", eyebrow: "Access", title: "Memberships (#{@memberships.size})" do %>
+      <% if @memberships.any? %>
+        <ul class="divide-y divide-[var(--color-line)]">
+          <% @memberships.each do |m| %>
+            <li class="flex items-center justify-between py-2.5 text-sm">
+              <%= link_to (m.organization&.name || "—"), (m.organization ? admin_organization_path(m.organization) : "#"), class: "min-w-0 truncate font-medium text-ink hover:text-[var(--brand-primary)]" %>
+              <span class="text-xs text-ink-soft"><%= m.access_role&.name %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-sm text-ink-soft">No memberships.</p>
+      <% end %>
+    <% end %>
+  </div>
+
+  <div class="space-y-6">
+    <%= render "shared/panel", eyebrow: "Data", title: "Owned records" do %>
+      <dl class="space-y-2 text-sm">
+        <% @stats.each do |label, count| %>
+          <div class="flex items-center justify-between rounded-md bg-paper px-3 py-2 ring-1 ring-[var(--color-line)]">
+            <dt class="capitalize text-ink-soft"><%= label %></dt>
+            <dd class="font-semibold text-ink"><%= count %></dd>
+          </div>
+        <% end %>
+      </dl>
+    <% end %>
+
+    <% if @user == current_user %>
+      <div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[var(--color-line-2)]">
+        <p class="micro">Danger zone</p>
+        <p class="mt-2 text-sm text-ink-soft">This is your own account — it can't be deleted from here.</p>
+      </div>
+    <% else %>
+      <div class="rounded-xl bg-panel p-6 shadow-card ring-1 ring-[#dc2626]/30">
+        <p class="micro" style="color:#991b1b">Danger zone</p>
+        <p class="mt-1 font-display text-base font-bold text-ink">Delete user</p>
+        <p class="mt-2 text-sm text-ink-soft">This permanently deletes the account and its memberships. It can only succeed once records they own (customers, deals) are reassigned or removed.</p>
+        <%= form_with url: admin_user_path(@user), method: :delete, class: "mt-4 space-y-3" do |f| %>
+          <label class="block text-xs font-medium text-ink-soft">Type <span class="mono text-ink"><%= @user.email %></span> to confirm</label>
+          <%= f.text_field :confirm_email, autocomplete: "off", class: "w-full rounded-md border border-[var(--color-line)] bg-paper px-3 py-2 text-sm text-ink focus:border-[var(--brand-primary)] focus:outline-none" %>
+          <%= f.submit "Delete user",
+                class: "w-full cursor-pointer rounded-md bg-[#dc2626] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b91c1c]",
+                data: { turbo_confirm: "Permanently delete #{@user.email}? This cannot be undone." } %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
