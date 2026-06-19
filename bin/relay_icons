@@ -28,6 +28,8 @@ ICONS=(
   mic mic-off grid-3x3
   trash-2
   lock frown dollar-sign refresh-cw minus
+  bold italic underline strikethrough list list-ordered link-2 unlink
+  remove-formatting
 )
 
 for name in "${ICONS[@]}"; do

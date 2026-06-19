@@ -3,6 +3,7 @@ require "base64"
 require "mail"
 require "securerandom"
 require "uri"
+require "cgi"
 
 class GmailService
   attr_reader :gmail, :user
@@ -131,6 +132,17 @@ class GmailService
     Rails.logger.info("Sending email to #{customer.email} with #{attachments.length} attachments")
 
     begin
+      # Keep the plain-text version from the ORIGINAL body before we wrap it in
+      # presentational HTML — wrapper markup/styles would otherwise leak into it.
+      plain_text = body_text.presence || strip_html(body_html)
+
+      # Normalize the body into well-formed, styled HTML so the delivered email
+      # is always formatted. Plain-text bodies (newlines only) get paragraph/<br>
+      # conversion; already-HTML bodies (from the rich-text composer) are wrapped
+      # in a consistent base-font container so spacing and typography render the
+      # same in every mail client.
+      body_html = build_html_body(body_html)
+
       # Inject the open-tracking pixel before building the MIME structure.
       # The token is generated here and re-used when the Email row is created
       # so the pixel hit (which carries the token) maps to this exact email.
@@ -140,9 +152,6 @@ class GmailService
         tracking_token: tracking_token,
         base_url: tracking_base_url
       )
-
-      # Generate plain text from HTML if not provided
-      plain_text = body_text.presence || strip_html(body_html)
 
       # Prepare attachment data first
       attachment_data = []
@@ -886,6 +895,38 @@ class GmailService
 
     # Simple HTML stripping - for more complex cases, consider using a HTML parser
     html.gsub(/<[^>]*>/, " ").gsub(/\s+/, " ").strip
+  end
+
+  # Wrap an outbound body in a consistent, well-formed HTML container so the
+  # delivered email is always formatted. If the body already contains HTML
+  # (the rich-text composer sends innerHTML), it's preserved as-is inside the
+  # wrapper; if it's plain text, blank lines become paragraphs and single
+  # newlines become <br> so line breaks survive (raw newlines collapse in HTML).
+  def build_html_body(body)
+    raw = body.to_s
+    inner = looks_like_html?(raw) ? raw : plain_text_to_html(raw)
+
+    <<~HTML
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#1f2937;">
+      #{inner}
+      </div>
+    HTML
+  end
+
+  # Heuristic: does the body already carry block/inline HTML we should keep?
+  def looks_like_html?(text)
+    text.match?(/<(p|div|br|ul|ol|li|h[1-6]|table|blockquote|span|a|strong|em|b|i|hr|img|font)\b/i)
+  end
+
+  # Convert plain text into paragraph HTML, escaping any stray markup.
+  def plain_text_to_html(text)
+    normalized = text.gsub(/\r\n?/, "\n").strip
+    return "" if normalized.empty?
+
+    normalized.split(/\n{2,}/).map do |paragraph|
+      lines = paragraph.split("\n").map { |line| CGI.escapeHTML(line) }
+      "<p style=\"margin:0 0 1em;\">#{lines.join('<br>')}</p>"
+    end.join("\n")
   end
 
   # Set up the OAuth2 client

@@ -74,7 +74,8 @@
       "Bash(dig +short salesgorilla.app A @8.8.8.8)",
       "Bash(dig +short salesgorilla.app A)",
       "Bash(dig +short xyzprobe.salesgorilla.app A @8.8.8.8)",
-      "Bash(dig +short xyzprobe.salesgorilla.app A)"
+      "Bash(dig +short xyzprobe.salesgorilla.app A)",
+      "Bash(ruby -e ' *)"
     ],
     "additionalDirectories": [
       "/tmp"

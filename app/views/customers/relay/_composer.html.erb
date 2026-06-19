@@ -125,15 +125,44 @@
 
   <% end %>
 
-  <%# Email panel — hidden by default unless WhatsApp is off (then it's the default channel). %>
-  <div data-channel="email" data-relay--composer-target="panel" <%= "hidden" if wa_on %>>
-    <%= form_with url: customer_emails_path(customer), method: :post do |f| %>
+  <%# Email panel — hidden by default unless WhatsApp is off (then it's the default channel).
+      Uses a contenteditable rich-text editor (email-composer controller) instead of a
+      plain textarea: GmailService treats the body as HTML, so plain-text newlines would
+      collapse and the sent email would render as one run-on block. The editor copies its
+      innerHTML into the hidden `body` field on submit. %>
+  <div data-channel="email" data-relay--composer-target="panel" <%= "hidden" if wa_on %>
+       data-controller="email-composer" data-email-composer-placeholder-value="Write your email…">
+    <%= form_with url: customer_emails_path(customer), method: :post,
+                  data: { turbo: true, email_composer_target: "form",
+                          action: "submit->email-composer#submit turbo:submit-end->email-composer#reset" } do |f| %>
       <div class="composer__box">
-        <input type="text" name="subject" placeholder="Subject"
+        <input type="text" name="subject" data-email-composer-target="subject" placeholder="Subject"
                style="width:100%;border:none;border-bottom:1px solid var(--color-divider);padding:10px 14px;outline:none;background:none;font-size:var(--text-sm);font-weight:600;color:var(--color-fg)">
-        <textarea name="body" class="composer__input" rows="3" placeholder="Write your email…"
-                  data-relay--composer-target="input"
-                  data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
+
+        <%# Formatting toolbar %>
+        <div class="composer__rt-toolbar">
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#bold" title="Bold (Ctrl+B)"><%= relay_icon("bold", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#italic" title="Italic (Ctrl+I)"><%= relay_icon("italic", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#underline" title="Underline (Ctrl+U)"><%= relay_icon("underline", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#strikeThrough" title="Strikethrough"><%= relay_icon("strikethrough", size: 15) %></button>
+          <span class="composer__rt-sep"></span>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#insertUnorderedList" title="Bullet list"><%= relay_icon("list", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#insertOrderedList" title="Numbered list"><%= relay_icon("list-ordered", size: 15) %></button>
+          <span class="composer__rt-sep"></span>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#createLink" title="Insert link"><%= relay_icon("link-2", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#unlink" title="Remove link"><%= relay_icon("unlink", size: 15) %></button>
+          <button type="button" class="composer__rt-btn" data-action="click->email-composer#removeFormat" title="Clear formatting"><%= relay_icon("remove-formatting", size: 15) %></button>
+        </div>
+
+        <%# Rich-text editor. ⌘↵ submits the enclosing form (matches other channels). %>
+        <div contenteditable="true"
+             data-email-composer-target="editor"
+             data-relay--composer-target="input"
+             data-placeholder="Write your email…"
+             data-action="keydown->relay--composer#submitOnCmdEnter"
+             class="composer__input composer__rt-editor"></div>
+        <input type="hidden" name="body" data-email-composer-target="body">
+
         <div class="composer__bar">
           <%= link_to customer_path(customer, anchor: "emails", compose: true), class: "rl-iconbtn rl-iconbtn--sm", title: "Open full composer (attachments, threads)" do %><%= relay_icon("paperclip", size: 16) %><% end %>
           <div class="grow"></div>

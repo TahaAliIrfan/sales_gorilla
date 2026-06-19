@@ -141,6 +141,18 @@ body { overflow: hidden; }
 .composer__input { width: 100%; border: none; background: none; outline: none; resize: none; padding: 12px 14px 4px; font-size: var(--text-sm); color: var(--color-fg); min-height: 24px; max-height: 160px; font-family: var(--font-sans); }
 .composer__bar { display: flex; align-items: center; gap: 6px; padding: 6px 8px 8px; }
 
+/* ---- Rich-text email composer (inline) ---- */
+.composer__rt-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 1px; padding: 5px 8px; border-bottom: 1px solid var(--color-divider); }
+.composer__rt-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: none; background: none; border-radius: var(--radius-sm); color: var(--color-fg-3); cursor: pointer; }
+.composer__rt-btn:hover { background: var(--color-surface-2); color: var(--color-fg); }
+.composer__rt-sep { width: 1px; height: 18px; background: var(--color-border); margin: 0 5px; }
+.composer__rt-editor { overflow-y: auto; line-height: 1.55; cursor: text; }
+.composer__rt-editor:empty::before { content: attr(data-placeholder); color: var(--color-fg-3); pointer-events: none; }
+.composer__rt-editor:focus:empty::before { content: ""; }
+.composer__rt-editor ul, .composer__rt-editor ol { padding-left: 1.5em; margin: 0.4em 0; }
+.composer__rt-editor li { margin: 0.2em 0; }
+.composer__rt-editor a { color: var(--color-primary); text-decoration: underline; }
+
 /* ---- Call bar (global active call) ---- */
 .callbar { position: fixed; z-index: var(--z-toast); right: var(--space-6); bottom: var(--space-6); width: 340px;
   background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-xl);
