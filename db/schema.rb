@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_22_171613) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_22_172402) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -341,6 +341,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_22_171613) do
     t.text "client_user_agent"
     t.text "event_source_url"
     t.string "zip"
+    t.string "portal_lead_id"
+    t.datetime "portal_last_pushed_at"
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"
@@ -351,6 +353,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_22_171613) do
     t.index ["latitude", "longitude"], name: "index_customers_on_coordinates"
     t.index ["lead_quality"], name: "index_customers_on_lead_quality"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
+    t.index ["organization_id", "portal_lead_id"], name: "index_customers_on_organization_id_and_portal_lead_id"
     t.index ["organization_id"], name: "index_customers_on_organization_id"
     t.index ["phone_analysis_completed_at"], name: "index_customers_on_phone_analysis_completed_at"
     t.index ["state"], name: "index_customers_on_state"
