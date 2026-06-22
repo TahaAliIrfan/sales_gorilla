@@ -14,7 +14,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 5: complete (commit bcd7150, 2 examples 0 failures)
 - [x] Task 6: complete (commit 26ed91b, 3 examples 0 failures; live selector capture deferred — needs portal creds)
 - [x] Task 7: complete (commit 4a5c23f, 1 example 0 failures)
-- [ ] Task 8: OdooPortalSyncWorker
+- [x] Task 8: complete (commit 93a0628, 3 examples 0 failures; impl used find_or_create_by! idempotency; fixed plan test-3 double-stub bug)
 - [ ] Task 9: EmailTrigger
 - [ ] Task 10: scheduled poll + manual sync
 - [ ] Task 11: write-back event map + callback
