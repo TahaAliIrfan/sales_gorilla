@@ -1,0 +1,15 @@
+<% s = feature.settings_hash %>
+<div class="col" style="gap:14px;background:var(--color-surface-2);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:16px">
+  <p class="rl-label" style="margin:0">AI credentials</p>
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_api_key", "API key", class: "rl-label" %>
+    <%= password_field_tag "organization_feature[settings][api_key]", "",
+          id: "organization_feature_settings_api_key", autocomplete: "new-password",
+          placeholder: s["api_key"].present? ? "•••••• (saved)" : "Your provider API key", class: "rl-input" %>
+  </div>
+  <div class="rl-field">
+    <%= label_tag "organization_feature_settings_model", "Model (optional)", class: "rl-label" %>
+    <%= text_field_tag "organization_feature[settings][model]", s["model"],
+          id: "organization_feature_settings_model", placeholder: "e.g. claude-opus-4-8", class: "rl-input" %>
+  </div>
+</div>

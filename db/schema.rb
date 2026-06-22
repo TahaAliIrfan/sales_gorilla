@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_23_002821) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -341,6 +341,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
     t.text "client_user_agent"
     t.text "event_source_url"
     t.string "zip"
+    t.string "portal_lead_id"
+    t.datetime "portal_last_pushed_at"
+    t.text "enrichment_summary"
+    t.string "industry"
+    t.integer "legitimacy_score"
+    t.boolean "lead_is_junk"
+    t.datetime "enriched_at"
+    t.text "call_script"
+    t.datetime "call_script_generated_at"
+    t.string "demo_url"
+    t.string "demo_db"
+    t.string "demo_login"
+    t.text "demo_password"
+    t.string "demo_status"
+    t.datetime "demo_built_at"
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"
@@ -351,6 +366,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
     t.index ["latitude", "longitude"], name: "index_customers_on_coordinates"
     t.index ["lead_quality"], name: "index_customers_on_lead_quality"
     t.index ["meta_lead_id"], name: "index_customers_on_meta_lead_id"
+    t.index ["organization_id", "portal_lead_id"], name: "index_customers_on_organization_id_and_portal_lead_id"
     t.index ["organization_id"], name: "index_customers_on_organization_id"
     t.index ["phone_analysis_completed_at"], name: "index_customers_on_phone_analysis_completed_at"
     t.index ["state"], name: "index_customers_on_state"
@@ -722,6 +738,22 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "odoo_portal_connections", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "base_url", default: "https://www.odoo.com", null: false
+    t.text "session_cookies"
+    t.string "status", default: "needs_reauth", null: false
+    t.text "last_error"
+    t.datetime "last_synced_at"
+    t.string "watch_from"
+    t.string "watch_subject"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "login_email"
+    t.text "login_password"
+    t.index ["organization_id"], name: "index_odoo_portal_connections_on_organization_id", unique: true
+  end
+
   create_table "odoo_proposals", force: :cascade do |t|
     t.bigint "customer_id"
     t.bigint "user_id", null: false
@@ -771,6 +803,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["subdomain"], name: "index_organizations_on_subdomain", unique: true
+  end
+
+  create_table "partner_portal_leads", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id"
+    t.string "portal_lead_id", null: false
+    t.string "status", default: "received", null: false
+    t.jsonb "raw_payload", default: {}, null: false
+    t.text "error_message"
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_partner_portal_leads_on_customer_id"
+    t.index ["organization_id", "portal_lead_id"], name: "idx_portal_leads_on_org_and_portal_id", unique: true
+    t.index ["organization_id"], name: "index_partner_portal_leads_on_organization_id"
   end
 
   create_table "pipelines", force: :cascade do |t|
@@ -1082,10 +1129,13 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
   add_foreign_key "notification_logs", "users"
   add_foreign_key "notifications", "organizations"
   add_foreign_key "notifications", "users"
+  add_foreign_key "odoo_portal_connections", "organizations"
   add_foreign_key "odoo_proposals", "customers"
   add_foreign_key "odoo_proposals", "organizations"
   add_foreign_key "odoo_proposals", "users"
   add_foreign_key "organization_features", "organizations"
+  add_foreign_key "partner_portal_leads", "customers"
+  add_foreign_key "partner_portal_leads", "organizations"
   add_foreign_key "pipelines", "organizations"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "organizations"

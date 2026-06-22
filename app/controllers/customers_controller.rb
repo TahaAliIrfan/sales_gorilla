@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout :choose_layout
   before_action :require_login
-  before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality, :add_note ]
+  before_action :set_customer, only: [ :show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality, :add_note, :enrich, :build_demo ]
   after_action :verify_authorized, except: [ :index, :export_csv ]
   after_action :verify_policy_scoped, only: [ :index, :export_csv ]
 
@@ -582,6 +582,18 @@ class CustomersController < ApplicationController
         format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
       end
     end
+  end
+
+  def enrich
+    authorize @customer
+    EnrichLeadWorker.perform_async(@customer.id)
+    redirect_back fallback_location: customer_path(@customer), notice: "Lead intelligence is being refreshed."
+  end
+
+  def build_demo
+    authorize @customer
+    BuildDemoWorker.perform_async(@customer.id)
+    redirect_back fallback_location: customer_path(@customer), notice: "Building the demo — this takes a minute."
   end
 
   def assign_to_self

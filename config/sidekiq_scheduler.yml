@@ -28,4 +28,11 @@ gmail_inbox_sync:
   queue: default
   description: "Enqueues a per-user Gmail inbox sync to ingest customer replies into the CRM"
 
+# Odoo partner-portal poll - backstop fetch every 2 hours
+odoo_portal_poll:
+  cron: "0 */2 * * *"
+  class: OdooPortalPollSchedulerWorker
+  queue: default
+  description: "Enqueues a portal lead fetch for every active Odoo partner-portal connection"
+
 # You can add more scheduled jobs here as needed

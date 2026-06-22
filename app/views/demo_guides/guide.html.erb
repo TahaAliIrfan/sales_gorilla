@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  body{font-family:-apple-system,Helvetica,Arial,sans-serif;color:#1f2933;font-size:12px;margin:0}
+  .hd{background:#21568a;color:#fff;padding:16px 20px}
+  .hd h1{margin:0;font-size:20px}.hd .s{color:#d6e2ec;font-size:11px;margin-top:4px}
+  .sec{padding:12px 20px}.k{color:#21568a;font-weight:700}
+  .box{background:#f1f5f9;border:1px solid #d9e1ea;border-radius:8px;padding:10px 14px;margin:8px 20px}
+  code{background:#e9eef3;padding:1px 5px;border-radius:4px}
+</style></head><body>
+  <div class="hd"><h1><%= @customer.company.presence || @customer.name %> &mdash; Odoo Demo Guide</h1>
+    <div class="s">Prepared for your sales call &middot; <%= @customer.industry.presence || "General" %></div></div>
+  <div class="box"><b>Demo:</b> <code><%= @customer.demo_url %></code> &nbsp;
+    <b>Login:</b> <code><%= @customer.demo_login %></code> &nbsp;
+    <b>Password:</b> <code><%= @customer.demo_password %></code></div>
+  <div class="sec"><span class="k">About this lead</span>
+    <p><%= @customer.enrichment_summary.presence || "Enrichment pending." %></p></div>
+  <div class="sec"><span class="k">How to present</span>
+    <p>Open the demo link, log in, and walk the prospect through their industry workflow end to end:
+    products &rarr; sales/POS &rarr; inventory &rarr; invoicing. Frame it as their business, running on Odoo.</p></div>
+</body></html>
