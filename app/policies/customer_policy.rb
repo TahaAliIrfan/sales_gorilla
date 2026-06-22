@@ -77,6 +77,10 @@ class CustomerPolicy < ApplicationPolicy
     true
   end
 
+  def enrich?
+    true
+  end
+
   def bulk_assign?
     user.admin? || user.manager?
   end

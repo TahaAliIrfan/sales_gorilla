@@ -183,6 +183,28 @@
     <% end %>
   </div>
 
+  <%# === Lead intelligence (AI) === %>
+  <div class="railsect">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="rl-h4">Lead intelligence</div>
+      <%= button_to "Re-run", enrich_customer_path(customer), method: :post, class: "rl-btn rl-btn--sm", form: { style: "display:inline" } %>
+    </div>
+    <% if customer.enrichment_summary.present? %>
+      <% if customer.industry.present? %><span class="rl-pill"><%= customer.industry %></span><% end %>
+      <% if customer.legitimacy_score.present? %><span class="muted rl-sm">Legitimacy: <%= customer.legitimacy_score %>/100</span><% end %>
+      <% if customer.lead_is_junk %><span class="rl-pill rl-pill--warn">Likely junk</span><% end %>
+      <p class="rl-sm" style="margin-top:8px;white-space:pre-wrap"><%= customer.enrichment_summary %></p>
+      <% if customer.call_script.present? %>
+        <details style="margin-top:8px">
+          <summary class="rl-sm" style="font-weight:600">Call script</summary>
+          <pre class="rl-sm" style="white-space:pre-wrap;margin-top:6px"><%= customer.call_script %></pre>
+        </details>
+      <% end %>
+    <% else %>
+      <p class="muted rl-sm">Not enriched yet. It runs automatically for new leads, or click Re-run.</p>
+    <% end %>
+  </div>
+
   <%# === Ad attribution === %>
   <% if customer.utm_campaign.present? || customer.utm_source.present? || customer.gclid.present? || customer.meta_campaign_id.present? %>
     <div class="railsect">

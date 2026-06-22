@@ -311,6 +311,7 @@ Rails.application.routes.draw do
         post  "upload_documents"
         post  "mark_lead_quality"
         post  "add_note"
+        post  "enrich"
       end
 
       resources :invoices do
