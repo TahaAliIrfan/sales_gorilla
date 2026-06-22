@@ -428,6 +428,9 @@ Rails.application.routes.draw do
       # disconnect). The OAuth connect itself lives on the root host.
       resources :meta_page_connections, only: %i[update destroy]
 
+      # Odoo Partner Portal self-service connect / disconnect.
+      resource :odoo_portal_connection, only: %i[create destroy], controller: "odoo_portal_connections"
+
       # Editable lookup lists (lead sources, statuses, project types …).
       # Admin-only via TaxonomyPolicy.
       resources :taxonomies, only: %i[index create update destroy] do
