@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_22_170658) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_22_171613) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -787,6 +787,21 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_22_170658) do
     t.index ["subdomain"], name: "index_organizations_on_subdomain", unique: true
   end
 
+  create_table "partner_portal_leads", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.bigint "customer_id"
+    t.string "portal_lead_id", null: false
+    t.string "status", default: "received", null: false
+    t.jsonb "raw_payload", default: {}, null: false
+    t.text "error_message"
+    t.datetime "processed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_partner_portal_leads_on_customer_id"
+    t.index ["organization_id", "portal_lead_id"], name: "idx_portal_leads_on_org_and_portal_id", unique: true
+    t.index ["organization_id"], name: "index_partner_portal_leads_on_organization_id"
+  end
+
   create_table "pipelines", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -1101,6 +1116,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_22_170658) do
   add_foreign_key "odoo_proposals", "organizations"
   add_foreign_key "odoo_proposals", "users"
   add_foreign_key "organization_features", "organizations"
+  add_foreign_key "partner_portal_leads", "customers"
+  add_foreign_key "partner_portal_leads", "organizations"
   add_foreign_key "pipelines", "organizations"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "organizations"
