@@ -35,3 +35,12 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
   - I3: hardened push-worker rescue (hoisted conn).
 - Branch feat/odoo-portal-connector (30+ commits off origin/revamp). NOT pushed/merged — awaiting user push + PR for Taha review.
 - Known follow-ups (documented, out of scope): live-portal selector + write_action click-path capture (needs real portal creds; node agent currently stubs write_action -> add a verify-action-landed check then); wire the connect card into the Relay features page; per-org editable field/event maps.
+
+## LIVE VALIDATION against real odoo.com partner portal (2026-06-23)
+- READ path VALIDATED LIVE: agent's list_leads logic extracted all 16 real leads (correct portal_lead_id from /my/lead/<id>, contact_name, email, phone from list columns).
+- PARSER rewritten for the REAL detail-page structure (schema.org microdata scoped to the "Customer:" row + name from the title; does NOT leak Tecaudex's own contact). 34 connector examples pass; fixture is a real captured page. Commit 1279175.
+- WRITE-BACK mechanics VALIDATED (dry-run, no submit): both modal forms found + fillable on the live page:
+    - exception/disqualify -> form.desinterested_partner_assign_form (comment + customer_mark_spam + .desinterested_partner_assign_confirm)
+    - accept/note -> form.interested_partner_assign_form (comment + .interested_partner_assign_confirm); both carry csrf_token + lead_id.
+- STILL UNVALIDATED: the actual write submit (clicking Confirm -> AJAX POST landing). Needs ONE real submit on a genuinely-junk lead with user go-ahead.
+- PRODUCTION connect flow needs the user's httpOnly `session_id` cookie pasted into Settings (DevTools > Application > Cookies > odoo.com > session_id).
