@@ -1,9 +1,82 @@
 <main>
-  <h2>Lead - HASSAN (animeworldpak.com) Registration</h2>
-  <p>Customer: <span class="o_customer">animeworldpak.com</span></p>
-  <p>Contact: HASSAN</p>
-  <p>Phone: +92 344 8431169</p>
-  <p>Email: husnainxbad@gmail.com</p>
-  <p>Address: Gujranwala</p>
-  <p>Stage: New</p>
+  <div class="o_portal container mt-3">
+    <ol class="o_portal_submenu breadcrumb">
+      <li class="breadcrumb-item"><a href="/my/leads">Leads</a></li>
+      <li class="breadcrumb-item active"><span>Danish Nazir (Trendy Wibes) Registration</span></li>
+    </ol>
+  </div>
+  <div id="wrap" class="o_portal_wrap">
+    <div class="container pt-3 pb-5">
+      <div class="d-flex align-items-center gap-2 mb-4">
+        <h4 class="mb-0">Lead -
+          <span>Danish Nazir (Trendy Wibes) Registration</span>
+          <span title="Rating" role="img" class="fs-6" aria-label="Rating: 0 on 3">
+            <span class="fa fa-lg fa-star-o"></span>
+          </span>
+        </h4>
+      </div>
+      <table class="table table-borderless">
+        <tbody class="text-nowrap">
+          <tr>
+            <th class="ps-0 pb-0">Customer:</th>
+            <td>
+              <address>
+                <div><span itemprop="name">Trendy Wibes</span></div>
+                <div><span class="fa fa-phone"></span> <span itemprop="telephone">+92 330 1071782</span></div>
+                <div><span class="fa fa-envelope"></span> <span itemprop="email">d11157825@gmail.com</span></div>
+              </address>
+            </td>
+          </tr>
+          <tr>
+            <th class="ps-0 pb-0">Address:</th>
+            <td class="w-100 pb-0 text-wrap">
+              <address><div><span>Lahore</span></div></address>
+            </td>
+          </tr>
+          <tr>
+            <th class="ps-0 pb-0">Sales Team:</th>
+            <td class="w-100 pb-0 text-wrap"><span>DU Partnership</span></td>
+          </tr>
+          <tr>
+            <th class="ps-0 pb-0">Assigned Partner:</th>
+            <td class="w-100 pb-0 text-wrap">
+              <address class="o_portal_address mb-0">
+                <div><span itemprop="name">Tecaudex Private Limited</span></div>
+                <div itemscope itemtype="http://schema.org/PostalAddress">
+                  <div><span itemprop="telephone">+923237399596</span></div>
+                  <div><span itemprop="email">tecaudex@gmail.com</span></div>
+                </div>
+              </address>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="d-flex justify-content-center gap-2 mt-3">
+        <a role="button" href="#" class="btn btn-primary" data-bs-target=".modal_partner_assign_interested"><i class="fa fa-file-text-o"></i> I'll contact them</a>
+        <a role="button" title="I'm not interested" href="#" class="btn btn-primary" data-bs-target=".modal_partner_assign_desinterested"> I'm not interested</a>
+        <div class="modal fade modal_partner_assign_interested">
+          <form method="POST" class="interested_partner_assign_form">
+            <input type="hidden" name="csrf_token" value="TESTCSRF">
+            <input type="hidden" name="lead_id" class="assign_lead_id" value="40815402">
+            <textarea name="comment" id="comment" class="comment_interested" rows="15"></textarea>
+            <button class="btn btn-primary interested_partner_assign_confirm">Confirm</button>
+          </form>
+        </div>
+        <div class="modal fade modal_partner_assign_desinterested">
+          <form method="POST" class="desinterested_partner_assign_form">
+            <input type="hidden" name="csrf_token" value="TESTCSRF">
+            <input type="hidden" name="lead_id" class="assign_lead_id" value="40815402">
+            <input type="text" name="comment" id="comment" class="comment_desinterested">
+            <input type="checkbox" name="customer_mark_spam" class="customer_mark_spam">
+            <button class="btn btn-primary desinterested_partner_assign_confirm">Confirm</button>
+          </form>
+        </div>
+      </div>
+      <hr>
+      <div>
+        <h3>Communication history</h3>
+        <div id="discussion" data-res_model="crm.lead" data-res_id="40815402" data-allow_composer="1"></div>
+      </div>
+    </div>
+  </div>
 </main>

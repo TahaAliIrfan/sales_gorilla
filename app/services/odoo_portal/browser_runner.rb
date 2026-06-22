@@ -11,7 +11,7 @@ module OdooPortal
     # Captured from the live portal in a follow-up (needs real creds). Defaults
     # are sane fallbacks; the node agent also has a fallback selector.
     SELECTORS = {
-      "row" => ".o_portal_my_doc_table tbody tr"
+      "row" => "table tbody tr"
     }.freeze
 
     def initialize(connection)

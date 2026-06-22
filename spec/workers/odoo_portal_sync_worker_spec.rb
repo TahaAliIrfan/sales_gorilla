@@ -8,7 +8,9 @@ RSpec.describe OdooPortalSyncWorker do
   before do
     allow(OdooPortal::Scraper).to receive(:new).and_return(scraper)
     allow(scraper).to receive(:fetch_new).and_return([
-      { "portal_lead_id" => "L1", "title" => "t", "html" => "<main>Contact: HASSAN\nEmail: h@x.com</main>" }
+      { "portal_lead_id" => "L1", "title" => "Lead - HASSAN (animeworldpak) Registration",
+        "contact_name" => "HASSAN", "email" => "h@x.com", "phone" => "+92 300 0000000",
+        "html" => "<main></main>" }
     ])
   end
 
