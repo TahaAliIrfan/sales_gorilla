@@ -436,6 +436,10 @@ Rails.application.routes.draw do
       end
     end
 
+    namespace :odoo_portal do
+      post "sync", to: "syncs#create"
+    end
+
     resources :odoo_proposals, only: %i[index new create show edit update destroy] do
       member do
         get   "download_pdf"
