@@ -28,6 +28,21 @@
       title: "WhatsApp Messaging",
       blurb: "Send/receive WhatsApp messages and templates through Twilio. Inbound routing uses your sender number.",
       icon:  "megaphone"
+    },
+    "ai" => {
+      title: "AI (Lead Intelligence)",
+      blurb: "Bring your own Claude/OpenAI key for lead enrichment + call scripts.",
+      icon:  "grid"
+    },
+    "demo_engine" => {
+      title: "Demo Builder",
+      blurb: "Connect the Odoo demo server that builds branded demos.",
+      icon:  "grid"
+    },
+    "odoo_partner_portal" => {
+      title: "Odoo Partner Portal",
+      blurb: "Auto-sync your odoo.com partner leads into the CRM.",
+      icon:  "grid"
     }
   }.fetch(feature.key, { title: feature.key.titleize, blurb: "", icon: "grid" })
 
@@ -97,6 +112,10 @@
         <%= render "settings/features/lead_ads_fields", f: f, feature: feature %>
       <% when "whatsapp" %>
         <%= render "settings/features/whatsapp_fields", f: f, feature: feature %>
+      <% when "ai" %>
+        <%= render "settings/features/ai_fields", f: f, feature: feature %>
+      <% when "demo_engine" %>
+        <%= render "settings/features/demo_engine_fields", f: f, feature: feature %>
       <% end %>
 
       <div class="row">
@@ -110,6 +129,10 @@
         feature form above (nested forms are invalid). %>
     <% if feature.key == "meta_lead_ads" %>
       <%= render "settings/features/lead_ads_connections", feature: feature %>
+    <% end %>
+
+    <% if feature.key == "odoo_partner_portal" %>
+      <%= render "settings/odoo_portal_connections/card", connection: OdooPortalConnection.for_organization(current_organization) %>
     <% end %>
   </div>
 </div>

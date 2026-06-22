@@ -77,7 +77,7 @@ class Settings::FeaturesController < TenantController
     pixel_id access_token test_event_code events_enabled eligible_sources
     customer_status_mappings deal_stage_mappings source_action_sources
     lead_form_mappings
-    api_key
+    api_key model server_url
     account_sid auth_token application_sid api_secret default_caller_id app_url
     sender_number
   ].freeze
