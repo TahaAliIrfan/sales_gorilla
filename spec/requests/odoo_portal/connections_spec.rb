@@ -23,4 +23,12 @@ RSpec.describe "Odoo portal connection settings", type: :request do
     expect(conn.status).to eq("active")
     expect(conn.cookies.first["value"]).to eq("z")
   end
+
+  it "seeds the lead-source taxonomy entry for 'Odoo Partner Portal' on connect" do
+    cookies_json = [{ "name" => "session_id", "value" => "z" }].to_json
+    post settings_odoo_portal_connection_path, params: {
+      odoo_portal_connection: { base_url: "https://www.odoo.com", watch_from: "odoo.com", watch_subject: "Lead", session_cookies: cookies_json }
+    }
+    expect(org.taxonomies.where(kind: "lead_source", name: "Odoo Partner Portal")).to exist
+  end
 end

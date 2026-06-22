@@ -18,4 +18,19 @@ RSpec.describe "Odoo portal manual sync", :sidekiq_fake, type: :request do
     expect { post "/odoo_portal/sync" }.to change(OdooPortalSyncWorker.jobs, :size).by(1)
     expect(response).to have_http_status(:redirect)
   end
+
+  context "when the current user is a non-admin member" do
+    let(:member) { create(:user, confirmed_at: Time.current) }
+
+    before do
+      ActsAsTenant.with_tenant(org) do
+        create(:membership, :member, user: member, organization: org)
+      end
+      allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(member)
+    end
+
+    it "does not enqueue a sync job" do
+      expect { post "/odoo_portal/sync" }.not_to change(OdooPortalSyncWorker.jobs, :size)
+    end
+  end
 end

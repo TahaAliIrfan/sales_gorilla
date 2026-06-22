@@ -24,6 +24,6 @@ class OdooPortalPushWorker
       customer.update_columns(portal_last_pushed_at: Time.current)
     end
   rescue OdooPortal::BrowserRunner::SessionExpired
-    OdooPortalConnection.for_organization(org)&.mark_needs_reauth!
+    conn&.mark_needs_reauth!
   end
 end

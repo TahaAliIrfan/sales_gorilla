@@ -42,6 +42,9 @@ class OdooPortalSyncWorker
     lead.mark_processed!(customer)
   rescue ActiveRecord::RecordNotUnique
     nil # concurrent run already ingested this portal_lead_id
+  rescue => e
+    lead&.mark_failed!(e.message)
+    Rails.logger.warn("[OdooPortalSync] lead #{payload['portal_lead_id']} failed: #{e.message}")
   end
 
   def upsert_customer(org, attrs)

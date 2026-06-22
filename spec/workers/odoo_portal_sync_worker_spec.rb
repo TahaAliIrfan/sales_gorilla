@@ -32,4 +32,13 @@ RSpec.describe OdooPortalSyncWorker do
     described_class.new.perform(org.id)
     expect(conn.reload.status).to eq("needs_reauth")
   end
+
+  it "isolates a single bad lead: marks it failed but keeps connection active" do
+    allow(OdooPortal::LeadParser).to receive(:call)
+      .and_raise(ActiveRecord::RecordInvalid.new(Customer.new))
+    described_class.new.perform(org.id)
+    lead = ActsAsTenant.with_tenant(org) { PartnerPortalLead.find_by(portal_lead_id: "L1") }
+    expect(lead.status).to eq("failed")
+    expect(conn.reload.status).to eq("active")
+  end
 end
