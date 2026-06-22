@@ -17,7 +17,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 8: complete (commit 93a0628, 3 examples 0 failures; impl used find_or_create_by! idempotency; fixed plan test-3 double-stub bug)
 - [x] Task 9: complete (commit 8cce8c3, 2 examples 0 failures)
 - [x] Task 10: complete (commit 8d2a429, 2 examples 0 failures)
-- [ ] Task 11: write-back event map + callback
+- [x] Task 11: complete (commit 95effdb, 5 examples 0 failures). FLAG for final review: subagent also made a minimal safe fix to Customer#record_activity_changes (skip activity log when no user exists; no prod behavior change) — needed for background customer updates.
 - [ ] Task 12: Writer + push worker
 - [ ] Task 13: settings UI
 
