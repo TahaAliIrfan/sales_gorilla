@@ -13,4 +13,16 @@ RSpec.describe OrganizationFeature do
     expect(feature).not_to be_valid
     expect(feature.errors[:provider]).to be_present
   end
+
+  it "accepts the ai feature with a claude provider" do
+    org = create(:organization)
+    expect(org.features.build(key: "ai", provider: "claude", enabled: true)).to be_valid
+  end
+
+  it "rejects an unsupported provider for ai" do
+    org = create(:organization)
+    f = org.features.build(key: "ai", provider: "twilio")
+    expect(f).not_to be_valid
+    expect(f.errors[:provider]).to be_present
+  end
 end
