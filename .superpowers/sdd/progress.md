@@ -19,7 +19,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 10: complete (commit 8d2a429, 2 examples 0 failures)
 - [x] Task 11: complete (commit 95effdb, 5 examples 0 failures). FLAG for final review: subagent also made a minimal safe fix to Customer#record_activity_changes (skip activity log when no user exists; no prod behavior change) — needed for background customer updates.
 - [x] Task 12: complete (commit 14e4253, 2 examples 0 failures)
-- [ ] Task 13: settings UI
+- [x] Task 13: complete (commit 7b39ccb, 1 example 0 failures; backend connect/disconnect — view-card wiring into Relay features page is a follow-up)
 
 ## Environment notes (IMPORTANT for remaining tasks)
 - Schema-driven repo: 7 tables (sms, google_meets, etc.) have NO migration files.
