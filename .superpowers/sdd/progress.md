@@ -6,8 +6,8 @@ Env: ruby 3.3.0 via `export PATH="$HOME/.rbenv/shims:$PATH"`
 Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not ours).
 
 ## Tasks
-- [ ] Task 0: branch + node agent scaffold
-- [ ] Task 1: register odoo_partner_portal feature
+- [x] Task 0: branch + node agent scaffold (commit a node-agent)
+- [x] Task 1: complete (commit d8559ad, review clean: 2 examples 0 failures)
 - [ ] Task 2: OdooPortalConnection model
 - [ ] Task 3: PartnerPortalLead model
 - [ ] Task 4: Customer portal columns
