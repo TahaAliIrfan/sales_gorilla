@@ -58,5 +58,5 @@ Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
 
 ## Sub-project 4: Demo Builder — IN PROGRESS (plan: docs/superpowers/plans/2026-06-23-demo-builder.md)
 - [x] D1 demo_engine feature (a1b7229)  - [x] D2 customer demo columns (a0ae5e4)  - [x] D3 Demo::ServerClient (2fe35d7)
-- [x] D4 DemoBuilderService (e9c6ca7)  - [x] D5 BuildDemoWorker (42ef101)  - [x] D6 DemoGuidePdfService+worker (585ebaa)  - [ ] D7 button+UI
+- [x] D4 DemoBuilderService (e9c6ca7)  - [x] D5 BuildDemoWorker (42ef101)  - [x] D6 DemoGuidePdfService+worker (585ebaa)  - [x] D7 button+UI (217c77c) — RAILS SIDE COMPLETE
 - [ ] SERVER: python demo-builder endpoint on demo.tecaudex.pk
