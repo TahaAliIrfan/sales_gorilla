@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_22_170658) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -722,6 +722,20 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "odoo_portal_connections", force: :cascade do |t|
+    t.bigint "organization_id", null: false
+    t.string "base_url", default: "https://www.odoo.com", null: false
+    t.text "session_cookies"
+    t.string "status", default: "needs_reauth", null: false
+    t.text "last_error"
+    t.datetime "last_synced_at"
+    t.string "watch_from"
+    t.string "watch_subject"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["organization_id"], name: "index_odoo_portal_connections_on_organization_id", unique: true
+  end
+
   create_table "odoo_proposals", force: :cascade do |t|
     t.bigint "customer_id"
     t.bigint "user_id", null: false
@@ -1082,6 +1096,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_17_120000) do
   add_foreign_key "notification_logs", "users"
   add_foreign_key "notifications", "organizations"
   add_foreign_key "notifications", "users"
+  add_foreign_key "odoo_portal_connections", "organizations"
   add_foreign_key "odoo_proposals", "customers"
   add_foreign_key "odoo_proposals", "organizations"
   add_foreign_key "odoo_proposals", "users"
