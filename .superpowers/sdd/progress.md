@@ -57,6 +57,6 @@ Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
 - Sub-project 4 (Demo Builder): NEXT. "Build Demo" button -> classify industry (use enrichment.industry) -> seed branded Odoo DB on demo.tecaudex.pk -> images -> story PDF -> URL+login+PDF on the Customer. Needs: Rails side (DemoBuilderService + DemoServerClient (mockable) + BuildDemoWorker + customer demo_* columns + button) AND a server-side parameterized demo-builder on demo.tecaudex.pk.
 
 ## Sub-project 4: Demo Builder — IN PROGRESS (plan: docs/superpowers/plans/2026-06-23-demo-builder.md)
-- [x] D1 demo_engine feature (a1b7229)  - [x] D2 customer demo columns (a0ae5e4)  - [ ] D3 Demo::ServerClient
+- [x] D1 demo_engine feature (a1b7229)  - [x] D2 customer demo columns (a0ae5e4)  - [x] D3 Demo::ServerClient (2fe35d7)
 - [ ] D4 DemoBuilderService  - [ ] D5 BuildDemoWorker  - [ ] D6 DemoGuidePdfService+worker  - [ ] D7 button+UI
 - [ ] SERVER: python demo-builder endpoint on demo.tecaudex.pk
