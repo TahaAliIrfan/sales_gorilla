@@ -219,4 +219,26 @@
     </div>
   <% end %>
 
+  <%# === Sales demo === %>
+  <div class="railsect">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="rl-h4">Sales demo</div>
+      <%= button_to "Build demo", build_demo_customer_path(customer), method: :post, class: "rl-btn rl-btn--sm", form: { style: "display:inline" } %>
+    </div>
+    <% case customer.demo_status %>
+    <% when "ready" %>
+      <p class="rl-sm"><a href="<%= customer.demo_url %>" target="_blank">Open demo</a> &middot; built <%= customer.demo_built_at&.to_fs(:short) %></p>
+      <p class="muted rl-sm">Login: <code><%= customer.demo_login %></code> &middot; Password: <code><%= customer.demo_password %></code></p>
+      <% if customer.demo_guide.attached? %>
+        <p class="rl-sm"><%= link_to "Download story guide (PDF)", rails_blob_path(customer.demo_guide, disposition: "attachment") %></p>
+      <% end %>
+    <% when "building" %>
+      <p class="muted rl-sm">Building the demo…</p>
+    <% when "failed" %>
+      <p class="muted rl-sm">Last build failed — click Build demo to retry.</p>
+    <% else %>
+      <p class="muted rl-sm">No demo yet. Click Build demo to spin up a branded Odoo demo for this lead.</p>
+    <% end %>
+  </div>
+
 </div>

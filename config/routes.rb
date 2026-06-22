@@ -312,6 +312,7 @@ Rails.application.routes.draw do
         post  "mark_lead_quality"
         post  "add_note"
         post  "enrich"
+        post  "build_demo"
       end
 
       resources :invoices do
