@@ -32,6 +32,12 @@ class GmailInboxSyncWorker
 
     user.update_column(:last_gmail_sync_at, Time.current)
 
+    begin
+      OdooPortal::EmailTrigger.new(user).call
+    rescue => e
+      Rails.logger.warn("[OdooPortalEmailTrigger] user=#{user.id}: #{e.message}")
+    end
+
     if summary[:imported].to_i.positive?
       Rails.logger.info("[GmailInboxSync] user=#{user_id} imported=#{summary[:imported]} skipped=#{summary[:skipped]} scanned=#{summary[:scanned]}")
     end
