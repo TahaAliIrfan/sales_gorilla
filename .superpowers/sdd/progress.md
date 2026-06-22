@@ -9,7 +9,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 0: branch + node agent scaffold (commit a node-agent)
 - [x] Task 1: complete (commit d8559ad, review clean: 2 examples 0 failures)
 - [x] Task 2: complete (commit 73e60e0, review clean: 3 examples 0 failures; FIXED schema.rb regression that dropped 7 tables + rebuilt dev/test DBs from full schema)
-- [ ] Task 3: PartnerPortalLead model
+- [x] Task 3: complete (commit ef87d2a, 2 examples 0 failures, schema clean)
 - [ ] Task 4: Customer portal columns
 - [ ] Task 5: LeadParser
 - [ ] Task 6: BrowserRunner + selectors
