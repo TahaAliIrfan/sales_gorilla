@@ -16,7 +16,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 7: complete (commit 4a5c23f, 1 example 0 failures)
 - [x] Task 8: complete (commit 93a0628, 3 examples 0 failures; impl used find_or_create_by! idempotency; fixed plan test-3 double-stub bug)
 - [x] Task 9: complete (commit 8cce8c3, 2 examples 0 failures)
-- [ ] Task 10: scheduled poll + manual sync
+- [x] Task 10: complete (commit 8d2a429, 2 examples 0 failures)
 - [ ] Task 11: write-back event map + callback
 - [ ] Task 12: Writer + push worker
 - [ ] Task 13: settings UI
