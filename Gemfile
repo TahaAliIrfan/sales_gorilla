@@ -58,6 +58,9 @@ gem "httparty", "~> 0.21.0"
 # CORS support for Rails API
 gem "rack-cors"
 
+# Throttle/blocklist abusive requests (signup spam, brute-force logins)
+gem "rack-attack"
+
 # Tailwind CSS for styling
 gem "tailwindcss-rails"
 
