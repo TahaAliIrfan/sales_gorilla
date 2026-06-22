@@ -50,3 +50,8 @@ Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
 - [x] T1 ai feature key (8474c67)  - [x] T2 Ai::Client (4af777c)  - [x] T3 customer columns (b58f53b)  - [x] T4 LeadEnrichmentService (5791e16)
 - [x] T5 EnrichLeadWorker (ee5d9cd)  - [x] T6 CallScriptService (020a3c2)  - [x] T7 GenerateCallScriptWorker (903ab5e)
 - [x] T8 auto-trigger (7d41990)  - [x] T9 customer UI (9814bc3) — LEAD INTELLIGENCE COMPLETE
+
+## STATUS SUMMARY
+- Sub-project 2 (Odoo connector): COMPLETE + live-validated against real portal (read path proven, write-back mechanics proven, email/password auto-reauth). 1 pending: real write-submit test on a junk lead.
+- Sub-project 3 (Lead Intelligence): COMPLETE — 23 examples 0 failures (ai feature + Ai::Client + enrich service/worker + call-script service/worker + auto-trigger + customer UI).
+- Sub-project 4 (Demo Builder): NEXT. "Build Demo" button -> classify industry (use enrichment.industry) -> seed branded Odoo DB on demo.tecaudex.pk -> images -> story PDF -> URL+login+PDF on the Customer. Needs: Rails side (DemoBuilderService + DemoServerClient (mockable) + BuildDemoWorker + customer demo_* columns + button) AND a server-side parameterized demo-builder on demo.tecaudex.pk.
