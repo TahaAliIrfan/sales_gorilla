@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_23_002820) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_23_002821) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -350,6 +350,12 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_23_002820) do
     t.datetime "enriched_at"
     t.text "call_script"
     t.datetime "call_script_generated_at"
+    t.string "demo_url"
+    t.string "demo_db"
+    t.string "demo_login"
+    t.text "demo_password"
+    t.string "demo_status"
+    t.datetime "demo_built_at"
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"

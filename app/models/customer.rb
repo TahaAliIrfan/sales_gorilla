@@ -16,6 +16,9 @@ class Customer < ApplicationRecord
   has_many :invoices, dependent: :destroy
   has_many :meta_conversion_logs, dependent: :destroy
   has_many_attached :documents
+  has_one_attached :demo_guide
+
+  encrypts :demo_password
 
   # Campaign relationships
   has_many :customer_group_memberships, dependent: :destroy
