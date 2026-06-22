@@ -11,7 +11,12 @@ class EnrichLeadWorker
 
     org = ActsAsTenant.without_tenant { customer.organization }
     ActsAsTenant.with_tenant(org) do
-      intel = LeadEnrichmentService.call(customer)
+      begin
+        intel = LeadEnrichmentService.call(customer)
+      rescue Ai::Client::MissingKey, Ai::Client::ApiError => e
+        Rails.logger.warn("[EnrichLead] customer=#{customer.id} AI unavailable: #{e.message}")
+        return
+      end
       customer.update!(
         enrichment_summary: intel[:summary],
         industry: intel[:industry],

@@ -201,6 +201,7 @@ class Customer < ApplicationRecord
   after_save :analyze_phone_number, if: -> { phone.present? && should_analyze_phone? }
   after_save :track_meta_conversions_events
   after_create :calculate_lead_score
+  after_create :enqueue_lead_intelligence, if: :auto_enrich?
 
   after_create :track_meta_conversions_events_create
   after_update :enqueue_portal_pushback, if: :portal_pushback_needed?
@@ -699,5 +700,13 @@ class Customer < ApplicationRecord
 
   def enqueue_portal_pushback
     OdooPortalPushWorker.perform_async(id)
+  end
+
+  def auto_enrich?
+    company.present? || idea_description.present?
+  end
+
+  def enqueue_lead_intelligence
+    EnrichLeadWorker.perform_async(id)
   end
 end
