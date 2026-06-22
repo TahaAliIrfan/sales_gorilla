@@ -11,7 +11,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 2: complete (commit 73e60e0, review clean: 3 examples 0 failures; FIXED schema.rb regression that dropped 7 tables + rebuilt dev/test DBs from full schema)
 - [x] Task 3: complete (commit ef87d2a, 2 examples 0 failures, schema clean)
 - [x] Task 4: complete (commit 3060be5, 1 example 0 failures, schema clean)
-- [ ] Task 5: LeadParser
+- [x] Task 5: complete (commit bcd7150, 2 examples 0 failures)
 - [ ] Task 6: BrowserRunner + selectors
 - [ ] Task 7: Scraper
 - [ ] Task 8: OdooPortalSyncWorker
