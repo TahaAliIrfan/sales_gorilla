@@ -25,3 +25,13 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - Schema-driven repo: 7 tables (sms, google_meets, etc.) have NO migration files.
 - Dev + test DBs now rebuilt complete (50 tables). `db:migrate` dumps cleanly now.
 - ALWAYS verify after a migration task: `git show HEAD:db/schema.rb | grep -c create_table` must NOT drop below the prior count. If it does, restore from prior schema + re-run only the new migration against a schema:load'd DB.
+
+## FINAL STATUS — COMPLETE (2026-06-23)
+- All 14 tasks done. Full connector suite: 32 examples, 0 failures. Schema intact (51 tables). No co-author lines.
+- Final whole-branch review (opus) found 1 CRITICAL + 3 IMPORTANT; all fixed in commit 38c87f9:
+  - C1: lead_source is taxonomy-validated -> seed "Odoo Partner Portal" lead_source taxonomy on connect + per-lead RecordInvalid isolation.
+  - I1: per-lead error isolation (bad lead -> mark_failed, batch + connection survive).
+  - I2: admin-gated the manual /odoo_portal/sync endpoint (TenantController + Pundit).
+  - I3: hardened push-worker rescue (hoisted conn).
+- Branch feat/odoo-portal-connector (30+ commits off origin/revamp). NOT pushed/merged — awaiting user push + PR for Taha review.
+- Known follow-ups (documented, out of scope): live-portal selector + write_action click-path capture (needs real portal creds; node agent currently stubs write_action -> add a verify-action-landed check then); wire the connect card into the Relay features page; per-org editable field/event maps.
