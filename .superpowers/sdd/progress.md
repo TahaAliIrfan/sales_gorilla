@@ -44,3 +44,9 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
     - accept/note -> form.interested_partner_assign_form (comment + .interested_partner_assign_confirm); both carry csrf_token + lead_id.
 - STILL UNVALIDATED: the actual write submit (clicking Confirm -> AJAX POST landing). Needs ONE real submit on a genuinely-junk lead with user go-ahead.
 - PRODUCTION connect flow needs the user's httpOnly `session_id` cookie pasted into Settings (DevTools > Application > Cookies > odoo.com > session_id).
+
+## Sub-project 3: Lead Intelligence (enrichment + call scripts) — IN PROGRESS
+Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
+- [ ] T1 ai feature key  - [ ] T2 Ai::Client  - [ ] T3 customer columns  - [ ] T4 LeadEnrichmentService
+- [ ] T5 EnrichLeadWorker  - [ ] T6 CallScriptService  - [ ] T7 GenerateCallScriptWorker
+- [ ] T8 auto-trigger  - [ ] T9 customer UI
