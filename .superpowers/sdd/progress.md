@@ -49,4 +49,4 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
 - [x] T1 ai feature key (8474c67)  - [x] T2 Ai::Client (4af777c)  - [x] T3 customer columns (b58f53b)  - [x] T4 LeadEnrichmentService (5791e16)
 - [x] T5 EnrichLeadWorker (ee5d9cd)  - [x] T6 CallScriptService (020a3c2)  - [x] T7 GenerateCallScriptWorker (903ab5e)
-- [x] T8 auto-trigger (7d41990)  - [ ] T9 customer UI
+- [x] T8 auto-trigger (7d41990)  - [x] T9 customer UI (9814bc3) — LEAD INTELLIGENCE COMPLETE
