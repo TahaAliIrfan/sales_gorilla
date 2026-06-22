@@ -18,4 +18,9 @@ RSpec.describe OdooPortal::BrowserRunner do
     allow(Open3).to receive(:capture3).and_return([{ ok: true, data: { "logged_in" => false } }.to_json, "", instance_double(Process::Status, success?: true)])
     expect { runner.run("validate_session") }.to raise_error(described_class::SessionExpired)
   end
+
+  it "login returns the cookie jar from the agent" do
+    allow(Open3).to receive(:capture3).and_return([{ ok: true, data: { "logged_in" => true, "cookies" => [{ "name" => "session_id", "value" => "z" }] } }.to_json, "", instance_double(Process::Status, success?: true)])
+    expect(runner.login(email: "a@b.com", password: "x")).to eq([{ "name" => "session_id", "value" => "z" }])
+  end
 end

@@ -7,13 +7,22 @@
     <%= button_to "Sync now", "/odoo_portal/sync", method: :post %>
     <%= button_to "Disconnect", settings_odoo_portal_connection_path, method: :delete %>
   <% else %>
-    <p>Status: <%= connection&.status || "not connected" %>. Paste your captured session cookies to connect.</p>
+    <p>Status: <%= connection&.status || "not connected" %>. Sign in with your odoo.com partner login and we'll keep the session fresh automatically.</p>
     <%= form_with url: settings_odoo_portal_connection_path, method: :post do |f| %>
       <%= f.fields_for :odoo_portal_connection do |c| %>
-        <%= c.text_field :base_url, value: "https://www.odoo.com" %>
-        <%= c.text_field :watch_from, placeholder: "notification sender (e.g. odoo.com)" %>
-        <%= c.text_field :watch_subject, placeholder: "subject contains (e.g. Lead)" %>
-        <%= c.text_area :session_cookies, placeholder: "captured cookie JSON" %>
+        <%= c.hidden_field :base_url, value: "https://www.odoo.com" %>
+        <label>Odoo email</label>
+        <%= c.email_field :login_email, placeholder: "you@odoo.com partner login", autocomplete: "off" %>
+        <label>Odoo password</label>
+        <%= c.password_field :login_password, placeholder: "portal password", autocomplete: "new-password" %>
+        <label>Notify-email sender (optional)</label>
+        <%= c.text_field :watch_from, placeholder: "e.g. odoo.com" %>
+        <label>Notify-email subject contains (optional)</label>
+        <%= c.text_field :watch_subject, placeholder: "e.g. Lead" %>
+        <details>
+          <summary>Advanced: paste a session cookie instead</summary>
+          <%= c.text_area :session_cookies, placeholder: "captured cookie JSON (only if you prefer not to store a password)" %>
+        </details>
       <% end %>
       <%= f.submit "Connect" %>
     <% end %>

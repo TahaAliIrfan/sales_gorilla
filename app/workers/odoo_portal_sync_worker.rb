@@ -15,14 +15,19 @@ class OdooPortalSyncWorker
 
   private
 
-  def sync(org, conn)
+  def sync(org, conn, retried: false)
     known = PartnerPortalLead.where(organization: org).pluck(:portal_lead_id)
     new_leads = OdooPortal::Scraper.new(conn).fetch_new(known_ids: known)
 
     new_leads.each { |payload| ingest(org, payload) }
     conn.touch_synced!
   rescue OdooPortal::BrowserRunner::SessionExpired
-    conn.mark_needs_reauth!
+    # Self-healing: if we have stored credentials, re-login once and retry.
+    if !retried && conn.refresh_session!
+      sync(org, conn, retried: true)
+    else
+      conn.mark_needs_reauth!
+    end
   rescue => e
     conn.mark_error!(e.message)
     raise

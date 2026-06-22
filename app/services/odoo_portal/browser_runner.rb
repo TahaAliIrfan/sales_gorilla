@@ -18,6 +18,13 @@ module OdooPortal
       @connection = connection
     end
 
+    # Logs in with email + password and returns the resulting cookie jar (array
+    # of cookie hashes) for the caller to persist. Raises AgentError on bad creds.
+    def login(email:, password:)
+      data = run("login", "email" => email, "password" => password)
+      Array(data && data["cookies"])
+    end
+
     def run(action, payload = {})
       input = {
         action: action,

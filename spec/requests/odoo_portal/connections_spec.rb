@@ -24,6 +24,20 @@ RSpec.describe "Odoo portal connection settings", type: :request do
     expect(conn.cookies.first["value"]).to eq("z")
   end
 
+  it "logs in with email + password and stores the captured session" do
+    runner = instance_double(OdooPortal::BrowserRunner)
+    allow(OdooPortal::BrowserRunner).to receive(:new).and_return(runner)
+    allow(runner).to receive(:login).and_return([{ "name" => "session_id", "value" => "z" }])
+
+    post settings_odoo_portal_connection_path, params: {
+      odoo_portal_connection: { base_url: "https://www.odoo.com", login_email: "a@b.com", login_password: "secret" }
+    }
+    conn = ActsAsTenant.with_tenant(org) { OdooPortalConnection.for_organization(org) }
+    expect(conn.status).to eq("active")
+    expect(conn.cookies.first["value"]).to eq("z")
+    expect(conn.login_email).to eq("a@b.com")
+  end
+
   it "seeds the lead-source taxonomy entry for 'Odoo Partner Portal' on connect" do
     cookies_json = [{ "name" => "session_id", "value" => "z" }].to_json
     post settings_odoo_portal_connection_path, params: {

@@ -8,6 +8,22 @@ module Settings
       conn = OdooPortalConnection.for_organization(current_organization) ||
              OdooPortalConnection.new(organization: current_organization)
       conn.assign_attributes(connection_params)
+
+      # Primary path: email + password -> log in headlessly and capture the
+      # session automatically (and re-auth becomes self-healing). Fallback:
+      # a directly-pasted cookie jar.
+      if conn.credentials? && conn.session_cookies.blank?
+        begin
+          cookies = OdooPortal::BrowserRunner.new(conn).login(email: conn.login_email, password: conn.login_password)
+          conn.session_cookies = cookies.to_json if cookies.present?
+        rescue OdooPortal::BrowserRunner::AgentError => e
+          conn.status = "error"
+          conn.last_error = e.message.to_s.truncate(1000)
+          conn.save!
+          return redirect_to settings_features_path, alert: "Couldn't connect to the Odoo portal: #{e.message}"
+        end
+      end
+
       conn.status = conn.session_cookies.present? ? "active" : "needs_reauth"
       conn.save!
       ensure_lead_source_taxonomy(current_organization)
@@ -26,7 +42,7 @@ module Settings
     end
 
     def connection_params
-      params.require(:odoo_portal_connection).permit(:base_url, :watch_from, :watch_subject, :session_cookies)
+      params.require(:odoo_portal_connection).permit(:base_url, :watch_from, :watch_subject, :session_cookies, :login_email, :login_password)
     end
 
     def ensure_lead_source_taxonomy(org)
