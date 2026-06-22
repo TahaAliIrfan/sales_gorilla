@@ -25,4 +25,15 @@ RSpec.describe OrganizationFeature do
     expect(f).not_to be_valid
     expect(f.errors[:provider]).to be_present
   end
+
+  it "accepts the demo_engine feature with an odoo provider" do
+    org = create(:organization)
+    expect(org.features.build(key: "demo_engine", provider: "odoo", enabled: true)).to be_valid
+  end
+
+  it "rejects an unsupported provider for demo_engine" do
+    org = create(:organization)
+    f = org.features.build(key: "demo_engine", provider: "twilio")
+    expect(f).not_to be_valid
+  end
 end
