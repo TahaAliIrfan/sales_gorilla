@@ -12,7 +12,7 @@ Note: spec/models/membership_spec.rb has 2 PRE-EXISTING failures on revamp (not 
 - [x] Task 3: complete (commit ef87d2a, 2 examples 0 failures, schema clean)
 - [x] Task 4: complete (commit 3060be5, 1 example 0 failures, schema clean)
 - [x] Task 5: complete (commit bcd7150, 2 examples 0 failures)
-- [ ] Task 6: BrowserRunner + selectors
+- [x] Task 6: complete (commit 26ed91b, 3 examples 0 failures; live selector capture deferred — needs portal creds)
 - [ ] Task 7: Scraper
 - [ ] Task 8: OdooPortalSyncWorker
 - [ ] Task 9: EmailTrigger
