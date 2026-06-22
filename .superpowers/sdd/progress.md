@@ -55,3 +55,8 @@ Plan: docs/superpowers/plans/2026-06-23-lead-intelligence.md (T1-T9)
 - Sub-project 2 (Odoo connector): COMPLETE + live-validated against real portal (read path proven, write-back mechanics proven, email/password auto-reauth). 1 pending: real write-submit test on a junk lead.
 - Sub-project 3 (Lead Intelligence): COMPLETE — 23 examples 0 failures (ai feature + Ai::Client + enrich service/worker + call-script service/worker + auto-trigger + customer UI).
 - Sub-project 4 (Demo Builder): NEXT. "Build Demo" button -> classify industry (use enrichment.industry) -> seed branded Odoo DB on demo.tecaudex.pk -> images -> story PDF -> URL+login+PDF on the Customer. Needs: Rails side (DemoBuilderService + DemoServerClient (mockable) + BuildDemoWorker + customer demo_* columns + button) AND a server-side parameterized demo-builder on demo.tecaudex.pk.
+
+## Sub-project 4: Demo Builder — IN PROGRESS (plan: docs/superpowers/plans/2026-06-23-demo-builder.md)
+- [ ] D1 demo_engine feature  - [ ] D2 customer demo columns  - [ ] D3 Demo::ServerClient
+- [ ] D4 DemoBuilderService  - [ ] D5 BuildDemoWorker  - [ ] D6 DemoGuidePdfService+worker  - [ ] D7 button+UI
+- [ ] SERVER: python demo-builder endpoint on demo.tecaudex.pk
