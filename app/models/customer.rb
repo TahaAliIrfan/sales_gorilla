@@ -203,6 +203,7 @@ class Customer < ApplicationRecord
   after_create :calculate_lead_score
 
   after_create :track_meta_conversions_events_create
+  after_update :enqueue_portal_pushback, if: :portal_pushback_needed?
 
   def active_deals_count
     deals.active.count
@@ -651,6 +652,11 @@ class Customer < ApplicationRecord
 
     changes_to_track = self.changes.select { |field, _| tracked_fields.include?(field) }
 
+    # Resolve the acting user once; skip activity logging entirely when no user
+    # is available (e.g. background jobs / test fixtures without an assigned user).
+    acting_user_id = self.user_id || User.first&.id
+    return if acting_user_id.nil?
+
     changes_to_track.each do |field, (old_value, new_value)|
       # For user_id field, get the actual user names instead of IDs
       if field == "user_id"
@@ -660,13 +666,13 @@ class Customer < ApplicationRecord
         customer_activities.build(
           action: "User assigned",
           details: "Changed from '#{old_user_name}' to '#{new_user_name}'",
-          user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
+          user_id: acting_user_id
         )
       else
         customer_activities.build(
           action: "#{field.humanize} changed",
           details: "Changed from '#{old_value}' to '#{new_value}'",
-          user_id: self.user_id || User.first&.id # Assign to current user or first user as fallback
+          user_id: acting_user_id
         )
       end
     end
@@ -684,5 +690,14 @@ class Customer < ApplicationRecord
   # Queue phone analysis when phone number is added or changed
   def queue_phone_analysis
     analyze_phone_number
+  end
+
+  def portal_pushback_needed?
+    portal_lead_id.present? && saved_change_to_status? &&
+      OdooPortal::EventMap.action_for(self).present?
+  end
+
+  def enqueue_portal_pushback
+    OdooPortalPushWorker.perform_async(id)
   end
 end
