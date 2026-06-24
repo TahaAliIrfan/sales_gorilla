@@ -80,7 +80,7 @@ class TasksController < ApplicationController
     end
 
     @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-    @users = current_user.admin? ? User.all : [ current_user ]
+    @users = current_user.admin? ? current_organization.users.order(:name) : [ current_user ]
   end
 
   def create
@@ -98,7 +98,7 @@ class TasksController < ApplicationController
         format.json { render :show, status: :created, location: @task }
       else
         @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-        @users = current_user.admin? ? User.all : [ current_user ]
+        @users = current_user.admin? ? current_organization.users.order(:name) : [ current_user ]
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @task.errors, status: :unprocessable_entity }
       end
@@ -108,7 +108,7 @@ class TasksController < ApplicationController
   def edit
     authorize @task
     @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-    @users = current_user.admin? ? User.all : [ current_user ]
+    @users = current_user.admin? ? current_organization.users.order(:name) : [ current_user ]
   end
 
   def show
@@ -130,7 +130,7 @@ class TasksController < ApplicationController
         format.json { render :show, status: :ok, location: @task }
       else
         @customers = current_user.admin? ? Customer.all : Customer.where(user_id: current_user.id)
-        @users = current_user.admin? ? User.all : [ current_user ]
+        @users = current_user.admin? ? current_organization.users.order(:name) : [ current_user ]
         format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: @task.errors, status: :unprocessable_entity }
       end

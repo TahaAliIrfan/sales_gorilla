@@ -22,7 +22,7 @@
         <% if current_user.admin? %>
           <div class="rl-field">
             <%= form.label :user_id, "Assigned to", class: "rl-label" %>
-            <%= form.collection_select :user_id, User.all, :id, :name, {}, class: "rl-select" %>
+            <%= form.collection_select :user_id, current_organization.users.order(:name), :id, :name, {}, class: "rl-select" %>
           </div>
         <% else %>
           <%= form.hidden_field :user_id, value: current_user.id %>

@@ -7,7 +7,7 @@ class CustomersController < ApplicationController
 
   def index
     @users = if current_user&.admin?
-      User.all
+      current_organization.users.order(:name)
     elsif current_user&.manager?
       # Managers can assign to themselves and their associates
       [ current_user ] + current_user.associates

@@ -38,7 +38,7 @@
           { include_blank: "Priority" }, class: "rl-select rl-input--sm", style: "width:auto" %>
 
     <% if current_user.admin? && params[:action] == "index" %>
-      <%= f.select :user_id, options_from_collection_for_select(User.all, :id, :name, params[:user_id]),
+      <%= f.select :user_id, options_from_collection_for_select(current_organization.users.order(:name), :id, :name, params[:user_id]),
             { include_blank: "Assignee" }, class: "rl-select rl-input--sm", style: "width:auto" %>
     <% end %>
 

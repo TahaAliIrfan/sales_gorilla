@@ -53,7 +53,7 @@ class DealsController < ApplicationController
     params[:filter_range] ||= "30"
     apply_filters
     @users = if current_user&.admin?
-      User.all
+      current_organization.users.order(:name)
     elsif current_user&.manager?
       [ current_user ] + current_user.associates
     else
@@ -124,7 +124,7 @@ class DealsController < ApplicationController
     params[:filter_range] ||= "30"
     apply_filters
     @users = if current_user&.admin?
-      User.all
+      current_organization.users.order(:name)
     elsif current_user&.manager?
       [ current_user ] + current_user.associates
     else
@@ -191,7 +191,7 @@ class DealsController < ApplicationController
     # Get all customers for dropdown
     if current_user&.admin?
       @customers = Customer.all
-      @users = User.all
+      @users = current_organization.users.order(:name)
     elsif current_user&.manager?
       # Managers can create deals for their own customers and their associates' customers
       associate_ids = current_user.associates.pluck(:id)
@@ -279,7 +279,7 @@ class DealsController < ApplicationController
       # Get all customers for dropdown
       if current_user&.admin?
         @customers = Customer.all
-        @users = User.all
+        @users = current_organization.users.order(:name)
       elsif current_user&.manager?
         # Managers can create deals for their own customers and their associates' customers
         associate_ids = current_user.associates.pluck(:id)
@@ -327,7 +327,7 @@ class DealsController < ApplicationController
       # Get all customers for dropdown for rendering the form
       if current_user&.admin?
         @customers = Customer.all
-        @users = User.all
+        @users = current_organization.users.order(:name)
       else
         @customers = Customer.where(user_id: current_user.id)
         @users = [ current_user ]
@@ -343,7 +343,7 @@ class DealsController < ApplicationController
       # Get data for form
       if current_user&.admin?
         @customers = Customer.all
-        @users = User.all
+        @users = current_organization.users.order(:name)
       elsif current_user&.manager?
         # Managers can create deals for their own customers and their associates' customers
         associate_ids = current_user.associates.pluck(:id)
@@ -365,7 +365,7 @@ class DealsController < ApplicationController
     # Get all customers for dropdown
     if current_user&.admin?
       @customers = Customer.all
-      @users = User.all
+      @users = current_organization.users.order(:name)
     elsif current_user&.manager?
       # Managers can edit deals with their own customers and their associates' customers
       associate_ids = current_user.associates.pluck(:id)
@@ -478,7 +478,7 @@ class DealsController < ApplicationController
       # Get data for form
       if current_user&.admin?
         @customers = Customer.all
-        @users = User.all
+        @users = current_organization.users.order(:name)
       elsif current_user&.manager?
         # Managers can edit deals with their own customers and their associates' customers
         associate_ids = current_user.associates.pluck(:id)
@@ -502,7 +502,7 @@ class DealsController < ApplicationController
       # Get data for form
       if current_user&.admin?
         @customers = Customer.all
-        @users = User.all
+        @users = current_organization.users.order(:name)
       elsif current_user&.manager?
         # Managers can edit deals with their own customers and their associates' customers
         associate_ids = current_user.associates.pluck(:id)

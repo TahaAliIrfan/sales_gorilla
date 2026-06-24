@@ -56,7 +56,7 @@
       <div class="sect__body">
         <%= form_with url: assign_users_pipeline_path(@pipeline), method: :patch, class: "col", html: { style: "gap:var(--space-4)" } do |form| %>
           <div class="col" style="gap:8px;max-height:240px;overflow-y:auto">
-            <% User.all.each do |user| %>
+            <% current_organization.users.order(:name).each do |user| %>
               <label class="rl-check">
                 <%= check_box_tag "user_ids[]", user.id, @assigned_users.include?(user) %>
                 <span class="rl-box"><%= relay_icon("check", size: 13) %></span>

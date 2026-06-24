@@ -75,7 +75,10 @@
       "Bash(dig +short salesgorilla.app A)",
       "Bash(dig +short xyzprobe.salesgorilla.app A @8.8.8.8)",
       "Bash(dig +short xyzprobe.salesgorilla.app A)",
-      "Bash(ruby -e ' *)"
+      "Bash(ruby -e ' *)",
+      "Bash(bundle lock *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)"
     ],
     "additionalDirectories": [
       "/tmp"

@@ -113,7 +113,7 @@ class UserDashboardController < ApplicationController
 
   # === Manager / admin: team attainment ===
   def load_team
-    associates = current_user.admin? ? User.all.to_a : current_user.associates.to_a
+    associates = current_user.admin? ? current_organization.users.order(:name).to_a : current_user.associates.to_a
     associates = associates.reject { |u| u.id == current_user.id }
 
     start = @month_start
