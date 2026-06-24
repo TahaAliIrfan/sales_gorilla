@@ -37,10 +37,13 @@
         and keep it fresh automatically.
       </p>
 
-      <%= form_with url: settings_odoo_portal_connection_path, method: :post,
-            class: "col", html: { style: "gap:var(--space-3)" } do |f| %>
-        <%= f.fields_for :odoo_portal_connection do |c| %>
-          <%= c.hidden_field :base_url, value: "https://www.odoo.com" %>
+      <%# scope: namespaces fields as odoo_portal_connection[...]. Using a nested
+          fields_for here would mis-name them "[odoo_portal_connection][...]" (no
+          parent object), which Rack parses to a literal "[odoo_portal_connection]"
+          key and breaks params.require -> 400. %>
+      <%= form_with url: settings_odoo_portal_connection_path, scope: :odoo_portal_connection,
+            method: :post, class: "col", html: { style: "gap:var(--space-3)" } do |c| %>
+        <%= c.hidden_field :base_url, value: "https://www.odoo.com" %>
 
           <div class="rl-field" style="margin:0">
             <%= c.label :login_email, "Odoo email", class: "rl-label" %>
@@ -73,10 +76,9 @@
                     class: "rl-input" %>
             </div>
           </details>
-        <% end %>
 
         <div class="row">
-          <%= f.submit "Connect", data: { turbo_submits_with: "Starting browser…" },
+          <%= c.submit "Connect", data: { turbo_submits_with: "Starting browser…" },
                 class: "rl-btn rl-btn--primary" %>
         </div>
       <% end %>
