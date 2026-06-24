@@ -34,8 +34,12 @@ module OdooPortal
         payload: payload
       }.to_json
 
-      stdout, stderr, status = Open3.capture3("node", SCRIPT, stdin_data: input)
-      raise AgentError, "node exited: #{stderr.presence || 'unknown'}" unless status.success?
+      begin
+        stdout, stderr, status = Open3.capture3("node", SCRIPT, stdin_data: input)
+      rescue Errno::ENOENT
+        raise AgentError, "Node.js isn't available on the server (it's needed to drive the headless browser)."
+      end
+      raise AgentError, "headless browser failed: #{stderr.presence || 'unknown error'}" unless status.success?
 
       parsed = JSON.parse(stdout.presence || "{}")
       raise AgentError, parsed["error"].to_s unless parsed["ok"]

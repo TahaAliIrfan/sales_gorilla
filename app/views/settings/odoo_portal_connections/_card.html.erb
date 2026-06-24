@@ -1,30 +1,85 @@
-<%# Odoo Partner Portal connect card. Render this from the features page once
-    the Relay feature-card layout is finalized (follow-up). Expects `connection`. %>
-<section class="relay-card">
-  <h2>Odoo Partner Portal</h2>
+<%# Odoo Partner Portal connect card. Rendered from settings/features/_feature_card
+    OUTSIDE the feature form (it has its own forms; nested forms are invalid).
+    Expects `connection` (may be nil). %>
+<div class="col" style="gap:var(--space-3);margin-top:var(--space-4)">
+  <h4 style="font-size:var(--text-h5);font-weight:700">Partner Portal Connection</h4>
+
   <% if connection&.status == "active" %>
-    <p>Connected · Last synced: <%= connection.last_synced_at&.to_fs(:short) || "never" %></p>
-    <%= button_to "Sync now", "/odoo_portal/sync", method: :post %>
-    <%= button_to "Disconnect", settings_odoo_portal_connection_path, method: :delete %>
+    <div class="sect" style="padding:var(--space-3)">
+      <div class="spread" style="gap:16px;align-items:flex-start">
+        <div>
+          <strong style="color:var(--color-success-text)">Connected</strong>
+          <p class="muted rl-sm" style="margin-top:2px">
+            Last synced: <%= connection.last_synced_at&.to_fs(:short) || "never" %>
+          </p>
+        </div>
+        <div class="row" style="gap:8px">
+          <%= button_to "Sync now", "/odoo_portal/sync", method: :post,
+                class: "rl-btn rl-btn--secondary" %>
+          <%= button_to "Disconnect", settings_odoo_portal_connection_path, method: :delete,
+                form: { data: { turbo_confirm: "Disconnect the Odoo partner portal? New leads will stop syncing." } },
+                class: "rl-btn rl-btn--ghost" %>
+        </div>
+      </div>
+    </div>
   <% else %>
-    <p>Status: <%= connection&.status || "not connected" %>. Sign in with your odoo.com partner login and we'll keep the session fresh automatically.</p>
-    <%= form_with url: settings_odoo_portal_connection_path, method: :post do |f| %>
-      <%= f.fields_for :odoo_portal_connection do |c| %>
-        <%= c.hidden_field :base_url, value: "https://www.odoo.com" %>
-        <label>Odoo email</label>
-        <%= c.email_field :login_email, placeholder: "you@odoo.com partner login", autocomplete: "off" %>
-        <label>Odoo password</label>
-        <%= c.password_field :login_password, placeholder: "portal password", autocomplete: "new-password" %>
-        <label>Notify-email sender (optional)</label>
-        <%= c.text_field :watch_from, placeholder: "e.g. odoo.com" %>
-        <label>Notify-email subject contains (optional)</label>
-        <%= c.text_field :watch_subject, placeholder: "e.g. Lead" %>
-        <details>
-          <summary>Advanced: paste a session cookie instead</summary>
-          <%= c.text_area :session_cookies, placeholder: "captured cookie JSON (only if you prefer not to store a password)" %>
-        </details>
+    <div class="sect" style="padding:var(--space-3)">
+      <p class="muted rl-sm" style="margin-bottom:var(--space-3)">
+        Status:
+        <% if connection&.status == "error" %>
+          <span style="color:var(--color-danger-text)">error</span><%= " — #{connection.last_error}" if connection.last_error.present? %>.
+        <% elsif connection&.status == "needs_reauth" %>
+          <span style="color:var(--color-danger-text)">needs re-auth</span>.
+        <% else %>
+          not connected.
+        <% end %>
+        Sign in with your odoo.com partner login — we start a headless browser, capture the session,
+        and keep it fresh automatically.
+      </p>
+
+      <%= form_with url: settings_odoo_portal_connection_path, method: :post,
+            class: "col", html: { style: "gap:var(--space-3)" } do |f| %>
+        <%= f.fields_for :odoo_portal_connection do |c| %>
+          <%= c.hidden_field :base_url, value: "https://www.odoo.com" %>
+
+          <div class="rl-field" style="margin:0">
+            <%= c.label :login_email, "Odoo email", class: "rl-label" %>
+            <%= c.email_field :login_email, placeholder: "you@company.com",
+                  autocomplete: "off", class: "rl-input" %>
+          </div>
+
+          <div class="rl-field" style="margin:0">
+            <%= c.label :login_password, "Odoo password", class: "rl-label" %>
+            <%= c.password_field :login_password, placeholder: "portal password",
+                  autocomplete: "new-password", class: "rl-input" %>
+          </div>
+
+          <div class="row" style="gap:10px;align-items:flex-end">
+            <div class="rl-field" style="margin:0;flex:1">
+              <%= c.label :watch_from, "Notify-email sender (optional)", class: "rl-label" %>
+              <%= c.text_field :watch_from, placeholder: "e.g. odoo.com", class: "rl-input" %>
+            </div>
+            <div class="rl-field" style="margin:0;flex:1">
+              <%= c.label :watch_subject, "Notify-email subject contains (optional)", class: "rl-label" %>
+              <%= c.text_field :watch_subject, placeholder: "e.g. Lead", class: "rl-input" %>
+            </div>
+          </div>
+
+          <details>
+            <summary class="rl-sm muted" style="cursor:pointer">Advanced: paste a session cookie instead</summary>
+            <div class="rl-field" style="margin-top:var(--space-2)">
+              <%= c.text_area :session_cookies, rows: 3,
+                    placeholder: "captured cookie JSON (only if you prefer not to store a password)",
+                    class: "rl-input" %>
+            </div>
+          </details>
+        <% end %>
+
+        <div class="row">
+          <%= f.submit "Connect", data: { turbo_submits_with: "Starting browser…" },
+                class: "rl-btn rl-btn--primary" %>
+        </div>
       <% end %>
-      <%= f.submit "Connect" %>
-    <% end %>
+    </div>
   <% end %>
-</section>
+</div>
