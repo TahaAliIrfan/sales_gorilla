@@ -78,7 +78,13 @@
       "Bash(ruby -e ' *)",
       "Bash(bundle lock *)",
       "Bash(git fetch *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Read(//opt/homebrew/Cellar/postgresql@17/17.9/bin/**)",
+      "Bash(lsof -nP -iTCP:5433 -sTCP:LISTEN)",
+      "Bash(brew services *)",
+      "Read(//opt/homebrew/var/postgresql@17/**)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/pg_restore -h localhost -p 5433 -d tecaudex_crm_clone --no-owner --no-acl /tmp/tecaudex_crm_clone.dump)",
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/pg_ctl -D /opt/homebrew/var/postgresql@17 stop -m fast)"
     ],
     "additionalDirectories": [
       "/tmp"
