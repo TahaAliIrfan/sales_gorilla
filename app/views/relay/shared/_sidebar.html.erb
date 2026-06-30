@@ -1,15 +1,50 @@
 <%# app/views/relay/shared/_sidebar.html.erb %>
 <aside class="rl-sidebar" data-relay--sidebar-target="aside">
-  <div class="rl-sidebar__brand">
-    <span class="rl-logo">
-      <% if current_organization&.logo&.attached? %>
-        <%= image_tag current_organization.logo, alt: current_organization.name,
-              style: "width:26px;height:26px;border-radius:7px;object-fit:cover" %>
-      <% else %>
-        <svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
-      <% end %>
-    </span>
-    <b><%= current_organization&.name || "Sales Gorilla" %></b>
+  <%# Org switcher — the brand is a dropdown listing every organization the
+      signed-in user belongs to. Switching navigates to that org's subdomain
+      (a different host), so links opt out of Turbo to force a full load. %>
+  <% switch_orgs = current_user&.organizations&.includes(logo_attachment: :blob)&.order(:name) || [] %>
+  <div class="rl-sidebar__brand" data-controller="relay--dropdown" style="position:relative">
+    <button type="button" class="rl-orgswitch"
+            data-action="click->relay--dropdown#toggle"
+            style="display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left">
+      <span class="rl-logo">
+        <% if current_organization&.logo&.attached? %>
+          <%= image_tag current_organization.logo, alt: current_organization.name,
+                style: "width:26px;height:26px;border-radius:7px;object-fit:cover" %>
+        <% else %>
+          <svg viewBox="0 0 32 32" fill="none"><path d="M6 7.5 L14.5 16 L6 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M15.5 7.5 L24 16 L15.5 24.5" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.55"/></svg>
+        <% end %>
+      </span>
+      <b style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= current_organization&.name || "Sales Gorilla" %></b>
+      <%= relay_icon("chevrons-up-down", size: 15, css: "muted") %>
+    </button>
+
+    <div class="menu-float pop" hidden data-relay--dropdown-target="menu" style="top:calc(100% + 6px);left:0;width:248px">
+      <div class="rl-menu">
+        <div class="rl-navgroup-label" style="padding:6px 10px 4px">Organizations</div>
+        <% switch_orgs.each do |org| %>
+          <% current = org.id == current_organization&.id %>
+          <%= link_to tenant_root_url(host: tenant_host_for(org.subdomain)),
+                data: { turbo: false },
+                class: class_names("rl-menuitem", "is-active" => current) do %>
+            <span class="rl-avatar rl-avatar--sm rl-avatar--c1" style="flex:none">
+              <% if org.logo.attached? %>
+                <%= image_tag org.logo, alt: org.name, style: "width:100%;height:100%;border-radius:inherit;object-fit:cover" %>
+              <% else %>
+                <%= org.initial %>
+              <% end %>
+            </span>
+            <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><%= org.name %></span>
+            <% if current %><%= relay_icon("check", size: 15) %><% end %>
+          <% end %>
+        <% end %>
+        <div class="rl-menu__sep"></div>
+        <%= link_to organizations_url(host: root_host), data: { turbo: false }, class: "rl-menuitem" do %>
+          <%= relay_icon("building-2", size: 16) %>All organizations
+        <% end %>
+      </div>
+    </div>
   </div>
 
   <nav class="rl-sidebar__nav">
