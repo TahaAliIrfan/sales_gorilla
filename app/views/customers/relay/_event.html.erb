@@ -3,6 +3,8 @@
 <% case event.kind %>
 <% when :whatsapp %>
   <%= render "customers/relay/whatsapp_bubble", message: event.record %>
+<% when :whatsapp_web %>
+  <%= render "customers/relay/whatsapp_web_bubble", message: event.record %>
 <% when :call %>
   <%= render "customers/relay/call_card", recording: event.record %>
 <% when :email %>

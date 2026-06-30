@@ -1,0 +1,31 @@
+<%# A single green-api WhatsApp message bubble (messages table, sent/received
+    via Whatsapp::ApiService). locals: message (a Message record). Mirrors the
+    Twilio whatsapp_bubble but carries a small "Web" tag so the two WhatsApp
+    channels are distinguishable on the canvas. %>
+<% out = message.outbound? %>
+<div class="cevent cevent--msg">
+  <div class="rl-msgrow <%= "rl-msgrow--out" if out %>">
+    <div class="rl-bubble <%= out ? "rl-bubble--out" : "rl-bubble--in" %> <%= "rl-bubble--media" if message.document.attached? %>">
+      <% if message.document.attached? %>
+        <% if message.document.image? %>
+          <%= image_tag url_for(message.document), class: "rl-media", style: "object-fit:cover" %>
+        <% else %>
+          <%= link_to url_for(message.document), class: "rl-attach", target: "_blank", rel: "noopener" do %>
+            <span class="rl-attach-ic"><%= relay_icon("file", size: 18) %></span>
+            <span class="rl-sm"><%= message.document.filename %></span>
+          <% end %>
+        <% end %>
+        <% if message.content.present? %><div class="rl-cap"><%= message.content %></div><% end %>
+      <% else %>
+        <%= message.content %>
+      <% end %>
+      <div class="rl-bubble__meta">
+        <span class="rl-badge" style="margin-right:4px;font-size:10px;opacity:.8" title="Sent via WhatsApp (Web / green-api)">Web</span>
+        <%= relay_conv_time(message.created_at) %>
+        <% if out %>
+          <%= relay_icon("check-check", size: 14, css: message.read? ? "rl-read" : nil) %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

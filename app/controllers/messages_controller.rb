@@ -82,16 +82,34 @@ class MessagesController < ApplicationController
 
     if result[:success]
       UserKpiRecord.track!(current_user&.id, :whatsapp_messages_sent)
-      render json: {
-        success: true,
-        message: result[:message] || "Message sent successfully",
-        sent_message: result[:message_data]
-      }
+      respond_to do |format|
+        format.json do
+          render json: {
+            success: true,
+            message: result[:message] || "Message sent successfully",
+            sent_message: result[:message_data]
+          }
+        end
+        # Relay lead-workspace composer: append the freshly-persisted outbound
+        # bubble to the conversation canvas. send_message just created it, so it
+        # is the customer's newest message.
+        format.turbo_stream do
+          message = @customer.messages.order(created_at: :desc).first
+          render turbo_stream: turbo_stream.before(
+            "conversation_tail",
+            partial: "customers/relay/whatsapp_web_bubble",
+            locals: { message: message }
+          )
+        end
+      end
     else
-      render json: {
-        success: false,
-        error: result[:error] || "Failed to send message"
-      }, status: :unprocessable_entity
+      error = result[:error] || "Failed to send message"
+      respond_to do |format|
+        format.json { render json: { success: false, error: error }, status: :unprocessable_entity }
+        # Turbo can't render a raw JSON error body — surface it as a flash.
+        format.turbo_stream { redirect_to customer_path(@customer), alert: error }
+        format.html { redirect_to customer_path(@customer), alert: error }
+      end
     end
   end
 

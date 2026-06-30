@@ -84,7 +84,13 @@
       "Bash(brew services *)",
       "Read(//opt/homebrew/var/postgresql@17/**)",
       "Bash(/opt/homebrew/opt/postgresql@17/bin/pg_restore -h localhost -p 5433 -d tecaudex_crm_clone --no-owner --no-acl /tmp/tecaudex_crm_clone.dump)",
-      "Bash(/opt/homebrew/opt/postgresql@17/bin/pg_ctl -D /opt/homebrew/var/postgresql@17 stop -m fast)"
+      "Bash(/opt/homebrew/opt/postgresql@17/bin/pg_ctl -D /opt/homebrew/var/postgresql@17 stop -m fast)",
+      "Bash(awk '/def send_text_message/,/^  end/' app/controllers/whatsapp_us_controller.rb)",
+      "Bash(sed -n '95,155p' app/services/whatsapp_message_service.rb)",
+      "Bash(sed -n '13,32p' app/services/relay/conversation_builder.rb)",
+      "Bash(awk '/def render_error/,/^  end/' app/controllers/whatsapp_us_controller.rb)",
+      "Bash(ruby -c app/controllers/messages_controller.rb)",
+      "Bash(ruby -c app/services/relay/conversation_builder.rb)"
     ],
     "additionalDirectories": [
       "/tmp"

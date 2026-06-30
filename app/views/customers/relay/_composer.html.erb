@@ -3,6 +3,9 @@
     conversation canvas. locals: customer %>
 <% wa_open = customer.respond_to?(:whatsapp_us_window_open?) && customer.whatsapp_us_window_open? %>
 <% wa_on = feature_enabled?(:whatsapp) %>
+<%# Green-api WhatsApp (Whatsapp::ApiService) — available whenever the lead has
+    a WhatsApp chat ID. Runs in parallel to the Twilio "WhatsApp" channel. %>
+<% wa_web_on = customer.whatsapp_chat_id.present? %>
 <div class="lead__compose"
      data-action="turbo:submit-end->relay--composer#reset">
 
@@ -15,7 +18,13 @@
         <span style="color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 15) %></span>WhatsApp
       </button>
     <% end %>
-    <button type="button" class="composer__tab <%= "is-active" unless wa_on %>" data-channel="email"
+    <% if wa_web_on %>
+      <button type="button" class="composer__tab <%= "is-active" unless wa_on %>" data-channel="whatsapp_web"
+              data-relay--composer-target="tab" data-action="click->relay--composer#switch">
+        <span style="color:var(--channel-whatsapp)"><%= relay_icon("message-circle", size: 15) %></span>WhatsApp (Web)
+      </button>
+    <% end %>
+    <button type="button" class="composer__tab <%= "is-active" unless wa_on || wa_web_on %>" data-channel="email"
             data-relay--composer-target="tab" data-action="click->relay--composer#switch">
       <span style="color:var(--channel-email)"><%= relay_icon("mail", size: 15) %></span>Email
     </button>
@@ -125,12 +134,37 @@
 
   <% end %>
 
+  <%# WhatsApp (Web) panel — green-api send via Whatsapp::ApiService. Posts to
+      MessagesController#create, which persists a Message and responds with a
+      turbo_stream bubble appended to the canvas. No 24-hour window limit. %>
+  <% if wa_web_on %>
+  <div data-channel="whatsapp_web" data-relay--composer-target="panel" <%= "hidden" if wa_on %>>
+    <%= form_with url: customer_messages_path(customer), method: :post do |f| %>
+      <div class="composer__box">
+        <textarea name="content" class="composer__input" rows="1" placeholder="Message <%= customer.name.to_s.split.first %> on WhatsApp (Web)…"
+                  data-relay--composer-target="input"
+                  data-action="input->relay--composer#autosize keydown->relay--composer#submitOnCmdEnter"></textarea>
+        <div class="composer__bar">
+          <span class="rl-badge" style="margin-left:4px" title="Sent via the green-api WhatsApp integration">
+            <%= relay_icon("link", size: 11) %>Web
+          </span>
+          <div class="grow"></div>
+          <span class="muted" style="font-size:11px;margin-right:4px">⌘↵ to send</span>
+          <button type="submit" class="rl-btn rl-btn--primary rl-btn--sm" style="background:var(--channel-whatsapp)">
+            <%= relay_icon("send-horizontal", size: 14) %>Send
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  <% end %>
+
   <%# Email panel — hidden by default unless WhatsApp is off (then it's the default channel).
       Uses a contenteditable rich-text editor (email-composer controller) instead of a
       plain textarea: GmailService treats the body as HTML, so plain-text newlines would
       collapse and the sent email would render as one run-on block. The editor copies its
       innerHTML into the hidden `body` field on submit. %>
-  <div data-channel="email" data-relay--composer-target="panel" <%= "hidden" if wa_on %>
+  <div data-channel="email" data-relay--composer-target="panel" <%= "hidden" if wa_on || wa_web_on %>
        data-controller="email-composer" data-email-composer-placeholder-value="Write your email…">
     <%= form_with url: customer_emails_path(customer), method: :post,
                   data: { turbo: true, email_composer_target: "form",

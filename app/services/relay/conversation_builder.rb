@@ -13,10 +13,11 @@ module Relay
     # Per-source caps. WhatsApp threads are the densest, so they get the most
     # headroom; everything else is comfortably bounded.
     LIMITS = {
-      whatsapp: 200,
-      email:    40,
-      call:     40,
-      activity: 60
+      whatsapp:     200,
+      whatsapp_web: 200,
+      email:        40,
+      call:         40,
+      activity:     60
     }.freeze
 
     # CustomerActivity actions that are already represented by a richer event
@@ -37,7 +38,7 @@ module Relay
     # injected by the view as it walks the list (so the same list can be
     # re-grouped without rebuilding).
     def events
-      (whatsapp_events + email_events + call_events + activity_events)
+      (whatsapp_events + whatsapp_web_events + email_events + call_events + activity_events)
         .sort_by { |e| [ e.at, e.kind.to_s ] }
     end
 
@@ -49,6 +50,17 @@ module Relay
                .limit(LIMITS[:whatsapp])
                .to_a
                .map { |m| Event.new(kind: :whatsapp, at: (m.timestamp || m.created_at), record: m) }
+    end
+
+    # Green-api WhatsApp thread (messages table), sent/received via
+    # Whatsapp::ApiService. Distinct from the Twilio whatsapp_messages source
+    # above so both channels render side by side on the canvas.
+    def whatsapp_web_events
+      @customer.messages
+               .order(created_at: :desc)
+               .limit(LIMITS[:whatsapp_web])
+               .to_a
+               .map { |m| Event.new(kind: :whatsapp_web, at: m.created_at, record: m) }
     end
 
     def email_events
