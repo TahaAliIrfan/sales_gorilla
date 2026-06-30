@@ -2,7 +2,7 @@ class UsersController < ApplicationController
   layout "relay"
   before_action :require_login
   before_action :require_admin
-  before_action :set_user, only: [ :show, :update_role, :toggle_active, :resend_invite, :manage_associates, :assign_associate, :remove_associate ]
+  before_action :set_user, only: [ :show, :update_role, :toggle_active, :resend_invite, :manage_associates, :assign_associate, :remove_associate, :remove_member ]
 
   # Org members and the roles assignable within the current organization.
   def index
@@ -166,6 +166,30 @@ class UsersController < ApplicationController
         format.json { render json: { success: false, message: "Failed to remove associate." }, status: :unprocessable_entity }
       end
     end
+  end
+
+  # Remove a member from the current organization. Destroys only their
+  # Membership for this org — the global User account (and any other orgs they
+  # belong to) is untouched. Their direct reports are detached via the
+  # Membership#direct_reports `dependent: :nullify`.
+  def remove_member
+    unless pundit_user.can?("users.manage")
+      return render json: { success: false, message: "You don't have permission to remove users." }, status: :forbidden
+    end
+    if @user == current_user
+      return render json: { success: false, message: "You can't remove yourself from the organization." }, status: :unprocessable_entity
+    end
+
+    membership = @user.membership_for(current_organization)
+    unless membership
+      return render json: { success: false, message: "User is not a member of this organization." }, status: :unprocessable_entity
+    end
+    if membership.owner? && current_organization.memberships.where(role: "owner").count <= 1
+      return render json: { success: false, message: "You can't remove the last owner of the organization." }, status: :unprocessable_entity
+    end
+
+    membership.destroy!
+    render json: { success: true, message: "#{@user.name} was removed from the organization." }
   end
 
   private

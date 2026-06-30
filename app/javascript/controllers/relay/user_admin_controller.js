@@ -57,9 +57,36 @@ export default class extends Controller {
       })
   }
 
+  removeMember(event) {
+    const button = event.currentTarget
+    const id = event.params.id
+    const name = button.dataset.name || "this user"
+
+    if (!window.confirm(`Remove ${name} from the organization? They'll lose access immediately.`)) return
+    button.disabled = true
+
+    this.#request("DELETE", `/users/${id}/remove_member`, {})
+      .then((data) => {
+        if (data && data.success) {
+          window.location.reload()
+        } else {
+          button.disabled = false
+          window.alert((data && data.message) || "Failed to remove user")
+        }
+      })
+      .catch(() => {
+        button.disabled = false
+        window.alert("An error occurred")
+      })
+  }
+
   #post(url, body) {
+    return this.#request("POST", url, body)
+  }
+
+  #request(method, url, body) {
     return fetch(url, {
-      method: "POST",
+      method,
       headers: {
         "Content-Type": "application/json",
         "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content

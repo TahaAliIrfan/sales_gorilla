@@ -99,6 +99,13 @@
                           data-active="<%= user.active? %>">
                     <%= user.active? ? "Deactivate" : "Activate" %>
                   </button>
+                  <button type="button" class="rl-btn rl-btn--destructive rl-btn--sm"
+                          data-action="relay--user-admin#removeMember"
+                          data-relay--user-admin-id-param="<%= user.id %>"
+                          data-name="<%= user.name %>"
+                          title="Remove from organization">
+                    <%= relay_icon("trash-2", size: 14) %>Remove
+                  </button>
                 <% end %>
               </div>
             </td>

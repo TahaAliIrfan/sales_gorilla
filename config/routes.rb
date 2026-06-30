@@ -246,6 +246,7 @@ Rails.application.routes.draw do
         get    :manage_associates
         post   :assign_associate
         delete :remove_associate
+        delete :remove_member
       end
       collection do
         get :associates
