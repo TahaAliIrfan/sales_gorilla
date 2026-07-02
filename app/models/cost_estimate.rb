@@ -121,6 +121,22 @@ class CostEstimate < ApplicationRecord
     customer&.email || ""
   end
 
+  # Dial codes we don't auto-generate proposals for: Pakistan (+92), India
+  # (+91), Bangladesh (+880). These aren't a target market for outreach.
+  BLOCKED_DIAL_CODES = %w[+880 +92 +91].freeze
+
+  # Whether a proposal/report should be generated for this estimate.
+  # Suppressed for the blocked dial codes above — UNLESS the customer email is
+  # one of ours (@tecaudex.com), which means it's our own team testing.
+  def report_generation_allowed?
+    return true if customer_email.to_s.strip.downcase.end_with?('@tecaudex.com')
+
+    phone = customer&.phone.to_s.delete(' ')
+    return true if phone.blank?
+
+    BLOCKED_DIAL_CODES.none? { |code| phone.start_with?(code) }
+  end
+
   # ── Parsed AI-generated JSON columns (safe against malformed payloads) ──
 
   def executive_summary_data

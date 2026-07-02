@@ -13,6 +13,13 @@ class SendCostEstimatePdfJob
 
     customer = cost_estimate.customer
 
+    # Skip proposal generation for non-target dial codes (PK/IN/BD), unless
+    # it's one of our own @tecaudex.com addresses (internal testing).
+    unless cost_estimate.report_generation_allowed?
+      Rails.logger.info("SendCostEstimatePdfJob: skipping estimate #{cost_estimate_id} — dial code #{customer&.phone} is not a target market")
+      return
+    end
+
     # WhatsApp delivery is disabled, so only email is required to proceed.
     unless customer&.email.present?
       Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer&.id} has no email address, nothing to send")
