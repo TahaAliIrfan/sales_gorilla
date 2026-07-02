@@ -77,8 +77,24 @@ class MockupGenerationService
                   .reject(&:blank?)
   end
 
+  # Back-end / plumbing work that has no meaningful screen to draw — excluded
+  # when choosing which feature to mock up so we never render an "API Development"
+  # or "Database Setup" screen.
+  NON_VISUAL = /\b(api|backend|database|infrastructure|hosting|deployment|devops|
+                  server|authentication|auth|security|encryption|integration|
+                  testing|\bqa\b|documentation|ci\/cd|migration|architecture|
+                  sdk|webhook|scalab|monitoring|logging|caching|
+                  responsive|web\ interface|ui\/ux|user\ interface|
+                  cross.?platform|native\ app|wireframe|prototype)\b/xi
+
+  # Features that map to a real, user-facing screen (best candidates first).
+  def user_facing_features
+    visual = top_features.reject { |f| f.match?(NON_VISUAL) }
+    visual.presence || top_features
+  end
+
   def key_feature
-    top_features.first.presence || 'the core feature'
+    user_facing_features.first.presence || 'the core feature'
   end
 
   def mobile?
@@ -117,7 +133,7 @@ class MockupGenerationService
   end
 
   def screens_prompt
-    features = top_features
+    features = user_facing_features
     vp       = viewport
     surface  = mobile? ? "mobile app (viewport exactly #{vp[:width]}x#{vp[:height]})" :
                          "desktop web application (viewport exactly #{vp[:width]}x#{vp[:height]})"
@@ -131,13 +147,31 @@ class MockupGenerationService
       Pick a colour scheme that suits the app — it must use Material UI colours.
       The screens should be so clean and polished that they look like a real Figma design.
 
-      Screen 1: the home screen. Screen 2: the "#{key_feature}" screen.
-      Both screens must share the exact same design system (colours, fonts, spacing).
+      Both screens are real user-facing product screens — the kind an end user
+      taps through. Screen 1 is the main Home / Dashboard screen. Screen 2 is the
+      "#{key_feature}" screen. NEVER draw a technical, developer or architecture
+      view (no API design, database schema, code, settings/config dumps or
+      admin panels) — only screens a normal user would actually see and use.
+
+      CONSISTENCY IS CRITICAL — the two screens must look like they came from the
+      SAME Figma file by the same designer. Before writing, lock ONE design system
+      and reuse it identically on both screens: the same colours, the same Google
+      Font pairing and type scale, the same corner radius, shadow style, spacing
+      rhythm and button style, and the same top bar / navigation and icon style.
+      Do not restyle anything between screen 1 and screen 2.
+
+      All visible text must be realistic product content — real labels, names,
+      numbers and dates. NEVER show colour codes, hex values, CSS variable names,
+      or design-token names as text in the UI. Buttons say things like "Continue"
+      or "New Task", not a hex code. Fill the screen comfortably; avoid large
+      empty areas at the bottom.
 
       Technical requirements (so the screens render correctly):
       - Two complete standalone HTML documents, each with everything inline.
+        Put the shared design tokens in :root CSS variables and reuse them on both.
       - html,body: margin 0; width #{vp[:width]}px; height #{vp[:height]}px; overflow hidden.
-        Everything must fit inside the viewport — no scrolling or clipping.
+        Everything must fit inside the viewport — no scrolling or clipping, and the
+        layout should fill the viewport rather than leaving big empty space.
       - No JavaScript, no external images or CDN libraries. Google Fonts @import is fine.
         Use inline SVG for icons; use initials-in-circles for avatars.
 
@@ -161,7 +195,7 @@ class MockupGenerationService
     })
     request.body = {
       model: CLAUDE_MODEL,
-      max_tokens: 20_000,
+      max_tokens: 40_000,  # two full standalone HTML screens can be large; avoid truncating screen 2
       messages: [{ role: 'user', content: prompt }]
     }.to_json
 
