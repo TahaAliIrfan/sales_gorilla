@@ -1,6 +1,6 @@
 class ClaudeProjectAnalysisService
   CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-  CLAUDE_MODEL = "claude-3-5-sonnet-20241022"
+  CLAUDE_MODEL = "claude-sonnet-4-6"
   
   def initialize
     @api_key = Rails.application.credentials.dig(:anthropic, :api_key) || ENV['ANTHROPIC_API_KEY']

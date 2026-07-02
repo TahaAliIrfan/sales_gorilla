@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_12_000001) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -146,6 +146,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_12_000001) do
     t.string "pdf_url"
     t.text "executive_summary"
     t.text "feature_prioritization"
+    t.text "market_research"
     t.index ["customer_id"], name: "index_cost_estimates_on_customer_id"
     t.index ["status"], name: "index_cost_estimates_on_status"
     t.index ["user_id"], name: "index_cost_estimates_on_user_id"

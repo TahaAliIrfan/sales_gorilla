@@ -6,7 +6,7 @@ class CostEstimateAiService
 
   def initialize
     @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
-    @model = "claude-sonnet-4-20250514"
+    @model = "claude-sonnet-4-6"
 
     if @api_key.blank?
       Rails.logger.error("Anthropic API key is not configured")
@@ -17,7 +17,8 @@ class CostEstimateAiService
     return nil if @api_key.blank?
 
     prompt = build_analysis_prompt(cost_estimate)
-    response = analyze_with_claude(prompt)
+    # Larger budget: the response JSON now also carries the market research block
+    response = analyze_with_claude(prompt, 3500)
 
     if response
       parse_analysis_response(response)
@@ -70,6 +71,7 @@ class CostEstimateAiService
       3. Comprehensive technical information
       4. An inspiring executive summary that sells the vision
       5. Smart feature prioritization for phased development
+      6. An honest market research assessment that validates the idea with a score
 
       Project Details:
       - Description: #{cost_estimate.description}
@@ -98,15 +100,15 @@ class CostEstimateAiService
           "total_hours": "XXX hours across all development phases"
         },
         "executive_summary": {
-          "problem_statement": "Clear, compelling description of the problem this solves (2-3 sentences, highlighting pain points and market need)",
-          "proposed_solution": "How this app elegantly solves the problem (2-3 sentences, emphasizing unique value and innovation)",
+          "problem_statement": "Clear, compelling description of the problem this solves (STRICT MAX 55 words, highlighting pain points and market need)",
+          "proposed_solution": "How this app elegantly solves the problem (STRICT MAX 55 words, emphasizing unique value and innovation)",
           "key_value_propositions": [
-            "Value proposition 1 (one sentence, benefit-focused)",
-            "Value proposition 2 (one sentence, benefit-focused)",
-            "Value proposition 3 (one sentence, benefit-focused)",
-            "Value proposition 4 (one sentence, benefit-focused)"
+            "Value proposition 1 (one sentence, MAX 18 words, benefit-focused)",
+            "Value proposition 2 (one sentence, MAX 18 words, benefit-focused)",
+            "Value proposition 3 (one sentence, MAX 18 words, benefit-focused)",
+            "Value proposition 4 (one sentence, MAX 18 words, benefit-focused)"
           ],
-          "roi_potential": "Exciting description of ROI and business potential (2-3 sentences, highlighting revenue opportunities, cost savings, market opportunity, scalability potential - be optimistic and encouraging)"
+          "roi_potential": "Exciting description of ROI and business potential (STRICT MAX 60 words, highlighting revenue opportunities, market opportunity, scalability - be optimistic and encouraging)"
         },
         "feature_prioritization": {
           "phase_1_mvp": {
@@ -124,10 +126,31 @@ class CostEstimateAiService
             "description": "Advanced capabilities for market leadership",
             "features": ["Feature 1", "Feature 2", "Feature 3", "..."]
           }
+        },
+        "market_research": {
+          "validation_score": 78,
+          "verdict": "One-sentence overall read of the idea's market potential (MAX 30 words)",
+          "market_signals": [
+            "Concrete positive market signal with a number or named trend (one sentence, MAX 28 words)",
+            "Signal 2",
+            "Signal 3"
+          ],
+          "refinements": [
+            {
+              "observation": "An honest observation about a weaker aspect of the idea (one sentence, MAX 25 words, neutral tone)",
+              "direction": "A concrete way to sharpen the SAME idea — a niche, positioning, feature emphasis or go-to-market angle (one sentence, MAX 25 words)"
+            },
+            {"observation": "...", "direction": "..."}
+          ]
         }
       }
 
       Guidelines:
+      - LENGTH LIMITS ARE HARD CONSTRAINTS — the content is typeset into a fixed-layout PDF,
+        so exceeding a stated word cap breaks the document. When in doubt, write LESS.
+      - Phase "features" entries and descriptions must be short: each feature 2-4 words with
+        no parentheses, each phase description one sentence (MAX 20 words)
+      - Similar app descriptions: one sentence each (MAX 20 words)
       - Be ENTHUSIASTIC and ENCOURAGING throughout
       - Highlight OPPORTUNITIES and POTENTIAL
       - Show how similar apps validate the market (they prove demand exists!)
@@ -136,6 +159,15 @@ class CostEstimateAiService
       - Use positive, action-oriented language
       - Never say things like "challenging", "difficult", "risky" - instead say "exciting opportunity", "manageable", "proven approach"
       - Make clients feel confident that building this is a GREAT decision
+
+      Market research rules:
+      - validation_score is an integer 0-100 reflecting a realistic read of market potential
+        (most fundable ideas land between 55 and 90 — do not inflate every idea to 90+)
+      - Be honest, but NEVER dismiss the idea. When something is weak, do not say the idea is
+        wrong — instead offer a sharper direction for the SAME idea in "refinements"
+        (e.g. narrow the niche, reposition the value, lead with a different feature, change
+        the go-to-market). Every observation MUST be paired with a constructive direction.
+      - Provide 2-3 refinements and 3 market_signals grounded in real, verifiable trends
     PROMPT
   end
 
@@ -161,7 +193,7 @@ class CostEstimateAiService
         ]
       }.to_json
 
-      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 60) do |http|
+      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) do |http|
         http.request(request)
       end
 

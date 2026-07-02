@@ -286,6 +286,66 @@
   .market-note strong { color: var(--ink); }
 
   /* ═══════════════════════════════════════════════════════════════════
+     MARKET RESEARCH (validation score gauge + constructive feedback)
+     ═══════════════════════════════════════════════════════════════════ */
+  .research-top {
+    display: flex; gap: 10mm; align-items: center;
+    padding-bottom: 6mm; margin-bottom: 6mm;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .gauge-wrap { flex-shrink: 0; width: 66mm; text-align: center; }
+  .gauge-wrap svg { display: block; width: 66mm; height: auto; }
+  .gauge-wrap .gauge-score {
+    margin-top: -1mm; font-size: 23pt; font-weight: 900; letter-spacing: -0.02em;
+    color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1;
+  }
+  .gauge-wrap .gauge-score .unit { font-size: 11pt; font-weight: 700; color: var(--mid); }
+  .gauge-wrap .gauge-label {
+    margin-top: 3pt; font-size: 7pt; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--mid);
+  }
+  .research-top .verdict { flex: 1; }
+  .research-top .verdict .band {
+    display: inline-block; padding: 3pt 11pt; border-radius: 999pt;
+    background: var(--red-tint); color: var(--red-dark);
+    font-size: 8pt; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .research-top .verdict p {
+    margin: 8pt 0 0 0; font-size: 12.5pt; font-weight: 600;
+    line-height: 1.5; color: var(--ink); letter-spacing: -0.005em;
+  }
+  .signal {
+    display: flex; gap: 4mm; padding: 3.5mm 0;
+    border-bottom: 1px solid var(--line-soft);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .signal:last-of-type { border-bottom: none; }
+  .signal .n {
+    flex-shrink: 0; font-size: 12pt; font-weight: 900; color: var(--red);
+    font-variant-numeric: tabular-nums; line-height: 1.3;
+  }
+  .signal .t { font-size: 9.5pt; color: var(--charcoal); line-height: 1.6; }
+  .refine {
+    display: flex; gap: 6mm; padding: 4.5mm 0;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .refine:last-of-type { border-bottom: none; }
+  .refine .col { flex: 1; }
+  .refine .tag {
+    font-size: 6.5pt; font-weight: 700; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--mid); margin-bottom: 3pt;
+  }
+  .refine .col.dir .tag { color: var(--red); }
+  .refine .txt { font-size: 9.5pt; color: var(--slate); line-height: 1.6; }
+  .refine .col.dir .txt { color: var(--ink); font-weight: 600; }
+  .refine .arrow {
+    flex-shrink: 0; align-self: center;
+    font-size: 13pt; font-weight: 900; color: var(--red);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
      ROADMAP
      ═══════════════════════════════════════════════════════════════════ */
   .phase {
@@ -463,6 +523,14 @@
   .cta p { margin-top: 6pt; font-size: 9.5pt; color: #BCBCC1; line-height: 1.6; max-width: 120mm; }
   .cta .contact { margin-top: 8pt; font-size: 9pt; color: var(--white); font-weight: 600; }
   .cta .contact span { color: var(--red); margin: 0 5pt; }
+  .cta .cta-btn {
+    display: inline-block; margin-top: 10pt;
+    padding: 8pt 18pt; border-radius: 999pt;
+    background: var(--red); color: var(--white);
+    font-size: 10.5pt; font-weight: 800; letter-spacing: 0.01em;
+    text-decoration: none;
+  }
+  .cta .cta-btn .url { font-weight: 600; opacity: 0.85; margin-left: 6pt; font-size: 9pt; }
 </style>
 </head>
 <body>
@@ -479,6 +547,8 @@
   apps      = est.similar_apps_data
   prio      = est.feature_prioritization_data
   tech      = est.technical_info_data
+  research  = est.market_research_data
+  booking_url = 'https://calendly.com/tecaudex'
 
   scale_text = est.scale_display.to_s.gsub('-', ' ').split.map(&:capitalize).join(' ')
 
@@ -744,6 +814,98 @@
   <div class="market-note">
     <strong>What this means for you:</strong> competitors validate the market — your differentiation and execution speed decide who wins it. <%= app_name %> is scoped to reach users fast with the features that matter most.
   </div>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MARKET RESEARCH (idea validation score + constructive feedback)
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if research['validation_score'].present? %>
+<%
+  score   = research['validation_score'].to_i.clamp(0, 100)
+  band    = score >= 80 ? 'Strong validation' :
+            score >= 65 ? 'Promising market'  :
+            score >= 50 ? 'Emerging opportunity' : 'Focused niche play'
+  signals = Array(research['market_signals'])
+  refines = Array(research['refinements']).select { |r| r.is_a?(Hash) }
+
+  # Speedometer geometry: semicircle centred at (110,110), radius 84,
+  # swept right-to-left; needle tip sits at the score's angle.
+  arc_r    = 84
+  arc_len  = Math::PI * arc_r
+  angle    = Math::PI * (1 - score / 100.0)
+  needle_x = 110 + 60 * Math.cos(angle)
+  needle_y = 110 - 60 * Math.sin(angle)
+%>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Market Research</div>
+    <h2>How the idea scores.</h2>
+    <p class="lead">An honest research pass on <%= app_name %> — what the market is signalling, and how we'd sharpen the idea to win it.</p>
+  </div>
+
+  <div class="research-top">
+    <div class="gauge-wrap">
+      <svg viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+        <% (0..4).each do |i| %>
+          <% ta = Math::PI * (1 - i / 4.0) %>
+          <line x1="<%= (110 + 68 * Math.cos(ta)).round(1) %>" y1="<%= (110 - 68 * Math.sin(ta)).round(1) %>"
+                x2="<%= (110 + 74 * Math.cos(ta)).round(1) %>" y2="<%= (110 - 74 * Math.sin(ta)).round(1) %>"
+                stroke="#D1D5DB" stroke-width="2" stroke-linecap="round"/>
+        <% end %>
+        <path d="M 26 110 A 84 84 0 0 1 194 110" fill="none" stroke="#F1F1F1" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 26 110 A 84 84 0 0 1 194 110" fill="none" stroke="#ED1A3B" stroke-width="12" stroke-linecap="round"
+              stroke-dasharray="<%= (arc_len * score / 100.0).round(1) %> <%= arc_len.ceil + 10 %>"/>
+        <line x1="110" y1="110" x2="<%= needle_x.round(1) %>" y2="<%= needle_y.round(1) %>"
+              stroke="#0A0A0A" stroke-width="3.5" stroke-linecap="round"/>
+        <circle cx="110" cy="110" r="5.5" fill="#0A0A0A"/>
+        <circle cx="110" cy="110" r="2" fill="#FFFFFF"/>
+      </svg>
+      <div class="gauge-score"><%= score %><span class="unit">/100</span></div>
+      <div class="gauge-label">Idea Validation Score</div>
+    </div>
+    <div class="verdict">
+      <span class="band"><%= band %></span>
+      <% if research['verdict'].present? %>
+        <p><%= research['verdict'] %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if signals.any? %>
+    <div class="block">
+      <div class="sub-heading">What the market is telling us</div>
+      <% signals.each_with_index do |sig, i| %>
+        <div class="signal">
+          <div class="n"><%= format('%02d', i + 1) %></div>
+          <div class="t"><%= sig %></div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if refines.any? %>
+    <div class="block">
+      <div class="sub-heading">How we'd sharpen the idea</div>
+      <% refines.each do |r| %>
+        <div class="refine">
+          <div class="col">
+            <div class="tag">What we noticed</div>
+            <div class="txt"><%= r['observation'] %></div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="col dir">
+            <div class="tag">Direction we recommend</div>
+            <div class="txt"><%= r['direction'] %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 </section>
 <% end %>
 
@@ -1041,7 +1203,8 @@
 
   <div class="cta">
     <h3>Ready to build <%= app_name %>?</h3>
-    <p>Reply to this email or message us on WhatsApp and we'll set up a 30-minute call to walk through scope, timeline, and any open questions.</p>
+    <p>Pick a slot that suits you and we'll walk through scope, timeline, and any open questions in a free 30-minute call — no commitment needed.</p>
+    <a class="cta-btn" href="<%= booking_url %>">Schedule a Call<span class="url"><%= booking_url.sub(%r{\Ahttps?://}, '') %></span></a>
     <div class="contact">sales@tecaudex.com<span>·</span>www.tecaudex.com</div>
   </div>
 </section>

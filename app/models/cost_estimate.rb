@@ -140,6 +140,10 @@ class CostEstimate < ApplicationRecord
     safe_parse_hash(technical_information_summary)
   end
 
+  def market_research_data
+    safe_parse_hash(market_research)
+  end
+
   # ── Platform detection (drives store fees & operational cost lines) ──
 
   def platforms
@@ -169,7 +173,9 @@ class CostEstimate < ApplicationRecord
   # present. Called from both the email job and the dashboard PDF download so
   # every proposal carries a proposed name.
   def ensure_proposal_content!
-    return if app_name.present?
+    # Regenerate when market_research is missing too, so estimates created
+    # before that section existed pick it up on the next send/download.
+    return if app_name.present? && market_research.present?
 
     analysis = CostEstimateAiService.new.generate_project_analysis(self)
     if analysis
@@ -178,14 +184,13 @@ class CostEstimate < ApplicationRecord
         similar_apps: analysis['similar_apps'].to_json,
         technical_information_summary: analysis['technical_info'].to_json,
         executive_summary: analysis['executive_summary'].to_json,
-        feature_prioritization: analysis['feature_prioritization'].to_json
+        feature_prioritization: analysis['feature_prioritization'].to_json,
+        market_research: analysis['market_research'].to_json
       )
     else
-      update!(
-        app_name: "#{customer_display_name}'s App",
-        similar_apps: [].to_json
-      )
-      Rails.logger.warn("CostEstimate##{id}: AI analysis failed, using fallback app name")
+      # Don't clobber previously generated content on a transient API failure
+      update!(app_name: "#{customer_display_name}'s App", similar_apps: [].to_json) if app_name.blank?
+      Rails.logger.warn("CostEstimate##{id}: AI analysis failed, keeping existing/fallback content")
     end
   end
 
