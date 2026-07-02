@@ -1,23 +1,37 @@
 require 'net/http'
 require 'json'
 require 'base64'
+require 'grover'
 
-# Generates AI concept screens for a cost estimate and attaches them to the
+# Generates concept screens for a cost estimate and attaches them to the
 # estimate as `mockup_images`, so the proposal PDF can embed them in the
-# Design Concepts section. Two-stage pipeline, both on GOOGLE_STUDIO_API_KEY:
+# Design Concepts section.
 #
-#   1. UI/UX research — a Gemini text model produces a design brief for the
-#      specific app (design system, custom color palette, typography, domain
-#      UI patterns), so screens don't all default to the agency brand.
-#   2. Image generation — Nano Banana Pro renders the screens from prompts
-#      built around that brief.
+# Primary pipeline (Claude + headless Chrome):
+#   1. Claude Sonnet authors TWO complete standalone HTML screens in one call,
+#      sharing a single design system, so both look like screens of one app.
+#   2. Headless Chromium (Grover — same binary the PDF pipeline uses) renders
+#      each document at device resolution and screenshots it to PNG.
+#   Real HTML means pixel-crisp type and true design-system spacing — a
+#   screenshot of rendered UI, not an AI painting of one.
+#
+# Fallback pipeline (Gemini image models) is kept for resilience: if Claude
+# or Chrome fails, we fall back to Nano Banana image generation.
 #
 # Idempotent — skips generation if images are already attached.
 class MockupGenerationService
-  PRIMARY_MODEL  = 'gemini-3-pro-image-preview'.freeze  # Nano Banana Pro
-  FALLBACK_MODEL = 'gemini-2.5-flash-image'.freeze      # original Nano Banana
-  RESEARCH_MODEL = 'gemini-2.5-flash'.freeze            # design-brief research
+  CLAUDE_MODEL   = 'claude-sonnet-4-6'.freeze
+  SCREEN_BREAK   = '<<<SCREEN_BREAK>>>'.freeze
+  ANTHROPIC_URL  = 'https://api.anthropic.com/v1/messages'.freeze
+
+  PRIMARY_MODEL  = 'gemini-3-pro-image-preview'.freeze  # fallback: Nano Banana Pro
+  FALLBACK_MODEL = 'gemini-2.5-flash-image'.freeze      # fallback: original Nano Banana
+  RESEARCH_MODEL = 'gemini-2.5-flash'.freeze            # fallback: design-brief research
   ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent'.freeze
+
+  # Rendered viewport per platform (deviceScaleFactor 2 for retina crispness)
+  MOBILE_VIEWPORT = { width: 390,  height: 844 }.freeze
+  WEB_VIEWPORT    = { width: 1440, height: 810 }.freeze
 
   DEFAULT_BRIEF = {
     'design_system'   => 'Material Design 3',
@@ -31,46 +45,23 @@ class MockupGenerationService
 
   def initialize(cost_estimate)
     @cost_estimate = cost_estimate
+    @anthropic_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
     @api_key = Rails.application.credentials.dig(:GOOGLE_STUDIO_API_KEY) || ENV['GOOGLE_STUDIO_API_KEY']
   end
 
   # Returns true if at least one mockup ends up attached.
   def generate_and_attach
-    if @api_key.blank?
-      Rails.logger.warn('MockupGenerationService: GOOGLE_STUDIO_API_KEY not configured, skipping mockups')
-      return false
-    end
     return true if @cost_estimate.mockup_images.attached?
     raise 'cost estimate must be persisted to attach mockups' unless @cost_estimate.persisted?
 
-    brief = design_brief
-    Rails.logger.info("MockupGenerationService: design brief — #{brief['design_system']}, primary #{brief['primary_color']}, mood: #{brief['mood']}")
-
-    home_spec, feature_spec = screen_specs(brief)
-
-    # The single-flow feature screen renders most reliably, so generate it
-    # first and feed it back as a style reference for the home screen — both
-    # then look like screens of the same app.
-    feature_png = generate_image(feature_spec[:prompt])
-    home_png    = generate_image(home_spec[:prompt], reference: feature_png)
-
-    attached = 0
-    [[home_spec, home_png], [feature_spec, feature_png]].each_with_index do |(spec, png), i|
-      if png.blank?
-        Rails.logger.warn("MockupGenerationService: no image returned for screen '#{spec[:slug]}'")
-        next
-      end
-
-      @cost_estimate.mockup_images.attach(
-        io: StringIO.new(png),
-        filename: format('%02d-%s.png', i + 1, spec[:slug]),
-        content_type: 'image/png'
-      )
-      attached += 1
-      Rails.logger.info("MockupGenerationService: attached mockup #{i + 1} (#{spec[:slug]}, #{png.bytesize} bytes)")
+    screens = claude_screens
+    if screens.present?
+      attached = attach_screens(screens) { |html| render_screenshot(html) }
+      return true if attached.positive?
+      Rails.logger.warn('MockupGenerationService: Claude pipeline produced no renderable screens, falling back to image models')
     end
 
-    attached.positive?
+    gemini_fallback
   end
 
   private
@@ -86,11 +77,193 @@ class MockupGenerationService
                   .reject(&:blank?)
   end
 
+  def key_feature
+    top_features.first.presence || 'the core feature'
+  end
+
   def mobile?
     @cost_estimate.mobile_app?
   end
 
-  # ── Stage 1: UI/UX research ────────────────────────────────────────────
+  def viewport
+    mobile? ? MOBILE_VIEWPORT : WEB_VIEWPORT
+  end
+
+  # ── Primary pipeline: Claude writes the UI, Chrome photographs it ──────
+
+  # Returns [[slug, html], [slug, html]] (home first) or nil on failure.
+  def claude_screens
+    if @anthropic_key.blank?
+      Rails.logger.warn('MockupGenerationService: ANTHROPIC_API_KEY not configured, skipping Claude pipeline')
+      return nil
+    end
+
+    raw = request_claude(screens_prompt)
+    return nil if raw.blank?
+
+    docs = raw.split(SCREEN_BREAK).map(&:strip).reject(&:blank?)
+    docs = docs.map { |d| d.sub(/\A```html?\s*/i, '').sub(/```\z/, '').strip }
+    docs = docs.select { |d| d.match?(/<html/i) && d.match?(/<\/html>/i) }
+
+    unless docs.size == 2
+      Rails.logger.warn("MockupGenerationService: expected 2 HTML screens from Claude, got #{docs.size}")
+      return nil
+    end
+
+    [
+      ['home-screen', docs[0]],
+      [key_feature.parameterize.presence || 'key-feature', docs[1]]
+    ]
+  end
+
+  def screens_prompt
+    similar  = @cost_estimate.similar_apps_data.map { |a| a['name'] }.compact.first(5)
+    features = top_features
+    vp       = viewport
+    surface  = mobile? ? "mobile app (viewport exactly #{vp[:width]}x#{vp[:height]})" :
+                         "desktop web application (viewport exactly #{vp[:width]}x#{vp[:height]})"
+
+    <<~PROMPT
+      You are a senior product designer at a top design studio, producing two pixel-perfect
+      UI mockup screens for a client pitch deck. These will be screenshotted at exact
+      viewport size and printed in a proposal document, so they must look like polished
+      Figma exports — calm, confident, unmistakably designed by a human expert.
+
+      Product: "#{app_name}"
+      Description: #{@cost_estimate.description.to_s.truncate(400)}
+      Platform: #{surface}
+      Key features: #{features.first(6).join(', ')}
+      Comparable products: #{similar.join(', ').presence || 'none identified'}
+
+      First, silently decide a design direction for THIS domain: a custom colour palette
+      suited to its audience psychology (never generic blue, never red #ED1A3B), one
+      Google Fonts pairing, and the right design language
+      (#{mobile? ? 'iOS HIG or Material 3' : 'modern SaaS web'}).
+
+      Then output TWO complete standalone HTML documents:
+
+      SCREEN 1 — the home screen a signed-in user sees. Exactly: a short personal
+      greeting, ONE hero card for the primary action (#{features.first.presence || 'the main feature'}),
+      one or two small supporting cards, #{mobile? ? 'a slim iOS status bar at the top and a bottom tab bar with 4 icons' : 'a compact left sidebar or top navigation'}.
+      A calm, breathable daily view — not a dashboard of every feature.
+
+      SCREEN 2 — the "#{key_feature}" screen, showing just that single flow in a
+      spacious, focused layout with a small amount of believable example data.
+
+      Hard rules:
+      - Both screens share the EXACT same design system — palette, fonts, radii,
+        spacing, iconography — as two artboards of one Figma file.
+      - html,body: margin 0; width #{vp[:width]}px; height #{vp[:height]}px; overflow hidden.
+        Content must fit the viewport exactly — nothing may overflow or scroll.
+      - Composition: generous white space on an 8px grid, one clear focal point per
+        screen, at most 4 components, strong type hierarchy, labels of 1-3 words,
+        realistic believable content (names, numbers, dates).
+      - No dense tables, no long lists (3 items max), no tiny paragraph text,
+        at most one simple chart (pure CSS/SVG).
+      - Fully self-contained: one inline <style> block, no external images, no
+        JavaScript, no CDN libraries. Google Fonts via @import is allowed.
+        Icons must be inline SVG (simple 24px stroke icons). Avatars are initials
+        in coloured circles. Photos are CSS gradient placeholders.
+      - Subtle depth: soft shadows, gentle rounded corners; never harsh borders.
+
+      Output format: the first HTML document, then a line containing exactly
+      #{SCREEN_BREAK}
+      then the second HTML document. No markdown fences, no commentary, nothing else.
+    PROMPT
+  end
+
+  def request_claude(prompt)
+    uri = URI(ANTHROPIC_URL)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 15
+    http.read_timeout = 300
+
+    request = Net::HTTP::Post.new(uri.path, {
+      'Content-Type'      => 'application/json',
+      'x-api-key'         => @anthropic_key,
+      'anthropic-version' => '2023-06-01'
+    })
+    request.body = {
+      model: CLAUDE_MODEL,
+      max_tokens: 20_000,
+      messages: [{ role: 'user', content: prompt }]
+    }.to_json
+
+    response = http.request(request)
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.warn("MockupGenerationService: Claude returned #{response.code}: #{response.body.to_s.truncate(300)}")
+      return nil
+    end
+
+    JSON.parse(response.body).dig('content', 0, 'text')
+  rescue JSON::ParserError, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+    Rails.logger.warn("MockupGenerationService: Claude request failed: #{e.class} #{e.message}")
+    nil
+  end
+
+  # Screenshot a standalone HTML document at device resolution.
+  def render_screenshot(html)
+    vp = viewport
+    Grover.new(
+      html,
+      viewport: { width: vp[:width], height: vp[:height], deviceScaleFactor: 2 },
+      full_page: false,
+      wait_until: 'networkidle0',
+      timeout: 60_000,
+      executable_path: OdooProposalHtmlPdfService.chrome_executable,
+      launch_args: ['--no-sandbox', '--disable-dev-shm-usage']
+    ).to_png
+  rescue => e
+    Rails.logger.warn("MockupGenerationService: screenshot render failed: #{e.class} #{e.message}")
+    nil
+  end
+
+  # Shared attach loop — yields each screen's payload to the renderer.
+  def attach_screens(screens)
+    attached = 0
+    screens.each_with_index do |(slug, payload), i|
+      png = yield(payload)
+      if png.blank?
+        Rails.logger.warn("MockupGenerationService: no image for screen '#{slug}'")
+        next
+      end
+
+      @cost_estimate.mockup_images.attach(
+        io: StringIO.new(png),
+        filename: format('%02d-%s.png', i + 1, slug),
+        content_type: 'image/png'
+      )
+      attached += 1
+      Rails.logger.info("MockupGenerationService: attached mockup #{i + 1} (#{slug}, #{png.bytesize} bytes)")
+    end
+    attached
+  end
+
+  # ── Fallback pipeline: Gemini image models (Nano Banana) ───────────────
+
+  def gemini_fallback
+    if @api_key.blank?
+      Rails.logger.warn('MockupGenerationService: GOOGLE_STUDIO_API_KEY not configured, skipping fallback mockups')
+      return false
+    end
+
+    brief = design_brief
+    Rails.logger.info("MockupGenerationService: fallback design brief — #{brief['design_system']}, primary #{brief['primary_color']}")
+
+    home_spec, feature_spec = screen_specs(brief)
+
+    # The single-flow feature screen renders most reliably, so generate it
+    # first and feed it back as a style reference for the home screen.
+    feature_png = generate_image(feature_spec[:prompt])
+    home_png    = generate_image(home_spec[:prompt], reference: feature_png)
+
+    screens = [
+      [home_spec[:slug],    home_png],
+      [feature_spec[:slug], feature_png]
+    ]
+    attach_screens(screens) { |png| png }.positive?
+  end
 
   # Asks a Gemini text model to act as a product designer and return a design
   # brief tailored to this app's domain. Falls back to DEFAULT_BRIEF on any
@@ -150,11 +323,8 @@ class MockupGenerationService
     hex.match?(/\A#\h{6}\z/) ? hex.upcase : fallback
   end
 
-  # ── Stage 2: screen prompts built from the brief ──────────────────────
-
   def screen_specs(brief)
     features = top_features
-    key_feature = features.first.presence || 'the core feature'
     summary = @cost_estimate.description.to_s.truncate(220)
 
     surface = mobile? ? 'mobile app' : 'desktop web application'
