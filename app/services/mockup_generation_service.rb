@@ -117,65 +117,33 @@ class MockupGenerationService
   end
 
   def screens_prompt
-    similar  = @cost_estimate.similar_apps_data.map { |a| a['name'] }.compact.first(5)
     features = top_features
     vp       = viewport
     surface  = mobile? ? "mobile app (viewport exactly #{vp[:width]}x#{vp[:height]})" :
                          "desktop web application (viewport exactly #{vp[:width]}x#{vp[:height]})"
 
     <<~PROMPT
-      You are a senior product designer at a top design studio, producing two pixel-perfect
-      UI mockup screens for a client pitch deck. These will be screenshotted at exact
-      viewport size and printed in a proposal document, so they must look like polished
-      Figma exports — calm, confident, unmistakably designed by a human expert.
+      Create me two #{surface} mockup screens for this app idea:
 
-      Product: "#{app_name}"
-      Description: #{@cost_estimate.description.to_s.truncate(400)}
-      Platform: #{surface}
+      "#{app_name}" — #{@cost_estimate.description.to_s.truncate(400)}
       Key features: #{features.first(6).join(', ')}
-      Comparable products: #{similar.join(', ').presence || 'none identified'}
 
-      First, silently decide a design direction for THIS domain: a custom colour palette
-      suited to its audience psychology (never generic blue, never red #ED1A3B), one
-      Google Fonts pairing, and the right design language
-      (#{mobile? ? 'iOS HIG or Material 3' : 'modern SaaS web'}).
+      Pick a colour scheme that suits the app — it must use Material UI colours.
+      The screens should be so clean and polished that they look like a real Figma design.
 
-      Then output TWO complete standalone HTML documents:
+      Screen 1: the home screen. Screen 2: the "#{key_feature}" screen.
+      Both screens must share the exact same design system (colours, fonts, spacing).
 
-      SCREEN 1 — the home screen a signed-in user sees. Exactly: a short personal
-      greeting, ONE hero card for the primary action (#{features.first.presence || 'the main feature'}),
-      one or two small supporting cards, #{mobile? ? 'a slim iOS status bar at the top and a bottom tab bar with 4 icons' : 'a compact left sidebar or top navigation'}.
-      A calm, breathable daily view — not a dashboard of every feature.
-
-      SCREEN 2 — the "#{key_feature}" screen, showing just that single flow in a
-      spacious, focused layout with a small amount of believable example data.
-
-      Hard rules:
-      - Both screens share the EXACT same design system — palette, fonts, radii,
-        spacing, iconography — as two artboards of one Figma file.
+      Technical requirements (so the screens render correctly):
+      - Two complete standalone HTML documents, each with everything inline.
       - html,body: margin 0; width #{vp[:width]}px; height #{vp[:height]}px; overflow hidden.
-        Content must fit the viewport exactly — nothing may overflow or scroll.
-      - Structure like Figma auto-layout: build the page as nested flexbox/grid
-        containers (app bar / content / nav zones); never absolutely position
-        content except a status bar. Align everything to a consistent grid —
-        equal card gutters, equal side margins, baseline-aligned rows.
-      - Nothing may touch or be cut by the viewport edges except app bars and
-        navigation; keep at least 24px of padding around the content zone and
-        at least 20px of inner padding in every card.
-      - Composition: generous white space on an 8px grid, one clear focal point per
-        screen, at most 4 components, strong type hierarchy, labels of 1-3 words,
-        realistic believable content (names, numbers, dates).
-      - No dense tables, no long lists (3 items max), no tiny paragraph text,
-        at most one simple chart (pure CSS/SVG).
-      - Fully self-contained: one inline <style> block, no external images, no
-        JavaScript, no CDN libraries. Google Fonts via @import is allowed.
-        Icons must be inline SVG (simple 24px stroke icons). Avatars are initials
-        in coloured circles. Photos are CSS gradient placeholders.
-      - Subtle depth: soft shadows, gentle rounded corners; never harsh borders.
+        Everything must fit inside the viewport — no scrolling or clipping.
+      - No JavaScript, no external images or CDN libraries. Google Fonts @import is fine.
+        Use inline SVG for icons; use initials-in-circles for avatars.
 
-      Output format: the first HTML document, then a line containing exactly
+      Output the first HTML document, then a line containing exactly
       #{SCREEN_BREAK}
-      then the second HTML document. No markdown fences, no commentary, nothing else.
+      then the second HTML document. No markdown fences, no commentary.
     PROMPT
   end
 
