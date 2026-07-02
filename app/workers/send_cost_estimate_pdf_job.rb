@@ -3,6 +3,11 @@ class SendCostEstimatePdfJob
 
   sidekiq_options queue: :notifications, retry: 3
 
+  # Approved Twilio WhatsApp media template ("copy_of_cost_calculator_report").
+  # Variable {{1}} is the Active Storage signed_id, substituted into the
+  # template's media URL https://crm.tecaudex.com/wa/media/{{1}}.pdf
+  WHATSAPP_REPORT_TEMPLATE_SID = 'HXc90b05bc97567dbd9279821d05db5ee7'.freeze
+
   def perform(cost_estimate_id)
     cost_estimate = CostEstimate.find_by(id: cost_estimate_id)
 
@@ -57,7 +62,6 @@ class SendCostEstimatePdfJob
         Rails.logger.error("HTML PDF generation failed (#{e.message}), falling back to Prawn")
         ProposalGenerationService.new(cost_estimate).generate_pdf.render
       end.force_encoding('BINARY')
-      pdf_content = Base64.strict_encode64(pdf_binary)
 
       app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
       filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
@@ -100,45 +104,32 @@ class SendCostEstimatePdfJob
         Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer.id} has no email address, skipping email")
       end
 
-      whatsapp_success = false
+      # Send over WhatsApp via the Twilio US number using the approved media
+      # template. The PDF rides in as the {{1}} media variable (its signed_id),
+      # so it works outside the 24h freeform window. Non-fatal: a Twilio error
+      # is logged, never raised, so it can't undo the email or retry endlessly.
       unless already_sent_whatsapp
-        whatsapp_service = Whatsapp::ApiService.new
-        chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
+        signed_id = cost_estimate.pdf_file.attached? ? cost_estimate.pdf_file.blob.signed_id : nil
 
-        app_types = cost_estimate.application_types_array.any? ?
-                    cost_estimate.application_types_array.join(', ').upcase :
-                    cost_estimate.app_type_display
-
-        caption = "Hi #{customer.name}! 👋\n\n" \
-                  "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
-                  "📱 Project Type: #{app_types}\n" \
-                  "📊 Scale: #{cost_estimate.scale.titleize}\n" \
-                  "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
-                  "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
-                  "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
-                  "Best regards,\nTecaudex Team"
-
-        Rails.logger.info("SendCostEstimatePdfJob: Sending PDF to chat_id: #{chat_id}, filename: #{filename}, pdf_size: #{pdf_binary.bytesize} bytes")
-
-        response = whatsapp_service.send_file(
-          chat_id,
-          pdf_content,
-          filename,
-          caption,
-          'application/pdf'
-        )
-
-        Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")
-        whatsapp_success = response[:success]
-
-        unless whatsapp_success
-          Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
-          raise "WhatsApp API Error: #{response[:error]}"
+        if customer.phone.present? && signed_id.present?
+          begin
+            Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via Twilio WhatsApp template to #{customer.phone}")
+            response = TwilioWhatsappService.new.send_template(
+              to_phone:          customer.phone,
+              content_sid:       WHATSAPP_REPORT_TEMPLATE_SID,
+              content_variables: { '1' => signed_id }
+            )
+            if response[:success]
+              Rails.logger.info("SendCostEstimatePdfJob: Twilio WhatsApp sent (sid: #{response[:sid]}, status: #{response[:status]})")
+            else
+              Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp failed: #{response[:error]}")
+            end
+          rescue => e
+            Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp error: #{e.message}")
+          end
+        else
+          Rails.logger.warn("SendCostEstimatePdfJob: skipping WhatsApp — missing phone or PDF for customer #{customer.id}")
         end
-
-        Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
-      else
-        whatsapp_success = true
       end
 
 
