@@ -108,6 +108,14 @@ class CostEstimatesController < ApplicationController
   end
   
   def generate_proposal
+    # Make sure the proposal carries an AI-proposed product name + narrative,
+    # same as the emailed version. Non-fatal: falls back to customer app name.
+    begin
+      @cost_estimate.ensure_proposal_content!
+    rescue => e
+      Rails.logger.error("Proposal content generation failed (#{e.message}) — continuing")
+    end
+
     pdf_binary = begin
       CostEstimateHtmlPdfService.new(@cost_estimate).generate
     rescue => e

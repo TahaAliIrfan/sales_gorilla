@@ -26,32 +26,9 @@ class SendCostEstimatePdfJob
     end
 
     begin
-      # Generate AI content if not already present
-      if cost_estimate.app_name.blank?
-        Rails.logger.info("Generating AI content for cost estimate #{cost_estimate_id}")
-        ai_service = CostEstimateAiService.new
-
-        analysis = ai_service.generate_project_analysis(cost_estimate)
-        if analysis
-          cost_estimate.update!(
-            app_name: analysis['app_name'],
-            similar_apps: analysis['similar_apps'].to_json,
-            technical_information_summary: analysis['technical_info'].to_json,
-            executive_summary: analysis['executive_summary'].to_json,
-            feature_prioritization: analysis['feature_prioritization'].to_json
-          )
-          Rails.logger.info("Generated app name: #{analysis['app_name']}")
-          Rails.logger.info("Generated technical information")
-          Rails.logger.info("Generated executive summary")
-          Rails.logger.info("Generated feature prioritization")
-        else
-          cost_estimate.update!(
-            app_name: "#{customer.name}'s App",
-            similar_apps: [].to_json
-          )
-          Rails.logger.warn("AI analysis failed, using fallback app name")
-        end
-      end
+      # Generate AI content (proposed name, narrative) if not already present
+      cost_estimate.ensure_proposal_content!
+      Rails.logger.info("Proposed app name: #{cost_estimate.app_name}")
 
       # Generate AI concept screens (Nano Banana Pro) if not already attached.
       # Non-fatal: the proposal simply renders without the Design Concepts page.
@@ -130,7 +107,7 @@ class SendCostEstimatePdfJob
                   "📱 Project Type: #{app_types}\n" \
                   "📊 Scale: #{cost_estimate.scale.titleize}\n" \
                   "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
-                  "💰 Total Cost: £#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
+                  "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
                   "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
                   "Best regards,\nTecaudex Team"
 

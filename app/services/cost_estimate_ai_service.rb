@@ -63,7 +63,9 @@ class CostEstimateAiService
 
       Based on the following project details, provide:
 
-      1. A creative, memorable app name (1-3 words)
+      1. A distinctive, brandable product name we can propose to the client (one or two words).
+         Suggestive or coined names work best (think "Shopify", "Notion", "Calmly") — NOT a
+         literal description like "Fitness Tracker App", and NOT the client's own name.
       2. A list of 5 similar existing apps/products (to show market validation)
       3. Comprehensive technical information
       4. An inspiring executive summary that sells the vision

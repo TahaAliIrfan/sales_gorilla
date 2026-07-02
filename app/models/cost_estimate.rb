@@ -164,6 +164,31 @@ class CostEstimate < ApplicationRecord
     platforms.any? { |t| t.match?(/android|cross/) } || generic_mobile?
   end
 
+  # Generates and persists the AI proposal narrative (proposed product name,
+  # similar apps, executive summary, feature prioritization) if not already
+  # present. Called from both the email job and the dashboard PDF download so
+  # every proposal carries a proposed name.
+  def ensure_proposal_content!
+    return if app_name.present?
+
+    analysis = CostEstimateAiService.new.generate_project_analysis(self)
+    if analysis
+      update!(
+        app_name: analysis['app_name'],
+        similar_apps: analysis['similar_apps'].to_json,
+        technical_information_summary: analysis['technical_info'].to_json,
+        executive_summary: analysis['executive_summary'].to_json,
+        feature_prioritization: analysis['feature_prioritization'].to_json
+      )
+    else
+      update!(
+        app_name: "#{customer_display_name}'s App",
+        similar_apps: [].to_json
+      )
+      Rails.logger.warn("CostEstimate##{id}: AI analysis failed, using fallback app name")
+    end
+  end
+
   # Combined feature text used to infer usage-based services (payments, maps, SMS)
   def feature_text
     names = features.map { |f| [f['name'], f['description']].compact.join(' ') }

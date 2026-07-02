@@ -590,11 +590,11 @@ class ProposalGenerationService
     table_data = [
       { label: "Cost Breakdown", value: "Value", is_header: true },
       { label: "Total Development Hours", value: "#{total_hours} hours" },
-      { label: "Development Rate", value: "£#{hourly_rate}/hour" },
-      { label: "Development Cost", value: "£#{number_with_commas(development_cost.to_i)}" },
+      { label: "Development Rate", value: "$#{hourly_rate}/hour" },
+      { label: "Development Cost", value: "$#{number_with_commas(development_cost.to_i)}" },
       { label: "Quality Assurance", value: "Included" },
       { label: "Documentation", value: "Included" },
-      { label: "Total Project Investment", value: "£#{number_with_commas(total_cost.to_i)}", is_total: true }
+      { label: "Total Project Investment", value: "$#{number_with_commas(total_cost.to_i)}", is_total: true }
     ]
 
     # Track table start position for borders
@@ -730,7 +730,7 @@ class ProposalGenerationService
     # Cost breakdown insights
     pdf.font_size 11
     cost_insights = [
-      "• Industry-competitive hourly rate of £#{hourly_rate}",
+      "• Industry-competitive hourly rate of $#{hourly_rate}",
       "• Comprehensive development including QA and documentation",
       "• Professional project management included"
     ]
