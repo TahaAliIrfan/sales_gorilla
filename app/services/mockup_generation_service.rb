@@ -158,15 +158,25 @@ class MockupGenerationService
     summary = @cost_estimate.description.to_s.truncate(220)
 
     surface = mobile? ? 'mobile app' : 'desktop web application'
-    patterns = brief['key_ui_patterns'].any? ? "Feature domain patterns where natural: #{brief['key_ui_patterns'].join(', ')}." : ''
+    patterns = brief['key_ui_patterns'].any? ? "If one fits naturally, feature ONE domain pattern such as: #{brief['key_ui_patterns'].first(3).join(', ')}." : ''
     style = <<~STYLE.squish
-      Design direction (from UI/UX research): follow #{brief['design_system']} components and layout
-      conventions. Primary brand color #{brief['primary_color']} for key actions and highlights,
-      accent color #{brief['accent_color']} used sparingly. Background: #{brief['background']}.
-      Typography: #{brief['typography']}. Mood: #{brief['mood']}. #{patterns}
-      High-fidelity, pixel-perfect product UI with realistic English interface text and believable
-      example content. Show ONLY the flat UI screen filling the entire frame — no device frame,
-      no browser chrome, no hands, no background scenery, no watermarks.
+      This is a presentation-grade UI/UX concept mockup — the kind a design studio
+      shows in a client pitch deck or a top Dribbble shot. It must look designed by
+      a senior product designer, not busy or auto-generated.
+      Composition rules (strict): generous white space on an 8pt spacing grid;
+      one clear focal point; strong visual hierarchy with one large friendly
+      headline; at most 4 UI components on the whole screen; soft rounded cards
+      with gentle shadows; short labels of one to three words.
+      Absolutely NO dense data tables, NO long lists (3 items maximum), NO tiny
+      paragraph text, NO more than one simple chart, NO crowding — when in doubt,
+      leave the space empty.
+      Design direction (from UI/UX research): follow #{brief['design_system']}
+      components and layout conventions. Primary brand color #{brief['primary_color']}
+      for key actions and highlights, accent color #{brief['accent_color']} used
+      sparingly. Background: #{brief['background']}. Typography: #{brief['typography']}.
+      Mood: #{brief['mood']}. #{patterns}
+      Pixel-perfect flat UI filling the entire frame — no device frame, no browser
+      chrome, no hands, no background scenery, no watermarks.
     STYLE
 
     [
@@ -174,11 +184,11 @@ class MockupGenerationService
         slug: 'home-screen',
         prompt: <<~PROMPT.squish
           UI design of a single #{surface} screen for "#{app_name}" — #{summary}
-          Screen: the home screen a signed-in user sees. One focused, uncluttered
-          layout with realistic personalised content: a greeting, one hero card for
-          the primary action (#{features.first.presence || 'the main feature'}),
-          two or three supporting stat or list cards, and simple navigation.
-          Do not cram every feature in — show a calm, believable daily view.
+          Screen: the home screen a signed-in user sees. Exactly this content and
+          nothing more: a short greeting, ONE hero card for the primary action
+          (#{features.first.presence || 'the main feature'}), one or two small
+          supporting cards, and simple navigation. A calm, breathable daily view —
+          not a dashboard of every feature.
           #{style}
         PROMPT
       },
@@ -186,8 +196,8 @@ class MockupGenerationService
         slug: key_feature.parameterize.presence || 'key-feature',
         prompt: <<~PROMPT.squish
           UI design of a single #{surface} screen for "#{app_name}" — #{summary}
-          Screen: the "#{key_feature}" screen, showing that flow in use with
-          realistic example data.
+          Screen: the "#{key_feature}" screen, showing just that single flow in a
+          spacious, focused layout with a small amount of believable example data.
           #{style}
         PROMPT
       }

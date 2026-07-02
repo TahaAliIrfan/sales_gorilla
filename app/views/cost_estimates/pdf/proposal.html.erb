@@ -419,7 +419,7 @@
      DESIGN CONCEPTS
      ═══════════════════════════════════════════════════════════════════ */
   .shots { display: flex; gap: 5mm; justify-content: center; align-items: flex-start; }
-  .shots.wide { flex-direction: column; align-items: stretch; }
+  .shots.wide { flex-direction: column; align-items: stretch; gap: 4mm; }
   .shot {
     flex: 1; max-width: 72mm;
     background: var(--card); border: 1px solid var(--line); border-radius: 9pt;
@@ -428,6 +428,7 @@
   .shots.wide .shot { max-width: none; }
   .shot .frame { border-radius: 5pt; overflow: hidden; border: 1px solid var(--line-soft); }
   .shot .frame img { display: block; width: 100%; height: auto; }
+  .shots.wide .shot .frame img { max-height: 80mm; object-fit: cover; object-position: center top; }
   .shot .cap {
     margin-top: 3mm;
     display: flex; align-items: baseline; gap: 5pt;
@@ -540,7 +541,8 @@
   prio      = est.feature_prioritization_data
   tech      = est.technical_info_data
   research  = est.market_research_data
-  booking_url = 'https://calendly.com/tecaudex'
+  booking_url = 'https://cal.com/tecaudex/discovery-call?duration=30'
+  booking_display = 'cal.com/tecaudex/discovery-call'
 
   scale_text = est.scale_display.to_s.gsub('-', ' ').split.map(&:capitalize).join(' ')
 
@@ -1000,7 +1002,7 @@
       <span class="eyebrow">Design concepts</span>
     </div>
     <h2>A first look at <%= app_name %></h2>
-    <p class="lead">Early visual concepts to make the idea tangible. Final designs are crafted with you during the design sprint.</p>
+    <p class="lead">Early visual concepts from a UI/UX research pass on your domain — they illustrate direction, not final UI. Every screen is designed properly, with your brand and feedback, during the design sprint.</p>
   </div>
 
   <div class="shots <%= 'wide' unless est.mobile_app? %>">
@@ -1017,11 +1019,6 @@
     <% end %>
   </div>
 
-  <p class="muted" style="margin-top:5mm; font-size:8pt; line-height:1.6;">
-    Concept visualisations from a UI/UX research pass on your project — design system, colour
-    palette and interface patterns chosen for your domain. They illustrate direction, not final
-    UI: every screen is designed properly, with your brand and feedback, before development begins.
-  </p>
 </section>
 <% end %>
 
@@ -1236,7 +1233,7 @@
   <div class="cta-card">
     <h3>Ready to build <%= app_name %>?</h3>
     <p>Pick a slot that suits you and we'll walk through scope, timeline, and any open questions in a free 30-minute call — no commitment needed.</p>
-    <a class="cta-btn" href="<%= booking_url %>"><%= icon.call('calendar-tick', 13) %> Schedule a call <span class="url"><%= booking_url.sub(%r{\Ahttps?://}, '') %></span></a>
+    <a class="cta-btn" href="<%= booking_url %>"><%= icon.call('calendar-tick', 13) %> Schedule a call <span class="url"><%= booking_display %></span></a>
     <div class="contact">
       <span><%= icon.call('sms', 10) %> sales@tecaudex.com</span>
       <span><%= icon.call('global', 10) %> www.tecaudex.com</span>
