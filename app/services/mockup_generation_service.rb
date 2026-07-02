@@ -155,6 +155,13 @@ class MockupGenerationService
         spacing, iconography — as two artboards of one Figma file.
       - html,body: margin 0; width #{vp[:width]}px; height #{vp[:height]}px; overflow hidden.
         Content must fit the viewport exactly — nothing may overflow or scroll.
+      - Structure like Figma auto-layout: build the page as nested flexbox/grid
+        containers (app bar / content / nav zones); never absolutely position
+        content except a status bar. Align everything to a consistent grid —
+        equal card gutters, equal side margins, baseline-aligned rows.
+      - Nothing may touch or be cut by the viewport edges except app bars and
+        navigation; keep at least 24px of padding around the content zone and
+        at least 20px of inner padding in every card.
       - Composition: generous white space on an 8px grid, one clear focal point per
         screen, at most 4 components, strong type hierarchy, labels of 1-3 words,
         realistic believable content (names, numbers, dates).
