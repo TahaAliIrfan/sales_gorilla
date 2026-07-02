@@ -57,6 +57,7 @@ class SendCostEstimatePdfJob
         Rails.logger.error("HTML PDF generation failed (#{e.message}), falling back to Prawn")
         ProposalGenerationService.new(cost_estimate).generate_pdf.render
       end.force_encoding('BINARY')
+      pdf_content = Base64.strict_encode64(pdf_binary)
 
       app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')
       filename = "Project_Proposal_#{app_name_clean}_#{Date.current.strftime('%Y%m%d')}.pdf"
@@ -99,42 +100,45 @@ class SendCostEstimatePdfJob
         Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer.id} has no email address, skipping email")
       end
 
-      # Send the PDF over WhatsApp via the Twilio US number. Non-fatal: WhatsApp
-      # delivery outside the 24h window (or any Twilio error) is logged but must
-      # not undo the email or trigger endless Sidekiq retries.
+      whatsapp_success = false
       unless already_sent_whatsapp
-        if customer.phone.present? && cost_estimate.pdf_url.present?
-          app_types = cost_estimate.application_types_array.any? ?
-                      cost_estimate.application_types_array.join(', ').upcase :
-                      cost_estimate.app_type_display
+        whatsapp_service = Whatsapp::ApiService.new
+        chat_id = whatsapp_service.get_whatsapp_chat_id(customer.phone)
 
-          caption = "Hi #{customer.name}! 👋\n\n" \
-                    "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
-                    "📱 Project Type: #{app_types}\n" \
-                    "📊 Scale: #{cost_estimate.scale.titleize}\n" \
-                    "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
-                    "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
-                    "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
-                    "Best regards,\nTecaudex Team"
+        app_types = cost_estimate.application_types_array.any? ?
+                    cost_estimate.application_types_array.join(', ').upcase :
+                    cost_estimate.app_type_display
 
-          begin
-            Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via Twilio WhatsApp to #{customer.phone} (#{filename})")
-            response = TwilioWhatsappService.new.send_media(
-              to_phone:  customer.phone,
-              media_url: cost_estimate.pdf_url,
-              body:      caption
-            )
-            if response[:success]
-              Rails.logger.info("SendCostEstimatePdfJob: Twilio WhatsApp sent (sid: #{response[:sid]}, status: #{response[:status]})")
-            else
-              Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp failed: #{response[:error]}")
-            end
-          rescue => e
-            Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp error: #{e.message}")
-          end
-        else
-          Rails.logger.warn("SendCostEstimatePdfJob: skipping WhatsApp — missing phone or PDF URL for customer #{customer.id}")
+        caption = "Hi #{customer.name}! 👋\n\n" \
+                  "Thank you for your interest in building with us! Here's your detailed cost estimate.\n\n" \
+                  "📱 Project Type: #{app_types}\n" \
+                  "📊 Scale: #{cost_estimate.scale.titleize}\n" \
+                  "⏱️ Total Hours: #{cost_estimate.total_hours}\n" \
+                  "💰 Total Cost: $#{number_with_commas(cost_estimate.total_cost.to_i)}\n\n" \
+                  "Please review the attached PDF for complete details. Feel free to reach out if you have any questions!\n\n" \
+                  "Best regards,\nTecaudex Team"
+
+        Rails.logger.info("SendCostEstimatePdfJob: Sending PDF to chat_id: #{chat_id}, filename: #{filename}, pdf_size: #{pdf_binary.bytesize} bytes")
+
+        response = whatsapp_service.send_file(
+          chat_id,
+          pdf_content,
+          filename,
+          caption,
+          'application/pdf'
+        )
+
+        Rails.logger.info("SendCostEstimatePdfJob: WhatsApp API response: #{response.inspect}")
+        whatsapp_success = response[:success]
+
+        unless whatsapp_success
+          Rails.logger.error("Failed to send PDF via WhatsApp: #{response[:error]}")
+          raise "WhatsApp API Error: #{response[:error]}"
         end
+
+        Rails.logger.info("Successfully sent PDF to customer #{customer.id} via WhatsApp")
+      else
+        whatsapp_success = true
       end
 
 
