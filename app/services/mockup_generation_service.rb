@@ -46,9 +46,16 @@ class MockupGenerationService
     brief = design_brief
     Rails.logger.info("MockupGenerationService: design brief — #{brief['design_system']}, primary #{brief['primary_color']}, mood: #{brief['mood']}")
 
+    home_spec, feature_spec = screen_specs(brief)
+
+    # The single-flow feature screen renders most reliably, so generate it
+    # first and feed it back as a style reference for the home screen — both
+    # then look like screens of the same app.
+    feature_png = generate_image(feature_spec[:prompt])
+    home_png    = generate_image(home_spec[:prompt], reference: feature_png)
+
     attached = 0
-    screen_specs(brief).each_with_index do |spec, i|
-      png = generate_image(spec[:prompt])
+    [[home_spec, home_png], [feature_spec, feature_png]].each_with_index do |(spec, png), i|
       if png.blank?
         Rails.logger.warn("MockupGenerationService: no image returned for screen '#{spec[:slug]}'")
         next
@@ -167,8 +174,11 @@ class MockupGenerationService
         slug: 'home-screen',
         prompt: <<~PROMPT.squish
           UI design of a single #{surface} screen for "#{app_name}" — #{summary}
-          Screen: the home / main screen, giving an overview and access to:
-          #{features.first(4).join(', ').presence || 'the main features'}.
+          Screen: the home screen a signed-in user sees. One focused, uncluttered
+          layout with realistic personalised content: a greeting, one hero card for
+          the primary action (#{features.first.presence || 'the main feature'}),
+          two or three supporting stat or list cards, and simple navigation.
+          Do not cram every feature in — show a calm, believable daily view.
           #{style}
         PROMPT
       },
@@ -216,15 +226,15 @@ class MockupGenerationService
     nil
   end
 
-  def generate_image(prompt)
+  def generate_image(prompt, reference: nil)
     [PRIMARY_MODEL, FALLBACK_MODEL].each do |model|
-      png = request_image(model, prompt)
+      png = request_image(model, prompt, reference: reference)
       return png if png.present?
     end
     nil
   end
 
-  def request_image(model, prompt)
+  def request_image(model, prompt, reference: nil)
     uri = URI.parse(format(ENDPOINT, model))
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = true
@@ -235,8 +245,21 @@ class MockupGenerationService
       'Content-Type' => 'application/json',
       'x-goog-api-key' => @api_key
     })
+
+    parts = []
+    if reference.present?
+      parts << { inlineData: { mimeType: 'image/png', data: Base64.strict_encode64(reference) } }
+      prompt = <<~REF.squish
+        The attached image is another screen of this exact app. Match its visual
+        style precisely — identical color palette, typography, corner radii,
+        component styling, spacing and iconography — as if both screens came
+        from the same design file. #{prompt}
+      REF
+    end
+    parts << { text: prompt }
+
     request.body = {
-      contents: [{ parts: [{ text: prompt }] }],
+      contents: [{ parts: parts }],
       generationConfig: {
         responseModalities: ['IMAGE'],
         imageConfig: { aspectRatio: mobile? ? '9:16' : '16:9' }
