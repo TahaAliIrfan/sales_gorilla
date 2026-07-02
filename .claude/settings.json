@@ -46,7 +46,17 @@
       "Bash(xargs ls -la)",
       "Bash(ruby -c app/controllers/api/v2/whatsapp_us_controller.rb)",
       "Bash(ruby -c app/workers/twilio_whatsapp_media_worker.rb)",
-      "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)"
+      "Bash(ruby -c app/controllers/twilio_whatsapp_controller.rb)",
+      "Bash(python3 -c ' *)",
+      "Bash(ruby -c app/workers/send_cost_estimate_pdf_job.rb)",
+      "Bash(ruby -c app/controllers/cost_estimates_controller.rb)",
+      "Bash(ruby -c app/models/cost_estimate.rb)",
+      "Bash(ruby -c app/services/cost_estimate_html_pdf_service.rb)",
+      "Bash(pdftoppm -png -r 100 cost_estimate_proposal.pdf proposal_page)",
+      "Bash(pdftoppm -png -f 5 -l 5 -r 70 cost_estimate_proposal.pdf design_check)",
+      "Bash(rm -f /tmp/render_with_mockups.rb /tmp/design_check-5.png /tmp/proposal_page-*.png)",
+      "Bash(pdftoppm -png -f 5 -l 5 -r 70 cost_estimate_proposal.pdf research_check)",
+      "Bash(rm -f /tmp/test_design_research.rb /tmp/research_check-5.png /tmp/proposal_page-*.png)"
     ],
     "additionalDirectories": [
       "/tmp"

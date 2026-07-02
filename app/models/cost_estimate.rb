@@ -5,6 +5,9 @@ class CostEstimate < ApplicationRecord
   # Active Storage attachment for PDF
   has_one_attached :pdf_file
 
+  # AI-generated concept screens embedded in the proposal PDF
+  has_many_attached :mockup_images
+
   # Status constants
   STATUSES = {
     init: 'init',
@@ -117,8 +120,75 @@ class CostEstimate < ApplicationRecord
   def customer_email
     customer&.email || ""
   end
-  
+
+  # ── Parsed AI-generated JSON columns (safe against malformed payloads) ──
+
+  def executive_summary_data
+    safe_parse_hash(executive_summary)
+  end
+
+  def similar_apps_data
+    parsed = safe_parse(similar_apps)
+    parsed.is_a?(Array) ? parsed : []
+  end
+
+  def feature_prioritization_data
+    safe_parse_hash(feature_prioritization)
+  end
+
+  def technical_info_data
+    safe_parse_hash(technical_information_summary)
+  end
+
+  # ── Platform detection (drives store fees & operational cost lines) ──
+
+  def platforms
+    types = application_types_array.map { |t| t.to_s.downcase }
+    types << app_type.to_s.downcase if types.empty? && app_type.present?
+    types
+  end
+
+  def mobile_app?
+    platforms.any? { |t| t.match?(/mobile|ios|android|cross/) }
+  end
+
+  def web_app?
+    platforms.any? { |t| t.match?(/web|ecommerce|e-commerce|crm|saas|portal|desktop|api/) }
+  end
+
+  def requires_ios_store?
+    platforms.any? { |t| t.match?(/ios|cross/) } || generic_mobile?
+  end
+
+  def requires_android_store?
+    platforms.any? { |t| t.match?(/android|cross/) } || generic_mobile?
+  end
+
+  # Combined feature text used to infer usage-based services (payments, maps, SMS)
+  def feature_text
+    names = features.map { |f| [f['name'], f['description']].compact.join(' ') }
+    names += proposed_features_array.map(&:to_s)
+    ([description] + names).join(' ').downcase
+  end
+
   private
+
+  # Only "mobile" was selected with no explicit OS — assume both stores
+  def generic_mobile?
+    platforms.any? { |t| t.match?(/mobile/) } && platforms.none? { |t| t.match?(/ios|android/) }
+  end
+
+  def safe_parse(raw)
+    return nil if raw.blank?
+    JSON.parse(raw)
+  rescue JSON::ParserError
+    nil
+  end
+
+  def safe_parse_hash(raw)
+    parsed = safe_parse(raw)
+    parsed.is_a?(Hash) ? parsed : {}
+  end
 
   def set_default_status
     self.status ||= STATUSES[:init]

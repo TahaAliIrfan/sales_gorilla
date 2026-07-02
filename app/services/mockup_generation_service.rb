@@ -1,0 +1,261 @@
+require 'net/http'
+require 'json'
+require 'base64'
+
+# Generates AI concept screens for a cost estimate and attaches them to the
+# estimate as `mockup_images`, so the proposal PDF can embed them in the
+# Design Concepts section. Two-stage pipeline, both on GOOGLE_STUDIO_API_KEY:
+#
+#   1. UI/UX research — a Gemini text model produces a design brief for the
+#      specific app (design system, custom color palette, typography, domain
+#      UI patterns), so screens don't all default to the agency brand.
+#   2. Image generation — Nano Banana Pro renders the screens from prompts
+#      built around that brief.
+#
+# Idempotent — skips generation if images are already attached.
+class MockupGenerationService
+  PRIMARY_MODEL  = 'gemini-3-pro-image-preview'.freeze  # Nano Banana Pro
+  FALLBACK_MODEL = 'gemini-2.5-flash-image'.freeze      # original Nano Banana
+  RESEARCH_MODEL = 'gemini-2.5-flash'.freeze            # design-brief research
+  ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent'.freeze
+
+  DEFAULT_BRIEF = {
+    'design_system'   => 'Material Design 3',
+    'primary_color'   => '#2563EB',
+    'accent_color'    => '#F59E0B',
+    'background'      => 'white with soft neutral surfaces and subtle elevation',
+    'typography'      => 'clean geometric sans-serif, strong numerals',
+    'mood'            => 'modern, trustworthy, focused',
+    'key_ui_patterns' => []
+  }.freeze
+
+  def initialize(cost_estimate)
+    @cost_estimate = cost_estimate
+    @api_key = Rails.application.credentials.dig(:GOOGLE_STUDIO_API_KEY) || ENV['GOOGLE_STUDIO_API_KEY']
+  end
+
+  # Returns true if at least one mockup ends up attached.
+  def generate_and_attach
+    if @api_key.blank?
+      Rails.logger.warn('MockupGenerationService: GOOGLE_STUDIO_API_KEY not configured, skipping mockups')
+      return false
+    end
+    return true if @cost_estimate.mockup_images.attached?
+    raise 'cost estimate must be persisted to attach mockups' unless @cost_estimate.persisted?
+
+    brief = design_brief
+    Rails.logger.info("MockupGenerationService: design brief — #{brief['design_system']}, primary #{brief['primary_color']}, mood: #{brief['mood']}")
+
+    attached = 0
+    screen_specs(brief).each_with_index do |spec, i|
+      png = generate_image(spec[:prompt])
+      if png.blank?
+        Rails.logger.warn("MockupGenerationService: no image returned for screen '#{spec[:slug]}'")
+        next
+      end
+
+      @cost_estimate.mockup_images.attach(
+        io: StringIO.new(png),
+        filename: format('%02d-%s.png', i + 1, spec[:slug]),
+        content_type: 'image/png'
+      )
+      attached += 1
+      Rails.logger.info("MockupGenerationService: attached mockup #{i + 1} (#{spec[:slug]}, #{png.bytesize} bytes)")
+    end
+
+    attached.positive?
+  end
+
+  private
+
+  def app_name
+    @cost_estimate.app_name.presence || @cost_estimate.project_name.presence || 'the app'
+  end
+
+  def top_features
+    @cost_estimate.features
+                  .sort_by { |f| -f['hours'].to_i }
+                  .map { |f| f['name'].to_s }
+                  .reject(&:blank?)
+  end
+
+  def mobile?
+    @cost_estimate.mobile_app?
+  end
+
+  # ── Stage 1: UI/UX research ────────────────────────────────────────────
+
+  # Asks a Gemini text model to act as a product designer and return a design
+  # brief tailored to this app's domain. Falls back to DEFAULT_BRIEF on any
+  # failure so image generation always has a usable direction.
+  def design_brief
+    raw = request_text(RESEARCH_MODEL, research_prompt)
+    parsed = raw.present? ? JSON.parse(raw) : {}
+    parsed = {} unless parsed.is_a?(Hash)
+
+    brief = DEFAULT_BRIEF.merge(parsed.slice(*DEFAULT_BRIEF.keys))
+    brief['primary_color'] = normalize_hex(brief['primary_color'], DEFAULT_BRIEF['primary_color'])
+    brief['accent_color']  = normalize_hex(brief['accent_color'],  DEFAULT_BRIEF['accent_color'])
+    brief['key_ui_patterns'] = Array(brief['key_ui_patterns']).map(&:to_s).reject(&:blank?).first(5)
+    brief
+  rescue JSON::ParserError => e
+    Rails.logger.warn("MockupGenerationService: design research returned invalid JSON (#{e.message}), using defaults")
+    DEFAULT_BRIEF.dup
+  end
+
+  def research_prompt
+    similar = @cost_estimate.similar_apps_data.map { |a| a['name'] }.compact.first(5)
+
+    <<~PROMPT
+      You are a senior UI/UX designer preparing the visual direction for a new product.
+
+      Product: "#{app_name}"
+      Description: #{@cost_estimate.description.to_s.truncate(400)}
+      Platforms: #{@cost_estimate.platforms.join(', ').presence || 'mobile'}
+      Key features: #{top_features.first(6).join(', ')}
+      Comparable products: #{similar.join(', ').presence || 'none identified'}
+
+      Research the domain and define a distinctive, appropriate design direction:
+      - Choose the right design system foundation: "Material Design 3" for Android/cross-platform,
+        "iOS Human Interface Guidelines" for iOS-first, or a modern web design system for web apps.
+      - Pick a CUSTOM primary brand color suited to this domain's psychology and audience
+        (do NOT default to generic blue; do NOT use red #ED1A3B), plus one complementary accent color.
+      - Describe background/surface treatment, typography direction, and overall mood.
+      - List 3-5 domain-specific UI patterns this product's screens should feature
+        (e.g. for fitness: activity rings, streak counters; for booking: calendar bottom sheets).
+
+      Respond with ONLY a JSON object, no markdown:
+      {
+        "design_system": "...",
+        "primary_color": "#RRGGBB",
+        "accent_color": "#RRGGBB",
+        "background": "one-line surface/background treatment",
+        "typography": "one-line typography direction",
+        "mood": "3-5 adjectives",
+        "key_ui_patterns": ["...", "..."]
+      }
+    PROMPT
+  end
+
+  def normalize_hex(value, fallback)
+    hex = value.to_s.strip
+    hex = "##{hex}" unless hex.start_with?('#')
+    hex.match?(/\A#\h{6}\z/) ? hex.upcase : fallback
+  end
+
+  # ── Stage 2: screen prompts built from the brief ──────────────────────
+
+  def screen_specs(brief)
+    features = top_features
+    key_feature = features.first.presence || 'the core feature'
+    summary = @cost_estimate.description.to_s.truncate(220)
+
+    surface = mobile? ? 'mobile app' : 'desktop web application'
+    patterns = brief['key_ui_patterns'].any? ? "Feature domain patterns where natural: #{brief['key_ui_patterns'].join(', ')}." : ''
+    style = <<~STYLE.squish
+      Design direction (from UI/UX research): follow #{brief['design_system']} components and layout
+      conventions. Primary brand color #{brief['primary_color']} for key actions and highlights,
+      accent color #{brief['accent_color']} used sparingly. Background: #{brief['background']}.
+      Typography: #{brief['typography']}. Mood: #{brief['mood']}. #{patterns}
+      High-fidelity, pixel-perfect product UI with realistic English interface text and believable
+      example content. Show ONLY the flat UI screen filling the entire frame — no device frame,
+      no browser chrome, no hands, no background scenery, no watermarks.
+    STYLE
+
+    [
+      {
+        slug: 'home-screen',
+        prompt: <<~PROMPT.squish
+          UI design of a single #{surface} screen for "#{app_name}" — #{summary}
+          Screen: the home / main screen, giving an overview and access to:
+          #{features.first(4).join(', ').presence || 'the main features'}.
+          #{style}
+        PROMPT
+      },
+      {
+        slug: key_feature.parameterize.presence || 'key-feature',
+        prompt: <<~PROMPT.squish
+          UI design of a single #{surface} screen for "#{app_name}" — #{summary}
+          Screen: the "#{key_feature}" screen, showing that flow in use with
+          realistic example data.
+          #{style}
+        PROMPT
+      }
+    ]
+  end
+
+  # Text request (design research) — forces a JSON response.
+  def request_text(model, prompt)
+    uri = URI.parse(format(ENDPOINT, model))
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 15
+    http.read_timeout = 60
+
+    request = Net::HTTP::Post.new(uri.path, {
+      'Content-Type' => 'application/json',
+      'x-goog-api-key' => @api_key
+    })
+    request.body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.8
+      }
+    }.to_json
+
+    response = http.request(request)
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.warn("MockupGenerationService: #{model} research returned #{response.code}: #{response.body.to_s.truncate(300)}")
+      return nil
+    end
+
+    JSON.parse(response.body).dig('candidates', 0, 'content', 'parts', 0, 'text')
+  rescue JSON::ParserError, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+    Rails.logger.warn("MockupGenerationService: #{model} research request failed: #{e.class} #{e.message}")
+    nil
+  end
+
+  def generate_image(prompt)
+    [PRIMARY_MODEL, FALLBACK_MODEL].each do |model|
+      png = request_image(model, prompt)
+      return png if png.present?
+    end
+    nil
+  end
+
+  def request_image(model, prompt)
+    uri = URI.parse(format(ENDPOINT, model))
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.open_timeout = 15
+    http.read_timeout = 180
+
+    request = Net::HTTP::Post.new(uri.path, {
+      'Content-Type' => 'application/json',
+      'x-goog-api-key' => @api_key
+    })
+    request.body = {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseModalities: ['IMAGE'],
+        imageConfig: { aspectRatio: mobile? ? '9:16' : '16:9' }
+      }
+    }.to_json
+
+    response = http.request(request)
+    unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.warn("MockupGenerationService: #{model} returned #{response.code}: #{response.body.to_s.truncate(300)}")
+      return nil
+    end
+
+    payload = JSON.parse(response.body)
+    part = payload.dig('candidates', 0, 'content', 'parts')&.find { |p| p['inlineData'] }
+    return nil unless part
+
+    Base64.decode64(part['inlineData']['data'])
+  rescue JSON::ParserError, Net::OpenTimeout, Net::ReadTimeout, SocketError => e
+    Rails.logger.warn("MockupGenerationService: #{model} request failed: #{e.class} #{e.message}")
+    nil
+  end
+end

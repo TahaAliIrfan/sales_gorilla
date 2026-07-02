@@ -53,11 +53,26 @@ class SendCostEstimatePdfJob
         end
       end
 
-      # Generate the PDF
+      # Generate AI concept screens (Nano Banana Pro) if not already attached.
+      # Non-fatal: the proposal simply renders without the Design Concepts page.
+      unless cost_estimate.mockup_images.attached?
+        begin
+          Rails.logger.info("Generating design mockups for cost estimate #{cost_estimate_id}")
+          MockupGenerationService.new(cost_estimate).generate_and_attach
+        rescue => e
+          Rails.logger.error("Mockup generation failed (#{e.message}) — continuing without design concepts")
+        end
+      end
+
+      # Generate the PDF (modern HTML template via headless Chromium,
+      # falling back to the legacy Prawn generator if rendering fails)
       Rails.logger.info("Generating PDF for cost estimate #{cost_estimate_id}")
-      proposal_service = ProposalGenerationService.new(cost_estimate)
-      pdf = proposal_service.generate_pdf
-      pdf_binary = pdf.render.force_encoding('BINARY')
+      pdf_binary = begin
+        CostEstimateHtmlPdfService.new(cost_estimate).generate
+      rescue => e
+        Rails.logger.error("HTML PDF generation failed (#{e.message}), falling back to Prawn")
+        ProposalGenerationService.new(cost_estimate).generate_pdf.render
+      end.force_encoding('BINARY')
       pdf_content = Base64.strict_encode64(pdf_binary)
 
       app_name_clean = cost_estimate.app_name.present? ? cost_estimate.app_name.gsub(/\s+/, '_') : customer.name.gsub(/\s+/, '_')

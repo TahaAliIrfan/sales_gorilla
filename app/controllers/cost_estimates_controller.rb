@@ -108,12 +108,16 @@ class CostEstimatesController < ApplicationController
   end
   
   def generate_proposal
-    proposal_service = ProposalGenerationService.new(@cost_estimate)
-    pdf = proposal_service.generate_pdf
-    
+    pdf_binary = begin
+      CostEstimateHtmlPdfService.new(@cost_estimate).generate
+    rescue => e
+      Rails.logger.error("HTML PDF generation failed (#{e.message}), falling back to Prawn")
+      ProposalGenerationService.new(@cost_estimate).generate_pdf.render
+    end
+
     filename = "#{@cost_estimate.app_type}_proposal_#{Date.current.strftime('%Y%m%d')}.pdf"
-    
-    send_data pdf.render, 
+
+    send_data pdf_binary,
       filename: filename,
       type: 'application/pdf',
       disposition: 'attachment'

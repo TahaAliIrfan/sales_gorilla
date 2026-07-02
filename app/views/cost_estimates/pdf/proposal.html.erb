@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Project Proposal — <%= @cost_estimate.app_name.presence || @cost_estimate.project_name.presence || 'Your App' %></title>
+<style>
+  /* Distinctive grotesque for display + body; falls back to Helvetica when offline */
+  @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap');
+
+  /* ═══════════════════════════════════════════════════════════════════
+     BRAND TOKENS  (Tecaudex: red / black / white only)
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --red:        #ED1A3B;
+    --red-dark:   #B0142C;
+    --red-tint:   #FEECEF;
+    --ink:        #0A0A0A;
+    --charcoal:   #1F2937;
+    --slate:      #4B5563;
+    --mid:        #6B7280;
+    --line:       #E5E7EB;
+    --line-soft:  #F1F1F1;
+    --off:        #FAFAFA;
+    --white:      #FFFFFF;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     PAGE SETUP
+     ═══════════════════════════════════════════════════════════════════ */
+  @page { size: A4; margin: 0; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  body {
+    font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 10pt;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  p { margin: 0 0 0.6em 0; }
+  h1, h2, h3, h4 { margin: 0; color: var(--ink); font-weight: 800; letter-spacing: -0.015em; }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  .muted  { color: var(--mid); }
+  .accent { color: var(--red); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 16mm 20mm;
+    position: relative;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .page.cover { display: flex; flex-direction: column; }
+
+  /* ── Top brand bar (inner pages) ── */
+  .page-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6mm;
+    margin-bottom: 10mm;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-bar .logo-row { display: flex; align-items: center; gap: 8pt; }
+  .page-bar .logo-row .mark { width: 9mm; height: 9mm; flex-shrink: 0; }
+  .page-bar .logo-row .name { font-size: 11pt; font-weight: 800; letter-spacing: -0.01em; }
+  .page-bar .logo-row .partner {
+    font-size: 7.5pt; color: var(--mid);
+    letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600;
+  }
+  .page-bar .meta { font-size: 8pt; color: var(--mid); text-align: right; line-height: 1.55; }
+  .page-bar .meta strong { color: var(--ink); }
+
+  /* ── Section header with ghost index numeral ── */
+  .section-title { margin-bottom: 8mm; position: relative; }
+  .section-title .ghost {
+    position: absolute; top: -6mm; right: 0;
+    font-size: 52pt; font-weight: 900; line-height: 1;
+    color: var(--line-soft);
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    user-select: none;
+  }
+  .section-title .eyebrow {
+    display: inline-flex; align-items: center; gap: 6pt;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    margin-bottom: 8pt;
+  }
+  .section-title .eyebrow::before {
+    content: ''; display: inline-block;
+    width: 14pt; height: 1.5pt; background: var(--red);
+  }
+  .section-title h2 {
+    font-size: 27pt; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em;
+  }
+  .section-title .lead {
+    margin-top: 10pt; font-size: 11pt; color: var(--slate);
+    max-width: 150mm; line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════ */
+  .cover { padding: 16mm 22mm 14mm 22mm; }
+  .cover .top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 6mm; border-bottom: 1px solid var(--line);
+  }
+  .cover .top .logo-row { display: flex; align-items: center; gap: 10pt; }
+  .cover .top .logo-row .mark { width: 12mm; height: 12mm; }
+  .cover .top .logo-row .text { line-height: 1.25; }
+  .cover .top .logo-row .text .name { font-size: 14pt; font-weight: 800; letter-spacing: -0.01em; }
+  .cover .top .logo-row .text .tag {
+    font-size: 7.5pt; font-weight: 700; color: var(--red);
+    letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .cover .top .meta { font-size: 8.5pt; color: var(--mid); text-align: right; line-height: 1.55; }
+
+  .cover .hero { margin-top: 13mm; }
+  .cover .hero .eyebrow {
+    font-size: 8.5pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red); margin-bottom: 10pt;
+  }
+  .cover .hero h1 {
+    font-size: 46pt; line-height: 1.0; font-weight: 900; letter-spacing: -0.03em;
+    overflow-wrap: break-word;
+  }
+  .cover .hero h1 .dot { color: var(--red); }
+  .cover .hero .subname {
+    margin-top: 5pt; font-size: 10pt; font-weight: 600; color: var(--mid);
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .cover .hero .deck {
+    margin-top: 10pt; font-size: 11.5pt; color: var(--slate); max-width: 138mm; line-height: 1.55;
+  }
+  .cover .chips { margin-top: 8pt; display: flex; flex-wrap: wrap; gap: 6pt; }
+  .cover .chips .chip {
+    padding: 4pt 11pt; border: 1.5pt solid var(--ink);
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    border-radius: 999pt;
+  }
+  .cover .chips .chip.red { border-color: var(--red); color: var(--red); }
+
+  .cover .prepared {
+    margin-top: 10mm; border-top: 1px solid var(--line); padding-top: 6mm;
+  }
+  .cover .prepared .label {
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--mid); margin-bottom: 5pt;
+  }
+  .cover .prepared .client {
+    font-size: 21pt; font-weight: 800; letter-spacing: -0.018em; line-height: 1.1;
+  }
+  .cover .prepared .client-meta { margin-top: 5pt; font-size: 9.5pt; color: var(--mid); }
+
+  .cover .stat-grid { margin-top: 8mm; display: flex; gap: 5mm; }
+  .cover .stat-grid .stat {
+    flex: 1; padding-top: 4mm; border-top: 2.5pt solid var(--ink);
+  }
+  .cover .stat-grid .stat.hot { border-top-color: var(--red); }
+  .cover .stat-grid .stat .label {
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--mid);
+  }
+  .cover .stat-grid .stat .value {
+    margin-top: 4pt; font-size: 15pt; font-weight: 800; letter-spacing: -0.015em;
+    font-variant-numeric: tabular-nums;
+  }
+  .cover .stat-grid .stat .value .unit { font-size: 9pt; color: var(--mid); font-weight: 600; }
+
+  .cover .investment {
+    margin-top: 8mm; padding: 7mm 9mm;
+    background: var(--ink); color: var(--white);
+    border-left: 4pt solid var(--red);
+    display: flex; justify-content: space-between; align-items: center; gap: 10mm;
+  }
+  .cover .investment .label {
+    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+  }
+  .cover .investment .amount {
+    margin-top: 6pt; font-size: 32pt; font-weight: 900;
+    letter-spacing: -0.03em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .cover .investment .footnote {
+    font-size: 8.5pt; color: #BCBCC1; line-height: 1.6; max-width: 62mm; text-align: right;
+  }
+
+  .cover .foot {
+    margin-top: auto; padding-top: 6mm; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 8.5pt; color: var(--mid);
+  }
+  .cover .foot .left strong { color: var(--ink); }
+  .cover .foot .right { text-align: right; line-height: 1.55; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ═══════════════════════════════════════════════════════════════════ */
+  .summary-block { margin-bottom: 8mm; }
+  .summary-block .label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    margin-bottom: 6pt; display: flex; align-items: center; gap: 6pt;
+  }
+  .summary-block .label::before {
+    content: ''; width: 12pt; height: 1.5pt; background: var(--red); display: inline-block;
+  }
+  .summary-block.alt .label { color: var(--ink); }
+  .summary-block.alt .label::before { background: var(--ink); }
+  .summary-block p { font-size: 11pt; line-height: 1.7; color: var(--charcoal); margin: 0; }
+
+  .vp-grid {
+    margin-top: 2mm;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 8mm;
+  }
+  .vp {
+    display: flex; gap: 4mm; padding-top: 3.5mm;
+    border-top: 1px solid var(--line);
+  }
+  .vp .n {
+    flex-shrink: 0; font-size: 13pt; font-weight: 900; color: var(--red);
+    font-variant-numeric: tabular-nums; line-height: 1.2;
+  }
+  .vp .t { font-size: 9.5pt; color: var(--charcoal); line-height: 1.55; }
+
+  .roi-panel {
+    margin-top: 9mm; padding: 6mm 8mm;
+    background: var(--red-tint); border-left: 4pt solid var(--red);
+  }
+  .roi-panel .label {
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red-dark); margin-bottom: 5pt;
+  }
+  .roi-panel p { font-size: 10.5pt; line-height: 1.65; color: var(--ink); margin: 0; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     MARKET VALIDATION
+     ═══════════════════════════════════════════════════════════════════ */
+  .market-row {
+    display: flex; gap: 6mm; padding: 5mm 0;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .market-row:last-of-type { border-bottom: none; }
+  .market-row .idx {
+    flex-shrink: 0; width: 12mm;
+    font-size: 17pt; font-weight: 900; color: var(--line);
+    font-variant-numeric: tabular-nums; line-height: 1.1;
+  }
+  .market-row .body { flex: 1; }
+  .market-row .name { font-size: 12pt; font-weight: 700; letter-spacing: -0.005em; }
+  .market-row .desc { margin-top: 2pt; font-size: 9.5pt; color: var(--slate); line-height: 1.6; }
+
+  .market-note {
+    margin-top: 8mm; padding: 5mm 7mm; background: var(--off);
+    border-left: 3pt solid var(--ink);
+    font-size: 9.5pt; color: var(--slate); line-height: 1.6;
+  }
+  .market-note strong { color: var(--ink); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ROADMAP
+     ═══════════════════════════════════════════════════════════════════ */
+  .phase {
+    display: flex; gap: 7mm; padding: 6mm 0;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .phase:last-of-type { border-bottom: none; }
+  .phase .rail { flex-shrink: 0; width: 17mm; }
+  .phase .rail .pnum {
+    font-size: 26pt; font-weight: 900; color: var(--red);
+    letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .phase .rail .plabel {
+    margin-top: 3pt; font-size: 6.5pt; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--mid);
+  }
+  .phase .body { flex: 1; }
+  .phase .head { display: flex; justify-content: space-between; align-items: baseline; gap: 6mm; }
+  .phase .title { font-size: 14pt; font-weight: 800; letter-spacing: -0.01em; }
+  .phase .time {
+    flex-shrink: 0; padding: 2pt 9pt; border: 1px solid var(--line);
+    color: var(--red); font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .phase .desc { margin-top: 4pt; font-size: 9.5pt; color: var(--slate); line-height: 1.6; }
+  .phase .feats { margin-top: 6pt; display: flex; flex-wrap: wrap; gap: 5pt; }
+  .phase .feats .f {
+    padding: 3pt 9pt; background: var(--off); border: 1px solid var(--line);
+    font-size: 8.5pt; font-weight: 600; color: var(--charcoal); border-radius: 999pt;
+  }
+  .phase.mvp .feats .f { background: var(--red-tint); border-color: transparent; color: var(--red-dark); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     DESIGN CONCEPTS
+     ═══════════════════════════════════════════════════════════════════ */
+  .shots { display: flex; gap: 8mm; justify-content: center; align-items: flex-start; }
+  .shots.wide { flex-direction: column; align-items: stretch; gap: 7mm; }
+  .shot { flex: 1; max-width: 76mm; }
+  .shots.wide .shot { max-width: none; }
+  .shot .frame {
+    border: 1.5pt solid var(--ink);
+    border-radius: 3mm;
+    overflow: hidden;
+    background: var(--off);
+  }
+  .shot .frame img { display: block; width: 100%; height: auto; }
+  .shot .cap {
+    margin-top: 6pt;
+    display: flex; align-items: baseline; gap: 6pt;
+  }
+  .shot .cap .n {
+    font-size: 11pt; font-weight: 900; color: var(--red);
+    font-variant-numeric: tabular-nums;
+  }
+  .shot .cap .t {
+    font-size: 9pt; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .shot-note {
+    margin-top: 7mm; font-size: 8.5pt; color: var(--mid); line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TABLES
+     ═══════════════════════════════════════════════════════════════════ */
+  .table { border-top: 2pt solid var(--ink); border-bottom: 2pt solid var(--ink); }
+  .table thead th {
+    background: var(--white);
+    border-bottom: 1px solid var(--ink);
+    text-align: left; padding: 9pt 0;
+    font-size: 8pt; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink);
+  }
+  .table thead th:first-child { padding-left: 2pt; }
+  .table thead th.r { text-align: right; padding-right: 2pt; }
+  .table tbody td {
+    padding: 6pt 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 9.5pt; color: var(--charcoal);
+    vertical-align: middle;
+  }
+  .table tbody td:first-child { padding-left: 2pt; }
+  .table tbody td.r { text-align: right; padding-right: 2pt; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .table tbody td.label-cell { font-weight: 600; color: var(--ink); }
+  .table tbody tr:last-child td { border-bottom: none; }
+  .table tbody tr.cat td {
+    padding: 7pt 0 5pt 2pt;
+    font-size: 8pt; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--red);
+    border-bottom: 1px solid var(--line);
+  }
+  .table tbody tr.cat td.r { font-size: 9pt; letter-spacing: 0; }
+  .table tbody td.feat { padding-left: 14pt; }
+  .table tfoot td {
+    padding: 12pt 2pt;
+    border-top: 2pt solid var(--ink);
+    font-size: 11pt; font-weight: 800; color: var(--ink);
+  }
+  .table tfoot td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .table tfoot td.accent { color: var(--red); }
+
+  .pill {
+    display: inline-block; padding: 2pt 8pt;
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 999pt;
+  }
+  .pill.gray { background: var(--line-soft); color: var(--charcoal); }
+  .pill.red  { background: var(--red-tint); color: var(--red-dark); }
+
+  .sub-heading {
+    margin: 0 0 4mm 0;
+    font-size: 8.5pt; font-weight: 800; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--red);
+    display: flex; align-items: center; gap: 6pt;
+  }
+  .sub-heading::before {
+    content: ''; display: inline-block; width: 14pt; height: 1.5pt; background: var(--red);
+  }
+  .block { margin-bottom: 10mm; page-break-inside: avoid; break-inside: avoid; }
+  .block:last-child { margin-bottom: 0; }
+
+  /* ── Investment split strip ── */
+  .pay-split { display: flex; gap: 5mm; margin-top: 2mm; }
+  .pay-split .cell {
+    flex: 1; padding: 5.5mm 7mm; border: 1.5pt solid var(--ink);
+  }
+  .pay-split .cell.dark { background: var(--ink); color: var(--white); border-color: var(--ink); }
+  .pay-split .cell .label {
+    font-size: 7pt; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .pay-split .cell.dark .label { color: var(--red); }
+  .pay-split .cell .value {
+    margin-top: 4pt; font-size: 17pt; font-weight: 900; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .pay-split .cell .value .unit { font-size: 9pt; font-weight: 600; color: var(--mid); }
+  .pay-split .cell.dark .value .unit { color: #BCBCC1; }
+  .pay-split .cell .note { margin-top: 3pt; font-size: 8pt; color: var(--mid); line-height: 1.5; }
+  .pay-split .cell.dark .note { color: #BCBCC1; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     NEXT STEPS
+     ═══════════════════════════════════════════════════════════════════ */
+  .step {
+    display: flex; gap: 5mm; padding: 4mm 0;
+    border-bottom: 1px solid var(--line);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .step:last-of-type { border-bottom: none; }
+  .step .num {
+    flex-shrink: 0; width: 11mm; height: 11mm;
+    background: var(--ink); color: var(--white);
+    border-left: 3pt solid var(--red);
+    font-size: 12pt; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step .body { flex: 1; }
+  .step .body .row { display: flex; justify-content: space-between; align-items: baseline; gap: 5mm; }
+  .step .body .title { font-size: 12pt; font-weight: 700; letter-spacing: -0.005em; }
+  .step .body .time {
+    flex-shrink: 0; padding: 2pt 8pt; border: 1px solid var(--line);
+    color: var(--red); font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
+  }
+  .step .body .desc { margin-top: 3pt; font-size: 9.5pt; color: var(--slate); line-height: 1.55; }
+
+  .cta {
+    margin-top: 8mm; padding: 7mm 9mm;
+    background: var(--ink); color: var(--white);
+    border-left: 4pt solid var(--red);
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .cta h3 { font-size: 16pt; font-weight: 800; color: var(--white); letter-spacing: -0.015em; }
+  .cta p { margin-top: 6pt; font-size: 9.5pt; color: #BCBCC1; line-height: 1.6; max-width: 120mm; }
+  .cta .contact { margin-top: 8pt; font-size: 9pt; color: var(--white); font-weight: 600; }
+  .cta .contact span { color: var(--red); margin: 0 5pt; }
+</style>
+</head>
+<body>
+
+<%
+  est      = @cost_estimate
+  customer = est.customer_display_name
+  date     = Date.current.strftime('%d %B %Y')
+  year     = Date.current.year
+  fmt      = ->(n) { ActiveSupport::NumberHelper.number_to_delimited(n.to_i) }
+
+  app_name  = est.app_name.presence || est.project_name.presence || "#{customer}'s App"
+  exec      = est.executive_summary_data
+  apps      = est.similar_apps_data
+  prio      = est.feature_prioritization_data
+  tech      = est.technical_info_data
+
+  scale_text = est.scale_display.to_s.gsub('-', ' ').split.map(&:capitalize).join(' ')
+
+  platform_labels = est.platforms.map { |t|
+    CostEstimate::APP_TYPES[t] || t.to_s.humanize.gsub(/\bios\b/i, 'iOS')
+  }.uniq
+
+  timeline_text = tech['estimated_timeline'].presence ||
+                  "~#{[(est.total_hours / 160.0).ceil, 1].max} months"
+  timeline_short = timeline_text[/\d+[\s–-]*\d*\s*(weeks?|months?)/i] || timeline_text
+
+  deck = exec['proposed_solution'].presence || est.description.to_s.truncate(180)
+
+  # AI-generated concept screens (attached by MockupGenerationService)
+  mockup_shots = []
+  if est.persisted?
+    est.mockup_images.attachments.first(2).each_with_index do |att, i|
+      begin
+        label = File.basename(att.filename.to_s, '.*').sub(/\A\d+[-_]?/, '').tr('-_', ' ').strip
+        mockup_shots << {
+          src:   "data:#{att.content_type};base64,#{Base64.strict_encode64(att.download)}",
+          label: label.presence || "Concept #{i + 1}"
+        }
+      rescue => e
+        Rails.logger.warn("Proposal PDF: skipping mockup attachment: #{e.message}")
+      end
+    end
+  end
+
+  grouped_features = est.features.group_by { |f| f['category'].presence || 'General' }
+
+  # ── Third-party & operational costs (paid directly to providers) ──
+  ft  = est.feature_text
+  ops = []
+  if est.requires_ios_store?
+    ops << { item: 'Apple Developer Program', detail: 'Required to publish on the Apple App Store',
+             provider: 'Apple', cadence: 'Per year', cost: '$99', low: 99 }
+  end
+  if est.requires_android_store?
+    ops << { item: 'Google Play Console', detail: 'One-time developer registration to publish on Google Play',
+             provider: 'Google', cadence: 'One-time', cost: '$25', low: 25 }
+  end
+  ops << { item: 'Cloud Hosting & Infrastructure', detail: 'Servers, database & storage (AWS / DigitalOcean)',
+           provider: 'Cloud provider', cadence: 'Per month', cost: '$20–80', low: 240 }
+  ops << { item: 'Domain Name', detail: 'Your custom web address (e.g. .com)',
+           provider: 'Registrar', cadence: 'Per year', cost: '~$15', low: 15 }
+  ops << { item: 'SSL Certificate', detail: "Encrypted connections — provisioned via Let's Encrypt",
+           provider: 'Included', cadence: 'Included', cost: 'Free', low: 0 }
+  ops << { item: 'Transactional Email', detail: 'Sign-up & notification emails (SendGrid / Amazon SES)',
+           provider: 'SendGrid / AWS', cadence: 'Per month', cost: 'Free–$15', low: 0 }
+  if est.mobile_app?
+    ops << { item: 'Push Notifications', detail: 'Firebase Cloud Messaging for iOS & Android',
+             provider: 'Google', cadence: 'Included', cost: 'Free', low: 0 }
+  end
+  if ft.match?(/payment|checkout|subscription|billing|stripe|wallet|purchase|e-?commerce/)
+    ops << { item: 'Payment Processing', detail: 'Stripe (or similar) — deducted per successful transaction',
+             provider: 'Stripe', cadence: 'Usage-based', cost: '2.9% + $0.30 / txn', low: 0 }
+  end
+  if ft.match?(/\bmaps?\b|location|geolocation|\bgps\b|route|navigation/)
+    ops << { item: 'Maps & Geolocation', detail: 'Google Maps Platform — generous monthly free tier',
+             provider: 'Google', cadence: 'Usage-based', cost: 'Free tier', low: 0 }
+  end
+  if ft.match?(/\bsms\b|\botp\b|phone verification|text message/)
+    ops << { item: 'SMS & Phone Verification', detail: 'Twilio (or similar) — charged per message sent',
+             provider: 'Twilio', cadence: 'Usage-based', cost: '~$0.01–0.05 / SMS', low: 0 }
+  end
+  ops_year1_from = ops.sum { |o| o[:low] }
+
+  # Inline SVG logo (red/black/white only) — works in PDF render without external file IO
+  logo_svg = <<~SVG.html_safe
+    <svg viewBox="0 0 301 300" xmlns="http://www.w3.org/2000/svg" class="mark">
+      <rect x="0.236816" width="300" height="300" rx="150" fill="white"/>
+      <path d="M202.544 133.219L189.464 155.491L204.901 182.892H173.099L160.104 206.382H244.237L202.544 133.219Z" fill="black"/>
+      <path d="M97.9295 133.219L111.009 155.491L95.5727 182.892H127.374L140.37 206.382H56.2368L97.9295 133.219Z" fill="black"/>
+      <path d="M84.7654 93.6182H215.509L199.82 120.784H163.696V182.802L150.369 206.382L136.524 182.892L136.53 120.784H100.654L84.7654 93.6182Z" fill="#ED1A3B"/>
+    </svg>
+  SVG
+
+  page_bar = ->{
+    capture do
+%>
+  <header class="page-bar">
+    <div class="logo-row">
+      <%= logo_svg %>
+      <div>
+        <div class="name">Tecaudex</div>
+        <div class="partner">Software Studio</div>
+      </div>
+    </div>
+    <div class="meta">
+      <div>Prepared for <strong><%= customer %></strong></div>
+      <div><%= date %></div>
+    </div>
+  </header>
+<%
+    end
+  }
+%>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page cover">
+  <div class="top">
+    <div class="logo-row">
+      <%= logo_svg %>
+      <div class="text">
+        <div class="name">Tecaudex</div>
+        <div class="tag">Software Studio</div>
+      </div>
+    </div>
+    <div class="meta">
+      <%= date %><br>
+      sales@tecaudex.com
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Project Proposal &amp; Cost Estimate</div>
+    <h1><%= app_name %><span class="dot">.</span></h1>
+    <div class="subname">Proposed product name</div>
+    <p class="deck"><%= deck %></p>
+    <% if platform_labels.any? || scale_text.present? %>
+      <div class="chips">
+        <% platform_labels.each do |pl| %>
+          <span class="chip"><%= pl %></span>
+        <% end %>
+        <% if scale_text.present? %>
+          <span class="chip red"><%= scale_text %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="prepared">
+    <div class="label">Prepared For</div>
+    <div class="client"><%= customer %></div>
+    <% if est.customer_email.present? %>
+      <div class="client-meta"><%= est.customer_email %></div>
+    <% end %>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat">
+      <div class="label">Features</div>
+      <div class="value"><%= est.features.size %></div>
+    </div>
+    <div class="stat">
+      <div class="label">Development Hours</div>
+      <div class="value"><%= fmt.call(est.total_hours) %><span class="unit"> hrs</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">Timeline</div>
+      <div class="value" style="font-size:13pt;"><%= timeline_short %></div>
+    </div>
+    <div class="stat hot">
+      <div class="label">Rate</div>
+      <div class="value">£<%= fmt.call(est.hourly_rate) %><span class="unit"> /hr</span></div>
+    </div>
+  </div>
+
+  <div class="investment">
+    <div>
+      <div class="label">Estimated Investment</div>
+      <div class="amount">£<%= fmt.call(est.total_cost) %></div>
+    </div>
+    <div class="footnote">
+      Design, development, quality assurance, project management &amp; documentation — all included.
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="left"><strong>Tecaudex</strong> · Building products people love</div>
+    <div class="right">
+      sales@tecaudex.com &nbsp;·&nbsp; www.tecaudex.com<br>
+      © <%= year %> Tecaudex. Confidential.
+    </div>
+  </div>
+</section>
+
+<%
+  sec_idx = 0
+  next_section = ->{ sec_idx += 1; format('%02d', sec_idx) }
+%>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     EXECUTIVE SUMMARY
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if exec.present? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Executive Summary</div>
+    <h2>Why <%= app_name %>,<br>and why now.</h2>
+  </div>
+
+  <% if exec['problem_statement'].present? %>
+    <div class="summary-block">
+      <div class="label">The Opportunity</div>
+      <p><%= exec['problem_statement'] %></p>
+    </div>
+  <% end %>
+
+  <% if exec['proposed_solution'].present? %>
+    <div class="summary-block alt">
+      <div class="label">Our Solution</div>
+      <p><%= exec['proposed_solution'] %></p>
+    </div>
+  <% end %>
+
+  <% vps = Array(exec['key_value_propositions']) %>
+  <% if vps.any? %>
+    <div class="summary-block">
+      <div class="label">Key Benefits</div>
+    </div>
+    <div class="vp-grid">
+      <% vps.each_with_index do |vp, i| %>
+        <div class="vp">
+          <div class="n"><%= format('%02d', i + 1) %></div>
+          <div class="t"><%= vp %></div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if exec['roi_potential'].present? %>
+    <div class="roi-panel">
+      <div class="label">Investment Potential</div>
+      <p><%= exec['roi_potential'] %></p>
+    </div>
+  <% end %>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     MARKET VALIDATION
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if apps.any? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Market Validation</div>
+    <h2>Proven demand.</h2>
+    <p class="lead">These established products solve adjacent problems — proof that a real market exists for <%= app_name %>.</p>
+  </div>
+
+  <% apps.each_with_index do |app, i| %>
+    <div class="market-row">
+      <div class="idx"><%= format('%02d', i + 1) %></div>
+      <div class="body">
+        <div class="name"><%= app['name'] %></div>
+        <div class="desc"><%= app['description'] %></div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="market-note">
+    <strong>What this means for you:</strong> competitors validate the market — your differentiation and execution speed decide who wins it. <%= app_name %> is scoped to reach users fast with the features that matter most.
+  </div>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     STRATEGIC ROADMAP
+     ═══════════════════════════════════════════════════════════════════ -->
+<%
+  phase_defs = [
+    { key: 'phase_1_mvp',    title: 'MVP Launch',          label: 'Validate', css: 'mvp' },
+    { key: 'phase_2_growth', title: 'Growth & Engagement', label: 'Grow',     css: '' },
+    { key: 'phase_3_scale',  title: 'Scale & Leadership',  label: 'Lead',     css: '' }
+  ].select { |p| prio[p[:key]].is_a?(Hash) }
+%>
+<% if phase_defs.any? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Strategic Roadmap</div>
+    <h2>Ship in phases,<br>learn at every step.</h2>
+    <p class="lead">We prioritise ruthlessly: launch the essentials first, then reinvest what you learn into the next release.</p>
+  </div>
+
+  <% phase_defs.each_with_index do |pd, i| %>
+    <% phase = prio[pd[:key]] %>
+    <div class="phase <%= pd[:css] %>">
+      <div class="rail">
+        <div class="pnum"><%= format('%02d', i + 1) %></div>
+        <div class="plabel"><%= pd[:label] %></div>
+      </div>
+      <div class="body">
+        <div class="head">
+          <div class="title"><%= pd[:title] %></div>
+          <% if phase['timeline'].present? %>
+            <div class="time"><%= phase['timeline'] %></div>
+          <% end %>
+        </div>
+        <% if phase['description'].present? %>
+          <div class="desc"><%= phase['description'] %></div>
+        <% end %>
+        <% feats = Array(phase['features']) %>
+        <% if feats.any? %>
+          <div class="feats">
+            <% feats.each do |f| %>
+              <span class="f"><%= f %></span>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     DESIGN CONCEPTS (AI-generated screens)
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if mockup_shots.any? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Design Concepts</div>
+    <h2>A first look at <%= app_name %>.</h2>
+    <p class="lead">Early visual concepts to make the idea tangible. Final designs are crafted with you during the design sprint.</p>
+  </div>
+
+  <div class="shots <%= 'wide' unless est.mobile_app? %>">
+    <% mockup_shots.each_with_index do |shot, i| %>
+      <div class="shot">
+        <div class="frame">
+          <img src="<%= shot[:src] %>" alt="<%= shot[:label] %>">
+        </div>
+        <div class="cap">
+          <span class="n"><%= format('%02d', i + 1) %></span>
+          <span class="t"><%= shot[:label] %></span>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <p class="shot-note">
+    * AI-assisted concept visualisations, built from a UI/UX research pass on your project — design system, colour palette and interface patterns chosen for your domain. They illustrate direction, not final UI: every screen is designed properly, with your brand and feedback, before development begins.
+  </p>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     SCOPE & HOURS
+     ═══════════════════════════════════════════════════════════════════ -->
+<% if grouped_features.any? %>
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Scope &amp; Hours</div>
+    <h2>Every hour, accounted for.</h2>
+    <p class="lead">A transparent breakdown of the estimated effort behind each feature.</p>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th style="width:80%">Feature</th>
+        <th class="r" style="width:20%">Est. Hours</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% grouped_features.each do |category, feats| %>
+        <tr class="cat">
+          <td><%= category %></td>
+          <td class="r num"><%= feats.sum { |f| f['hours'].to_i } %>h</td>
+        </tr>
+        <% feats.each do |f| %>
+          <tr>
+            <td class="feat"><%= f['name'].presence || 'Unnamed feature' %></td>
+            <td class="r"><%= f['hours'].to_i %>h</td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Total Estimated Hours</td>
+        <td class="r accent"><%= fmt.call(est.total_hours) %>h</td>
+      </tr>
+    </tfoot>
+  </table>
+</section>
+<% end %>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     INVESTMENT
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Investment</div>
+    <h2>One transparent number.</h2>
+    <p class="lead">Everything it takes to design, build and launch <%= app_name %> — no hidden line items, no surprises.</p>
+  </div>
+
+  <div class="block">
+    <div class="sub-heading">Development Investment — paid to Tecaudex</div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:55%">Item</th>
+          <th style="width:20%">Basis</th>
+          <th class="r" style="width:25%">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="label-cell">Design &amp; Development</td>
+          <td class="muted num"><%= fmt.call(est.total_hours) %> hrs × £<%= fmt.call(est.hourly_rate) %></td>
+          <td class="r">£<%= fmt.call(est.total_hours * est.hourly_rate) %></td>
+        </tr>
+        <tr>
+          <td class="label-cell">Quality Assurance &amp; Testing</td>
+          <td><span class="pill gray">Included</span></td>
+          <td class="r">—</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Project Management</td>
+          <td><span class="pill gray">Included</span></td>
+          <td class="r">—</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Technical Documentation</td>
+          <td><span class="pill gray">Included</span></td>
+          <td class="r">—</td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="2">Total Project Investment (one-time)</td>
+          <td class="r accent">£<%= fmt.call(est.total_cost) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <div class="pay-split">
+    <div class="cell dark">
+      <div class="label">You pay Tecaudex</div>
+      <div class="value">£<%= fmt.call(est.total_cost) %><span class="unit"> one-time</span></div>
+      <div class="note">Full product build — design through launch.</div>
+    </div>
+    <div class="cell">
+      <div class="label">You pay providers</div>
+      <div class="value">~$<%= fmt.call(ops_year1_from) %><span class="unit"> / first year</span></div>
+      <div class="note">Store fees, hosting &amp; services — detailed on the next page.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     RUNNING COSTS (third-party & operational)
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Running Your App</div>
+    <h2>The costs nobody warns you about.</h2>
+    <p class="lead">Every app needs a few third-party services to go live and stay online. Here's what <%= app_name %> will need — billed directly to you, so you own everything.</p>
+  </div>
+
+  <div class="block">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:47%">Service</th>
+          <th style="width:18%">Billed By</th>
+          <th style="width:15%">Cadence</th>
+          <th class="r" style="width:20%">Est. Cost (USD)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% ops.each do |o| %>
+          <tr>
+            <td>
+              <div class="label-cell"><%= o[:item] %></div>
+              <div class="muted" style="font-size:8.5pt; margin-top:1pt;"><%= o[:detail] %></div>
+            </td>
+            <td class="muted"><%= o[:provider] %></td>
+            <td><span class="pill <%= o[:cadence].match?(/usage|month|year/i) ? 'red' : 'gray' %>"><%= o[:cadence] %></span></td>
+            <td class="r"><%= o[:cost] %></td>
+          </tr>
+        <% end %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Typical first-year operational spend</td>
+          <td class="r">from ~$<%= fmt.call(ops_year1_from) %></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <p class="muted" style="margin-top:2mm; font-size:8.5pt; line-height:1.6;">
+    Third-party prices are indicative, set by each provider, and may change. Accounts are registered in your name so you retain full ownership of your app, data and infrastructure. We handle the setup of every service above as part of the launch process — at no extra charge.
+  </p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     NEXT STEPS
+     ═══════════════════════════════════════════════════════════════════ -->
+<section class="page">
+  <%= page_bar.call %>
+
+  <% n = next_section.call %>
+  <div class="section-title">
+    <div class="ghost"><%= n %></div>
+    <div class="eyebrow"><%= n %> · Next Steps</div>
+    <h2>From idea to launch.</h2>
+    <p class="lead">Here's the path we recommend to turn <%= app_name %> into a live product.</p>
+  </div>
+
+  <%
+    steps = [
+      ['01', 'Review This Proposal', 'This week',  'Share it with your team — we\'re happy to walk through any section on a quick call.'],
+      ['02', 'Discovery Call',       '30 minutes', 'We align on vision, priorities and open questions, and refine the estimate where needed.'],
+      ['03', 'Scope & Agreement',    'Week 1',     'We lock the MVP scope, timeline and milestones, and sign a simple service agreement.'],
+      ['04', 'Design Sprint',        'Weeks 1–3',  'Wireframes and UI design for the core flows, reviewed and approved by you.'],
+      ['05', 'Development & QA',     timeline_short.to_s.capitalize, 'Agile sprints with weekly demos, continuous testing and full visibility of progress.'],
+      ['06', 'Launch & Support',     'Go-live',    'Store submission, infrastructure setup and a dedicated support window after release.']
+    ]
+  %>
+
+  <% steps.each do |num, title, time, desc| %>
+    <div class="step">
+      <div class="num"><%= num %></div>
+      <div class="body">
+        <div class="row">
+          <div class="title"><%= title %></div>
+          <div class="time"><%= time %></div>
+        </div>
+        <div class="desc"><%= desc %></div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="cta">
+    <h3>Ready to build <%= app_name %>?</h3>
+    <p>Reply to this email or message us on WhatsApp and we'll set up a 30-minute call to walk through scope, timeline, and any open questions.</p>
+    <div class="contact">sales@tecaudex.com<span>·</span>www.tecaudex.com</div>
+  </div>
+</section>
+
+</body>
+</html>
