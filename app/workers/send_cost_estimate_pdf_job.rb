@@ -121,6 +121,7 @@ class SendCostEstimatePdfJob
             )
             if response[:success]
               Rails.logger.info("SendCostEstimatePdfJob: Twilio WhatsApp sent (sid: #{response[:sid]}, status: #{response[:status]})")
+              persist_whatsapp_message(customer, cost_estimate, response, filename)
             else
               Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp failed: #{response[:error]}")
             end
@@ -141,6 +142,38 @@ class SendCostEstimatePdfJob
   end
 
   private
+
+  # Save the outbound proposal as a whatsapp_messages record so it shows up in
+  # the customer's WhatsApp US chat thread (mirrors WhatsappUsController#persist_outbound).
+  # The proposal PDF is attached as the message media. Best-effort: a failure
+  # here must not undo the already-sent Twilio message.
+  def persist_whatsapp_message(customer, cost_estimate, response, filename)
+    message = customer.whatsapp_messages.create!(
+      message_id: response[:sid],
+      remote_id:  customer.phone,
+      body:       filename,
+      direction:  'outbound',
+      status:     response[:status] || 'queued',
+      timestamp:  Time.current,
+      metadata:   {
+        provider:         'twilio',
+        to:               "whatsapp:#{customer.phone}",
+        from:             TwilioWhatsappService::FROM,
+        template_sid:     WHATSAPP_REPORT_TEMPLATE_SID,
+        cost_estimate_id: cost_estimate.id
+      }
+    )
+
+    if cost_estimate.pdf_file.attached?
+      message.media.attach(cost_estimate.pdf_file.blob)
+    end
+
+    WhatsappUsBroadcaster.broadcast(message)
+    message
+  rescue => e
+    Rails.logger.error("SendCostEstimatePdfJob: failed to persist WhatsApp message: #{e.message}")
+    nil
+  end
 
   def number_with_commas(number)
     number.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\\1,').reverse
