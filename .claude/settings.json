@@ -56,7 +56,23 @@
       "Bash(pdftoppm -png -f 5 -l 5 -r 70 cost_estimate_proposal.pdf design_check)",
       "Bash(rm -f /tmp/render_with_mockups.rb /tmp/design_check-5.png /tmp/proposal_page-*.png)",
       "Bash(pdftoppm -png -f 5 -l 5 -r 70 cost_estimate_proposal.pdf research_check)",
-      "Bash(rm -f /tmp/test_design_research.rb /tmp/research_check-5.png /tmp/proposal_page-*.png)"
+      "Bash(rm -f /tmp/test_design_research.rb /tmp/research_check-5.png /tmp/proposal_page-*.png)",
+      "Bash(sed -i '' 's/£<%=/$<%=/g' app/views/cost_estimate_mailer/send_estimate.html.erb)",
+      "Bash(sed -i '' 's/£#{hourly_rate}/$#{hourly_rate}/g; s/£#{number_with_commas/$#{number_with_commas/g' app/services/proposal_generation_service.rb)",
+      "Bash(mdls -name kMDItemNumberOfPages /tmp/proposal_test.pdf)",
+      "Bash(ruby -e 'require \"pdf-reader\"; puts \"pdf-reader ok\"')",
+      "Bash(pdftoppm -png -r 80 -f 5 -l 7 proposal_test.pdf big)",
+      "Bash(rm -f p2-*.png)",
+      "Bash(pdftoppm -png -r 80 proposal_test2.pdf p2)",
+      "Bash(pdftoppm -png -r 60 proposal_mr2.pdf mr)",
+      "Bash(pdftoppm -png -r 60 proposal_final.pdf fin)",
+      "Bash(mdls -name kMDItemNumberOfPages /Users/taha/Desktop/Athleads_Pilot_Readiness_Report.pdf)",
+      "Bash(cp /Users/taha/Desktop/Athleads_Pilot_Readiness_Report.pdf /tmp/athleads.pdf)",
+      "Bash(rm -f ath-*.png)",
+      "Bash(pdftoppm -png -r 60 athleads.pdf ath)",
+      "Bash(pdffonts /tmp/athleads.pdf)",
+      "Bash(pdffonts /Users/taha/Desktop/Athleads_Pilot_Readiness_Report.pdf)",
+      "Bash(ruby -e ' *)"
     ],
     "additionalDirectories": [
       "/tmp"

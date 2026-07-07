@@ -380,7 +380,7 @@
             </thead>
           <tbody class="bg-white divide-y divide-gray-200" data-customer-filter-target="customersList">
             <% @customers.each do |customer| %>
-                <tr class="customer-row hover:bg-gray-50 transition-colors <%= customer.customer_type == 'High Value' ? 'bg-amber-50' : '' %>"
+                <tr class="customer-row hover:bg-gray-50 transition-colors <%= { 'High Value' => 'bg-amber-50', 'Gold' => 'bg-yellow-50' }[customer.customer_type] %>"
                   data-name="<%= customer.name.downcase %>"
                   data-email="<%= customer.email&.downcase %>"
                   data-company="<%= customer.company&.downcase %>"
@@ -569,7 +569,7 @@
       <div class="md:hidden">
           <div class="divide-y divide-gray-200" data-customer-filter-target="customersList">
           <% @customers.each do |customer| %>
-              <div class="p-6 customer-row <%= customer.customer_type == 'High Value' ? 'bg-amber-50' : '' %>"
+              <div class="p-6 customer-row <%= { 'High Value' => 'bg-amber-50', 'Gold' => 'bg-yellow-50' }[customer.customer_type] %>"
                 data-name="<%= customer.name.downcase %>"
                 data-email="<%= customer.email&.downcase %>"
                 data-company="<%= customer.company&.downcase %>"

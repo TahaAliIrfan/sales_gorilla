@@ -40,7 +40,8 @@ class Customer < ApplicationRecord
   # Constants for dropdown fields
   CUSTOMER_TYPES = {
     'Standard' => 'Standard',
-    'High Value' => 'High Value'
+    'High Value' => 'High Value',
+    'Gold' => 'Gold'
   }.freeze
 
   LEAD_SOURCES = {

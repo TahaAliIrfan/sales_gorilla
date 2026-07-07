@@ -89,6 +89,11 @@
                     ⭐ High Value
                   </span>
                 <% end %>
+                <% if @customer.customer_type == 'Gold' %>
+                  <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-400">
+                    🥇 Gold
+                  </span>
+                <% end %>
                 <% if @customer.repeat_lead? %>
                   <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                     🔄 Repeat Lead

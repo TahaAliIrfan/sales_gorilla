@@ -184,6 +184,7 @@ export default class extends Controller {
       case 'customer_type':
         switch(statusValue) {
           case 'High Value': return 'bg-amber-50 text-amber-700'
+          case 'Gold': return 'bg-yellow-50 text-yellow-700'
           default: return 'bg-yellow-900/10 text-yellow-900'
         }
 
@@ -236,6 +237,7 @@ export default class extends Controller {
       case 'customer_type':
         switch(statusValue) {
           case 'High Value': return 'bg-amber-100 text-amber-800 ring-2 ring-amber-300'
+          case 'Gold': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-400'
           default: return 'bg-yellow-900/20 text-yellow-900 ring-2 ring-yellow-900/30'
         }
 
