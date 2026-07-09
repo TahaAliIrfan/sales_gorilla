@@ -25,7 +25,9 @@ class InvoicesController < ApplicationController
       @invoice.populate_from_milestone!(@invoice.milestone)
       @invoice.project_name = @invoice.milestone.name
     end
+    @invoice.invoice_payment_links.build if @invoice.invoice_payment_links.empty?
     @milestones = @customer.milestones.includes(:milestone_items).order(:created_at)
+    @bank_accounts = BankAccount.active.ordered
     authorize @invoice
   end
 
@@ -34,7 +36,9 @@ class InvoicesController < ApplicationController
     if milestone.blank?
       flash[:error] = "Please select a milestone"
       @milestones = @customer.milestones.includes(:milestone_items).order(:created_at)
+      @bank_accounts = BankAccount.active.ordered
       @invoice = @customer.invoices.build(invoice_params)
+      @invoice.invoice_payment_links.build if @invoice.invoice_payment_links.empty?
       authorize Invoice.new(customer: @customer)
       render :new, status: :unprocessable_entity and return
     end
@@ -50,6 +54,8 @@ class InvoicesController < ApplicationController
       redirect_to customer_invoice_path(@customer, @invoice), notice: "Invoice created successfully."
     else
       @milestones = @customer.milestones.includes(:milestone_items).order(:created_at)
+      @bank_accounts = BankAccount.active.ordered
+      @invoice.invoice_payment_links.build if @invoice.invoice_payment_links.empty?
       render :new, status: :unprocessable_entity
     end
   end
@@ -57,6 +63,7 @@ class InvoicesController < ApplicationController
   def edit
     authorize @invoice
     @milestones = @customer.milestones.includes(:milestone_items).order(:created_at)
+    @bank_accounts = BankAccount.active.ordered
   end
 
   def update
@@ -67,6 +74,7 @@ class InvoicesController < ApplicationController
       redirect_to customer_invoice_path(@customer, @invoice), notice: "Invoice updated successfully."
     else
       @milestones = @customer.milestones.includes(:milestone_items).order(:created_at)
+      @bank_accounts = BankAccount.active.ordered
       render :edit, status: :unprocessable_entity
     end
   end
@@ -108,8 +116,9 @@ class InvoicesController < ApplicationController
 
   def invoice_params
     params.require(:invoice).permit(
-      :project_name, :description, :issue_date, :due_date, :tax_rate, :payment_link, :payment_link_label, :status,
-      invoice_line_items_attributes: [:id, :description, :amount, :position, :_destroy]
+      :project_name, :description, :issue_date, :due_date, :tax_rate, :status, :bank_account_id,
+      invoice_line_items_attributes: [:id, :description, :amount, :position, :_destroy],
+      invoice_payment_links_attributes: [:id, :label, :url, :position, :_destroy]
     )
   end
 end

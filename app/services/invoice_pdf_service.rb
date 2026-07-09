@@ -25,6 +25,7 @@ class InvoicePdfService
   def generate_pdf
     Prawn::Document.new(page_size: 'A4', margin: [40, 60]) do |pdf|
       add_header(pdf)
+      add_company_section(pdf)
       add_customer_section(pdf)
       add_line_items_table(pdf)
       add_totals_section(pdf)
@@ -58,6 +59,36 @@ class InvoicePdfService
     pdf.text "Invoice #: #{sanitize(@invoice.invoice_number)}"
     pdf.text "Issue Date: #{@invoice.issue_date.strftime('%B %d, %Y')}"
     pdf.text "Due Date: #{@invoice.due_date.strftime('%B %d, %Y')}"
+    pdf.move_down 20
+  end
+
+  def add_company_section(pdf)
+    pdf.font_size 11
+    pdf.fill_color BLACK_COLOR
+    pdf.text "From", style: :bold
+    pdf.move_down 6
+
+    cells = CompanyInfo.entities.map do |entity|
+      lines = ["<b>#{sanitize(entity[:name])}</b>", sanitize(entity[:subtitle])]
+      lines.concat(entity[:lines].map { |l| sanitize(l) })
+      if entity[:reg_number].present?
+        lines << "#{sanitize(entity[:reg_label])}: #{sanitize(entity[:reg_number])}"
+      end
+      lines.join("\n")
+    end
+
+    column_width = (pdf.bounds.width / cells.length).floor
+    pdf.font_size 9
+    pdf.fill_color GRAY_COLOR
+    pdf.table([cells],
+      cell_style: { borders: [], padding: [0, 10, 0, 0], inline_format: true, size: 9 },
+      column_widths: Array.new(cells.length, column_width)
+    )
+
+    pdf.move_down 6
+    phone_parts = CompanyInfo.phones.map { |p| "#{p[:label]}: #{p[:number]}" }
+    contact = (phone_parts + [CompanyInfo.email, CompanyInfo.website]).join("  |  ")
+    pdf.text sanitize(contact), size: 8
     pdf.move_down 20
   end
 
@@ -127,19 +158,50 @@ class InvoicePdfService
   end
 
   def add_footer(pdf)
+    add_payment_methods(pdf)
+
     pdf.font_size 9
     pdf.fill_color GRAY_COLOR
     pdf.stroke_color RED_COLOR
     pdf.line_width 1
     pdf.stroke_horizontal_rule
     pdf.move_down 15
-    if @invoice.payment_link.present?
-      label = @invoice.payment_link_label.present? ? "Pay online (#{sanitize(@invoice.payment_link_label)}): " : "Pay online: "
-      pdf.text "#{label}#{sanitize(@invoice.payment_link)}", align: :center, size: 8
-      pdf.move_down 8
-    end
     pdf.text "Thank you for your business.", align: :center
     pdf.text "Tecaudex", align: :center, style: :bold
+  end
+
+  def add_payment_methods(pdf)
+    links = @invoice.invoice_payment_links.to_a
+    bank = @invoice.bank_account
+    return if links.empty? && bank.blank?
+
+    pdf.font_size 11
+    pdf.fill_color BLACK_COLOR
+    pdf.text "Payment Options", style: :bold
+    pdf.move_down 6
+
+    if links.any?
+      pdf.font_size 9
+      pdf.fill_color GRAY_COLOR
+      pdf.text "Pay online", style: :bold
+      links.each do |link|
+        pdf.text "#{sanitize(link.label)}: #{sanitize(link.url)}", size: 8
+      end
+      pdf.move_down 8
+    end
+
+    if bank.present?
+      pdf.font_size 9
+      pdf.fill_color GRAY_COLOR
+      heading = "Bank transfer"
+      heading += " (#{sanitize(bank.country)})" if bank.country.present?
+      pdf.text heading, style: :bold
+      bank.detail_fields.each do |field_label, value|
+        pdf.text "#{field_label}: #{sanitize(value)}", size: 8
+      end
+    end
+
+    pdf.move_down 15
   end
 
   def sanitize(text)

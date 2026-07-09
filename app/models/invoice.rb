@@ -2,7 +2,9 @@ class Invoice < ApplicationRecord
   belongs_to :customer
   belongs_to :milestone
   belongs_to :user
+  belongs_to :bank_account, optional: true
   has_many :invoice_line_items, -> { order(:position) }, dependent: :destroy
+  has_many :invoice_payment_links, -> { order(:position) }, dependent: :destroy
   has_one_attached :pdf_file
   has_one_attached :payment_proof
 
@@ -14,6 +16,8 @@ class Invoice < ApplicationRecord
   validates :total, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   accepts_nested_attributes_for :invoice_line_items, allow_destroy: true
+  accepts_nested_attributes_for :invoice_payment_links, allow_destroy: true,
+    reject_if: ->(attrs) { attrs[:url].blank? && attrs[:label].blank? }
 
   before_validation :set_invoice_number, on: :create
   before_validation :set_public_token, on: :create

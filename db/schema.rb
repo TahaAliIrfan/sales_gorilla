@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_09_100718) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -53,6 +53,26 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["recording_id"], name: "index_ai_analyses_on_recording_id"
+  end
+
+  create_table "bank_accounts", force: :cascade do |t|
+    t.string "label", null: false
+    t.string "country"
+    t.string "currency"
+    t.string "bank_name"
+    t.text "bank_address"
+    t.string "beneficiary_name"
+    t.string "account_number"
+    t.string "sort_code"
+    t.string "routing_number"
+    t.string "bsb"
+    t.string "iban"
+    t.string "swift_bic"
+    t.text "additional_info"
+    t.boolean "active", default: true, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "calls", force: :cascade do |t|
@@ -479,6 +499,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
     t.index ["position"], name: "index_invoice_line_items_on_position"
   end
 
+  create_table "invoice_payment_links", force: :cascade do |t|
+    t.bigint "invoice_id", null: false
+    t.string "label", null: false
+    t.string "url", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["invoice_id"], name: "index_invoice_payment_links_on_invoice_id"
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.bigint "customer_id", null: false
     t.bigint "milestone_id", null: false
@@ -493,10 +523,10 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
     t.decimal "total", precision: 12, scale: 2, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "payment_link"
     t.string "status", default: "pending", null: false
     t.string "public_token"
-    t.string "payment_link_label"
+    t.bigint "bank_account_id"
+    t.index ["bank_account_id"], name: "index_invoices_on_bank_account_id"
     t.index ["customer_id"], name: "index_invoices_on_customer_id"
     t.index ["invoice_number"], name: "index_invoices_on_invoice_number", unique: true
     t.index ["issue_date"], name: "index_invoices_on_issue_date"
@@ -919,6 +949,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_02_133104) do
   add_foreign_key "google_meets", "users"
   add_foreign_key "invoice_line_items", "invoices"
   add_foreign_key "invoice_line_items", "milestone_items"
+  add_foreign_key "invoice_payment_links", "invoices"
+  add_foreign_key "invoices", "bank_accounts"
   add_foreign_key "invoices", "customers"
   add_foreign_key "invoices", "milestones"
   add_foreign_key "invoices", "users"

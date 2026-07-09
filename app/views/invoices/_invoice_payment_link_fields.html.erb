@@ -1,0 +1,15 @@
+<div class="flex gap-3 items-start p-3 bg-gray-50 rounded-lg" data-nested-form-target="item">
+  <div class="w-40">
+    <%= f.text_field :label, class: "block w-full rounded-lg border-gray-300 shadow-sm text-sm", placeholder: "Label (e.g. Stripe)" %>
+  </div>
+  <div class="flex-1">
+    <%= f.url_field :url, class: "block w-full rounded-lg border-gray-300 shadow-sm text-sm", placeholder: "https://..." %>
+  </div>
+  <%= f.hidden_field :_destroy %>
+  <button type="button" data-action="nested-form#remove"
+          class="mt-2 text-gray-400 hover:text-red-600" title="Remove">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+</div>

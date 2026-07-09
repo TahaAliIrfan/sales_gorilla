@@ -119,3 +119,6 @@ application.register("transcript", TranscriptController)
 
 import TranscriptModalController from "./transcript_modal_controller"
 application.register("transcript-modal", TranscriptModalController)
+
+import NestedFormController from "./nested_form_controller"
+application.register("nested-form", NestedFormController)
