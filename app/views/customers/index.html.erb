@@ -394,12 +394,14 @@
                       <span class="cb-mono text-[10.5px] text-[#94A3B8] truncate"><%= customer.company.presence || customer.phone %></span>
                     </div>
                   </div>
-                  <% if customer.lead_score.present? %>
-                    <span class="hidden sm:inline-flex flex-col items-center justify-center shrink-0 h-9 w-9 rounded-lg cb-mono text-sm font-semibold <%= customer.lead_score_color %>" style="background:rgba(5,150,105,.07)" title="Lead score: <%= customer.lead_score %>/100 (<%= customer.lead_score_badge %>)"><%= customer.lead_score %></span>
-                  <% end %>
-                  <div class="hidden md:flex flex-col items-end shrink-0 cb-mono text-[10.5px] text-[#94A3B8]">
+                  <div class="hidden sm:flex items-center justify-center shrink-0 w-10">
+                    <% if customer.lead_score.present? %>
+                      <span class="grid place-items-center h-9 w-9 rounded-lg cb-mono text-sm font-semibold <%= customer.lead_score_color %>" style="background:rgba(5,150,105,.07)" title="Lead score: <%= customer.lead_score %>/100 (<%= customer.lead_score_badge %>)"><%= customer.lead_score %></span>
+                    <% end %>
+                  </div>
+                  <div class="hidden md:flex flex-col items-end shrink-0 w-[92px] cb-mono text-[10.5px] text-[#94A3B8]">
                     <span><%= customer.total_call_attempts %>c · <%= customer.messages.where(direction: 'outbound').count %>m</span>
-                    <span class="truncate max-w-[90px]"><%= customer.user&.name || '—' %></span>
+                    <span class="truncate w-full text-right"><%= customer.user&.name || '—' %></span>
                   </div>
                   <svg class="h-4 w-4 text-[#CBD5E1] shrink-0 group-hover:text-emerald-500 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                 <% end %>
