@@ -11,7 +11,7 @@ export default class extends Controller {
     const recordingId = event.currentTarget.dataset.recordingId
     console.log('Opening transcript for recording:', recordingId)
     
-    this.contentTarget.innerHTML = '<div class="flex justify-center items-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>'
+    this.contentTarget.innerHTML = '<div class="flex justify-center items-center py-4"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div></div>'
     
     // Show modal
     this.modalTarget.classList.remove('hidden')
@@ -92,9 +92,9 @@ export default class extends Controller {
     if (!this.transcriptData || !this.hasAudioPlayerTarget) return
     
     const currentTime = this.audioPlayerTarget.currentTime
-    const previousHighlight = document.querySelector('.bg-blue-50')
+    const previousHighlight = document.querySelector('.bg-emerald-50')
     if (previousHighlight) {
-      previousHighlight.classList.remove('bg-blue-50')
+      previousHighlight.classList.remove('bg-emerald-50')
     }
     
     const currentSegment = this.transcriptData.find(item => 
@@ -105,7 +105,7 @@ export default class extends Controller {
       const index = this.transcriptData.indexOf(currentSegment)
       const element = document.getElementById(`transcript-${index}`)
       if (element) {
-        element.classList.add('bg-blue-50')
+        element.classList.add('bg-emerald-50')
         element.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
     }

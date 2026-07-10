@@ -71,7 +71,7 @@ document.addEventListener('turbo:load', function() {
       .catch(error => {
         console.error('Error setting up Twilio device:', error);
         statusMessage.textContent = `Error initializing device: ${error.message}`;
-        callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+        callStatus.classList.remove('bg-emerald-100', 'text-emerald-800');
         callStatus.classList.add('bg-red-100', 'text-red-800');
       });
   }
@@ -115,7 +115,7 @@ document.addEventListener('turbo:load', function() {
       
       statusMessage.textContent = errorMessage;
       callStatus.classList.remove('hidden');
-      callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+      callStatus.classList.remove('bg-emerald-100', 'text-emerald-800');
       callStatus.classList.add('bg-red-100', 'text-red-800');
     });
     
@@ -133,7 +133,7 @@ document.addEventListener('turbo:load', function() {
       console.log('Call accepted');
       statusMessage.textContent = 'Call in progress...';
       callStatus.classList.remove('hidden');
-      callStatus.classList.remove('bg-blue-100', 'text-blue-800', 'bg-red-100', 'text-red-800');
+      callStatus.classList.remove('bg-emerald-100', 'text-emerald-800', 'bg-red-100', 'text-red-800');
       callStatus.classList.add('bg-green-100', 'text-green-800');
       
       // Show call controls
@@ -146,7 +146,7 @@ document.addEventListener('turbo:load', function() {
       statusMessage.textContent = 'Call ended';
       callStatus.classList.remove('hidden');
       callStatus.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
-      callStatus.classList.add('bg-blue-100', 'text-blue-800');
+      callStatus.classList.add('bg-emerald-100', 'text-emerald-800');
       
       // Hide call controls
       callControls.classList.add('hidden');
@@ -163,7 +163,7 @@ document.addEventListener('turbo:load', function() {
     currentCall.on('error', function(error) {
       console.error('Call error:', error);
       statusMessage.textContent = 'Error: ' + (error.message || 'Call failed');
-      callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+      callStatus.classList.remove('bg-emerald-100', 'text-emerald-800');
       callStatus.classList.add('bg-red-100', 'text-red-800');
       callControls.classList.add('hidden');
     });
@@ -190,7 +190,7 @@ document.addEventListener('turbo:load', function() {
     if (!phoneNumber) {
       statusMessage.textContent = 'Please enter a phone number';
       callStatus.classList.remove('hidden');
-      callStatus.classList.remove('bg-blue-100', 'text-blue-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+      callStatus.classList.remove('bg-emerald-100', 'text-emerald-800', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
       callStatus.classList.add('bg-yellow-100', 'text-yellow-800');
       return;
     }
@@ -199,7 +199,7 @@ document.addEventListener('turbo:load', function() {
     statusMessage.textContent = 'Calling ' + phoneNumber + '...';
     callStatus.classList.remove('hidden');
     callStatus.classList.remove('bg-yellow-100', 'text-yellow-800', 'bg-red-100', 'text-red-800', 'bg-green-100', 'text-green-800');
-    callStatus.classList.add('bg-blue-100', 'text-blue-800');
+    callStatus.classList.add('bg-emerald-100', 'text-emerald-800');
     
     // Make the call
     const params = {
@@ -224,12 +224,12 @@ document.addEventListener('turbo:load', function() {
       } catch (error) {
         console.error('Error connecting call:', error);
         statusMessage.textContent = 'Error connecting call: ' + error.message;
-        callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+        callStatus.classList.remove('bg-emerald-100', 'text-emerald-800');
         callStatus.classList.add('bg-red-100', 'text-red-800');
       }
     } else {
       statusMessage.textContent = 'Device not initialized. Please refresh the page.';
-      callStatus.classList.remove('bg-blue-100', 'text-blue-800');
+      callStatus.classList.remove('bg-emerald-100', 'text-emerald-800');
       callStatus.classList.add('bg-red-100', 'text-red-800');
     }
   }
@@ -296,7 +296,7 @@ document.addEventListener('turbo:load', function() {
               <td class="py-3 px-4">${formattedDate}</td>
               <td class="py-3 px-4">${formattedDuration}</td>
               <td class="py-3 px-4">
-                <button class="play-recording bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs mr-2" 
+                <button class="play-recording bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded text-xs mr-2" 
                         data-url="${recording.url}">
                   <i class="fas fa-play"></i> Play
                 </button>

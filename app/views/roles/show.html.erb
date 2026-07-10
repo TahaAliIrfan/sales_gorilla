@@ -2,7 +2,7 @@
   <div class="mb-6 flex justify-between items-center">
     <h1 class="text-2xl font-bold">Role: <%= @role.name %></h1>
     <div>
-      <%= link_to "Edit", edit_role_path(@role), class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2" %>
+      <%= link_to "Edit", edit_role_path(@role), class: "bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded mr-2" %>
       <%= link_to "Back to Roles", roles_path, class: "bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded" %>
     </div>
   </div>
@@ -59,12 +59,12 @@
             <% assignment = user.role_assignments.find_by(role: @role) %>
             <tr>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                <%= link_to user.name, user_path(user), class: "text-blue-600 hover:text-blue-900" %>
+                <%= link_to user.name, user_path(user), class: "text-emerald-600 hover:text-emerald-900" %>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= user.email %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 <% if assignment&.assigned_by %>
-                  <%= link_to assignment.assigned_by.name, user_path(assignment.assigned_by), class: "text-blue-600 hover:text-blue-900" %>
+                  <%= link_to assignment.assigned_by.name, user_path(assignment.assigned_by), class: "text-emerald-600 hover:text-emerald-900" %>
                 <% else %>
                   <span class="text-gray-400">System</span>
                 <% end %>

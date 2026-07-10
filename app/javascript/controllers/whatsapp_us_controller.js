@@ -407,7 +407,7 @@ export default class extends Controller {
           <div class="min-w-0">
             <div class="text-sm font-semibold text-gray-900 truncate">
               ${this.escape(t.friendly_name || t.content_sid)}
-              ${t.has_media ? `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">MEDIA</span>` : ""}
+              ${t.has_media ? `<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">MEDIA</span>` : ""}
             </div>
             <div class="text-[11px] text-gray-500 mt-0.5">
               ${this.escape(t.language || "")}${t.category ? " · " + this.escape(t.category) : ""}

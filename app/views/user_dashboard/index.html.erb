@@ -3,8 +3,8 @@
      'Pending'                 => 'color:#D97706;border-color:rgba(217,119,6,.3)',
      'Lead'                    => 'color:#0D9488;border-color:rgba(13,148,136,.3)',
      'Contact Established'     => 'color:#0D9488;border-color:rgba(13,148,136,.3)',
-     'Converted'               => 'color:#4F46E5;border-color:rgba(79,70,229,.35)',
-     'Proposal Sent'           => 'color:#4F46E5;border-color:rgba(79,70,229,.35)',
+     'Converted'               => 'color:#059669;border-color:rgba(5,150,105,.35)',
+     'Proposal Sent'           => 'color:#059669;border-color:rgba(5,150,105,.35)',
      'Not Interested'          => 'color:#E11D48;border-color:rgba(225,29,72,.3)',
      'Contact Not Established' => 'color:#E11D48;border-color:rgba(225,29,72,.3)',
      'Unresponsive'            => 'color:#E11D48;border-color:rgba(225,29,72,.3)'
@@ -34,12 +34,12 @@
         <div class="flex items-center justify-between">
           <span class="cb-eyebrow">total_customers</span>
           <% if @customers_this_month > 0 %>
-            <span class="cb-pill" style="color:#4F46E5;border-color:rgba(79,70,229,.35)">+<%= @customers_this_month %> MTD</span>
+            <span class="cb-pill" style="color:#059669;border-color:rgba(5,150,105,.35)">+<%= @customers_this_month %> MTD</span>
           <% end %>
         </div>
         <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= number_with_delimiter(@total_customers) %></div>
       </div>
-      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW ALL →
       <% end %>
     </div>
@@ -53,7 +53,7 @@
         </div>
         <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= @active_deals %></div>
       </div>
-      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW DEALS →
       <% end %>
     </div>
@@ -69,7 +69,7 @@
         </div>
         <div class="cb-mono text-[32px] font-semibold text-[#0F172A] mt-2 leading-none"><%= @pending_tasks_count %></div>
       </div>
-      <%= link_to my_tasks_tasks_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to my_tasks_tasks_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW TASKS →
       <% end %>
     </div>
@@ -81,9 +81,9 @@
           <span class="cb-eyebrow">call_success</span>
           <span class="cb-pill" style="color:#64748B;border-color:rgba(100,116,139,.3)"><%= @calls_this_month %> CALLS MTD</span>
         </div>
-        <div class="cb-mono text-[32px] font-semibold mt-2 leading-none <%= @call_success_rate >= 50 ? 'text-[#4F46E5]' : 'text-[#0F172A]' %>"><%= @call_success_rate %>%</div>
+        <div class="cb-mono text-[32px] font-semibold mt-2 leading-none <%= @call_success_rate >= 50 ? 'text-[#059669]' : 'text-[#0F172A]' %>"><%= @call_success_rate %>%</div>
       </div>
-      <%= link_to my_recordings_recordings_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to my_recordings_recordings_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW RECORDINGS →
       <% end %>
     </div>
@@ -98,7 +98,7 @@
       <div class="space-y-3">
         <div class="flex justify-between items-baseline">
           <span class="text-[13px] text-[#64748B]">Won</span>
-          <span class="cb-mono text-[14px] text-[#4F46E5] font-semibold"><%= @won_deals %>
+          <span class="cb-mono text-[14px] text-[#059669] font-semibold"><%= @won_deals %>
             <span class="text-[#94A3B8] text-[11px] font-normal ml-1"><%= number_to_currency(@won_deal_value, precision: 0) %></span>
           </span>
         </div>
@@ -166,7 +166,7 @@
         </div>
         <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
           <span class="text-[13px] text-[#64748B]">Deals created</span>
-          <span class="cb-mono text-[16px] font-semibold text-[#4F46E5]"><%= @deals_created_this_month %></span>
+          <span class="cb-mono text-[16px] font-semibold text-[#059669]"><%= @deals_created_this_month %></span>
         </div>
         <div class="flex justify-between items-center py-2 border-b border-[#E9ECF1]">
           <span class="text-[13px] text-[#64748B]">Tasks completed</span>
@@ -178,7 +178,7 @@
         </div>
         <div class="flex justify-between items-center py-2">
           <span class="text-[13px] text-[#64748B]">Calls connected <span class="cb-mono text-[10px] text-[#94A3B8]">≥120s</span></span>
-          <span class="cb-mono text-[16px] font-semibold text-[#4F46E5]"><%= @connected_calls_this_month %></span>
+          <span class="cb-mono text-[16px] font-semibold text-[#059669]"><%= @connected_calls_this_month %></span>
         </div>
       </div>
     </div>
@@ -193,8 +193,8 @@
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
         <% @deal_stages.each do |stage| %>
-          <div class="rounded-lg border border-[#E9ECF1] bg-[#F8FAFC] hover:border-[#4F46E5]/40 transition-colors p-4 text-center">
-            <div class="cb-mono text-[26px] font-semibold <%= (@deals_by_stage[stage.id] || 0) > 0 ? 'text-[#4F46E5]' : 'text-[#CBD5E1]' %>">
+          <div class="rounded-lg border border-[#E9ECF1] bg-[#F8FAFC] hover:border-[#059669]/40 transition-colors p-4 text-center">
+            <div class="cb-mono text-[26px] font-semibold <%= (@deals_by_stage[stage.id] || 0) > 0 ? 'text-[#059669]' : 'text-[#CBD5E1]' %>">
               <%= @deals_by_stage[stage.id] || 0 %>
             </div>
             <div class="text-[11px] text-[#64748B] mt-1 truncate" title="<%= stage.name %>"><%= stage.name %></div>
@@ -211,7 +211,7 @@
            link: my_tasks_tasks_path(due_date: 'today') },
          { title: 'overdue',  tasks: @overdue_tasks,  count: @overdue_tasks_count,  accent: '#E11D48', empty: 'Nothing overdue',
            link: my_tasks_tasks_path(due_date: 'overdue') },
-         { title: 'upcoming', tasks: @upcoming_tasks, count: @upcoming_tasks_count, accent: '#4F46E5', empty: 'No upcoming tasks',
+         { title: 'upcoming', tasks: @upcoming_tasks, count: @upcoming_tasks_count, accent: '#059669', empty: 'No upcoming tasks',
            link: my_tasks_tasks_path(due_date: 'upcoming') }
        ].each do |panel| %>
       <div class="cb-panel overflow-hidden flex flex-col">
@@ -226,14 +226,14 @@
                 <li class="flex items-start gap-2 px-2.5 py-2 rounded-md hover:bg-[#F6F8FB] transition-colors group">
                   <div class="flex-1 min-w-0">
                     <p class="text-[13px] font-medium text-[#0F172A] truncate">
-                      <%= link_to task.title, task_path(task), class: "hover:text-[#4F46E5]" %>
+                      <%= link_to task.title, task_path(task), class: "hover:text-[#059669]" %>
                     </p>
                     <p class="cb-mono text-[10px] mt-0.5" style="color:<%= panel[:title] == 'overdue' ? '#E11D48' : '#94A3B8' %>">
                       <%= task.due_date.strftime('%b %d, %H:%M').upcase %><% if task.customer %> · <%= task.customer.name %><% end %>
                     </p>
                   </div>
                   <%= button_to complete_task_path(task), method: :patch,
-                        class: "shrink-0 p-1 rounded border border-[#DCE0E6] text-[#94A3B8] hover:text-[#4F46E5] hover:border-[#4F46E5]/50 transition-colors",
+                        class: "shrink-0 p-1 rounded border border-[#DCE0E6] text-[#94A3B8] hover:text-[#059669] hover:border-[#059669]/50 transition-colors",
                         title: "Mark complete" do %>
                     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 13l4 4L19 7"/>
@@ -246,7 +246,7 @@
             <p class="text-[12.5px] text-[#94A3B8] py-8 text-center"><%= panel[:empty] %></p>
           <% end %>
         </div>
-        <%= link_to panel[:link], class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+        <%= link_to panel[:link], class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#059669] transition-colors" do %>
           VIEW ALL →
         <% end %>
       </div>
@@ -268,7 +268,7 @@
               <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-[#F6F8FB] transition-colors">
                 <div class="flex-1 min-w-0">
                   <p class="text-[13.5px] font-medium text-[#0F172A] truncate">
-                    <%= link_to deal.title, deal_path(deal), class: "hover:text-[#4F46E5]" %>
+                    <%= link_to deal.title, deal_path(deal), class: "hover:text-[#059669]" %>
                   </p>
                   <p class="cb-mono text-[10px] text-[#94A3B8] mt-0.5 truncate">
                     <%= deal.customer&.name || 'NO CUSTOMER' %> · <%= deal.deal_stage.name.upcase %>
@@ -282,7 +282,7 @@
           <p class="text-[12.5px] text-[#94A3B8] py-8 text-center">No active deals</p>
         <% end %>
       </div>
-      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to my_deals_deals_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW ALL DEALS →
       <% end %>
     </div>
@@ -299,7 +299,7 @@
               <li class="flex items-center justify-between gap-3 px-2.5 py-2.5 rounded-md hover:bg-[#F6F8FB] transition-colors">
                 <div class="flex-1 min-w-0">
                   <p class="text-[13.5px] font-medium text-[#0F172A] truncate">
-                    <%= link_to customer.name, customer_path(customer), class: "hover:text-[#4F46E5]" %>
+                    <%= link_to customer.name, customer_path(customer), class: "hover:text-[#059669]" %>
                   </p>
                   <p class="cb-mono text-[10px] text-[#94A3B8] mt-0.5 truncate"><%= customer.email.presence || 'NO EMAIL' %></p>
                 </div>
@@ -311,7 +311,7 @@
           <p class="text-[12.5px] text-[#94A3B8] py-8 text-center">No recent customers</p>
         <% end %>
       </div>
-      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#4F46E5] transition-colors" do %>
+      <%= link_to customers_path, class: "block px-5 py-2.5 border-t border-[#E9ECF1] cb-mono text-[10.5px] text-center text-[#64748B] hover:text-[#059669] transition-colors" do %>
         VIEW ALL CUSTOMERS →
       <% end %>
     </div>

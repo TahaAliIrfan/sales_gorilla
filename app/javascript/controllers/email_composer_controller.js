@@ -164,14 +164,14 @@ export default class extends Controller {
 
     Array.from(this.fileList.files).forEach((file, index) => {
       const chip = document.createElement('div')
-      chip.className = 'inline-flex items-center px-2 py-1 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700 group'
+      chip.className = 'inline-flex items-center px-2 py-1 bg-emerald-50 border border-emerald-200 rounded text-xs text-emerald-700 group'
       chip.innerHTML = `
         <svg class="h-3 w-3 mr-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
         </svg>
         <span class="truncate max-w-[150px]" title="${this.escapeHtml(file.name)}">${this.escapeHtml(file.name)}</span>
-        <span class="text-blue-500 ml-1">(${this.formatFileSize(file.size)})</span>
-        <button type="button" class="ml-1 text-blue-400 hover:text-red-500 transition-colors" data-index="${index}" data-action="click->email-composer#removeAttachment">
+        <span class="text-emerald-500 ml-1">(${this.formatFileSize(file.size)})</span>
+        <button type="button" class="ml-1 text-emerald-400 hover:text-red-500 transition-colors" data-index="${index}" data-action="click->email-composer#removeAttachment">
           <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>

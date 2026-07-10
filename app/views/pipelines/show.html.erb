@@ -2,7 +2,7 @@
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900"><%= @pipeline.name %></h1>
     <div class="flex space-x-2">
-      <%= link_to "Edit Pipeline", edit_pipeline_path(@pipeline), class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+      <%= link_to "Edit Pipeline", edit_pipeline_path(@pipeline), class: "bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded" %>
       <%= link_to "Add Stage", new_pipeline_deal_stage_path(@pipeline), class: "bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" %>
       <%= link_to "Back to Pipelines", pipelines_path, class: "bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
@@ -40,7 +40,7 @@
             </label>
           <% end %>
         </div>
-        <%= form.submit "Update Assignments", class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded text-sm" %>
+        <%= form.submit "Update Assignments", class: "bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-1 px-3 rounded text-sm" %>
       <% end %>
     </div>
   </div>
@@ -69,7 +69,7 @@
               </div>
               
               <div class="flex space-x-1">
-                <%= link_to "Edit", edit_pipeline_deal_stage_path(@pipeline, stage), class: "text-xs bg-blue-500 hover:bg-blue-700 text-white py-1 px-2 rounded" %>
+                <%= link_to "Edit", edit_pipeline_deal_stage_path(@pipeline, stage), class: "text-xs bg-emerald-500 hover:bg-emerald-700 text-white py-1 px-2 rounded" %>
                 <%= link_to "Delete", pipeline_deal_stage_path(@pipeline, stage), method: :delete, 
                       confirm: "Are you sure?", 
                       class: "text-xs bg-red-500 hover:bg-red-700 text-white py-1 px-2 rounded" %>
@@ -88,7 +88,7 @@
       </div>
     <% else %>
       <div class="text-center py-8">
-        <p class="text-gray-500">No stages found. <%= link_to "Add your first stage", new_pipeline_deal_stage_path(@pipeline), class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <p class="text-gray-500">No stages found. <%= link_to "Add your first stage", new_pipeline_deal_stage_path(@pipeline), class: "text-emerald-600 hover:text-emerald-900" %>.</p>
       </div>
     <% end %>
   </div>

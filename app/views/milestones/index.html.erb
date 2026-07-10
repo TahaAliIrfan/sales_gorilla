@@ -10,7 +10,7 @@
       <h1 class="text-2xl font-bold text-gray-900">Milestones</h1>
       <p class="text-gray-600 mt-1">Payment schedule for <%= @customer.name %></p>
     </div>
-    <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm shadow-sm" do %>
+    <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm shadow-sm" do %>
       <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
@@ -38,7 +38,7 @@
               <% else %>
                 <%= button_to "Mark Paid", mark_paid_customer_milestone_path(@customer, milestone), method: :patch, class: "px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700" %>
               <% end %>
-              <%= link_to "Edit", edit_customer_milestone_path(@customer, milestone), class: "px-3 py-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium" %>
+              <%= link_to "Edit", edit_customer_milestone_path(@customer, milestone), class: "px-3 py-1.5 text-sm text-emerald-600 hover:text-emerald-800 font-medium" %>
               <%= link_to "View", customer_milestone_path(@customer, milestone), class: "px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 font-medium" %>
               <%= link_to "Create Invoice", new_customer_invoice_path(@customer, milestone_id: milestone.id), class: "px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700" %>
               <%= button_to "Delete", customer_milestone_path(@customer, milestone), method: :delete, data: { confirm: "Are you sure? This will delete all milestone items." }, class: "px-3 py-1.5 text-sm text-red-600 hover:text-red-800 font-medium" %>
@@ -68,7 +68,7 @@
       <h3 class="mt-2 text-sm font-medium text-gray-900">No milestones</h3>
       <p class="mt-1 text-sm text-gray-500">Create a milestone to track payments and generate invoices.</p>
       <div class="mt-6">
-        <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" do %>
+        <%= link_to new_customer_milestone_path(@customer), class: "inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm" do %>
           <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>

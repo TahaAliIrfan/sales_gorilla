@@ -10,7 +10,7 @@
       <h1 class="text-2xl font-bold text-gray-900">Invoices</h1>
       <p class="text-gray-600 mt-1">Manage invoices for <%= @customer.name %></p>
     </div>
-    <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm shadow-sm" do %>
+    <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm shadow-sm" do %>
       <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
       </svg>
@@ -40,7 +40,7 @@
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= invoice.due_date.strftime('%b %d, %Y') %></td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900"><%= number_to_currency(invoice.total) %></td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                <%= link_to "Edit", edit_customer_invoice_path(@customer, invoice), class: "text-blue-600 hover:text-blue-800 font-medium mr-3" %>
+                <%= link_to "Edit", edit_customer_invoice_path(@customer, invoice), class: "text-emerald-600 hover:text-emerald-800 font-medium mr-3" %>
                 <%= link_to "Download PDF", download_pdf_customer_invoice_path(@customer, invoice), class: "text-purple-600 hover:text-purple-800 font-medium" %>
               </td>
             </tr>
@@ -56,7 +56,7 @@
       <h3 class="mt-2 text-sm font-medium text-gray-900">No invoices</h3>
       <p class="mt-1 text-sm text-gray-500">Create an invoice from a milestone. First add a milestone with payment schedule.</p>
       <div class="mt-6">
-        <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" do %>
+        <%= link_to new_customer_invoice_path(@customer), class: "inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm" do %>
           <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>

@@ -21,7 +21,7 @@
     <!-- Search & Actions -->
     <div class="flex items-center space-x-3">
       <div class="relative">
-        <input type="text" id="email-search" placeholder="Search emails..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <input type="text" id="email-search" placeholder="Search emails..." class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
         <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -36,7 +36,7 @@
         </button>
       <% end %>
       
-      <button type="button" id="open-compose-modal-btn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors shadow-sm">
+      <button type="button" id="open-compose-modal-btn" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm">
         <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -56,7 +56,7 @@
             data-email-read="<%= email.is_read %>"
             data-email-subject="<%= email.subject&.downcase %>"
             data-email-from="<%= email.from_address&.downcase %>"
-            class="email-row flex items-start p-4 hover:bg-gray-50 cursor-pointer transition-colors <%= email.is_read ? 'bg-white' : 'bg-blue-50 border-l-4 border-blue-500' %>"
+            class="email-row flex items-start p-4 hover:bg-gray-50 cursor-pointer transition-colors <%= email.is_read ? 'bg-white' : 'bg-emerald-50 border-l-4 border-emerald-500' %>"
           >
             <!-- Direction indicator -->
             <div class="flex-shrink-0 mr-3">
@@ -67,8 +67,8 @@
                   </svg>
                 </div>
               <% else %>
-                <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center" title="Sent">
-                  <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center" title="Sent">
+                  <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </div>
@@ -83,7 +83,7 @@
                     <%= email.direction == 'inbound' ? email.from_address : "To: #{email.to_address}" %>
                   </span>
                   <% unless email.is_read %>
-                    <span class="unread-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span class="unread-badge inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                       New
                     </span>
                   <% end %>
@@ -129,7 +129,7 @@
               Sync Emails
             </button>
           <% end %>
-          <button type="button" id="empty-compose-btn" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors">
+          <button type="button" id="empty-compose-btn" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm transition-colors">
             <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>

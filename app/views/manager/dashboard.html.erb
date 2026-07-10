@@ -9,7 +9,7 @@
       <p class="text-gray-600">You don't have any associates assigned yet.</p>
       <% if current_user.admin? %>
         <p class="mt-2">
-          <%= link_to "Manage Users", users_path, class: "text-blue-600 hover:text-blue-800" %> to assign associates to managers.
+          <%= link_to "Manage Users", users_path, class: "text-emerald-600 hover:text-emerald-800" %> to assign associates to managers.
         </p>
       <% end %>
     </div>
@@ -79,7 +79,7 @@
                   <div class="flex items-center">
                     <div>
                       <div class="text-sm font-medium text-gray-900">
-                        <%= link_to associate.name, user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
+                        <%= link_to associate.name, user_path(associate), class: "text-emerald-600 hover:text-emerald-900" %>
                       </div>
                       <div class="text-sm text-gray-500"><%= associate.email %></div>
                     </div>
@@ -106,8 +106,8 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="space-x-2">
-                    <%= link_to "View", user_path(associate), class: "text-blue-600 hover:text-blue-900" %>
-                    <%= link_to "Manage Roles", user_path(associate), class: "text-indigo-600 hover:text-indigo-900" %>
+                    <%= link_to "View", user_path(associate), class: "text-emerald-600 hover:text-emerald-900" %>
+                    <%= link_to "Manage Roles", user_path(associate), class: "text-emerald-600 hover:text-emerald-900" %>
                   </div>
                 </td>
               </tr>

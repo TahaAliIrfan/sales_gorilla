@@ -12,7 +12,7 @@
  * Palette (light):
  *   canvas #F6F7F9   panel #FFFFFF   hairline #E9ECF1
  *   ink    #0F172A   body  #334155   dim  #64748B   faint #94A3B8
- *   indigo #4F46E5   teal  #0D9488   rose #E11D48   amber #D97706   violet #7C3AED
+ *   emerald #059669 (primary)   teal #0D9488   rose #E11D48   amber #D97706   violet #7C3AED
  */
 
 .theme-carbon {
@@ -21,7 +21,7 @@
   font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif;
 }
 
-.theme-carbon ::selection { background: rgba(79, 70, 229, .16); color: #0F172A; }
+.theme-carbon ::selection { background: rgba(5, 150, 105, .16); color: #0F172A; }
 
 /* ---------- Helper classes for the bespoke dashboard / users views ---------- */
 
@@ -55,7 +55,7 @@
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, #4F46E5, #0D9488);
+  background: linear-gradient(90deg, #047857, #34D399);
 }
 
 .theme-carbon .cb-pill {

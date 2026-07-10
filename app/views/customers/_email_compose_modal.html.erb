@@ -5,7 +5,7 @@
      class="compose-modal fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center p-4 hidden">
   <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
     <!-- Modal Header -->
-    <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+    <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-emerald-600 to-emerald-700">
       <h2 class="text-lg font-bold text-white flex items-center">
         <svg class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -27,7 +27,7 @@
           <div class="flex items-center space-x-3">
             <label class="text-sm font-medium text-gray-500 w-12">To:</label>
             <div class="flex-1 flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
-              <div class="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
+              <div class="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-purple-600 flex items-center justify-center text-white font-semibold text-xs">
                 <%= customer.name.first.upcase %>
               </div>
               <div>
@@ -268,7 +268,7 @@
             contenteditable="true" 
             data-email-composer-target="editor"
             data-placeholder="Write your email here..."
-            class="flex-1 border border-t-0 border-gray-300 rounded-b-lg p-4 min-h-[280px] focus:outline-none focus:ring-2 focus:ring-blue-500 prose prose-sm max-w-none overflow-y-auto bg-white"
+            class="flex-1 border border-t-0 border-gray-300 rounded-b-lg p-4 min-h-[280px] focus:outline-none focus:ring-2 focus:ring-emerald-500 prose prose-sm max-w-none overflow-y-auto bg-white"
           ></div>
           
           <!-- Hidden input for form submission -->
@@ -300,7 +300,7 @@
             <button type="button" data-action="click->email-inbox#closeCompose" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
               Cancel
             </button>
-            <button type="submit" data-email-composer-target="sendButton" class="inline-flex items-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm transition-colors shadow-sm">
+            <button type="submit" data-email-composer-target="sendButton" class="inline-flex items-center px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm transition-colors shadow-sm">
               <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
@@ -336,7 +336,7 @@
 [data-email-composer-target="editor"] h3 { font-size: 1.25em; font-weight: bold; margin: 0.5em 0; }
 [data-email-composer-target="editor"] ul, [data-email-composer-target="editor"] ol { padding-left: 1.5em; margin: 0.5em 0; }
 [data-email-composer-target="editor"] li { margin: 0.25em 0; }
-[data-email-composer-target="editor"] a { color: #2563eb; text-decoration: underline; }
+[data-email-composer-target="editor"] a { color: #059669; text-decoration: underline; }
 [data-email-composer-target="editor"] blockquote { border-left: 3px solid #d1d5db; padding-left: 1em; margin: 0.5em 0; color: #6b7280; }
 [data-email-composer-target="editor"] pre { background: #f3f4f6; padding: 0.75em; border-radius: 0.375rem; font-family: monospace; font-size: 0.875em; overflow-x: auto; }
 [data-email-composer-target="editor"] hr { border: none; border-top: 1px solid #e5e7eb; margin: 1em 0; }

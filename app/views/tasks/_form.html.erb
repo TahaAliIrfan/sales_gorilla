@@ -26,7 +26,7 @@
   <div class="grid grid-cols-1 gap-y-6 gap-x-6 sm:grid-cols-6">
     <div class="sm:col-span-6">
       <%= form.label :title, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= form.text_field :title, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Enter task title" %>
+      <%= form.text_field :title, class: "shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Enter task title" %>
     </div>
 
     <div class="sm:col-span-3">
@@ -35,7 +35,7 @@
         <%= form.select :status, 
                        options_for_select(Task::STATUSES.map { |k, v| [v, k] }, task.status), 
                        {}, 
-                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" %>
         <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
           <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -50,7 +50,7 @@
         <%= form.select :priority, 
                        options_for_select(Task::PRIORITIES.map { |k, v| [v, k] }, task.priority), 
                        {}, 
-                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                       class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" %>
         <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
           <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -62,7 +62,7 @@
     <div class="sm:col-span-3">
       <%= form.label :due_date, class: "block text-sm font-medium text-gray-700 mb-1" %>
       <div class="flex space-x-2">
-        <%= form.datetime_field :due_date, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md" %>
+        <%= form.datetime_field :due_date, class: "shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md" %>
       </div>
       <p class="mt-1 text-xs text-gray-500">Set a deadline date and time for this task</p>
     </div>
@@ -76,7 +76,7 @@
                                     :id, 
                                     :name, 
                                     {}, 
-                                    class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                                    class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" %>
           <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
               <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -96,7 +96,7 @@
                                   :id, 
                                   :name, 
                                   { include_blank: "None" }, 
-                                  class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" %>
+                                  class: "appearance-none block w-full bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" %>
         <div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
           <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -108,7 +108,7 @@
 
     <div class="sm:col-span-6">
       <%= form.label :description, class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= form.text_area :description, rows: 5, class: "shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Describe the task in detail..." %>
+      <%= form.text_area :description, rows: 5, class: "shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full py-2 px-3 sm:text-sm border-gray-300 rounded-md", placeholder: "Describe the task in detail..." %>
       <p class="mt-2 text-xs text-gray-500">
         Add detailed description of what needs to be done for this task.
       </p>
@@ -117,10 +117,10 @@
 
   <div class="pt-6 mt-4 border-t border-gray-200">
     <div class="flex justify-end space-x-3">
-      <%= link_to (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : (task.persisted? ? task_path(task) : tasks_path)), class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" do %>
+      <%= link_to (params[:action] == "new" ? (params[:from] == "my_tasks" ? my_tasks_tasks_path : tasks_path) : (task.persisted? ? task_path(task) : tasks_path)), class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" do %>
         Cancel
       <% end %>
-      <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+      <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" %>
     </div>
   </div>
 <% end %> 

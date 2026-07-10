@@ -123,7 +123,7 @@ export default class extends Controller {
     if (body) {
       body.innerHTML = `
         <div class="flex items-center justify-center py-12">
-          <svg class="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin h-8 w-8 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -148,7 +148,7 @@ export default class extends Controller {
       ? (email.from_name || email.from_email) 
       : (email.to_name || email.to_email)
     const senderInitial = senderName ? senderName.charAt(0).toUpperCase() : '?'
-    const avatarColor = email.status === 'received' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500'
+    const avatarColor = email.status === 'received' ? 'from-purple-500 to-pink-500' : 'from-emerald-500 to-cyan-500'
     const emailDate = new Date(email.sent_at || email.received_at || email.created_at)
 
     // Get email body with multiple fallbacks
@@ -196,7 +196,7 @@ export default class extends Controller {
                     <div class="text-sm text-gray-500">${emailDate.toLocaleDateString()} at ${emailDate.toLocaleTimeString()}</div>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <button data-action="click->email-modal#reply" class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                    <button data-action="click->email-modal#reply" class="inline-flex items-center px-3 py-1.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-medium">
                       <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
@@ -240,7 +240,7 @@ export default class extends Controller {
             <div class="mb-4 pb-4 border-b border-gray-100 last:border-0">
               <div class="flex items-start justify-between mb-2">
                 <div class="flex items-center space-x-2">
-                  <div class="h-8 w-8 rounded-full bg-gradient-to-br ${threadEmail.status === 'received' ? 'from-purple-500 to-pink-500' : 'from-blue-500 to-cyan-500'} flex items-center justify-center text-white font-semibold text-xs">
+                  <div class="h-8 w-8 rounded-full bg-gradient-to-br ${threadEmail.status === 'received' ? 'from-purple-500 to-pink-500' : 'from-emerald-500 to-cyan-500'} flex items-center justify-center text-white font-semibold text-xs">
                     ${(threadEmail.from_name || threadEmail.from_email || '?').charAt(0).toUpperCase()}
                   </div>
                   <div>
@@ -278,7 +278,7 @@ export default class extends Controller {
               </div>
               ${att.download_url ? `
                 <a href="${att.download_url}" 
-                   class="flex-shrink-0 inline-flex items-center px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                   class="flex-shrink-0 inline-flex items-center px-3 py-1.5 text-sm font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-50 rounded-lg transition-colors"
                    title="Download ${this.escapeHtml(att.filename)}">
                   <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -315,7 +315,7 @@ export default class extends Controller {
     
     // Word documents
     if (type.includes('word') || type.includes('document') || name.match(/\.(doc|docx)$/i)) {
-      return `<svg class="h-8 w-8 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      return `<svg class="h-8 w-8 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>`
     }
@@ -328,7 +328,7 @@ export default class extends Controller {
     }
     
     // Default document icon
-    return `<svg class="h-8 w-8 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    return `<svg class="h-8 w-8 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
     </svg>`
   }
@@ -433,11 +433,11 @@ export default class extends Controller {
       // Update UI
       const emailRow = document.querySelector(`[data-email-id="${emailId}"]`)
       if (emailRow) {
-        emailRow.classList.remove('bg-blue-50', 'border-l-4', 'border-blue-500', 'border-blue-200')
+        emailRow.classList.remove('bg-emerald-50', 'border-l-4', 'border-emerald-500', 'border-emerald-200')
         emailRow.classList.add('bg-white')
         emailRow.dataset.unread = 'false'
 
-        const unreadBadge = emailRow.querySelector('.unread-badge, [class*="bg-blue-100"]')
+        const unreadBadge = emailRow.querySelector('.unread-badge, [class*="bg-emerald-100"]')
         if (unreadBadge && unreadBadge.textContent.trim() === 'New') {
           unreadBadge.remove()
         }

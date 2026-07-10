@@ -152,13 +152,13 @@ export default class extends Controller {
       case 'Pending': return 'bg-yellow-50 text-yellow-700'
       case 'Contact Not Established': return 'bg-red-50 text-red-700'
       case 'Unresponsive': return 'bg-orange-50 text-orange-700'
-      case 'Converted': return 'bg-blue-50 text-blue-700'
-      case 'Proposal Sent': return 'bg-indigo-50 text-indigo-700'
+      case 'Converted': return 'bg-emerald-50 text-emerald-700'
+      case 'Proposal Sent': return 'bg-emerald-50 text-emerald-700'
       case 'Not Interested': return 'bg-gray-50 text-gray-700'
       case 'Invalid': return 'bg-purple-50 text-purple-700'
       case 'Retarget': return 'bg-amber-50 text-amber-700'
       case 'Exhausted_1': return 'bg-pink-50 text-pink-700'
-      default: return 'bg-blue-50 text-blue-700'
+      default: return 'bg-emerald-50 text-emerald-700'
     }
   }
   
@@ -169,13 +169,13 @@ export default class extends Controller {
       case 'Pending': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
       case 'Contact Not Established': return 'bg-red-100 text-red-800 ring-2 ring-red-300'
       case 'Unresponsive': return 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
-      case 'Converted': return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
-      case 'Proposal Sent': return 'bg-indigo-100 text-indigo-800 ring-2 ring-indigo-300'
+      case 'Converted': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
+      case 'Proposal Sent': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
       case 'Not Interested': return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
       case 'Invalid': return 'bg-purple-100 text-purple-800 ring-2 ring-purple-300'
       case 'Retarget': return 'bg-amber-100 text-amber-800 ring-2 ring-amber-300'
       case 'Exhausted_1': return 'bg-pink-100 text-pink-800 ring-2 ring-pink-300'
-      default: return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+      default: return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
     }
   }
   
@@ -194,7 +194,7 @@ export default class extends Controller {
           case 'Incorrect Number': return 'bg-red-50 text-red-700'
           case 'Pending': return 'bg-yellow-50 text-yellow-700'
           case 'Followup': return 'bg-orange-50 text-orange-700'
-          case 'Connected': return 'bg-blue-50 text-blue-700'
+          case 'Connected': return 'bg-emerald-50 text-emerald-700'
           default: return 'bg-gray-50 text-gray-700'
         }
         
@@ -204,7 +204,7 @@ export default class extends Controller {
           case 'Incorrect Email': return 'bg-red-50 text-red-700'
           case 'Pending': return 'bg-yellow-50 text-yellow-700'
           case 'Followup': return 'bg-orange-50 text-orange-700'
-          case 'Conversation Initiated': return 'bg-blue-50 text-blue-700'
+          case 'Conversation Initiated': return 'bg-emerald-50 text-emerald-700'
           default: return 'bg-gray-50 text-gray-700'
         }
         
@@ -214,7 +214,7 @@ export default class extends Controller {
           case 'Incorrect Number': return 'bg-red-50 text-red-700'
           case 'Pending': return 'bg-yellow-50 text-yellow-700'
           case 'Followup': return 'bg-orange-50 text-orange-700'
-          case 'Conversation Initiated': return 'bg-blue-50 text-blue-700'
+          case 'Conversation Initiated': return 'bg-emerald-50 text-emerald-700'
           default: return 'bg-gray-50 text-gray-700'
         }
         
@@ -223,7 +223,7 @@ export default class extends Controller {
           case 'Message Sent': return 'bg-green-50 text-green-700'
           case 'Pending': return 'bg-yellow-50 text-yellow-700'
           case 'Followup': return 'bg-orange-50 text-orange-700'
-          case 'Conversation Initiated': return 'bg-blue-50 text-blue-700'
+          case 'Conversation Initiated': return 'bg-emerald-50 text-emerald-700'
           default: return 'bg-gray-50 text-gray-700'
         }
         
@@ -247,7 +247,7 @@ export default class extends Controller {
           case 'Incorrect Number': return 'bg-red-100 text-red-800 ring-2 ring-red-300'
           case 'Pending': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
           case 'Followup': return 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
-          case 'Connected': return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+          case 'Connected': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
           default: return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
         }
         
@@ -257,7 +257,7 @@ export default class extends Controller {
           case 'Incorrect Email': return 'bg-red-100 text-red-800 ring-2 ring-red-300'
           case 'Pending': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
           case 'Followup': return 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
-          case 'Conversation Initiated': return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+          case 'Conversation Initiated': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
           default: return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
         }
         
@@ -267,7 +267,7 @@ export default class extends Controller {
           case 'Incorrect Number': return 'bg-red-100 text-red-800 ring-2 ring-red-300'
           case 'Pending': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
           case 'Followup': return 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
-          case 'Conversation Initiated': return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+          case 'Conversation Initiated': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
           default: return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
         }
         
@@ -276,7 +276,7 @@ export default class extends Controller {
           case 'Message Sent': return 'bg-green-100 text-green-800 ring-2 ring-green-300'
           case 'Pending': return 'bg-yellow-100 text-yellow-800 ring-2 ring-yellow-300'
           case 'Followup': return 'bg-orange-100 text-orange-800 ring-2 ring-orange-300'
-          case 'Conversation Initiated': return 'bg-blue-100 text-blue-800 ring-2 ring-blue-300'
+          case 'Conversation Initiated': return 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-300'
           default: return 'bg-gray-100 text-gray-800 ring-2 ring-gray-300'
         }
         

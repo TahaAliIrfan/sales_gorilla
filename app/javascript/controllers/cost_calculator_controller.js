@@ -318,7 +318,7 @@ export default class extends Controller {
         <div class="border-t pt-2">
           <div class="flex justify-between items-center">
             <span class="text-base font-semibold text-gray-900">Total Cost:</span>
-            <span class="text-xl font-bold text-blue-600">${data.formatted_cost}</span>
+            <span class="text-xl font-bold text-emerald-600">${data.formatted_cost}</span>
           </div>
         </div>
       </div>

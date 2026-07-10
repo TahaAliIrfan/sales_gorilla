@@ -1,7 +1,7 @@
 <div class="container mx-auto px-4 py-6">
   <div class="flex justify-between items-center mb-6">
     <h1 class="text-2xl font-bold text-gray-900">Pipeline Management</h1>
-    <%= link_to "New Pipeline", new_pipeline_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+    <%= link_to "New Pipeline", new_pipeline_path, class: "bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded" %>
   </div>
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -21,7 +21,7 @@
         <% @pipelines.each do |pipeline| %>
           <tr>
             <td class="px-6 py-4 whitespace-nowrap">
-              <%= link_to pipeline.name, pipeline, class: "text-blue-600 hover:text-blue-900 font-medium" %>
+              <%= link_to pipeline.name, pipeline, class: "text-emerald-600 hover:text-emerald-900 font-medium" %>
             </td>
             <td class="px-6 py-4">
               <p class="text-sm text-gray-900"><%= truncate(pipeline.description, length: 100) %></p>
@@ -43,8 +43,8 @@
               <% end %>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-              <%= link_to "View", pipeline, class: "text-blue-600 hover:text-blue-900 mr-3" %>
-              <%= link_to "Edit", edit_pipeline_path(pipeline), class: "text-indigo-600 hover:text-indigo-900 mr-3" %>
+              <%= link_to "View", pipeline, class: "text-emerald-600 hover:text-emerald-900 mr-3" %>
+              <%= link_to "Edit", edit_pipeline_path(pipeline), class: "text-emerald-600 hover:text-emerald-900 mr-3" %>
               <%= link_to "Delete", pipeline, method: :delete, 
                     confirm: "Are you sure? This will remove the pipeline and all its stages.", 
                     class: "text-red-600 hover:text-red-900" %>
@@ -56,7 +56,7 @@
     
     <% if @pipelines.empty? %>
       <div class="text-center py-8">
-        <p class="text-gray-500">No pipelines found. <%= link_to "Create your first pipeline", new_pipeline_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+        <p class="text-gray-500">No pipelines found. <%= link_to "Create your first pipeline", new_pipeline_path, class: "text-emerald-600 hover:text-emerald-900" %>.</p>
       </div>
     <% end %>
   </div>

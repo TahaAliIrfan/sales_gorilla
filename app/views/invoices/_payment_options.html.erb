@@ -3,7 +3,7 @@
     <%= f.label :bank_account_id, "Bank transfer account", class: "block text-sm font-medium text-gray-700 mb-1" %>
     <%= f.collection_select :bank_account_id, bank_accounts, :id, :label,
           { include_blank: "No bank transfer" },
-          { class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" } %>
+          { class: "block w-full rounded-lg border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" } %>
     <p class="mt-1 text-xs text-gray-500">
       Optional. Bank details (US / UK / AUS) are shown to the customer on the invoice.
       <% if bank_accounts.blank? %>
@@ -16,7 +16,7 @@
     <div class="flex items-center justify-between mb-2">
       <label class="block text-sm font-medium text-gray-700">Online payment links</label>
       <button type="button" data-action="nested-form#add"
-              class="text-sm font-medium text-blue-600 hover:text-blue-800">+ Add link</button>
+              class="text-sm font-medium text-emerald-600 hover:text-emerald-800">+ Add link</button>
     </div>
 
     <div data-nested-form-target="list" class="space-y-3">

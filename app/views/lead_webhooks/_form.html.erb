@@ -10,33 +10,33 @@
   <div>
     <%= form.label :name, class: "block cb-eyebrow mb-1.5" %>
     <%= form.text_field :name, placeholder: "e.g. Meta — Ramadan Campaign", required: true,
-          class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#4F46E5]" %>
+          class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#059669]" %>
     <p class="text-[11.5px] text-[#94A3B8] mt-1">Only shown here, to tell your webhooks apart.</p>
   </div>
 
   <div>
     <%= form.label :lead_source, class: "block cb-eyebrow mb-1.5" %>
     <%= form.select :lead_source, Customer::LEAD_SOURCES.values, { include_blank: "Select source" },
-          { required: true, class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] focus:outline-none focus:border-[#4F46E5]" } %>
+          { required: true, class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] focus:outline-none focus:border-[#059669]" } %>
     <p class="text-[11.5px] text-[#94A3B8] mt-1">Every lead arriving through this webhook is tagged with this source.</p>
   </div>
 
   <div>
     <%= form.label :description, class: "block cb-eyebrow mb-1.5" %>
     <%= form.text_field :description, placeholder: "Optional note — which Zap / form / campaign uses this",
-          class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#4F46E5]" %>
+          class: "w-full rounded-lg bg-white border border-[#DCE0E6] px-3.5 py-2.5 text-[13.5px] text-[#0F172A] placeholder-[#94A3B8] focus:outline-none focus:border-[#059669]" %>
   </div>
 
   <% unless @lead_webhook.new_record? %>
     <div class="flex items-center gap-2.5">
-      <%= form.check_box :active, class: "h-4 w-4 rounded border-[#DCE0E6] text-[#4F46E5] focus:ring-[#4F46E5]" %>
+      <%= form.check_box :active, class: "h-4 w-4 rounded border-[#DCE0E6] text-[#059669] focus:ring-[#059669]" %>
       <%= form.label :active, "Active (accepts incoming leads)", class: "text-[13px] text-[#334155]" %>
     </div>
   <% end %>
 
   <div class="flex items-center gap-3 pt-2">
     <%= form.submit @lead_webhook.new_record? ? "Create Webhook" : "Save Changes",
-          class: "rounded-lg bg-[#4F46E5] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#4338CA] transition-colors cursor-pointer" %>
+          class: "rounded-lg bg-[#059669] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#4338CA] transition-colors cursor-pointer" %>
     <%= link_to "Cancel", lead_webhooks_path, class: "rounded-lg border border-[#DCE0E6] px-5 py-2.5 text-[13px] text-[#64748B] hover:border-[#94A3B8] transition-colors" %>
   </div>
 <% end %>

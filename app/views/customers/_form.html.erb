@@ -30,7 +30,7 @@
 
   <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
     <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
       </svg>
       Basic Information
@@ -38,25 +38,25 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :name, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_field :name, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :email, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.email_field :email, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.email_field :email, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :phone, "Phone Number", class: "block text-sm font-medium text-gray-700" %>
         <div class="mt-1">
-          <%= form.telephone_field :phone, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Include country code (e.g. +923001234567)" %>
+          <%= form.telephone_field :phone, class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "Include country code (e.g. +923001234567)" %>
           <p class="mt-1 text-xs text-gray-500">Include country code with + sign (e.g. +923001234567)</p>
         </div>
       </div>
 
       <div>
         <%= form.label :company, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :company, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_field :company, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div data-controller="country">
@@ -65,7 +65,7 @@
         
         <div class="mt-1 relative">
           <button type="button" 
-                  class="flex items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  class="flex items-center w-full rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
                   data-action="click->country#toggleDropdown">
             <span data-country-target="selectedFlag" class="flex-grow text-left"><%= customer.country.present? ? "#{customer.country}" : "Select a country" %></span>
             <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -76,7 +76,7 @@
           <div data-country-target="dropdown" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
             <div class="sticky top-0 z-10 bg-white p-2">
               <input type="text" 
-                     class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                     class="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm" 
                      placeholder="Search countries..." 
                      data-country-target="searchInput"
                      data-action="input->country#search">
@@ -108,14 +108,14 @@
             ["All Timezones", ActiveSupport::TimeZone.all.map { |tz| ["#{tz.formatted_offset} #{tz.name.gsub('_', ' ')}", tz.name] }]
           ], 
           {}, 
-          class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+          class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" 
         %>
         <p class="mt-1 text-xs text-gray-500">If not selected, timezone will be determined based on country</p>
       </div>
 
       <div>
         <%= form.label :address, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :address, rows: 2, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_area :address, rows: 2, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
       
       <div class="md:col-span-2">
@@ -135,14 +135,14 @@
               <% end %>
             </div>
             <div>
-              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                 Change
                 <%= form.file_field :documents, class: "hidden", accept: "image/*,.pdf,.doc,.docx", multiple: true %>
               </label>
             </div>
           <% else %>
             <div>
-              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <label class="cursor-pointer inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                 <svg class="mr-2 h-4 w-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                 </svg>
@@ -159,7 +159,7 @@
 
   <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300" data-controller="lead-source">
     <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd" d="M6.672 1.911a1 1 0 10-1.932.518l.259.966a1 1 0 001.932-.518l-.26-.966zM2.429 4.74a1 1 0 10-.517 1.932l.966.259a1 1 0 00.517-1.932l-.966-.26zm8.814-.569a1 1 0 00-1.415-1.414l-.707.707a1 1 0 101.415 1.415l.707-.708zm-7.071 7.072l.707-.707A1 1 0 003.465 9.12l-.708.707a1 1 0 001.415 1.415zm3.2-5.171a1 1 0 00-1.3 1.3l4 10a1 1 0 001.823.075l1.38-2.759 3.018 3.02a1 1 0 001.414-1.415l-3.019-3.02 2.76-1.379a1 1 0 00-.076-1.822l-10-4z" clip-rule="evenodd" />
       </svg>
       Source & Project Details
@@ -168,58 +168,58 @@
       <div>
         <%= form.label :lead_source, class: "block text-sm font-medium text-gray-700" %>
         <%= form.select :lead_source, Customer::LEAD_SOURCES.keys, { include_blank: "Select Source" },
-            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500",
+            class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500",
             data: { action: "change->lead-source#toggleCcrFields", "lead-source-target": "select" } %>
       </div>
 
       <div>
         <%= form.label :linkedin_url, "LinkedIn URL", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.url_field :linkedin_url, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.url_field :linkedin_url, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :meta_lead_id, "Meta Lead ID", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :meta_lead_id, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "e.g. 1234567890123456" %>
+        <%= form.text_field :meta_lead_id, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "e.g. 1234567890123456" %>
       </div>
 
       <div data-lead-source-target="ccrFields" class="<%= customer.lead_source == 'CCR' ? '' : 'hidden' %> space-y-4">
         <%= form.label :ccr_link, "CCR Link", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.url_field :ccr_link, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", placeholder: "Google Drive Link" %>
+        <%= form.url_field :ccr_link, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", placeholder: "Google Drive Link" %>
       </div>
 
       <div data-lead-source-target="ccrCost" class="<%= customer.lead_source == 'CCR' ? '' : 'hidden' %>">
         <%= form.label :project_estimated_cost, "Project Estimated Cost", class: "block text-sm font-medium text-gray-700" %>
         <div class="mt-1 flex rounded-md shadow-sm">
           <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">$</span>
-          <%= form.number_field :project_estimated_cost, class: "flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:border-blue-500 focus:ring-blue-500", step: "0.01" %>
+          <%= form.number_field :project_estimated_cost, class: "flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-r-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500", step: "0.01" %>
         </div>
       </div>
 
       <div>
         <%= form.label :project_type, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :project_type, Customer::PROJECT_TYPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :project_type, Customer::PROJECT_TYPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :platform, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :platform, Customer::PLATFORMS.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :platform, Customer::PLATFORMS.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :project_scope, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :project_scope, Customer::PROJECT_SCOPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :project_scope, Customer::PROJECT_SCOPES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div class="md:col-span-2">
         <%= form.label :idea_description, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :idea_description, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_area :idea_description, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
     </div>
   </div>
 
   <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6 hover:shadow-md transition-shadow duration-300">
     <h2 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
         <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
       </svg>
       Status & Communication
@@ -227,49 +227,49 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <%= form.label :status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :status, Customer::STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :status, Customer::STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <% if current_user&.admin? %>
         <div>
           <%= form.label :user_id, "Assigned To", class: "block text-sm font-medium text-gray-700" %>
-          <%= form.collection_select :user_id, User.all, :id, :name, { include_blank: "Unassigned" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+          <%= form.collection_select :user_id, User.all, :id, :name, { include_blank: "Unassigned" }, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
         </div>
       <% end %>
 
       <div>
         <%= form.label :call_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :call_status, Customer::CALL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :call_status, Customer::CALL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :preferred_calling_time, "Preferred Calling Time", class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_field :preferred_calling_time, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_field :preferred_calling_time, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :email_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :email_status, Customer::EMAIL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :email_status, Customer::EMAIL_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :whatsapp_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :whatsapp_status, Customer::WHATSAPP_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :whatsapp_status, Customer::WHATSAPP_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :linkedin_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :linkedin_status, Customer::LINKEDIN_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :linkedin_status, Customer::LINKEDIN_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :upwork_profile, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :upwork_profile, Customer::UPWORK_PROFILES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :upwork_profile, Customer::UPWORK_PROFILES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div>
         <%= form.label :exhaust_status, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.select :exhaust_status, Customer::EXHAUST_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.select :exhaust_status, Customer::EXHAUST_STATUSES.keys, {}, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
 
       <div class="flex items-center">
@@ -287,14 +287,14 @@
 
       <div class="md:col-span-2">
         <%= form.label :notes, class: "block text-sm font-medium text-gray-700" %>
-        <%= form.text_area :notes, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+        <%= form.text_area :notes, rows: 4, class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
       </div>
     </div>
   </div>
 
   <div class="flex justify-end space-x-3 pt-5">
-    <%= link_to "Cancel", customers_path, class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150" %>
-    <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-150 transform hover:scale-105" %>
+    <%= link_to "Cancel", customers_path, class: "py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-150" %>
+    <%= form.submit class: "py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-150 transform hover:scale-105" %>
   </div>
 <% end %>
 
@@ -335,11 +335,11 @@
   }
   
   /* Button enhancements */
-  .bg-blue-600 {
-    background-image: linear-gradient(to right, #3b82f6, #2563eb);
+  .bg-emerald-600 {
+    background-image: linear-gradient(to right, #10B981, #059669);
   }
   
-  .bg-blue-600:hover {
-    background-image: linear-gradient(to right, #2563eb, #1d4ed8);
+  .bg-emerald-600:hover {
+    background-image: linear-gradient(to right, #059669, #047857);
   }
 </style> 

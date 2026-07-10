@@ -5,7 +5,7 @@
       <p class="text-sm text-gray-600 mt-1">Only administrators can assign or remove associates to managers.</p>
     </div>
     <div class="flex space-x-2">
-      <%= link_to "View Team Hierarchy", team_hierarchy_path, class: "bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded mr-2" %>
+      <%= link_to "View Team Hierarchy", team_hierarchy_path, class: "bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1 rounded mr-2" %>
       <%= link_to "Back to User", user_path(@user), class: "bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded" %>
     </div>
   </div>
@@ -32,10 +32,10 @@
     <div class="p-6">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Current Team Members -->
-        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+        <div class="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
           <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-medium text-blue-800">Current Team Members (<span id="current-count"><%= @current_associates.count %></span>)</h3>
-            <button type="button" class="text-blue-600 hover:text-blue-800 text-sm" data-action="team-management#expandAll">
+            <h3 class="text-lg font-medium text-emerald-800">Current Team Members (<span id="current-count"><%= @current_associates.count %></span>)</h3>
+            <button type="button" class="text-emerald-600 hover:text-emerald-800 text-sm" data-action="team-management#expandAll">
               Expand All
             </button>
           </div>
@@ -44,7 +44,7 @@
             <% if @current_associates.any? %>
               <% @current_associates.each do |associate| %>
                 <% assignment = associate.role_assignments.find_by(role: Role.associate, assigned_by: @user) %>
-                <div class="associate-card bg-white rounded-md shadow-sm p-3 mb-2 cursor-move border-l-4 border-blue-500" 
+                <div class="associate-card bg-white rounded-md shadow-sm p-3 mb-2 cursor-move border-l-4 border-emerald-500" 
                      data-team-management-target="associateCard"
                      data-associate-id="<%= associate.id %>"
                      data-associate-name="<%= associate.name.present? ? associate.name.downcase : '' %>" 
@@ -55,7 +55,7 @@
                       <p class="text-sm text-gray-500"><%= associate.email.present? ? associate.email : 'No Email' %></p>
                     </div>
                     <div class="flex items-center space-x-2">
-                      <span class="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1">Team Member</span>
+                      <span class="text-xs bg-emerald-100 text-emerald-800 rounded-full px-2 py-1">Team Member</span>
                       <button type="button" class="ml-2 text-red-600 hover:text-red-800 focus:outline-none" 
                               data-action="team-management#unassignAssociate" data-associate-id="<%= associate.id %>">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,7 +64,7 @@
                       </button>
                     </div>
                   </div>
-                  <button type="button" class="text-sm text-blue-600 hover:text-blue-800 mt-2 w-full text-left focus:outline-none" 
+                  <button type="button" class="text-sm text-emerald-600 hover:text-emerald-800 mt-2 w-full text-left focus:outline-none" 
                           data-action="team-management#toggleDetails">
                     Show Details
                   </button>
@@ -115,7 +115,7 @@
             <div class="flex space-x-2">
               <input type="text" placeholder="Search associates..." class="border border-gray-300 rounded px-2 py-1 text-sm" 
                      data-team-management-target="searchInput" data-action="input->team-management#searchAssociates">
-              <button type="button" class="text-blue-600 hover:text-blue-800 text-sm" data-action="team-management#clearSearch">
+              <button type="button" class="text-emerald-600 hover:text-emerald-800 text-sm" data-action="team-management#clearSearch">
                 Clear
               </button>
             </div>
@@ -144,7 +144,7 @@
                       </button>
                     </div>
                   </div>
-                  <button type="button" class="text-sm text-blue-600 hover:text-blue-800 mt-2 w-full text-left focus:outline-none" 
+                  <button type="button" class="text-sm text-emerald-600 hover:text-emerald-800 mt-2 w-full text-left focus:outline-none" 
                           data-action="team-management#toggleDetails">
                     Show Details
                   </button>

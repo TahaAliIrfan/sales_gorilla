@@ -5,7 +5,7 @@
       <% status_colors = {
         'draft' => 'bg-gray-100 text-gray-800',
         'scheduled' => 'bg-yellow-100 text-yellow-800',
-        'in_progress' => 'bg-blue-100 text-blue-800',
+        'in_progress' => 'bg-emerald-100 text-emerald-800',
         'completed' => 'bg-green-100 text-green-800',
         'failed' => 'bg-red-100 text-red-800',
         'stopped' => 'bg-orange-100 text-orange-800'
@@ -34,7 +34,7 @@
             form: { data: { turbo_confirm: "This will stop the campaign and cancel all pending messages. You can restart it later. Continue?" } },
             class: "bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" %>
       <% elsif @campaign.in_progress? %>
-        <div class="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-2 rounded font-semibold">
+        <div class="bg-emerald-100 border border-emerald-400 text-emerald-800 px-4 py-2 rounded font-semibold">
           Campaign in progress...
         </div>
         <%= button_to "Stop Campaign", stop_campaign_path(@campaign), method: :post,
@@ -45,7 +45,7 @@
             class: "bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded" %>
         <%= button_to "Restart Campaign", restart_campaign_path(@campaign), method: :post,
             form: { data: { turbo_confirm: "This will reset all failed messages to pending and change the campaign status to draft. You can then edit and re-send. Continue?" } },
-            class: "bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded" %>
+            class: "bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded" %>
       <% end %>
       <%= link_to "Back", campaigns_path,
           class: "bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded" %>
@@ -116,8 +116,8 @@
           <%= form_with url: add_customers_campaign_path(@campaign), method: :post, class: "flex gap-2" do |f| %>
             <%= f.select :group_id, options_from_collection_for_select(@customer_groups, :id, ->(g) { "#{g.name} (#{g.customer_count} customers)" }),
                 { prompt: "Select a group" },
-                class: "flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
-            <%= f.submit "Add Group", class: "bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded cursor-pointer" %>
+                class: "flex-1 rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+            <%= f.submit "Add Group", class: "bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded cursor-pointer" %>
           <% end %>
         </div>
       <% end %>
@@ -137,7 +137,7 @@
                   <input
                     type="text"
                     placeholder="Search by name, email, or phone..."
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     data-campaign-customer-selector-target="searchInput"
                     data-action="input->campaign-customer-selector#filter">
                 </div>
@@ -146,7 +146,7 @@
                 <div>
                   <label class="block text-xs font-medium text-gray-700 mb-1">Lead Source</label>
                   <select
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm"
                     data-campaign-customer-selector-target="leadSourceFilter"
                     data-action="change->campaign-customer-selector#filter">
                     <option value="">All Lead Sources</option>
@@ -161,7 +161,7 @@
               <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-300">
                 <div class="flex items-center">
                   <%= check_box_tag "select_all", "1", false,
-                      class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded",
+                      class: "h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded",
                       data: {
                         campaign_customer_selector_target: "selectAllCheckbox",
                         action: "change->campaign-customer-selector#toggleSelectAll"
@@ -169,7 +169,7 @@
                   <%= label_tag "select_all", "Select All Visible", class: "ml-2 text-sm font-medium text-gray-700" %>
                 </div>
                 <div class="text-sm text-gray-600">
-                  Selected: <span class="font-semibold text-blue-600" data-campaign-customer-selector-target="selectedCount">0</span>
+                  Selected: <span class="font-semibold text-emerald-600" data-campaign-customer-selector-target="selectedCount">0</span>
                 </div>
               </div>
             </div>
@@ -198,7 +198,7 @@
                       <td class="px-3 py-3">
                         <%= check_box_tag "customer_ids[]", customer.id, false,
                             id: "customer_#{customer.id}",
-                            class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded",
+                            class: "h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded",
                             data: { action: "change->campaign-customer-selector#updateSelectedCount change->campaign-customer-selector#updateSelectAllState" } %>
                       </td>
                       <td class="px-3 py-3">
@@ -212,7 +212,7 @@
                       </td>
                       <td class="px-3 py-3">
                         <% if customer.lead_source.present? %>
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
                             <%= customer.lead_source %>
                           </span>
                         <% else %>
@@ -289,7 +289,7 @@
                 <td class="px-4 py-3 whitespace-nowrap">
                   <% exec_status_colors = {
                     'pending' => 'bg-yellow-100 text-yellow-800',
-                    'processing' => 'bg-blue-100 text-blue-800',
+                    'processing' => 'bg-emerald-100 text-emerald-800',
                     'completed' => 'bg-green-100 text-green-800',
                     'failed' => 'bg-red-100 text-red-800'
                   } %>

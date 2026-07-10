@@ -21,10 +21,10 @@
         </div>
         <div class="flex-1 h-px bg-gray-300 mx-4"></div>
         <div class="flex items-center">
-          <div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full text-sm font-medium">
+          <div class="flex items-center justify-center w-8 h-8 bg-emerald-600 text-white rounded-full text-sm font-medium">
             2
           </div>
-          <span class="ml-2 text-sm font-medium text-blue-600">Map Fields</span>
+          <span class="ml-2 text-sm font-medium text-emerald-600">Map Fields</span>
         </div>
         <div class="flex-1 h-px bg-gray-300 mx-4"></div>
         <div class="flex items-center">
@@ -57,14 +57,14 @@
           <h2 class="text-lg font-semibold text-gray-900 mb-4">Step 2: Map CSV Columns to Customer Fields</h2>
           
           <!-- Lead Source Selection -->
-          <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 class="text-sm font-semibold text-blue-900 mb-3">Default Lead Source for All Customers</h3>
+          <div class="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+            <h3 class="text-sm font-semibold text-emerald-900 mb-3">Default Lead Source for All Customers</h3>
             <div class="flex items-center space-x-4">
-              <label for="default_lead_source" class="text-sm font-medium text-blue-800">
+              <label for="default_lead_source" class="text-sm font-medium text-emerald-800">
                 Lead Source:
               </label>
               <select id="default_lead_source" name="default_lead_source" 
-                      class="block rounded-md border-blue-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                      class="block rounded-md border-emerald-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm">
                 <option value="">-- Select Lead Source --</option>
                 <% Customer::LEAD_SOURCES.each do |key, value| %>
                   <option value="<%= value %>" <%= 'selected' if value == 'Qatar_Web_summit' %>>
@@ -73,7 +73,7 @@
                 <% end %>
               </select>
             </div>
-            <p class="text-xs text-blue-600 mt-2">
+            <p class="text-xs text-emerald-600 mt-2">
               This lead source will be applied to all imported customers unless a lead_source column is mapped below.
             </p>
           </div>
@@ -86,14 +86,14 @@
                     CSV Column: "<%= header %>"
                   </label>
                   <% if @csv_import[:suggested_mappings][header] %>
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                       Auto-suggested
                     </span>
                   <% end %>
                 </div>
                 
                 <select name="field_mappings[<%= header %>]" 
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 sm:text-sm">
                   <option value="">-- Don't Import --</option>
                   <% CsvImportService.available_customer_fields.each do |key, label| %>
                     <option value="<%= key %>" <%= 'selected' if @csv_import[:suggested_mappings][header] == key %>>
@@ -119,12 +119,12 @@
           <!-- Action Buttons -->
           <div class="flex items-center justify-between pt-6 mt-6 border-t border-gray-200">
             <%= link_to "Back to Upload", new_csv_import_path, 
-                       class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+                       class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" %>
             
             <button type="button" 
                     id="csv-import-button"
                     onclick="submitCsvImport()"
-                    class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    class="px-6 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
               Import Customers
             </button>
           </div>
@@ -211,10 +211,10 @@
         // Add visual feedback when fields are mapped
         const container = this.closest('.border');
         if (this.value) {
-          container.classList.add('border-blue-300', 'bg-blue-50');
+          container.classList.add('border-emerald-300', 'bg-emerald-50');
           container.classList.remove('border-gray-200');
         } else {
-          container.classList.remove('border-blue-300', 'bg-blue-50');
+          container.classList.remove('border-emerald-300', 'bg-emerald-50');
           container.classList.add('border-gray-200');
         }
       });
@@ -222,7 +222,7 @@
       // Initialize mapped fields styling
       if (select.value) {
         const container = select.closest('.border');
-        container.classList.add('border-blue-300', 'bg-blue-50');
+        container.classList.add('border-emerald-300', 'bg-emerald-50');
         container.classList.remove('border-gray-200');
       }
     });

@@ -22,7 +22,7 @@ export default class extends Controller {
     this.preventDefault(event)
     if (!this.isDragOver) {
       this.isDragOver = true
-      this.dropZoneTarget.classList.add('border-blue-400', 'bg-blue-50')
+      this.dropZoneTarget.classList.add('border-emerald-400', 'bg-emerald-50')
       this.dropZoneTarget.classList.remove('border-gray-300')
     }
   }
@@ -32,7 +32,7 @@ export default class extends Controller {
     // Only remove drag styles if we're leaving the drop zone entirely
     if (!this.dropZoneTarget.contains(event.relatedTarget)) {
       this.isDragOver = false
-      this.dropZoneTarget.classList.remove('border-blue-400', 'bg-blue-50')
+      this.dropZoneTarget.classList.remove('border-emerald-400', 'bg-emerald-50')
       this.dropZoneTarget.classList.add('border-gray-300')
     }
   }
@@ -40,7 +40,7 @@ export default class extends Controller {
   handleDrop(event) {
     this.preventDefault(event)
     this.isDragOver = false
-    this.dropZoneTarget.classList.remove('border-blue-400', 'bg-blue-50')
+    this.dropZoneTarget.classList.remove('border-emerald-400', 'bg-emerald-50')
     this.dropZoneTarget.classList.add('border-gray-300')
 
     const files = event.dataTransfer.files
@@ -178,7 +178,7 @@ export default class extends Controller {
     fileItem.setAttribute('data-file', fileName)
     fileItem.innerHTML = `
       <span class="text-gray-700">${fileName}</span>
-      <span class="file-status text-blue-600">Uploading...</span>
+      <span class="file-status text-emerald-600">Uploading...</span>
     `
     this.fileListTarget.appendChild(fileItem)
   }

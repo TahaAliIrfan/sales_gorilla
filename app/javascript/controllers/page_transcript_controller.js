@@ -144,7 +144,7 @@ export default class extends Controller {
             speakerLower === 'a' || speakerLower === 'speaker_a' ||
             speakerLower === 'spk_0' || speakerLower === '0') {
           speakerName = "Customer";
-          speakerClass = "bg-blue-100";
+          speakerClass = "bg-emerald-100";
         } else if (speakerLower.includes('agent') || speakerLower.includes('rep') || 
                  speakerLower.includes('sales') || speakerLower.includes('user') ||
                  speakerLower === 'b' || speakerLower === 'speaker_b' ||
@@ -154,12 +154,12 @@ export default class extends Controller {
         } else {
           // For other values, alternate based on index
           speakerName = index % 2 === 0 ? "Customer" : "Agent";
-          speakerClass = index % 2 === 0 ? "bg-blue-100" : "bg-green-100";
+          speakerClass = index % 2 === 0 ? "bg-emerald-100" : "bg-green-100";
         }
       } else {
         // If no speaker info, alternate customer/agent based on position
         speakerName = index % 2 === 0 ? "Customer" : "Agent";
-        speakerClass = index % 2 === 0 ? "bg-blue-100" : "bg-green-100";
+        speakerClass = index % 2 === 0 ? "bg-emerald-100" : "bg-green-100";
       }
       
       // Check content fields

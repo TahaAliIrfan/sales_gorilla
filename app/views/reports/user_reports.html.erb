@@ -25,7 +25,7 @@
                        <%= 'checked' if @filter_range == value %>
                        onchange="document.getElementById('custom-date-fields').style.display = this.value === 'custom' ? 'flex' : 'none'; if(this.value !== 'custom') this.form.submit();">
                 <div class="px-4 py-2 text-sm font-medium border-r border-gray-300 last:border-r-0
-                            peer-checked:bg-blue-600 peer-checked:text-white peer-checked:border-blue-600
+                            peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600
                             text-gray-700 hover:bg-gray-50 transition-colors">
                   <%= label %>
                 </div>
@@ -37,13 +37,13 @@
         <div id="custom-date-fields" class="<%= @filter_range == 'custom' ? 'flex' : 'hidden' %> items-end gap-3">
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Start Date</label>
-            <%= date_field_tag :start_date, @custom_start_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+            <%= date_field_tag :start_date, @custom_start_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" %>
           </div>
           <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">End Date</label>
-            <%= date_field_tag :end_date, @custom_end_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm" %>
+            <%= date_field_tag :end_date, @custom_end_date, class: "block w-full border-gray-300 rounded-lg shadow-sm focus:ring-emerald-500 focus:border-emerald-500 text-sm" %>
           </div>
-          <%= submit_tag "Apply", class: "px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-sm text-sm cursor-pointer" %>
+          <%= submit_tag "Apply", class: "px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium shadow-sm text-sm cursor-pointer" %>
         </div>
       <% end %>
     </div>
@@ -56,7 +56,7 @@
       <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
           <div class="text-sm font-medium text-gray-500 mb-1">Leads Assigned</div>
-          <div class="text-3xl font-bold text-blue-600"><%= perf[:leads_assigned] %></div>
+          <div class="text-3xl font-bold text-emerald-600"><%= perf[:leads_assigned] %></div>
         </div>
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 hover:shadow-md transition-shadow">
           <div class="text-sm font-medium text-gray-500 mb-1">Calls Attempted</div>
@@ -161,7 +161,7 @@
       <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-8 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
           <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <svg class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
             Customer Activity Detail
@@ -203,7 +203,7 @@
                     <% end %>
                   </td>
                   <td class="px-6 py-3 whitespace-nowrap">
-                    <a href="<%= customer_path(detail[:customer]) %>" class="text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
+                    <a href="<%= customer_path(detail[:customer]) %>" class="text-sm font-medium text-gray-900 hover:text-emerald-600 transition-colors">
                       <%= detail[:customer].name %>
                     </a>
                     <% if detail[:customer].company.present? %>
@@ -217,7 +217,7 @@
                         'Contact Established' => 'bg-green-100 text-green-800',
                         'Contact Not Established' => 'bg-yellow-100 text-yellow-800',
                         'Unresponsive' => 'bg-yellow-100 text-yellow-800',
-                        'Converted' => 'bg-blue-100 text-blue-800',
+                        'Converted' => 'bg-emerald-100 text-emerald-800',
                         'Proposal Sent' => 'bg-purple-100 text-purple-800',
                         'Not Interested' => 'bg-red-100 text-red-800',
                         'Exhausted' => 'bg-red-100 text-red-700',
@@ -278,9 +278,9 @@
             <div class="text-2xl font-bold text-purple-600"><%= overview[:proposal_sent] %></div>
             <div class="text-xs font-medium text-purple-700 mt-1">Proposal Sent</div>
           </div>
-          <div class="bg-blue-50 rounded-lg p-4 text-center border border-blue-200">
-            <div class="text-2xl font-bold text-blue-600"><%= overview[:converted] %></div>
-            <div class="text-xs font-medium text-blue-700 mt-1">Converted</div>
+          <div class="bg-emerald-50 rounded-lg p-4 text-center border border-emerald-200">
+            <div class="text-2xl font-bold text-emerald-600"><%= overview[:converted] %></div>
+            <div class="text-xs font-medium text-emerald-700 mt-1">Converted</div>
           </div>
           <div class="bg-red-50 rounded-lg p-4 text-center border border-red-200">
             <div class="text-2xl font-bold text-red-600"><%= overview[:not_interested] %></div>
@@ -298,9 +298,9 @@
             <div class="text-2xl font-bold text-orange-600"><%= overview[:retarget] %></div>
             <div class="text-xs font-medium text-orange-700 mt-1">Retarget</div>
           </div>
-          <div class="bg-indigo-50 rounded-lg p-4 text-center border border-indigo-200">
-            <div class="text-2xl font-bold text-indigo-600"><%= overview[:deals_created] %></div>
-            <div class="text-xs font-medium text-indigo-700 mt-1">Deals Created</div>
+          <div class="bg-emerald-50 rounded-lg p-4 text-center border border-emerald-200">
+            <div class="text-2xl font-bold text-emerald-600"><%= overview[:deals_created] %></div>
+            <div class="text-xs font-medium text-emerald-700 mt-1">Deals Created</div>
           </div>
           <div class="bg-green-50 rounded-lg p-4 text-center border border-green-300">
             <div class="text-2xl font-bold text-green-700"><%= overview[:deals_won] %></div>

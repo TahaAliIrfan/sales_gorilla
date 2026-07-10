@@ -244,7 +244,7 @@ export default class extends Controller {
       listItem.dataset.countryItem = ''
       listItem.dataset.name = country.name
       listItem.dataset.code = country.code
-      listItem.className = 'cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 transition-colors duration-150'
+      listItem.className = 'cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-emerald-50 transition-colors duration-150'
       listItem.setAttribute('data-action', 'click->country#selectCountry')
       
       const itemContent = document.createElement('div')

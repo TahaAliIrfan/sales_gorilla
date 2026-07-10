@@ -17,11 +17,11 @@
             <%= form.select :pipeline_id, 
                 options_for_select(options, @selected_pipeline_id),
                 { include_blank: false }, 
-                { id: "pipeline_selector", class: "rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm", onchange: "this.form.submit()" } %>
+                { id: "pipeline_selector", class: "rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 text-sm", onchange: "this.form.submit()" } %>
           <% end %>
         </div>
       <% end %>
-      <p class="text-sm text-gray-600">Manage stages through <%= link_to "Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-800" %></p>
+      <p class="text-sm text-gray-600">Manage stages through <%= link_to "Pipelines", pipelines_path, class: "text-emerald-600 hover:text-emerald-800" %></p>
     </div>
   </div>
 
@@ -64,7 +64,7 @@
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div class="flex space-x-2">
-                      <%= link_to "Edit", edit_deal_stage_path(stage), class: "text-indigo-600 hover:text-indigo-900" %>
+                      <%= link_to "Edit", edit_deal_stage_path(stage), class: "text-emerald-600 hover:text-emerald-900" %>
                       <% if Deal.by_stage(stage).none? %>
                         <%= button_to "Delete", deal_stage_path(stage), method: :delete, data: { confirm: "Are you sure you want to delete this stage?" }, class: "text-red-600 hover:text-red-900 bg-transparent border-none p-0 cursor-pointer" %>
                       <% else %>
@@ -79,7 +79,7 @@
         </div>
       <% else %>
         <div class="text-center py-8 text-gray-500">
-          <p>No deal stages defined yet. <%= link_to "Create stages through Pipelines", pipelines_path, class: "text-blue-600 hover:text-blue-900" %>.</p>
+          <p>No deal stages defined yet. <%= link_to "Create stages through Pipelines", pipelines_path, class: "text-emerald-600 hover:text-emerald-900" %>.</p>
         </div>
       <% end %>
     </div>
@@ -98,7 +98,7 @@
       <p class="text-gray-600 mt-1">View and manage deals across pipeline stages</p>
     </div>
     <div class="flex space-x-4">
-      <%= link_to "New Deal", new_deal_path, class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+      <%= link_to "New Deal", new_deal_path, class: "bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   </div>
 
@@ -108,7 +108,7 @@
         <div class="p-4 border-b border-gray-200 bg-gray-200 rounded-t-lg" data-stage-id="<%= stage.id %>">
           <div class="flex justify-between items-center">
             <h3 class="font-semibold text-gray-700"><%= stage.name %></h3>
-            <%= link_to new_deal_path(stage_id: stage.id), class: "text-blue-600 hover:text-blue-800" do %>
+            <%= link_to new_deal_path(stage_id: stage.id), class: "text-emerald-600 hover:text-emerald-800" do %>
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
               </svg>
@@ -122,7 +122,7 @@
             <% stage_deals.each do |deal| %>
               <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow" data-drag-target="deal" data-deal-id="<%= deal.id %>">
                 <div class="flex justify-between items-start">
-                  <h4 class="font-medium text-blue-600 flex items-center">
+                  <h4 class="font-medium text-emerald-600 flex items-center">
                     <span class="drag-handle cursor-move mr-2 text-gray-400">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -147,7 +147,7 @@
                       <%= form.select :user_id, 
                           User.all.map { |u| [u.name, u.id, { selected: u.id == deal.user_id }] }, 
                           { include_blank: "Assign to..." }, 
-                          { class: "block w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
+                          { class: "block w-full text-xs rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", 
                             onchange: "this.form.submit()" } %>
                     </div>
                   <% end %>

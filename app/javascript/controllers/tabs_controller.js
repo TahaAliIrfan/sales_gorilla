@@ -23,8 +23,8 @@ export default class extends Controller {
     // Update tab buttons
     this.tabTargets.forEach(tab => {
       const isActive = tab.dataset.tabId === tabId
-      tab.classList.toggle('border-blue-500', isActive)
-      tab.classList.toggle('text-blue-600', isActive)
+      tab.classList.toggle('border-emerald-500', isActive)
+      tab.classList.toggle('text-emerald-600', isActive)
       tab.classList.toggle('active', isActive)
       tab.classList.toggle('border-transparent', !isActive)
       tab.classList.toggle('text-gray-500', !isActive)

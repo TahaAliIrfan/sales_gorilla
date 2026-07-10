@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-bold">
         <%= action_name == 'my_deals' ? 'My Deals' : 'All Deals' %>
         <% if current_user.admin? && @selected_pipeline %>
-          · <span class="text-blue-600"><%= @selected_pipeline.name %></span>
+          · <span class="text-emerald-600"><%= @selected_pipeline.name %></span>
         <% end %>
       </h1>
       <p class="text-gray-600 mt-1">
@@ -27,7 +27,7 @@
       <% end %>
       <%= link_to "New Deal", 
           current_user.admin? && @selected_pipeline ? new_deal_path(pipeline_id: @selected_pipeline.id) : new_deal_path, 
-          class: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" %>
+          class: "bg-emerald-500 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded" %>
     </div>
   </div>
   
@@ -53,7 +53,7 @@
               <%= form.select :pipeline_id, 
                   options_for_select(options, @selected_pipeline&.id || @selected_pipeline_id), 
                   {}, 
-                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "pipeline_id", onchange: "this.form.submit();" } 
+                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", id: "pipeline_id", onchange: "this.form.submit();" } 
               %>
             </div>
           <% end %>
@@ -65,7 +65,7 @@
               <%= form.select :user_id, 
                   options_for_select([['All Users', '']] + @users.map { |u| [u.name, u.id] }, params[:user_id]), 
                   {}, 
-                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "user_id" } 
+                  { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", id: "user_id" } 
               %>
             </div>
           <% end %>
@@ -76,7 +76,7 @@
             <%= form.select :deal_stage_id, 
                 options_for_select([['All Stages', '']] + @deal_stages.map { |s| [s.name, s.id] }, params[:deal_stage_id]), 
                 {}, 
-                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", id: "deal_stage_id" } 
+                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", id: "deal_stage_id" } 
             %>
           </div>
           
@@ -91,7 +91,7 @@
                   ['All Dates', 'all']
                 ], params[:filter_range] || '30'), 
                 {}, 
-                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500", 
+                { class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500", 
                   id: "filter_range",
                   onchange: "toggleCustomDateFields(this.value)" } 
             %>
@@ -103,16 +103,16 @@
       </div>
       
       <!-- Custom date fields - only shown when custom range is selected -->
-      <div id="custom_date_fields" class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> bg-blue-50 rounded-lg p-4 border border-blue-200">
-        <h3 class="text-md font-medium mb-3 text-blue-800">Custom Date Range</h3>
+      <div id="custom_date_fields" class="<%= (params[:filter_range] == 'custom' || (!params[:filter_range] && params[:start_date].present?)) ? '' : 'hidden' %> bg-emerald-50 rounded-lg p-4 border border-emerald-200">
+        <h3 class="text-md font-medium mb-3 text-emerald-800">Custom Date Range</h3>
         <div class="flex items-center space-x-3">
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-            <%= form.date_field :start_date, value: @custom_start_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            <%= form.date_field :start_date, value: @custom_start_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
           </div>
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-            <%= form.date_field :end_date, value: @custom_end_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+            <%= form.date_field :end_date, value: @custom_end_date&.strftime('%Y-%m-%d'), class: "w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@
         <%= link_to action_name == 'my_deals' ? my_deals_deals_path : deals_path, class: "px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50" do %>
           Clear Filters
         <% end %>
-        <%= form.submit "Apply Filters", class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700" %>
+        <%= form.submit "Apply Filters", class: "px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700" %>
       </div>
     <% end %>
     
@@ -130,7 +130,7 @@
         <span class="text-sm text-gray-600">Active filters:</span>
         <% params.except(:controller, :action).each do |key, value| %>
           <% next if value.blank? %>
-          <span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+          <span class="bg-emerald-100 text-emerald-800 text-xs font-medium px-2.5 py-0.5 rounded">
             <% if key == 'filter_range' && value != 'custom' %>
               <% case value 
                  when '30' %> Last 30 Days
@@ -167,7 +167,7 @@
               <% stage_deals.each do |deal| %>
                 <div class="bg-white p-4 mb-2 rounded shadow hover:shadow-md transition-shadow" data-drag-target="deal" data-deal-id="<%= deal.id %>">
                   <div class="flex justify-between items-start">
-                    <h4 class="font-medium text-blue-600 flex items-center">
+                    <h4 class="font-medium text-emerald-600 flex items-center">
                       <span class="drag-handle cursor-move mr-2 text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -279,7 +279,7 @@
     <div class="bg-white shadow-md rounded p-8 my-6">
       <p class="text-gray-600">
         <% if current_user.admin? %>
-          No deal stages found for this pipeline. <%= link_to "Create pipeline stages", pipelines_path, class: "text-blue-600 hover:text-blue-900" %> to get started.
+          No deal stages found for this pipeline. <%= link_to "Create pipeline stages", pipelines_path, class: "text-emerald-600 hover:text-emerald-900" %> to get started.
         <% else %>
           No deal stages available. Contact your administrator to set up pipelines and stages.
         <% end %>

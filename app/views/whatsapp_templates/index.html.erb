@@ -52,7 +52,7 @@
               <div class="flex items-center gap-2">
                 <h3 class="text-sm font-semibold text-gray-900 truncate"><%= t.friendly_name.presence || t.content_sid %></h3>
                 <% if t.has_media? %>
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700">
                     <%= t.requires_media_upload? ? 'MEDIA (upload required)' : 'MEDIA (fixed)' %>
                   </span>
                 <% end %>
@@ -85,7 +85,7 @@
                   <% t.variable_keys.each do |k| %>
                     <% is_media = t.media_variable_keys.include?(k) %>
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium
-                                 <%= is_media ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-gray-100 text-gray-700 border border-gray-200' %>">
+                                 <%= is_media ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-700 border border-gray-200' %>">
                       {{<%= k %>}}<%= is_media ? ' (media)' : '' %>
                     </span>
                   <% end %>

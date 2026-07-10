@@ -14,10 +14,10 @@
       <!-- Progress Steps -->
       <div class="flex items-center mb-6">
         <div class="flex items-center">
-          <div class="flex items-center justify-center w-8 h-8 bg-blue-600 text-white rounded-full text-sm font-medium">
+          <div class="flex items-center justify-center w-8 h-8 bg-emerald-600 text-white rounded-full text-sm font-medium">
             1
           </div>
-          <span class="ml-2 text-sm font-medium text-blue-600">Upload CSV</span>
+          <span class="ml-2 text-sm font-medium text-emerald-600">Upload CSV</span>
         </div>
         <div class="flex-1 h-px bg-gray-300 mx-4"></div>
         <div class="flex items-center">
@@ -41,9 +41,9 @@
       <h2 class="text-lg font-semibold text-gray-900 mb-4">Step 1: Upload CSV File</h2>
       
       <!-- Instructions -->
-      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <h3 class="text-sm font-medium text-blue-900 mb-2">CSV File Requirements:</h3>
-        <ul class="text-sm text-blue-800 space-y-1">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
+        <h3 class="text-sm font-medium text-emerald-900 mb-2">CSV File Requirements:</h3>
+        <ul class="text-sm text-emerald-800 space-y-1">
           <li>• File must be in CSV format (.csv)</li>
           <li>• First row should contain column headers</li>
           <li>• At minimum, include a 'Name' column</li>
@@ -77,18 +77,18 @@
                    id="csv_file"
                    accept=".csv,text/csv"
                    required
-                   class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-3">
+                   class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 p-3">
           </div>
           <p class="text-xs text-gray-500 mt-1">Upload a CSV file (maximum 10MB)</p>
         </div>
 
         <div class="flex items-center justify-between pt-4">
           <%= link_to "Cancel", customers_path, 
-                     class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" %>
+                     class: "px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" %>
           
           <button type="submit" 
                   id="csv-upload-button"
-                  class="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                  class="px-6 py-2 text-sm font-medium text-white bg-emerald-600 border border-transparent rounded-md hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
             Upload and Continue
           </button>
         </div>

@@ -1,6 +1,6 @@
 <div class="container mx-auto px-4 py-8">
   <div class="mb-6">
-    <%= link_to "← Back to Deals", deals_path, class: "text-blue-600 hover:text-blue-800" %>
+    <%= link_to "← Back to Deals", deals_path, class: "text-emerald-600 hover:text-emerald-800" %>
   </div>
 
   <div class="bg-white shadow-md rounded-lg overflow-hidden">
@@ -8,7 +8,7 @@
       <h1 class="text-2xl font-bold text-gray-900">
         New Deal
         <% if current_user.admin? && @selected_pipeline %>
-          <span class="text-blue-600">· <%= @selected_pipeline.name %></span>
+          <span class="text-emerald-600">· <%= @selected_pipeline.name %></span>
         <% end %>
       </h1>
       <p class="text-gray-600 mt-1">

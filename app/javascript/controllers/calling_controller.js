@@ -533,7 +533,7 @@ export default class extends Controller {
       const customerName = recording.customer_name || 'Unknown'
       const customerId = recording.customer_id
       const customerInfo = customerId ? 
-        `<div class="font-medium"><a href="/customers/${customerId}" class="text-blue-600 hover:text-blue-800 hover:underline">${customerName}</a></div>` : 
+        `<div class="font-medium"><a href="/customers/${customerId}" class="text-emerald-600 hover:text-emerald-800 hover:underline">${customerName}</a></div>` : 
         `<div class="font-medium">${customerName}</div>`
       
       // Agent info with tooltip
@@ -546,7 +546,7 @@ export default class extends Controller {
         <td class="py-3 px-4">${formattedDuration}</td>
         <td class="py-3 px-4">${agentInfo}</td>
         <td class="py-3 px-4">
-          <button class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs play-recording" data-sid="${recording.sid}">
+          <button class="bg-emerald-500 hover:bg-emerald-600 text-white px-2 py-1 rounded text-xs play-recording" data-sid="${recording.sid}">
             <i class="fas fa-play"></i> Play
           </button>
         </td>
@@ -596,9 +596,9 @@ export default class extends Controller {
         textColor = 'text-red-800'
         break
       default: // info
-        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-        bgColor = 'bg-indigo-50'
-        textColor = 'text-indigo-800'
+        iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+        bgColor = 'bg-emerald-50'
+        textColor = 'text-emerald-800'
     }
     
     // Set status message with icon

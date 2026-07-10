@@ -14,10 +14,10 @@ module ApplicationHelper
   
   def activity_color_class(action)
     case action
-    when 'created' then 'bg-blue-500'
+    when 'created' then 'bg-emerald-500'
     when 'updated' then 'bg-yellow-500'
     when 'stage_changed' then 'bg-purple-500'
-    when 'user_assigned' then 'bg-indigo-500'
+    when 'user_assigned' then 'bg-emerald-500'
     when 'marked_won' then 'bg-green-500'
     when 'marked_lost' then 'bg-red-500'
     when 'deleted' then 'bg-gray-500'

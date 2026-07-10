@@ -19,7 +19,7 @@
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Customers in Group</h2>
-        <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+        <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-0.5 rounded">
           <%= @customers.count %>
         </span>
       </div>
@@ -58,7 +58,7 @@
               </div>
               <%= link_to "Add", add_customer_customer_group_path(@customer_group, customer_id: customer.id),
                   method: :post,
-                  class: "bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded" %>
+                  class: "bg-emerald-500 hover:bg-emerald-600 text-white text-sm py-1 px-3 rounded" %>
             </div>
           <% end %>
         </div>

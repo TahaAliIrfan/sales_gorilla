@@ -103,7 +103,7 @@
                         <%= assignment.assigned_by.name.present? ? assignment.assigned_by.name.first.upcase : assignment.assigned_by.email.first.upcase %>
                       </div>
                       <div>
-                        <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), class: "text-sm text-blue-600 hover:text-blue-800 font-medium" %>
+                        <%= link_to (assignment.assigned_by.name.presence || assignment.assigned_by.email), user_path(assignment.assigned_by), class: "text-sm text-emerald-600 hover:text-emerald-800 font-medium" %>
                       </div>
                     </div>
                   <% else %>
@@ -114,7 +114,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                       <%= user.customers.count %> customers
                     </span>
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -136,7 +136,7 @@
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div class="flex items-center justify-end space-x-2">
-                    <%= link_to user_path(user), class: "inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors text-xs font-medium" do %>
+                    <%= link_to user_path(user), class: "inline-flex items-center px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-xs font-medium" do %>
                       <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />

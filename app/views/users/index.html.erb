@@ -1,6 +1,6 @@
 <% role_pill = lambda do |user|
      if user.admin?
-       ['ADMIN', 'color:#4F46E5;border-color:rgba(79,70,229,.35)']
+       ['ADMIN', 'color:#059669;border-color:rgba(5,150,105,.35)']
      elsif user.manager?
        ['MANAGER', 'color:#0D9488;border-color:rgba(13,148,136,.3)']
      else
@@ -20,7 +20,7 @@
   </div>
 
   <% if notice.present? %>
-    <div class="mb-5 cb-panel px-4 py-3 text-[13px]" style="border-color:rgba(79,70,229,.35);color:#4F46E5;"><%= notice %></div>
+    <div class="mb-5 cb-panel px-4 py-3 text-[13px]" style="border-color:rgba(5,150,105,.35);color:#059669;"><%= notice %></div>
   <% end %>
 
   <!-- Stats strip -->
@@ -31,7 +31,7 @@
     </div>
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">admins</div>
-      <div class="cb-mono text-[30px] font-semibold text-[#4F46E5] mt-1.5 leading-none"><%= @users.count(&:admin?) %></div>
+      <div class="cb-mono text-[30px] font-semibold text-[#059669] mt-1.5 leading-none"><%= @users.count(&:admin?) %></div>
     </div>
     <div class="cb-panel p-5">
       <div class="cb-eyebrow">managers</div>
@@ -62,7 +62,7 @@
         </thead>
         <tbody>
           <% @users.each do |user| %>
-            <tr class="border-b border-[#EEF0F3] last:border-0 hover:bg-[#4F46E5]/[.03] transition-colors" data-user-id="<%= user.id %>">
+            <tr class="border-b border-[#EEF0F3] last:border-0 hover:bg-[#059669]/[.03] transition-colors" data-user-id="<%= user.id %>">
               <!-- User -->
               <td class="px-5 py-4 whitespace-nowrap">
                 <div class="flex items-center gap-3">
@@ -72,7 +72,7 @@
                   </div>
                   <div class="min-w-0">
                     <div class="text-[13.5px] font-medium text-[#0F172A]">
-                      <%= link_to (user.name.presence || user.email), user_path(user), class: "hover:text-[#4F46E5] transition-colors" %>
+                      <%= link_to (user.name.presence || user.email), user_path(user), class: "hover:text-[#059669] transition-colors" %>
                       <% if user == current_user %><span class="cb-mono text-[9.5px] text-[#94A3B8] ml-1">YOU</span><% end %>
                     </div>
                     <div class="cb-mono text-[10.5px] text-[#94A3B8] truncate"><%= user.email %></div>
@@ -86,7 +86,7 @@
                 <div class="flex items-center gap-2.5">
                   <span class="cb-pill" style="<%= style %>"><%= label %></span>
                   <select
-                    class="role-selector rounded-md bg-[#FFFFFF] border border-[#DCE0E6] text-[12px] text-[#334155] py-1 pl-2 pr-7 focus:outline-none focus:border-[#4F46E5]"
+                    class="role-selector rounded-md bg-[#FFFFFF] border border-[#DCE0E6] text-[12px] text-[#334155] py-1 pl-2 pr-7 focus:outline-none focus:border-[#059669]"
                     data-user-id="<%= user.id %>"
                     data-current-role="<%= user.admin? ? 'admin' : (user.manager? ? 'manager' : 'associate') %>"
                     <%= 'disabled' if user == current_user %>>
@@ -103,7 +103,7 @@
               <!-- Status -->
               <td class="px-5 py-4 whitespace-nowrap">
                 <% if user.active? %>
-                  <span class="cb-pill" style="color:#4F46E5;border-color:rgba(79,70,229,.35)">● ACTIVE</span>
+                  <span class="cb-pill" style="color:#059669;border-color:rgba(5,150,105,.35)">● ACTIVE</span>
                 <% else %>
                   <span class="cb-pill" style="color:#E11D48;border-color:rgba(225,29,72,.3)">○ INACTIVE</span>
                 <% end %>
@@ -113,7 +113,7 @@
               <td class="px-5 py-4 whitespace-nowrap">
                 <div class="cb-mono text-[11.5px] text-[#64748B]">
                   <span class="text-[#0D9488]"><%= @customer_counts[user.id] || 0 %></span> leads ·
-                  <span class="text-[#4F46E5]"><%= @deal_counts[user.id] || 0 %></span> deals
+                  <span class="text-[#059669]"><%= @deal_counts[user.id] || 0 %></span> deals
                 </div>
               </td>
 
@@ -129,7 +129,7 @@
                     <% end %>
                     <button
                       class="toggle-active-btn px-2.5 py-1.5 rounded-md border border-[#DCE0E6] text-[11.5px] transition-colors
-                             <%= user.active? ? 'text-[#64748B] hover:text-[#D97706] hover:border-[#D97706]/50' : 'text-[#64748B] hover:text-[#4F46E5] hover:border-[#4F46E5]/50' %>"
+                             <%= user.active? ? 'text-[#64748B] hover:text-[#D97706] hover:border-[#D97706]/50' : 'text-[#64748B] hover:text-[#059669] hover:border-[#059669]/50' %>"
                       data-user-id="<%= user.id %>"
                       data-active="<%= user.active? %>">
                       <%= user.active? ? 'Deactivate' : 'Activate' %>
@@ -174,7 +174,7 @@
     <div class="mt-4">
       <label class="cb-eyebrow block mb-1.5">reassign_leads_to</label>
       <select id="reassign-target"
-              class="block w-full rounded-md bg-[#FFFFFF] border border-[#D5DAE1] text-[13px] text-[#0F172A] py-2.5 px-3 focus:outline-none focus:border-[#4F46E5]">
+              class="block w-full rounded-md bg-[#FFFFFF] border border-[#D5DAE1] text-[13px] text-[#0F172A] py-2.5 px-3 focus:outline-none focus:border-[#059669]">
         <% @users.select(&:active?).each do |u| %>
           <option value="<%= u.id %>" data-user-id="<%= u.id %>"><%= u.name.presence || u.email %><%= ' (you)' if u == current_user %></option>
         <% end %>
@@ -351,7 +351,7 @@
     // ----- Toast -----
     function showNotification(message, type) {
       const colors = {
-        success: 'border-[#4F46E5] text-[#4F46E5]',
+        success: 'border-[#059669] text-[#059669]',
         error: 'border-[#E11D48] text-[#E11D48]'
       };
       const notification = document.createElement('div');

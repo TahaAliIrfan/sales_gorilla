@@ -56,13 +56,13 @@ export default class extends Controller {
         }
         
         // Update the notification items in the dropdown
-        const notificationItems = this.element.querySelectorAll('.bg-blue-50')
+        const notificationItems = this.element.querySelectorAll('.bg-emerald-50')
         notificationItems.forEach(item => {
-          item.classList.remove('bg-blue-50')
+          item.classList.remove('bg-emerald-50')
           item.classList.add('bg-white')
           
           // Remove the blue dot
-          const dot = item.querySelector('.h-2.w-2.bg-blue-500')
+          const dot = item.querySelector('.h-2.w-2.bg-emerald-500')
           if (dot) {
             dot.remove()
           }
@@ -105,11 +105,11 @@ export default class extends Controller {
           .then(data => {
             if (data.success) {
               // Update UI
-              item.classList.remove('bg-blue-50')
+              item.classList.remove('bg-emerald-50')
               item.classList.add('bg-white')
               
               // Remove the blue dot
-              const dot = item.querySelector('.h-2.w-2.bg-blue-500')
+              const dot = item.querySelector('.h-2.w-2.bg-emerald-500')
               if (dot) {
                 dot.remove()
               }

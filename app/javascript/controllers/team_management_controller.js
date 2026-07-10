@@ -183,8 +183,8 @@ export default class extends Controller {
     if (card) {
       // Update the card styling to match current team
       card.classList.remove('border-gray-300');
-      card.classList.add('border-blue-500');
-      card.querySelector('.text-xs').className = 'text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-1';
+      card.classList.add('border-emerald-500');
+      card.querySelector('.text-xs').className = 'text-xs bg-emerald-100 text-emerald-800 rounded-full px-2 py-1';
       card.querySelector('.text-xs').textContent = 'Team Member';
       
       // Replace the add button with remove button
@@ -287,7 +287,7 @@ export default class extends Controller {
     const card = document.querySelector(`[data-associate-id="${associateId}"]`);
     if (card) {
       // Update the card styling to match available
-      card.classList.remove('border-blue-500');
+      card.classList.remove('border-emerald-500');
       card.classList.add('border-gray-300');
       card.querySelector('.text-xs').className = 'text-xs bg-gray-100 text-gray-800 rounded-full px-2 py-1';
       card.querySelector('.text-xs').textContent = 'Available';

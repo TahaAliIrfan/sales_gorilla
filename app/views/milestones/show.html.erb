@@ -25,7 +25,7 @@
         <% else %>
           <%= button_to "Mark Paid", mark_paid_customer_milestone_path(@customer, @milestone), method: :patch, class: "px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm" %>
         <% end %>
-        <%= link_to "Edit", edit_customer_milestone_path(@customer, @milestone), class: "px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm" %>
+        <%= link_to "Edit", edit_customer_milestone_path(@customer, @milestone), class: "px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 font-medium text-sm" %>
         <%= link_to "Create Invoice", new_customer_invoice_path(@customer, milestone_id: @milestone.id), class: "px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium text-sm" %>
       </div>
     </div>
