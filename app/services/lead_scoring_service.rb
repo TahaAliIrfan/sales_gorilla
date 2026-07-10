@@ -113,33 +113,66 @@ class LeadScoringService
   def build_prompt
     messages = @customer.messages.order(created_at: :desc).limit(12)
                         .map { |m| "#{m.direction}: #{m.content}" }.reverse.join("\n")
+    notes = [@customer.notes.presence, @customer.followup_notes.presence].compact.join("\n")
+    emails = email_snippets
     transcripts = call_transcripts
 
     <<~PROMPT
-      You are qualifying a sales lead for a software development agency. Judge ONLY
-      the lead's intent, seriousness and project value from their own words below.
-      Do NOT consider name, ethnicity, gender or nationality.
+      You are qualifying an inbound sales lead for a software development agency.
+      Score how strong and serious this lead is based on the QUALITY & CLARITY of
+      what they want built and how ENGAGED they are across channels (project
+      description, call notes/transcripts, WhatsApp messages, emails, rep notes).
 
-      Return a JSON object (and nothing else):
+      IMPORTANT: leads almost never mention a budget, timeline or price — do NOT
+      expect them and do NOT lower the score for their absence. Focus on the
+      substance of the project and the depth of the conversation instead. Ignore
+      name, ethnicity, gender and nationality.
+
+      Weigh:
+      - Project description — clear, specific, a real buildable product vs. vague,
+        one-line, or spam.
+      - Engagement — genuine two-way conversation, thoughtful replies, questions,
+        booked calls/meetings across WhatsApp/email/calls/notes.
+      - Fit — a legitimate software project an agency could take on.
+
+      Return ONLY this JSON:
       ```json
       { "quality_score": <integer 0-30>, "reason": "<one short sentence>" }
       ```
 
-      Scoring guide (0-30):
-      - 24-30: detailed, serious project with clear scope/budget and strong buying intent
-      - 15-23: real project, moderate detail or intent
-      - 7-14: vague or early-stage interest
-      - 0-6: no real project, spam, or clearly not a fit
+      Guide: 24-30 = clear, specific project with strong engagement; 15-23 = real
+      project with some detail or interaction; 7-14 = vague or early interest;
+      0-6 = no real project, spam, or not a fit.
 
       PROJECT DESCRIPTION:
       #{@customer.idea_description.presence || "(none provided)"}
 
-      RECENT MESSAGES:
+      REP NOTES:
+      #{notes.presence || "(none)"}
+
+      WHATSAPP / MESSAGES:
       #{messages.presence || "(none)"}
 
-      CALL NOTES/TRANSCRIPTS:
+      EMAILS:
+      #{emails.presence || "(none)"}
+
+      CALL NOTES / TRANSCRIPTS:
       #{transcripts.presence || "(none)"}
     PROMPT
+  end
+
+  # Best-effort recent email context (subject + snippet), guarded against schema
+  # differences.
+  def email_snippets
+    return nil unless @customer.respond_to?(:emails)
+    @customer.emails.order(created_at: :desc).limit(5).filter_map do |e|
+      subject = e.try(:subject)
+      body = e.try(:snippet) || e.try(:body_plain) || e.try(:body)
+      next if subject.blank? && body.blank?
+      "#{subject} — #{body.to_s.gsub(/\s+/, ' ').strip[0, 300]}".strip
+    end.join("\n---\n")
+  rescue
+    nil
   end
 
   # Best-effort call transcripts — only if the recording model exposes them.
