@@ -2,8 +2,9 @@
   <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Reports & Analytics</h1>
-      <p class="mt-2 text-sm text-gray-600">
+      <div class="cb-eyebrow mb-1.5">insights // reports</div>
+      <h1 class="text-[26px] sm:text-[30px] font-semibold tracking-tight text-[#0F172A]">Reports &amp; Analytics</h1>
+      <p class="mt-1.5 text-sm text-[#64748B]">
         <%= @filter_range == 'today' ? "Today's" : @filter_range == 'yesterday' ? "Yesterday's" : @filter_range.titleize %>
         performance overview
         <% unless current_user.admin? %>
