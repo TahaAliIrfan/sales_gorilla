@@ -16,7 +16,7 @@
   </head>
 
   <body class="h-full theme-carbon">
-    <div class="min-h-full" data-controller="mobile-menu cost-calculator">
+    <div class="min-h-full" data-controller="mobile-menu cost-calculator call-widget">
       <!-- Mobile menu backdrop -->
       <div 
         data-mobile-menu-target="backdrop"
@@ -482,6 +482,8 @@
           
           <%= yield %>
         </main>
+
+        <%= render "shared/call_widget" %>
       </div>
 
       <!-- Cost Calculator Modal -->

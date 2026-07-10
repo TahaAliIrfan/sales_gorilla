@@ -1,0 +1,206 @@
+<%# Detail pane for the split-view customers list. Loaded into #customer_preview. %>
+<turbo-frame id="customer_preview">
+  <div class="ah-card !p-0 overflow-hidden">
+
+    <!-- Mobile back bar -->
+    <button type="button" data-action="split-view#close"
+            class="lg:hidden flex items-center gap-2 w-full px-5 py-3 border-b border-[#E9ECF1] text-sm font-medium text-[#334155]">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      Back to list
+    </button>
+
+    <!-- Header -->
+    <div class="px-6 pt-6 pb-5 border-b border-[#E9ECF1]">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-center gap-4 min-w-0">
+          <div class="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 grid place-items-center text-white font-semibold text-xl" style="box-shadow:0 10px 24px -10px rgba(5,150,105,.6);">
+            <%= @customer.name.first.upcase %>
+          </div>
+          <div class="min-w-0">
+            <div class="cb-eyebrow mb-1">customer // profile</div>
+            <h2 class="text-[22px] font-semibold tracking-tight text-[#0F172A] truncate"><%= @customer.name %></h2>
+            <% if @customer.company.present? %>
+              <div class="text-sm text-[#64748B] truncate"><%= @customer.company %></div>
+            <% end %>
+          </div>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium shrink-0 <%= customer_status_color_class(@customer.status) %>"><%= @customer.status %></span>
+      </div>
+
+      <!-- Quick actions -->
+      <div class="mt-5 flex flex-wrap items-center gap-2">
+        <% if @customer.phone.present? %>
+          <button type="button" class="ah-pill !py-2 !px-3.5 text-[13px]"
+                  data-action="call-widget#call"
+                  data-call-phone="<%= @customer.phone %>"
+                  data-call-customer-id="<%= @customer.id %>"
+                  data-call-name="<%= @customer.name %>">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            Call
+          </button>
+        <% end %>
+        <%= link_to customer_path(@customer), data: { turbo_frame: "_top" }, class: "inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[13px] font-medium text-[#334155] border border-[#E2E8F0] hover:bg-[#F6F7F9] transition" do %>
+          Full profile
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Contact -->
+    <div class="px-6 py-5 border-b border-[#E9ECF1] space-y-3">
+      <div class="cb-eyebrow">contact</div>
+      <% if @customer.email.present? %>
+        <div class="flex items-center gap-2.5 text-sm text-[#0F172A]">
+          <svg class="h-4 w-4 text-[#94A3B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <a href="mailto:<%= @customer.email %>" class="truncate hover:text-emerald-600"><%= @customer.email %></a>
+        </div>
+      <% end %>
+      <% if @customer.phone.present? %>
+        <div class="flex items-center gap-2.5 text-sm text-[#0F172A]">
+          <svg class="h-4 w-4 text-[#94A3B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          <span class="cb-mono"><%= @customer.phone %></span>
+        </div>
+      <% end %>
+      <% if @customer.preferred_calling_time.present? && @customer.preferred_calling_time != 'Not Applicable' %>
+        <div class="flex items-center gap-2.5 text-sm text-[#64748B]">
+          <svg class="h-4 w-4 text-[#94A3B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Prefers <%= @customer.preferred_calling_time %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Project -->
+    <% has_project = (@customer.project_type.present? && @customer.project_type != 'Not Applicable') ||
+                     (@customer.project_scope.present? && @customer.project_scope != 'Not Applicable') ||
+                     @customer.idea_description.present? %>
+    <% if has_project %>
+      <div class="px-6 py-5 border-b border-[#E9ECF1] space-y-2.5">
+        <div class="cb-eyebrow">project</div>
+        <div class="flex flex-wrap gap-2">
+          <% if @customer.project_type.present? && @customer.project_type != 'Not Applicable' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800"><%= @customer.project_type %></span>
+          <% end %>
+          <% if @customer.project_scope.present? && @customer.project_scope != 'Not Applicable' %>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#334155]"><%= @customer.project_scope %></span>
+          <% end %>
+        </div>
+        <% if @customer.idea_description.present? %>
+          <p class="text-sm text-[#334155] leading-relaxed"><%= @customer.idea_description %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Location & time -->
+    <% local_now = @customer.timezone.present? ? (Time.current.in_time_zone(@customer.timezone) rescue nil) : nil %>
+    <% location_bits = [@customer.city, @customer.state, @customer.country].reject(&:blank?) %>
+    <% if location_bits.any? || local_now %>
+      <div class="px-6 py-5 border-b border-[#E9ECF1] space-y-3">
+        <div class="cb-eyebrow">location &amp; time</div>
+        <% if location_bits.any? %>
+          <div class="flex items-center gap-2.5 text-sm text-[#0F172A]">
+            <svg class="h-4 w-4 text-[#94A3B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span><%= location_bits.join(', ') %></span>
+          </div>
+        <% end %>
+        <% if local_now %>
+          <div class="flex items-center gap-2.5 text-sm text-[#0F172A]">
+            <svg class="h-4 w-4 text-[#94A3B8] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span class="cb-mono"><%= local_now.strftime('%-I:%M %p') %></span>
+            <span class="text-xs text-[#94A3B8]">local time<%= " · #{@customer.timezone_abbreviation}" if @customer.timezone_abbreviation.present? %></span>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Activity metrics -->
+    <div class="px-6 py-5 border-b border-[#E9ECF1]">
+      <div class="cb-eyebrow mb-3">engagement</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="cb-panel !rounded-xl p-4">
+          <div class="text-xs text-[#64748B]">Calls</div>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="cb-mono text-2xl font-semibold text-[#0F172A]"><%= @customer.total_call_attempts %></span>
+            <span class="text-xs text-[#94A3B8]">attempts</span>
+          </div>
+          <div class="cb-mono text-xs text-emerald-600 mt-0.5"><%= @customer.successful_call_attempts %> connected</div>
+        </div>
+        <div class="cb-panel !rounded-xl p-4">
+          <div class="text-xs text-[#64748B]">Messages</div>
+          <div class="mt-1 flex items-baseline gap-1">
+            <span class="cb-mono text-2xl font-semibold text-[#0F172A]"><%= @customer.messages.where(direction: 'outbound').count %></span>
+            <span class="text-xs text-[#94A3B8]">sent</span>
+          </div>
+          <div class="cb-mono text-xs text-emerald-600 mt-0.5"><%= @customer.messages.where(direction: 'inbound').count %> replies</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lead info -->
+    <div class="px-6 py-5 border-b border-[#E9ECF1]">
+      <div class="cb-eyebrow mb-3">lead info</div>
+      <div class="flex flex-wrap gap-2">
+        <% if @customer.lead_source.present? %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= lead_source_color_class(@customer.lead_source) %>"><%= @customer.lead_source %></span>
+        <% end %>
+        <% if @customer.repeat_lead? %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Repeat</span>
+        <% end %>
+        <% if @customer.utm_campaign.present? %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800" title="UTM Campaign"><%= @customer.utm_campaign %></span>
+        <% end %>
+        <% if @customer.utm_term.present? %>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800" title="UTM Term"><%= @customer.utm_term %></span>
+        <% end %>
+      </div>
+      <div class="mt-4 flex items-center justify-between text-sm">
+        <span class="text-[#64748B]">Assigned to</span>
+        <% if @customer.user %>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800"><%= @customer.user.name %></span>
+        <% elsif policy(@customer).assign_to_self? %>
+          <%= link_to "Assign to me", assign_to_self_customer_path(@customer), data: { turbo_method: :post, turbo_frame: "_top", turbo_confirm: "Assign this customer to yourself?" }, class: "inline-flex items-center px-2.5 py-1 text-xs font-medium text-white bg-emerald-600 rounded-full hover:bg-emerald-700 transition" %>
+        <% else %>
+          <span class="text-xs text-[#94A3B8]">Unassigned</span>
+        <% end %>
+      </div>
+      <div class="mt-3 cb-mono text-[11px] text-[#94A3B8]">Added <%= @customer.created_at.strftime('%b %d, %Y') %></div>
+    </div>
+
+    <!-- Notes -->
+    <% if @customer.notes.present? || @customer.followup_notes.present? %>
+      <div class="px-6 py-5 border-b border-[#E9ECF1] space-y-3">
+        <div class="cb-eyebrow">notes</div>
+        <% if @customer.notes.present? %>
+          <p class="text-sm text-[#334155] leading-relaxed whitespace-pre-line"><%= @customer.notes %></p>
+        <% end %>
+        <% if @customer.followup_notes.present? %>
+          <div class="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2.5">
+            <div class="cb-eyebrow !text-amber-700 mb-1">follow-up</div>
+            <p class="text-sm text-amber-900 whitespace-pre-line"><%= @customer.followup_notes %></p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <!-- Recent activity -->
+    <% if @recent_activities.present? %>
+      <div class="px-6 py-5">
+        <div class="cb-eyebrow mb-3">recent activity</div>
+        <ul class="space-y-3">
+          <% @recent_activities.each do |activity| %>
+            <li class="flex gap-3 text-sm">
+              <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500"></span>
+              <div class="min-w-0">
+                <div class="text-[#0F172A]"><%= activity.action&.humanize %></div>
+                <% if activity.details.present? %>
+                  <div class="text-xs text-[#64748B] truncate"><%= activity.details %></div>
+                <% end %>
+                <div class="cb-mono text-[10.5px] text-[#94A3B8] mt-0.5"><%= time_ago_in_words(activity.created_at) %> ago</div>
+              </div>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+  </div>
+</turbo-frame>

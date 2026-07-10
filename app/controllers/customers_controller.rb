@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
+  before_action :set_customer, only: [:show, :preview, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
   after_action :verify_authorized, except: [:index, :export_csv]
   after_action :verify_policy_scoped, only: [:index, :export_csv]
 
@@ -115,6 +115,14 @@ class CustomersController < ApplicationController
     if @customer.email.present? && current_user.google_auth_configured?
       CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
     end
+  end
+
+  # Lightweight detail pane for the split-view customers list. Rendered into a
+  # Turbo Frame (#customer_preview) when a row is selected, so the list stays put.
+  def preview
+    authorize @customer, :show?
+    @recent_activities = @customer.customer_activities.recent.limit(5)
+    render layout: false
   end
 
   def new

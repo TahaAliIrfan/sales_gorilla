@@ -89,6 +89,7 @@ Rails.application.routes.draw do
   # Add RESTful routes for our models
   resources :customers do
     member do
+      get 'preview'
       patch 'update_status'
       patch 'update_communication_status'
       post 'analyze_phone'

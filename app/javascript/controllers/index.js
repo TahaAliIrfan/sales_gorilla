@@ -39,6 +39,12 @@ application.register("customer-documents", CustomerDocumentsController)
 import CustomerFilterController from "./customer_filter_controller"
 application.register("customer-filter", CustomerFilterController)
 
+import SplitViewController from "./split_view_controller"
+application.register("split-view", SplitViewController)
+
+import CallWidgetController from "./call_widget_controller"
+application.register("call-widget", CallWidgetController)
+
 import CustomerNavigationController from "./customer_navigation_controller"
 application.register("customer-navigation", CustomerNavigationController)
 

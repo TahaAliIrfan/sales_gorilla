@@ -291,6 +291,97 @@
 .theme-carbon select,
 .theme-carbon textarea { border-radius: 10px; }
 
+/* ============================================================= *
+ *  Customers split view (list + detail pane)                     *
+ * ============================================================= */
+
+.theme-carbon .split-row { cursor: pointer; }
+.theme-carbon .split-row.sv-active {
+  background: #ECFDF5;
+  box-shadow: inset 2px 0 0 var(--ah-accent);
+}
+.theme-carbon .split-row.sv-active:hover { background: #E6FBEF; }
+
+/* On desktop the detail pane is always visible; on narrow screens it stays
+   hidden until a row is selected, then slides over the full viewport. */
+@media (max-width: 1023px) {
+  .theme-carbon [data-split-view-target="pane"] { display: none; }
+  .theme-carbon [data-split-view-target="pane"].sv-open {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: var(--ah-bg);
+    overflow-y: auto;
+    padding: 12px;
+  }
+}
+
+/* ============================================================= *
+ *  Floating call widget (softphone)                              *
+ * ============================================================= */
+
+.theme-carbon .cw-panel {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  opacity: 0;
+  transform: translateY(12px) scale(.98);
+  transition: opacity .2s ease, transform .2s ease;
+}
+.theme-carbon .cw-panel.cw-visible { opacity: 1; transform: translateY(0) scale(1); }
+
+.theme-carbon .cw-card {
+  position: relative;
+  overflow: hidden;
+  color: var(--ah-on-dark);
+  background-color: var(--ah-panel);
+  background-image:
+    linear-gradient(rgba(110, 231, 183, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 231, 183, 0.07) 1px, transparent 1px);
+  background-size: 40px 40px;
+  border: 1px solid rgba(238, 251, 244, 0.10);
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 24px 60px -20px rgba(12, 14, 18, 0.55);
+}
+
+.theme-carbon .cw-head { display: flex; align-items: center; gap: 11px; }
+.theme-carbon .cw-avatar {
+  display: grid; place-items: center;
+  height: 38px; width: 38px; border-radius: 12px; flex-shrink: 0;
+  background: linear-gradient(135deg, #059669, #10B981); color: #fff;
+}
+.theme-carbon .cw-id { min-width: 0; flex: 1; }
+.theme-carbon .cw-name { font-size: 14px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.theme-carbon .cw-num { font-size: 12px; color: var(--ah-muted-dk); }
+.theme-carbon .cw-x {
+  display: grid; place-items: center; height: 26px; width: 26px; border-radius: 8px;
+  color: var(--ah-muted-dk); flex-shrink: 0; transition: background .15s ease, color .15s ease;
+}
+.theme-carbon .cw-x:hover { background: rgba(238, 251, 244, 0.08); color: #fff; }
+
+.theme-carbon .cw-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; }
+.theme-carbon .cw-status { font-size: 12.5px; font-weight: 500; color: var(--ah-mint); }
+.theme-carbon .cw-status[data-state="error"] { color: #FCA5A5; }
+.theme-carbon .cw-status[data-state="warn"]  { color: #FCD34D; }
+.theme-carbon .cw-timer { font-size: 13px; color: var(--ah-on-dark); }
+
+.theme-carbon .cw-actions { display: flex; gap: 8px; margin-top: 14px; }
+.theme-carbon .cw-btn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 12px; border-radius: 11px; font-size: 13px; font-weight: 500;
+  transition: background .15s ease, opacity .15s ease;
+}
+.theme-carbon .cw-mute { background: rgba(238, 251, 244, 0.08); color: var(--ah-on-dark); }
+.theme-carbon .cw-mute:hover { background: rgba(238, 251, 244, 0.14); }
+.theme-carbon .cw-mute.is-muted { background: rgba(16, 185, 129, 0.2); color: var(--ah-mint); }
+.theme-carbon .cw-hang { background: #E11D48; color: #fff; }
+.theme-carbon .cw-hang:hover { background: #BE123C; }
+
 /* ---------- Scrollbars ---------- */
 
 .theme-carbon ::-webkit-scrollbar { width: 10px; height: 10px; }
