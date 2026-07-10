@@ -13,9 +13,7 @@
     <div class="px-6 pt-6 pb-5 border-b border-[#E9ECF1]">
       <div class="flex items-start justify-between gap-3">
         <div class="flex items-center gap-4 min-w-0">
-          <div class="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 grid place-items-center text-white font-semibold text-xl" style="box-shadow:0 10px 24px -10px rgba(5,150,105,.6);">
-            <%= @customer.name.first.upcase %>
-          </div>
+          <%= customer_avatar(@customer, size: 56, css: "rounded-2xl shrink-0 ring-1 ring-[#E9ECF1]") %>
           <div class="min-w-0">
             <div class="cb-eyebrow mb-1">customer // profile</div>
             <h2 class="text-[22px] font-semibold tracking-tight text-[#0F172A] truncate"><%= @customer.name %></h2>
@@ -44,6 +42,34 @@
           <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         <% end %>
       </div>
+    </div>
+
+    <!-- Lead score -->
+    <div class="px-6 py-5 border-b border-[#E9ECF1]" data-controller="lead-score"
+         data-lead-score-url-value="<%= calculate_lead_score_customer_path(@customer) %>"
+         data-lead-score-preview-url-value="<%= preview_customer_path(@customer) %>">
+      <div class="flex items-center justify-between mb-3">
+        <div class="cb-eyebrow">lead score</div>
+        <button type="button" data-action="lead-score#recalc" data-lead-score-target="button"
+                class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition">
+          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span data-lead-score-target="buttonLabel"><%= @customer.lead_score.present? ? 'Recalculate' : 'Score now' %></span>
+        </button>
+      </div>
+
+      <% if @customer.lead_score.present? %>
+        <div class="flex items-baseline gap-2">
+          <span class="cb-mono text-[34px] leading-none font-semibold <%= @customer.lead_score_color %>"><%= @customer.lead_score %></span>
+          <span class="text-xs text-[#94A3B8]">/ 100</span>
+          <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium <%= @customer.lead_score_color %>" style="background:rgba(5,150,105,.08)"><%= @customer.lead_score_badge %></span>
+        </div>
+        <div class="cb-meter mt-3"><span style="width: <%= @customer.lead_score %>%"></span></div>
+        <% if @customer.lead_score_reason.present? %>
+          <p class="mt-2.5 text-xs text-[#64748B] leading-relaxed"><span class="cb-eyebrow !text-[#94A3B8]">ai</span> <%= @customer.lead_score_reason %></p>
+        <% end %>
+      <% else %>
+        <p class="text-sm text-[#94A3B8]">Not scored yet — click <span class="text-emerald-700 font-medium">Score now</span>.</p>
+      <% end %>
     </div>
 
     <!-- Contact -->

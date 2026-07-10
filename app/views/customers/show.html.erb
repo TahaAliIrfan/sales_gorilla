@@ -40,9 +40,7 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
       <div class="flex items-start space-x-6">
         <div class="flex-shrink-0">
-          <div class="h-24 w-24 rounded-full bg-gradient-to-br from-emerald-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-            <%= @customer.name.first.upcase %>
-          </div>
+          <%= customer_avatar(@customer, size: 96, css: "rounded-2xl shadow-lg ring-1 ring-[#E9ECF1]") %>
         </div>
         
         <div class="flex-1 min-w-0">

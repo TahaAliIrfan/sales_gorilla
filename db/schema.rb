@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_10_021424) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_10_023053) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -351,6 +351,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_10_021424) do
     t.string "phone_carrier"
     t.datetime "phone_lookup_checked_at"
     t.string "phone_country_code"
+    t.text "lead_score_reason"
     t.index ["area_code"], name: "index_customers_on_area_code"
     t.index ["browser_id"], name: "index_customers_on_browser_id"
     t.index ["carrier"], name: "index_customers_on_carrier"

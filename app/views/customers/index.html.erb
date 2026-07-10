@@ -383,9 +383,7 @@
                 <%= link_to preview_customer_path(customer),
                       class: "flex items-center gap-3 min-w-0 flex-1",
                       data: { turbo_frame: "customer_preview", action: "split-view#select" } do %>
-                  <div class="h-9 w-9 shrink-0 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 grid place-items-center text-white font-semibold text-sm">
-                    <%= customer.name.first.upcase %>
-                  </div>
+                  <%= customer_avatar(customer, size: 36, css: "rounded-lg shrink-0 ring-1 ring-[#E9ECF1]") %>
                   <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2">
                       <span class="text-sm font-medium text-[#0F172A] truncate"><%= customer.name %></span>
@@ -396,7 +394,10 @@
                       <span class="cb-mono text-[10.5px] text-[#94A3B8] truncate"><%= customer.company.presence || customer.phone %></span>
                     </div>
                   </div>
-                  <div class="hidden sm:flex flex-col items-end shrink-0 cb-mono text-[10.5px] text-[#94A3B8]">
+                  <% if customer.lead_score.present? %>
+                    <span class="hidden sm:inline-flex flex-col items-center justify-center shrink-0 h-9 w-9 rounded-lg cb-mono text-sm font-semibold <%= customer.lead_score_color %>" style="background:rgba(5,150,105,.07)" title="Lead score: <%= customer.lead_score %>/100 (<%= customer.lead_score_badge %>)"><%= customer.lead_score %></span>
+                  <% end %>
+                  <div class="hidden md:flex flex-col items-end shrink-0 cb-mono text-[10.5px] text-[#94A3B8]">
                     <span><%= customer.total_call_attempts %>c · <%= customer.messages.where(direction: 'outbound').count %>m</span>
                     <span class="truncate max-w-[90px]"><%= customer.user&.name || '—' %></span>
                   </div>

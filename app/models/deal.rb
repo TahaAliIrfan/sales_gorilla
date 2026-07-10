@@ -17,6 +17,8 @@ class Deal < ApplicationRecord
   
   # Lifecycle hooks for Meta tracking
   after_save :track_meta_conversions_deal_events
+  # Keep the customer's lead score in sync as deals move through the pipeline.
+  after_commit :rescore_customer, on: [:create, :update, :destroy]
   
   enum status: {
     active: 'active',
@@ -36,6 +38,12 @@ class Deal < ApplicationRecord
   scope :won, -> { where(status: 'won') }
   scope :lost, -> { where(status: 'lost') }
   
+  # Recompute the customer's rule-based lead score (cheap, no AI) after the deal
+  # changes, so pipeline progress is reflected in the score.
+  def rescore_customer
+    customer&.recompute_lead_score!
+  end
+
   # Log an activity for this deal
   def log_activity(user, action, details = nil)
     deal_activities.create(

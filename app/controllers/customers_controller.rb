@@ -584,7 +584,10 @@ class CustomersController < ApplicationController
     authorize @customer
 
     begin
-     @customer.calculate_lead_score
+      # Run the full score (rules + Claude AI quality) inline so the UI can show
+      # the fresh result immediately.
+      LeadScoringService.new(@customer).refresh!(run_ai: true)
+      @customer.reload
 
       respond_to do |format|
         format.html { redirect_to @customer, notice: 'Lead score calculated successfully.' }
@@ -594,6 +597,7 @@ class CustomersController < ApplicationController
             lead_score: @customer.lead_score,
             geographic_score: @customer.geographic_score,
             description_score: @customer.description_score,
+            lead_score_reason: @customer.lead_score_reason,
             lead_score_badge: @customer.lead_score_badge,
             lead_score_color: @customer.lead_score_color,
             updated_at: @customer.lead_score_updated_at&.strftime('%b %d, %Y at %I:%M %p')

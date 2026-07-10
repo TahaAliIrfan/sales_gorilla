@@ -412,9 +412,18 @@ class Customer < ApplicationRecord
     end
   end
 
+  # Full (re)score including the Claude AI quality read — runs in the background
+  # (used on create and by the manual "Recalculate" action, which runs it inline).
   def calculate_lead_score
-    #scoring_service = LeadScoringService.new(self)
-    #scoring_service.calculate_score
+    LeadScoreWorker.perform_async(id, true)
+  end
+
+  # Cheap, AI-free recompute of the rule-based signals (keeps the cached AI
+  # quality score). Called when calls/deals change so the score stays live.
+  def recompute_lead_score!
+    LeadScoringService.new(self).refresh!(run_ai: false)
+  rescue => e
+    Rails.logger.error("recompute_lead_score! failed for customer #{id}: #{e.message}")
   end
 
   def lead_score_color
@@ -452,6 +461,7 @@ class Customer < ApplicationRecord
       details: "Call attempt ##{total_call_attempts}",
       user_id: user_id || User.first&.id
     )
+    recompute_lead_score!
   end
 
   # Track a successful call - called when a call exceeds 60 seconds
@@ -465,6 +475,7 @@ class Customer < ApplicationRecord
       details: "Total successful calls: #{successful_call_attempts}",
       user_id: user_id || User.first&.id
     )
+    recompute_lead_score!
   end
 
   # Calculate call success rate as a percentage
