@@ -104,32 +104,20 @@ class SendCostEstimatePdfJob
         Rails.logger.warn("SendCostEstimatePdfJob: Customer #{customer.id} has no email address, skipping email")
       end
 
-      # Send over WhatsApp via the Twilio US number using the approved media
-      # template. The PDF rides in as the {{1}} media variable (its signed_id),
-      # so it works outside the 24h freeform window. Non-fatal: a Twilio error
-      # is logged, never raised, so it can't undo the email or retry endlessly.
+      # Send over WhatsApp. US/Canada (+1) recipients can't receive our Twilio
+      # WhatsApp templates — Meta blocks marketing-category templates to US
+      # numbers (Twilio error 63049) — so route them through the Tecaudex
+      # green-api WhatsApp number as a freeform document instead. Everyone else
+      # keeps the Twilio US approved-template path, which works outside the 24h
+      # freeform window. Non-fatal in both cases: any WhatsApp error is logged,
+      # never raised, so it can't undo the email or retry endlessly.
       unless already_sent_whatsapp
-        signed_id = cost_estimate.pdf_file.attached? ? cost_estimate.pdf_file.blob.signed_id : nil
-
-        if customer.phone.present? && signed_id.present?
-          begin
-            Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via Twilio WhatsApp template to #{customer.phone}")
-            response = TwilioWhatsappService.new.send_template(
-              to_phone:          customer.phone,
-              content_sid:       WHATSAPP_REPORT_TEMPLATE_SID,
-              content_variables: { '1' => signed_id }
-            )
-            if response[:success]
-              Rails.logger.info("SendCostEstimatePdfJob: Twilio WhatsApp sent (sid: #{response[:sid]}, status: #{response[:status]})")
-              persist_whatsapp_message(customer, cost_estimate, response, filename)
-            else
-              Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp failed: #{response[:error]}")
-            end
-          rescue => e
-            Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp error: #{e.message}")
-          end
+        if customer.phone.blank?
+          Rails.logger.warn("SendCostEstimatePdfJob: skipping WhatsApp — no phone for customer #{customer.id}")
+        elsif us_number?(customer.phone)
+          send_via_tecaudex(customer, pdf_binary, filename)
         else
-          Rails.logger.warn("SendCostEstimatePdfJob: skipping WhatsApp — missing phone or PDF for customer #{customer.id}")
+          send_via_twilio_template(customer, cost_estimate, filename)
         end
       end
 
@@ -142,6 +130,58 @@ class SendCostEstimatePdfJob
   end
 
   private
+
+  # US/Canada numbers (NANP, +1). Meta blocks our marketing-category Twilio
+  # WhatsApp templates to these recipients (error 63049), so they're sent via
+  # the Tecaudex green-api number instead.
+  def us_number?(phone)
+    phone.to_s.delete(' ').start_with?('+1')
+  end
+
+  # Twilio US approved-template path — the PDF rides in as the {{1}} media
+  # variable (its Active Storage signed_id) so it delivers outside the 24h
+  # freeform window. Used for all non-US recipients.
+  def send_via_twilio_template(customer, cost_estimate, filename)
+    signed_id = cost_estimate.pdf_file.attached? ? cost_estimate.pdf_file.blob.signed_id : nil
+    unless signed_id.present?
+      Rails.logger.warn("SendCostEstimatePdfJob: skipping WhatsApp — no PDF for customer #{customer.id}")
+      return
+    end
+
+    Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via Twilio WhatsApp template to #{customer.phone}")
+    response = TwilioWhatsappService.new.send_template(
+      to_phone:          customer.phone,
+      content_sid:       WHATSAPP_REPORT_TEMPLATE_SID,
+      content_variables: { '1' => signed_id }
+    )
+    if response[:success]
+      Rails.logger.info("SendCostEstimatePdfJob: Twilio WhatsApp sent (sid: #{response[:sid]}, status: #{response[:status]})")
+      persist_whatsapp_message(customer, cost_estimate, response, filename)
+    else
+      Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp failed: #{response[:error]}")
+    end
+  rescue => e
+    Rails.logger.error("SendCostEstimatePdfJob: Twilio WhatsApp error: #{e.message}")
+  end
+
+  # Tecaudex green-api path — sends the proposal PDF as a freeform document
+  # from the Tecaudex WhatsApp number. Used for US/CA recipients that Meta
+  # won't deliver Twilio marketing templates to.
+  def send_via_tecaudex(customer, pdf_binary, filename)
+    chat_id = customer.whatsapp_chat_id.presence ||
+              "#{customer.phone.to_s.delete(' ').gsub(/\A\+/, '')}@c.us"
+    caption = "Hi #{customer.name}, here's your project proposal from Tecaudex."
+
+    Rails.logger.info("SendCostEstimatePdfJob: Sending PDF via Tecaudex (green-api) WhatsApp to #{chat_id}")
+    response = WhatsappMessageService.new.send_media_message(chat_id, pdf_binary, filename, caption, customer)
+    if response[:success]
+      Rails.logger.info("SendCostEstimatePdfJob: Tecaudex WhatsApp sent to #{chat_id}")
+    else
+      Rails.logger.error("SendCostEstimatePdfJob: Tecaudex WhatsApp failed: #{response[:error]}")
+    end
+  rescue => e
+    Rails.logger.error("SendCostEstimatePdfJob: Tecaudex WhatsApp error: #{e.message}")
+  end
 
   # Save the outbound proposal as a whatsapp_messages record so it shows up in
   # the customer's WhatsApp US chat thread (mirrors WhatsappUsController#persist_outbound).
