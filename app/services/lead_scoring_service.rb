@@ -39,7 +39,7 @@ class LeadScoringService
     total
   end
 
-  # ---- deterministic signals (0-70) ----
+  # ---- deterministic signals (clamped with AI to 0-100) ----
 
   def rule_score
     status_points + call_points + deal_points + message_points
@@ -62,26 +62,35 @@ class LeadScoringService
     [(@customer.successful_call_attempts.to_i * 8) + [@customer.total_call_attempts.to_i, 2].min, 20].min
   end
 
-  # Deals: existence + pipeline progression + won + value (0-25)
+  # Deals & pipeline stage (0-30). Having a deal is a strong signal; how far it
+  # has advanced through its pipeline scales it up, and a won deal maxes it out.
   def deal_points
     deals = @customer.deals.to_a
     return 0 if deals.empty?
+    return 30 if deals.any? { |d| d.status == "won" }
 
-    pts = 8
-    pts += 12 if deals.any? { |d| d.status == "won" }
+    pts = 10 # has an active deal in play
 
-    # furthest stage reached, relative to the pipeline length
-    positions = deals.map { |d| d.deal_stage&.position }.compact
-    if positions.any?
-      max_pos = DealStage.maximum(:position).to_i
-      pts += ((positions.max.to_f / [max_pos, 1].max) * 9).round if max_pos.positive?
+    # Deepest stage reached, measured against that deal's own pipeline length.
+    pts += (best_stage_fraction(deals) * 15).round
+
+    # A sizeable open deal adds a little more.
+    pts += 5 if deals.map { |d| d.amount.to_f }.max >= 20_000
+
+    [pts, 30].min
+  end
+
+  # How far (0.0–1.0) the furthest-advanced deal has moved through its pipeline.
+  def best_stage_fraction(deals)
+    fractions = deals.filter_map do |deal|
+      stage = deal.deal_stage
+      next unless stage&.position
+      pipeline_max = DealStage.where(pipeline_id: stage.pipeline_id).maximum(:position).to_i
+      pipeline_max.positive? ? (stage.position.to_f / pipeline_max) : 0.0
     end
-
-    top_amount = deals.map { |d| d.amount.to_f }.max
-    pts += 8 if top_amount >= 20_000
-    pts += 4 if top_amount.between?(5_000, 19_999.99)
-
-    [pts, 25].min
+    fractions.max || 0.0
+  rescue
+    0.0
   end
 
   # Two-way messaging (0-5) — the lead replied.
