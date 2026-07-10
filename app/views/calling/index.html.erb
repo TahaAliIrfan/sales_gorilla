@@ -1,158 +1,129 @@
 <!-- Main container with Stimulus controller -->
-<div data-controller="calling" class="max-w-5xl mx-auto">
-  <!-- Mobile menu button for sidebar (visible only on mobile) -->
+<div data-controller="calling" class="max-w-xl mx-auto">
+  <!-- Mobile menu button (visible only on mobile) -->
   <div class="lg:hidden mb-4">
     <button type="button" class="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-emerald-500" id="mobile-menu-button">
       <span class="sr-only">Open sidebar</span>
-      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-      </svg>
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
     </button>
   </div>
 
-  <h1 class="text-3xl font-bold text-gray-900 mb-6 flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-    </svg>
-    Virtual Phone System
-  </h1>
-
-  <!-- Status message bar that appears at the top -->
-  <div data-calling-target="callStatus" class="bg-emerald-50 text-emerald-800 p-4 rounded-lg mb-5 shadow-sm flex items-center">
-    <span data-calling-target="statusMessage" class="flex items-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-emerald-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      Initializing phone system...
-    </span>
+  <!-- Header -->
+  <div class="mb-6 text-center">
+    <div class="cb-eyebrow mb-1.5">telephony // dialer</div>
+    <h1 class="text-[28px] font-semibold tracking-tight text-[#0F172A]">Virtual Phone</h1>
+    <p class="mt-1.5 text-sm text-[#64748B]">Call any customer straight from the browser.</p>
   </div>
 
-  <div class="grid grid-cols-1 gap-6 flex justify-center">
-    <!-- Phone Interface -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100 max-w-lg mx-auto w-full">
-      <div class="bg-gradient-to-r from-emerald-600 to-emerald-800 text-white p-5 flex justify-between items-center">
-        <h3 class="text-xl font-bold m-0 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-          </svg>
-          Virtual Caller
-        </h3>
+  <!-- Dialer card -->
+  <div class="ah-card !p-0 overflow-hidden">
+    <!-- Header (dark airhive panel, static branding) -->
+    <div class="ah-panel !rounded-none px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <span class="grid place-items-center h-8 w-8 rounded-lg shrink-0" style="background:linear-gradient(135deg,#059669,#10B981);box-shadow:0 6px 16px -6px rgba(5,150,105,.7)">
+          <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+        </span>
+        <span class="text-sm font-medium" style="color:var(--ah-on-dark)">Virtual Caller</span>
       </div>
-      <div class="p-6">
-        <!-- Customer Search -->
-        <div class="mb-5 relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input 
-            type="text" 
-            id="customer-search" 
-            placeholder="Search customers by name..." 
-            class="pl-10 w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150"
-            data-action="input->calling#filterCustomers">
-        </div>
-        
-        <!-- Customer Selection -->
-        <div class="mb-5">
-          <label for="customer-select" class="block mb-2 font-medium text-gray-700">Select Customer:</label>
-          <div class="relative">
-            <select data-calling-target="customerSelect" data-action="calling#onCustomerSelect" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none bg-white transition duration-150">
-              <option value="">Select a customer...</option>
-              <% @customers.each do |customer| %>
-                <option value="<%= customer.id %>" 
-                        data-phone="<%= customer.phone %>" 
-                        data-customer-name="<%= customer.name.downcase %>"
-                        <%= 'selected' if @selected_customer&.id == customer.id %>>
-                  <%= customer.name %> (<%= customer.phone %>)
-                </option>
-              <% end %>
-            </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
+      <span class="cb-eyebrow" style="color:var(--ah-mint)">twilio voice</span>
+    </div>
 
-        <div class="mb-5 space-y-4">
-          <div>
-            <label for="caller-id" class="block mb-2 font-medium text-gray-700">Caller ID:</label>
-            <div class="relative">
-              <select data-calling-target="callerId" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 appearance-none bg-white transition duration-150">
-                <% if @twilio_numbers.present? %>
-                  <% @twilio_numbers.each do |number| %>
-                    <% country_label = get_country_label(number[:phone_number]) %>
-                    <option value="<%= number[:phone_number] %>"><%= country_label %> (<%= number[:phone_number] %>)</option>
-                  <% end %>
-                <% else %>
-                  <option value="+447897021964">UK Number (+447897021964)</option>
-                <% end %>
-              </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-                </svg>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <label for="phone-number" class="block mb-2 font-medium text-gray-700">Call To:</label>
-            <div class="flex">
-              <input type="tel" 
-                     data-calling-target="phoneNumber" 
-                     data-action="input->calling#onPhoneNumberInput"
-                     class="flex-grow border border-gray-300 rounded-l-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150" 
-                     placeholder="Enter phone number (e.g. +923001234567) or select customer" 
-                     value="<%= @phone_to_call %>">
-              <button data-calling-target="callButton" 
-                      data-action="calling#makeCall" 
-                      class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-r-lg opacity-50 cursor-not-allowed transition duration-150 flex items-center" 
-                      disabled>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <span class="hidden sm:inline">Call</span>
-              </button>
-            </div>
+    <div class="p-6 space-y-5">
+      <!-- Controller-managed status bar -->
+      <div data-calling-target="callStatus" class="bg-emerald-50 text-emerald-800 p-3.5 rounded-lg flex items-center text-sm">
+        <span data-calling-target="statusMessage" class="flex items-center">
+          <svg class="h-5 w-5 mr-2 text-emerald-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Initializing phone system…
+        </span>
+      </div>
+      <!-- Customer search -->
+      <div class="relative">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </div>
+        <input type="text" id="customer-search" placeholder="Search customers by name…"
+               class="pl-10 w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+               data-action="input->calling#filterCustomers">
+      </div>
+
+      <!-- Customer select -->
+      <div>
+        <label for="customer-select" class="cb-eyebrow block mb-1.5">customer</label>
+        <div class="relative">
+          <select data-calling-target="customerSelect" data-action="calling#onCustomerSelect"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+            <option value="">Select a customer…</option>
+            <% @customers.each do |customer| %>
+              <option value="<%= customer.id %>" data-phone="<%= customer.phone %>" data-customer-name="<%= customer.name.downcase %>" <%= 'selected' if @selected_customer&.id == customer.id %>>
+                <%= customer.name %> (<%= customer.phone %>)
+              </option>
+            <% end %>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+            <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
           </div>
         </div>
-        
-        <div data-calling-target="callControls" class="hidden">
-          <button data-calling-target="hangupButton" data-action="calling#hangUp" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg transition duration-150 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" />
-            </svg>
-            Hang Up
+      </div>
+
+      <!-- Caller ID + set default -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="caller-id" class="cb-eyebrow">caller id · call from</label>
+          <button type="button" data-action="calling#saveDefaultCallerId"
+                  class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-800 transition">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            Set as default
           </button>
-          
-          <div class="mt-5">
-            <label class="block mb-2 font-medium text-gray-700">Keypad</label>
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div class="grid grid-cols-3 gap-3 mb-3">
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="1">1</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="2">2</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="3">3</button>
-              </div>
-              <div class="grid grid-cols-3 gap-3 mb-3">
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="4">4</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="5">5</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="6">6</button>
-              </div>
-              <div class="grid grid-cols-3 gap-3 mb-3">
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="7">7</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="8">8</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="9">9</button>
-              </div>
-              <div class="grid grid-cols-3 gap-3">
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="*">*</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="0">0</button>
-                <button class="bg-white hover:bg-gray-100 py-4 rounded-lg shadow-sm text-lg font-medium transition duration-150" data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="#">#</button>
-              </div>
-            </div>
+        </div>
+        <div class="relative">
+          <select data-calling-target="callerId"
+                  class="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm appearance-none bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+            <% if @twilio_numbers.present? %>
+              <% @twilio_numbers.each do |number| %>
+                <% country_label = get_country_label(number[:phone_number]) %>
+                <option value="<%= number[:phone_number] %>" <%= 'selected' if current_user&.default_caller_id == number[:phone_number] %>><%= country_label %> (<%= number[:phone_number] %>)<%= ' — default' if current_user&.default_caller_id == number[:phone_number] %></option>
+              <% end %>
+            <% else %>
+              <option value="+447897021964" <%= 'selected' if current_user&.default_caller_id == '+447897021964' %>>UK Number (+447897021964)</option>
+            <% end %>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+            <svg class="fill-current h-4 w-4" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+          </div>
+        </div>
+        <p class="mt-1.5 text-[11px] text-[#94A3B8]">The saved default is also used by the quick-call widget across the app.</p>
+      </div>
+
+      <!-- Call To + call button -->
+      <div>
+        <label for="phone-number" class="cb-eyebrow block mb-1.5">call to</label>
+        <div class="flex gap-2">
+          <input type="tel" data-calling-target="phoneNumber" data-action="input->calling#onPhoneNumberInput"
+                 class="flex-grow border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
+                 placeholder="+923001234567 or pick a customer" value="<%= @phone_to_call %>">
+          <button data-calling-target="callButton" data-action="calling#makeCall"
+                  class="ah-pill !px-5 shrink-0 opacity-50 cursor-not-allowed" disabled>
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+            <span class="hidden sm:inline">Call</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- In-call controls -->
+      <div data-calling-target="callControls" class="hidden pt-1">
+        <button data-calling-target="hangupButton" data-action="calling#hangUp"
+                class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 font-medium">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z" /></svg>
+          Hang up
+        </button>
+
+        <div class="mt-5">
+          <label class="cb-eyebrow block mb-2">keypad</label>
+          <div class="grid grid-cols-3 gap-2.5">
+            <% %w[1 2 3 4 5 6 7 8 9 * 0 #].each do |d| %>
+              <button class="py-3.5 rounded-xl border border-[#E9ECF1] bg-white hover:bg-[#F6FBF8] hover:border-emerald-300 text-lg font-medium text-[#0F172A] transition cb-mono"
+                      data-calling-target="dtmf" data-action="calling#sendDigit" data-digit="<%= d %>"><%= d %></button>
+            <% end %>
           </div>
         </div>
       </div>
@@ -160,23 +131,17 @@
   </div>
 </div>
 
-<!-- Add modern icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <!-- Twilio Voice SDK via jsdelivr CDN -->
 <%= javascript_include_tag "https://cdn.jsdelivr.net/npm/@twilio/voice-sdk@2.15.0/dist/twilio.min.js", "data-turbo-track": "reload" %>
 
-<!-- JavaScript for mobile sidebar toggle -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     const mobileMenuButton = document.getElementById('mobile-menu-button');
     if (mobileMenuButton) {
       mobileMenuButton.addEventListener('click', function() {
         const sidebar = document.querySelector('.fixed.inset-y-0.left-0');
-        if (sidebar) {
-          sidebar.classList.toggle('-translate-x-full');
-        }
+        if (sidebar) sidebar.classList.toggle('-translate-x-full');
       });
     }
   });
-</script> 
+</script>

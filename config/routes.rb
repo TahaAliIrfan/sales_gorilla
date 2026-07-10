@@ -252,6 +252,7 @@ Rails.application.routes.draw do
   match 'calling/voice', to: 'calling#voice', via: [:get, :post]
   get 'calling/available_numbers', to: 'calling#available_numbers'
   post 'calling/store_customer_id', to: 'calling#store_customer_id'
+  post 'calling/set_default_number', to: 'calling#set_default_number', as: :calling_set_default_number
 
   # Call recording routes
   get 'calling/recordings', to: 'calling#recordings'

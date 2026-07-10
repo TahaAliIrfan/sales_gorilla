@@ -32,6 +32,30 @@ export default class extends Controller {
     this.updateCallButtonState()
   }
 
+  // Save the currently selected caller ID as this user's default (server-side),
+  // so it's used on every call path — the dialer, the floating widget, and the
+  // server-side fallback in CallingController#voice.
+  async saveDefaultCallerId(event) {
+    event.preventDefault()
+    if (!this.hasCallerIdTarget || !this.callerIdTarget.value) return
+    const value = this.callerIdTarget.value
+    try {
+      const res = await fetch("/calling/set_default_number", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content,
+        },
+        body: JSON.stringify({ caller_id: value }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      window.localStorage && window.localStorage.setItem("crm.defaultCallerId", value)
+      this.showStatus(`Default calling number set to ${value}`, "success")
+    } catch (e) {
+      this.showStatus("Could not save default number. Please try again.", "error")
+    }
+  }
+
   // Handle customer selection
   onCustomerSelect(event) {
     const selectedOption = event.target.selectedOptions[0]

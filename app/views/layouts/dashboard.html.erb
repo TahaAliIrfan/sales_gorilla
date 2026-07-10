@@ -16,7 +16,7 @@
   </head>
 
   <body class="h-full theme-carbon">
-    <div class="min-h-full" data-controller="mobile-menu cost-calculator call-widget">
+    <div class="min-h-full" data-controller="mobile-menu cost-calculator call-widget" data-call-widget-default-caller-id-value="<%= current_user&.default_caller_id %>">
       <!-- Mobile menu backdrop -->
       <div 
         data-mobile-menu-target="backdrop"

@@ -68,6 +68,17 @@ class CallingController < ApplicationController
     end
   end
 
+  # Persist the signed-in user's default outbound caller ID. Used by the dialer
+  # and the floating call widget, and enforced server-side in #voice.
+  def set_default_number
+    if current_user && params[:caller_id].present?
+      current_user.update(default_caller_id: params[:caller_id])
+      render json: { success: true, default_caller_id: current_user.default_caller_id }
+    else
+      render json: { success: false, error: "No number provided" }, status: :unprocessable_entity
+    end
+  end
+
   def voice
     begin
       # Get parameters from Twilio
@@ -104,7 +115,11 @@ class CallingController < ApplicationController
           user_id = identity.to_i > 0 ? identity.to_i : 1
         end
 
-        Rails.logger.info("Client-to-PSTN call - User: #{user_id}, Customer: #{customer_id}")
+        # Enforce the caller's saved default number whenever the client didn't
+        # send an explicit caller ID — so every call path uses the default.
+        caller_id = caller_id.presence || User.find_by(id: user_id)&.default_caller_id || '+447897021964'
+
+        Rails.logger.info("Client-to-PSTN call - User: #{user_id}, Customer: #{customer_id}, CallerId: #{caller_id}")
 
         # Track call attempt as soon as the call is initiated
         if customer.present?

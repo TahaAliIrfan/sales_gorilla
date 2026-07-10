@@ -13,6 +13,7 @@ const DEFAULT_CALLER_ID = "+447897021964"
 
 export default class extends Controller {
   static targets = ["panel", "name", "number", "status", "timer", "muteBtn"]
+  static values = { defaultCallerId: String }
 
   connect() {
     this.device = null
@@ -56,7 +57,7 @@ export default class extends Controller {
 
     try {
       this.currentCall = await this.device.connect({
-        params: { To: phone, caller_id: DEFAULT_CALLER_ID, customer_id: customerId || "" },
+        params: { To: phone, caller_id: this._callerId(), customer_id: customerId || "" },
       })
       this._bindCall()
       this._status("Ringing…", "info")
@@ -158,6 +159,18 @@ export default class extends Controller {
     if (!this.hasStatusTarget) return
     this.statusTarget.textContent = msg
     this.statusTarget.dataset.state = type
+  }
+
+  // Caller ID = the user's saved default (rendered server-side into the layout),
+  // then a same-session localStorage hint, else the fallback. The server also
+  // enforces the user default in CallingController#voice as a final safety net.
+  _callerId() {
+    if (this.hasDefaultCallerIdValue && this.defaultCallerIdValue) return this.defaultCallerIdValue
+    try {
+      return localStorage.getItem("crm.defaultCallerId") || DEFAULT_CALLER_ID
+    } catch (e) {
+      return DEFAULT_CALLER_ID
+    }
   }
 
   _csrf() {
