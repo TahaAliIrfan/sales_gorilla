@@ -10,7 +10,9 @@
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "carbon_theme", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   </head>
 
   <body class="h-full theme-carbon">
@@ -25,12 +27,12 @@
       <!-- Sidebar - hidden by default on mobile -->
       <div 
         data-mobile-menu-target="sidebar"
-        class="fixed inset-y-0 left-0 z-30 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full">
+        class="fixed inset-y-0 left-0 z-30 w-64 ah-sidebar transform transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full">
         <!-- Logo section -->
-        <div class="flex h-16 items-center justify-between px-6 bg-gray-800">
+        <div class="flex h-16 items-center justify-between px-6 ah-sidebar-brand">
           <span class="flex items-center gap-2.5 text-xl font-bold text-white">
-            <span class="inline-grid place-items-center w-7 h-7 rounded font-bold text-[15px]" style="background:linear-gradient(135deg,#059669,#10B981);color:#FFFFFF;font-family:'IBM Plex Mono',monospace;">T</span>
-            <span>tecaudex<span style="color:#6EE7B7">_crm</span></span>
+            <span class="inline-grid place-items-center w-7 h-7 rounded-lg font-bold text-[15px]" style="background:linear-gradient(135deg,#059669,#10B981);color:#FFFFFF;font-family:'Geist Mono',monospace;box-shadow:0 6px 16px -6px rgba(5,150,105,.7);">T</span>
+            <span style="letter-spacing:-.02em;">tecaudex<span style="color:#6EE7B7">_crm</span></span>
           </span>
           <!-- Close button for mobile -->
           <button 
@@ -256,7 +258,7 @@
       <!-- Main content - responsive padding for sidebar -->
       <div class="lg:pl-64" data-controller="customer-navigation" data-current-controller="<%= controller_name %>">
         <!-- Top navigation -->
-        <div class="bg-white shadow">
+        <div class="sticky top-0 z-10" style="background:rgba(255,255,255,.85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--ah-line);">
           <div class="flex h-16 items-center justify-between px-4 sm:px-6">
             <!-- Mobile menu button -->
             <button

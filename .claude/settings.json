@@ -72,7 +72,9 @@
       "Bash(pdftoppm -png -r 60 athleads.pdf ath)",
       "Bash(pdffonts /tmp/athleads.pdf)",
       "Bash(pdffonts /Users/taha/Desktop/Athleads_Pilot_Readiness_Report.pdf)",
-      "Bash(ruby -e ' *)"
+      "Bash(ruby -e ' *)",
+      "Bash(awk '/<style>/,/<\\\\/style>/' /tmp/pos_landing.html)",
+      "Bash(awk 'NR>=130' /Users/taha/rails_2025/tecaudex_crm/app/views/layouts/dashboard.html.erb)"
     ],
     "additionalDirectories": [
       "/tmp"

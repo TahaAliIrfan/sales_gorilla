@@ -1,49 +1,221 @@
 /*
- * App theme — clean light skin for the dashboard layout.
+ * App theme — "green airhive": the AirHive/POS design language ported into the
+ * CRM, with the brand emerald standing in for AirHive's blue accent.
  * Scoped under body.theme-carbon (set in layouts/dashboard.html.erb).
  *
- * The generic CRM pages (customers, deals, tasks, recordings, …) are built
- * with the standard Tailwind light vocabulary, so this file deliberately does
- * NOT remap those utilities or the sidebar — it only defines the shared
- * canvas/fonts/scrollbars and the cb-* helper classes used by the bespoke
- * dashboard and users views. Leaving the utilities alone lets every other
- * page keep its original light styling.
+ * Design language (mirrors tecaudex_pos' .ah system):
+ *   - Geist / Geist Mono type, tight display tracking, mono numerals & labels
+ *   - light canvas with dramatic near-black "blueprint" panels (faint grid + glow)
+ *   - generous rounding (16–32px), soft layered shadows, hairline borders
+ *   - a single confident accent used sparingly: emerald, not blue
  *
- * Palette (light):
- *   canvas #F6F7F9   panel #FFFFFF   hairline #E9ECF1
- *   ink    #0F172A   body  #334155   dim  #64748B   faint #94A3B8
- *   emerald #059669 (primary)   teal #0D9488   rose #E11D48   amber #D97706   violet #7C3AED
+ * The generic CRM pages keep their standard Tailwind light vocabulary; this
+ * file only defines the shared canvas/fonts/scrollbars, the airhive .ah-*
+ * primitives, and the cb-* helpers used by the bespoke dashboard / users views
+ * (now remapped onto the airhive look).
  */
 
 .theme-carbon {
-  background-color: #F6F7F9;
-  color: #0F172A;
-  font-family: 'Archivo', ui-sans-serif, system-ui, sans-serif;
+  /* ---- tokens (green) ---- */
+  --ah-bg:          #F6F7F9;   /* light canvas            */
+  --ah-surface:     #FFFFFF;   /* card surface            */
+  --ah-panel:       #0C0E12;   /* near-black blueprint    */
+  --ah-ink:         #0F172A;   /* primary text            */
+  --ah-muted:       #64748B;   /* secondary text          */
+  --ah-faint:       #94A3B8;   /* tertiary text           */
+  --ah-line:        rgba(15, 23, 42, 0.09);
+  --ah-line-2:      rgba(15, 23, 42, 0.14);
+  --ah-accent:      #059669;   /* emerald-600  (fills)    */
+  --ah-accent-2:    #047857;   /* emerald-700  (eyebrows) */
+  --ah-accent-br:   #10B981;   /* emerald-500  (glows)    */
+  --ah-mint:        #6EE7B7;   /* mint         (grid/hi)  */
+  --ah-on-dark:     #EEFBF4;   /* text on dark panel      */
+  --ah-muted-dk:    rgba(238, 251, 244, 0.60);
+
+  background-color: var(--ah-bg);
+  color: var(--ah-ink);
+  font-family: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-.theme-carbon ::selection { background: rgba(5, 150, 105, .16); color: #0F172A; }
+.theme-carbon ::selection { background: rgba(5, 150, 105, .18); color: #0F172A; }
 
-/* ---------- Helper classes for the bespoke dashboard / users views ---------- */
+.theme-carbon h1,
+.theme-carbon h2,
+.theme-carbon h3 {
+  font-family: 'Geist', sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
 
+/* ============================================================= *
+ *  AirHive primitives (.ah-*)                                    *
+ * ============================================================= */
+
+.theme-carbon .ah-mono,
 .theme-carbon .cb-mono {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-feature-settings: "tnum" 1;
+  font-family: 'Geist Mono', ui-monospace, 'IBM Plex Mono', monospace;
+  font-feature-settings: "tnum" 1, "ss01" 1;
 }
 
+/* Tiny colored uppercase eyebrow — the section marker */
+.theme-carbon .ah-eyebrow,
 .theme-carbon .cb-eyebrow {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: .2em;
+  font-family: 'Geist Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .18em;
   text-transform: uppercase;
-  color: #94A3B8;
+  color: var(--ah-accent-2);
 }
 
+/* White surface card: soft border + big soft shadow, generous radius */
+.theme-carbon .ah-card,
 .theme-carbon .cb-panel {
-  background: #FFFFFF;
-  border: 1px solid #E9ECF1;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 1px 3px rgba(15, 23, 42, .06);
+  position: relative;
+  background: var(--ah-surface);
+  border: 1px solid var(--ah-line);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, .03),
+    0 24px 48px -32px rgba(15, 23, 42, .22);
 }
+.theme-carbon .ah-card { border-radius: 24px; padding: 1.75rem; }
+
+/* Dark blueprint panel: near-black + faint mint grid + edge vignette glow */
+.theme-carbon .ah-panel {
+  position: relative;
+  overflow: hidden;
+  color: var(--ah-on-dark);
+  background-color: var(--ah-panel);
+  background-image:
+    linear-gradient(rgba(110, 231, 183, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 231, 183, 0.07) 1px, transparent 1px);
+  background-size: 48px 48px;
+  border-radius: 24px;
+}
+.theme-carbon .ah-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(16, 185, 129, 0.22), transparent 55%),
+    radial-gradient(90% 70% at 50% 120%, rgba(12, 14, 18, 0.9), transparent 60%);
+}
+.theme-carbon .ah-panel > * { position: relative; z-index: 1; }
+
+/* Rich green gradient panel (airhive's .ah-blue, greened) */
+.theme-carbon .ah-green {
+  color: #EAFBF3;
+  background: radial-gradient(120% 120% at 0% 0%, #10B981 0%, #047857 45%, #053B2E 100%);
+  border-radius: 24px;
+}
+
+/* Primary pill button: emerald fill, white text, colored glow */
+.theme-carbon .ah-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--ah-accent);
+  color: #fff;
+  box-shadow: 0 8px 24px -8px rgba(5, 150, 105, 0.6);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.theme-carbon .ah-pill:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px -10px rgba(5, 150, 105, 0.78);
+}
+
+/* Dark pill button */
+.theme-carbon .ah-pill-dark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--ah-ink);
+  color: #fff;
+  transition: opacity .2s ease;
+}
+.theme-carbon .ah-pill-dark:hover { opacity: .85; }
+
+/* Text/ghost button */
+.theme-carbon .ah-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.7rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: inherit;
+  transition: opacity .2s ease;
+}
+.theme-carbon .ah-ghost:hover { opacity: .6; }
+
+/* Giant gradient-clipped wordmark */
+.theme-carbon .ah-wordmark {
+  font-family: 'Geist', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 0.82;
+  background: linear-gradient(180deg, #0C0E12 0%, #0C0E12 48%, rgba(12, 14, 18, 0) 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  user-select: none;
+}
+
+/* ============================================================= *
+ *  Sidebar chrome — near-black airhive panel, emerald active     *
+ * ============================================================= */
+
+.theme-carbon .ah-sidebar {
+  background-color: var(--ah-panel);
+  background-image: radial-gradient(120% 40% at 50% -8%, rgba(16, 185, 129, 0.16), transparent 60%);
+  border-right: 1px solid rgba(238, 251, 244, 0.06);
+}
+.theme-carbon .ah-sidebar-brand {
+  background: transparent;
+  border-bottom: 1px solid rgba(238, 251, 244, 0.07);
+  font-family: 'Geist', sans-serif;
+}
+
+/* Nav links (Tailwind gray utilities re-skinned within the sidebar scope) */
+.theme-carbon .ah-sidebar a,
+.theme-carbon .ah-sidebar button {
+  position: relative;
+  color: rgba(238, 251, 244, 0.62);
+  border-radius: 10px;
+  transition: color .15s ease, background-color .15s ease;
+}
+.theme-carbon .ah-sidebar a svg,
+.theme-carbon .ah-sidebar button svg { color: rgba(238, 251, 244, 0.42); transition: color .15s ease; }
+
+.theme-carbon .ah-sidebar a:hover,
+.theme-carbon .ah-sidebar button:hover {
+  color: #fff;
+  background-color: rgba(238, 251, 244, 0.06);
+}
+.theme-carbon .ah-sidebar a:hover svg,
+.theme-carbon .ah-sidebar button:hover svg { color: var(--ah-mint); }
+
+/* Active link = the conditional .bg-gray-800 emitted by the layout */
+.theme-carbon .ah-sidebar .bg-gray-800 {
+  color: #fff;
+  background-color: rgba(16, 185, 129, 0.14);
+  box-shadow: inset 2px 0 0 var(--ah-accent-br);
+}
+.theme-carbon .ah-sidebar .bg-gray-800 svg { color: var(--ah-mint); }
+
+/* ---------- meters & pills (dashboard/users bespoke views) ---------- */
 
 .theme-carbon .cb-meter {
   height: 5px;
@@ -55,20 +227,69 @@
   display: block;
   height: 100%;
   border-radius: 3px;
-  background: linear-gradient(90deg, #047857, #34D399);
+  background: linear-gradient(90deg, var(--ah-accent-2), var(--ah-mint));
 }
 
 .theme-carbon .cb-pill {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: .08em;
   padding: 2.5px 8px;
   border: 1px solid;
-  border-radius: 5px;
+  border-radius: 6px;
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
 }
+
+/* ============================================================= *
+ *  Global elevation — airhive polish for the standard CRM pages  *
+ *  Additive: re-skins the common Tailwind card/button/input      *
+ *  vocabulary app-wide (every page inherits .theme-carbon) so    *
+ *  all ~116 views adopt the look without per-file edits.         *
+ * ============================================================= */
+
+/* Form controls don't inherit font-family by default — pull in Geist */
+.theme-carbon button,
+.theme-carbon input,
+.theme-carbon select,
+.theme-carbon textarea { font-family: inherit; }
+
+/* White cards → hairline border + soft layered airhive shadow */
+.theme-carbon .bg-white.rounded-lg,
+.theme-carbon .bg-white.rounded-xl,
+.theme-carbon .bg-white.rounded-2xl {
+  border-color: var(--ah-line);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, .03),
+    0 24px 48px -32px rgba(15, 23, 42, .20);
+}
+.theme-carbon .bg-white.rounded-lg { border-width: 1px; border-style: solid; }
+.theme-carbon .bg-white.rounded-xl { border-width: 1px; border-style: solid; }
+
+/* Tame the stock-heavy Tailwind shadows into the airhive soft shadow */
+.theme-carbon .bg-white.shadow-md,
+.theme-carbon .bg-white.shadow-lg,
+.theme-carbon .bg-white.shadow-xl {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, .03),
+    0 30px 60px -34px rgba(15, 23, 42, .26);
+}
+
+/* Emerald primary buttons → subtle airhive glow */
+.theme-carbon .bg-emerald-600,
+.theme-carbon .bg-emerald-500 {
+  box-shadow: 0 8px 22px -10px rgba(5, 150, 105, .55);
+}
+.theme-carbon .bg-emerald-600:hover,
+.theme-carbon .bg-emerald-500:hover {
+  box-shadow: 0 14px 30px -12px rgba(5, 150, 105, .72);
+}
+
+/* Inputs: calmer resting border, emerald focus already set in views */
+.theme-carbon input:not([type=checkbox]):not([type=radio]),
+.theme-carbon select,
+.theme-carbon textarea { border-radius: 10px; }
 
 /* ---------- Scrollbars ---------- */
 
@@ -76,6 +297,6 @@
 .theme-carbon ::-webkit-scrollbar-thumb {
   background: rgba(15, 23, 42, .18);
   border-radius: 99px;
-  border: 2px solid #F6F7F9;
+  border: 2px solid var(--ah-bg);
 }
 .theme-carbon ::-webkit-scrollbar-track { background: transparent; }

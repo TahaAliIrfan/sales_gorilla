@@ -12,16 +12,22 @@
 
 <div class="px-4 sm:px-6 lg:px-8 py-8 min-h-screen max-w-[1240px] mx-auto">
 
-  <!-- Header -->
-  <div class="mb-7 flex items-end justify-between">
-    <div>
-      <div class="cb-eyebrow mb-1">overview // dashboard</div>
-      <h1 class="text-[26px] font-bold tracking-tight text-[#0F172A]">
-        Welcome back, <%= current_user.name || current_user.email %>
-      </h1>
-    </div>
-    <div class="cb-mono text-[11px] text-[#94A3B8] hidden sm:block">
-      <%= @today.strftime('%a %d %b %Y').upcase %>
+  <!-- Header — airhive blueprint hero -->
+  <div class="ah-panel mb-7 px-7 py-8 sm:px-9 sm:py-9">
+    <div class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <div class="cb-eyebrow mb-2" style="color:var(--ah-mint);">overview // dashboard</div>
+        <h1 class="text-[26px] sm:text-[32px] font-semibold tracking-tight" style="color:var(--ah-on-dark);">
+          Welcome back, <%= current_user.name || current_user.email %>
+        </h1>
+        <p class="mt-2 text-sm" style="color:var(--ah-muted-dk);">Here's where things stand across your pipeline today.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="cb-mono text-[11px]" style="color:var(--ah-muted-dk);"><%= @today.strftime('%a %d %b %Y').upcase %></span>
+        <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] cb-mono" style="background:rgba(16,185,129,.14);color:var(--ah-mint);border:1px solid rgba(16,185,129,.25);">
+          <span style="width:6px;height:6px;border-radius:99px;background:var(--ah-mint);box-shadow:0 0 8px var(--ah-mint);"></span>LIVE
+        </span>
+      </div>
     </div>
   </div>
 
