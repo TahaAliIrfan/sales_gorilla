@@ -160,21 +160,34 @@ class EmailsController < ApplicationController
     end
   end
   
+  # Sync this customer's emails from the ASSIGNED user's Gmail (not the viewer's).
   def fetch
-    unless current_user.google_auth_configured?
-      flash[:error] = "Google OAuth is not configured for your account"
+    rep = @customer.user
+
+    unless rep
+      flash[:error] = "This customer isn't assigned to anyone, so there's no Gmail account to sync from."
       redirect_to customer_path(@customer, anchor: 'emails') and return
     end
 
-    gmail_service = GmailService.new(current_user)
-    emails = gmail_service.fetch_emails_for_customer(@customer)
-    
-    if emails.any?
-      flash[:success] = "Successfully fetched #{emails.count} emails"
-    else
-      flash[:notice] = "No new emails found"
+    unless rep.google_auth_configured?
+      flash[:error] = "#{rep.name}'s Google account isn't connected, so their emails can't be synced."
+      redirect_to customer_path(@customer, anchor: 'emails') and return
     end
-    
+
+    gmail_service = GmailService.new(rep)
+    emails = gmail_service.fetch_emails_for_customer(@customer)
+    @customer.update(last_email_fetched_at: Time.current)
+
+    if emails.any?
+      flash[:success] = "Synced #{emails.count} emails from #{rep.name}'s Gmail"
+    else
+      flash[:notice] = "No new emails found in #{rep.name}'s Gmail"
+    end
+
+    redirect_to customer_path(@customer, anchor: 'emails')
+  rescue Google::Apis::AuthorizationError, Signet::AuthorizationError => e
+    Rails.logger.warn("EmailsController#fetch auth error for customer #{@customer.id}: #{e.message}")
+    flash[:error] = "Couldn't access #{rep&.name}'s Gmail — authorization expired. They may need to reconnect Google in Settings."
     redirect_to customer_path(@customer, anchor: 'emails')
   end
   

@@ -4,7 +4,9 @@ class CustomerEmailFetchWorker
 
   SYNC_COOLDOWN = 5.minutes
 
-  def perform(customer_id, user_id)
+  # user_id is accepted for backwards compatibility but ignored — emails are
+  # always fetched from the customer's ASSIGNED user's Gmail.
+  def perform(customer_id, _user_id = nil)
     customer = Customer.find_by(id: customer_id)
     return unless customer
     return unless customer.email.present?
@@ -13,7 +15,7 @@ class CustomerEmailFetchWorker
       return
     end
 
-    user = User.find_by(id: user_id)
+    user = customer.user
     return unless user&.google_auth_configured?
 
     gmail_service = GmailService.new(user)
@@ -21,7 +23,7 @@ class CustomerEmailFetchWorker
 
     customer.update(last_email_fetched_at: Time.current)
   rescue Google::Apis::AuthorizationError, Signet::AuthorizationError => e
-    Rails.logger.warn("CustomerEmailFetchWorker: Auth error for user #{user_id} / customer #{customer_id}: #{e.message}")
+    Rails.logger.warn("CustomerEmailFetchWorker: Auth error for customer #{customer_id}: #{e.message}")
   rescue => e
     Rails.logger.error("CustomerEmailFetchWorker: Failed for customer #{customer_id}: #{e.message}")
     raise

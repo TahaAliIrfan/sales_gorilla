@@ -111,10 +111,9 @@ class CustomersController < ApplicationController
     @tasks = @customer.tasks.order(due_date: :asc)
     # Eager load attachments to prevent N+1 queries
     @emails = @customer.emails.with_attached_attachments.recent.limit(5)
-
-    if @customer.email.present? && current_user.google_auth_configured?
-      CustomerEmailFetchWorker.perform_async(@customer.id, current_user.id)
-    end
+    # Emails are no longer auto-fetched on page load — they sync only when the
+    # user presses "Sync", which pulls from the assigned rep's Gmail
+    # (see EmailsController#fetch).
   end
 
   # Lightweight detail pane for the split-view customers list. Rendered into a
