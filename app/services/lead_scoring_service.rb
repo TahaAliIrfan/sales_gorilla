@@ -1,8 +1,8 @@
-require "net/http"
+require "openai"
 require "json"
 
 # Lead scoring — a transparent 0-100 score combining deterministic CRM signals
-# (always available, updates as calls/deals progress) with an optional Claude AI
+# (always available, updates as calls/deals progress) with an optional AI
 # quality read of the lead's own words (description + recent messages + call
 # transcripts). No name/ethnicity heuristics.
 #
@@ -11,9 +11,10 @@ require "json"
 # Use `run_ai: false` for the cheap live recompute triggered by call/deal events;
 # `run_ai: true` (default) re-reads the qualitative signal and caches it.
 class LeadScoringService
-  CLAUDE_API_URL   = "https://api.anthropic.com/v1/messages"
-  CLAUDE_MODEL     = "claude-sonnet-4-6"
-  ANTHROPIC_VERSION = "2023-06-01"
+  OPENAI_MODEL          = "gpt-5.5"
+  # Reasoning tokens share this budget, so keep it well above the small JSON
+  # answer or the visible content comes back empty.
+  MAX_COMPLETION_TOKENS = 4000
 
   def initialize(customer)
     @customer = customer
@@ -101,11 +102,11 @@ class LeadScoringService
   # ---- AI qualitative read (0-30) ----
 
   def ai_quality
-    api_key = ENV["ANTHROPIC_API_KEY"] || Rails.application.credentials.dig(:anthropic, :api_key)
+    api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
     return nil if api_key.blank?
 
     prompt = build_prompt
-    content = claude(prompt, api_key)
+    content = openai(prompt, api_key)
     return nil unless content
 
     json = extract_json(content)
@@ -193,29 +194,18 @@ class LeadScoringService
     nil
   end
 
-  def claude(prompt, api_key)
-    uri = URI.parse(CLAUDE_API_URL)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.read_timeout = 30
-
-    request = Net::HTTP::Post.new(uri.path)
-    request["content-type"]     = "application/json"
-    request["x-api-key"]        = api_key
-    request["anthropic-version"] = ANTHROPIC_VERSION
-    request.body = {
-      model: CLAUDE_MODEL,
-      max_tokens: 400,
-      messages: [{ role: "user", content: prompt }]
-    }.to_json
-
-    response = http.request(request)
-    if response.code == "200"
-      JSON.parse(response.body).dig("content", 0, "text")
-    else
-      Rails.logger.error("Claude lead-score API error: #{response.code} - #{response.body}")
-      nil
-    end
+  def openai(prompt, api_key)
+    client = OpenAI::Client.new(access_token: api_key, request_timeout: 60)
+    response = client.chat(parameters: {
+      model: OPENAI_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      max_completion_tokens: MAX_COMPLETION_TOKENS
+    })
+    response.dig("choices", 0, "message", "content")
+  rescue Faraday::Error => e
+    body = e.respond_to?(:response) ? e.response&.dig(:body) : nil
+    Rails.logger.error("OpenAI lead-score API error: #{e.message} - #{body}")
+    nil
   end
 
   def extract_json(text)
