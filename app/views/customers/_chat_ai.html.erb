@@ -1,5 +1,8 @@
 <div data-controller="ai-chat"
      data-ai-chat-customer-id-value="<%= customer.id %>"
+     data-ai-chat-customer-name-value="<%= customer.name %>"
+     data-ai-chat-can-email-value="<%= customer.email.present? %>"
+     data-ai-chat-can-whatsapp-value="<%= customer.whatsapp_chat_id.present? %>"
      data-ai-chat-history-value="<%= customer.ai_chat_messages.chronological.pluck(:role, :content).map { |role, content| { role: role, content: content } }.to_json %>"
      class="flex flex-col h-[600px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
   <!-- Header -->
@@ -11,7 +14,7 @@
     </div>
     <div>
       <p class="text-sm font-semibold text-gray-900">Chat about <%= customer.name %></p>
-      <p class="text-xs text-gray-500">Ask questions, summarise the relationship, or draft outreach — the assistant has this customer's CRM context.</p>
+      <p class="text-xs text-gray-500">Ask questions, summarise the relationship, or draft outreach. The assistant has this customer's CRM context.</p>
     </div>
   </div>
 
@@ -24,17 +27,18 @@
         </svg>
       </div>
       <p class="text-sm font-medium text-gray-700">How can I help with <%= customer.name %>?</p>
-      <p class="text-xs text-gray-500 mt-1 mb-4 max-w-sm">I know this lead's profile, deals, calls, messages, emails and notes.</p>
-      <div class="flex flex-wrap items-center justify-center gap-2">
-        <button type="button" data-action="ai-chat#ask" data-prompt="Give me a quick summary of where this lead stands and what to do next." class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">Summarise this lead</button>
-        <button type="button" data-action="ai-chat#ask" data-prompt="Draft a warm, professional follow-up email to this customer based on our history." class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">Draft a follow-up email</button>
-        <button type="button" data-action="ai-chat#ask" data-prompt="What are the best talking points for my next call with this customer?" class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">Next call talking points</button>
-      </div>
+      <p class="text-xs text-gray-500 mt-1 max-w-sm">I know this lead's profile, deals, calls, messages, emails and notes. Use the buttons below to draft a pitch or a message.</p>
     </div>
   </div>
 
   <!-- Composer -->
   <div class="border-t border-gray-200 bg-white px-4 py-3">
+    <div class="flex flex-wrap items-center gap-2 mb-2.5">
+      <button type="button" data-action="ai-chat#ask" data-prompt="Write a short sales pitch for this customer based on their profile and our history." class="px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-700 hover:bg-emerald-100">Sales pitch</button>
+      <button type="button" data-action="ai-chat#ask" data-prompt="Draft a short WhatsApp message to this customer based on our recent history." class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">WhatsApp message</button>
+      <button type="button" data-action="ai-chat#ask" data-prompt="Draft a follow-up email to this customer based on our history." class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">Email</button>
+      <button type="button" data-action="ai-chat#ask" data-prompt="Give me a quick summary of where this lead stands and what to do next." class="px-3 py-1.5 rounded-full bg-white border border-gray-200 text-xs text-gray-700 hover:bg-gray-50 hover:border-gray-300">Summarise</button>
+    </div>
     <form data-ai-chat-target="form" data-action="submit->ai-chat#send" class="flex items-end gap-2">
       <textarea data-ai-chat-target="input"
                 data-action="keydown->ai-chat#handleKeydown input->ai-chat#autoGrow"
@@ -48,6 +52,6 @@
         </svg>
       </button>
     </form>
-    <p class="mt-1.5 text-[11px] text-gray-400">AI can make mistakes — review drafts before sending. This conversation is saved to the customer.</p>
+    <p class="mt-1.5 text-[11px] text-gray-400">AI can make mistakes. Review every draft before you send it. This conversation is saved to the customer.</p>
   </div>
 </div>

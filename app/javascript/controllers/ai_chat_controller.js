@@ -6,7 +6,13 @@ import { Controller } from "@hotwired/stimulus"
 // via the history value so it renders when the tab is (re)opened.
 export default class extends Controller {
   static targets = ["messages", "input", "sendButton", "empty", "form"]
-  static values = { customerId: Number, history: Array }
+  static values = {
+    customerId: Number,
+    customerName: String,
+    canEmail: Boolean,
+    canWhatsapp: Boolean,
+    history: Array
+  }
 
   connect() {
     this.pending = false
@@ -95,15 +101,150 @@ export default class extends Controller {
     const row = document.createElement("div")
     row.className = `flex ${isUser ? "justify-end" : "justify-start"}`
 
-    const bubble = document.createElement("div")
-    bubble.className = isUser
-      ? "max-w-[80%] rounded-2xl rounded-br-sm bg-emerald-600 text-white px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm"
-      : "max-w-[80%] rounded-2xl rounded-bl-sm bg-white border border-gray-200 text-gray-800 px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm"
-    bubble.textContent = text
+    if (isUser) {
+      const bubble = document.createElement("div")
+      bubble.className = "max-w-[80%] rounded-2xl rounded-br-sm bg-emerald-600 text-white px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm"
+      bubble.textContent = text
+      row.appendChild(bubble)
+    } else {
+      const col = document.createElement("div")
+      col.className = "max-w-[80%] flex flex-col items-start gap-1.5"
 
-    row.appendChild(bubble)
+      const bubble = document.createElement("div")
+      bubble.className = "rounded-2xl rounded-bl-sm bg-white border border-gray-200 text-gray-800 px-4 py-2.5 text-sm whitespace-pre-wrap break-words shadow-sm"
+      bubble.textContent = text
+      col.appendChild(bubble)
+
+      const actions = this.buildSendActions(text)
+      if (actions) col.appendChild(actions)
+      row.appendChild(col)
+    }
+
     this.messagesTarget.appendChild(row)
     this.scrollToBottom()
+  }
+
+  // --- sending drafts ------------------------------------------------------
+
+  // Buttons under each assistant reply to send it to the customer. Only the
+  // channels the customer actually has are offered. Nothing sends without an
+  // explicit click and a confirm.
+  buildSendActions(text) {
+    if (!this.canWhatsappValue && !this.canEmailValue) return null
+
+    const bar = document.createElement("div")
+    bar.className = "flex flex-wrap items-center gap-2 pl-1"
+
+    if (this.canWhatsappValue) {
+      const btn = this.actionButton("Send on WhatsApp")
+      btn.addEventListener("click", () => this.dispatchSend("whatsapp", text, bar))
+      bar.appendChild(btn)
+    }
+    if (this.canEmailValue) {
+      const btn = this.actionButton("Send as email")
+      btn.addEventListener("click", () => this.dispatchSend("email", text, bar))
+      bar.appendChild(btn)
+    }
+    return bar
+  }
+
+  actionButton(label) {
+    const btn = document.createElement("button")
+    btn.type = "button"
+    btn.className = "inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-gray-200 bg-white text-[11px] font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+    btn.textContent = label
+    return btn
+  }
+
+  async dispatchSend(channel, text, bar) {
+    const name = this.hasCustomerNameValue ? this.customerNameValue : "this customer"
+    const isWhatsapp = channel === "whatsapp"
+    if (!confirm(`Send this ${isWhatsapp ? "WhatsApp message" : "email"} to ${name}?`)) return
+
+    const buttons = bar.querySelectorAll("button")
+    buttons.forEach((b) => (b.disabled = true))
+
+    try {
+      const result = isWhatsapp ? await this.postWhatsapp(text) : await this.postEmail(text)
+      if (result.ok) {
+        this.markSent(bar, isWhatsapp ? "Sent on WhatsApp" : "Sent as email")
+      } else {
+        this.showActionError(bar, result.error || "Could not send. Please try again.")
+        buttons.forEach((b) => (b.disabled = false))
+      }
+    } catch (error) {
+      console.error("AI chat send error:", error)
+      this.showActionError(bar, "Network error. Please try again.")
+      buttons.forEach((b) => (b.disabled = false))
+    }
+  }
+
+  async postWhatsapp(text) {
+    const response = await fetch(`/customers/${this.customerIdValue}/messages`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: this.jsonHeaders(),
+      body: JSON.stringify({ message: { content: text } })
+    })
+    const data = await response.json().catch(() => ({}))
+    return { ok: response.ok, error: data.error || data.message }
+  }
+
+  async postEmail(text) {
+    const { subject, body } = this.splitEmail(text)
+    const response = await fetch(`/customers/${this.customerIdValue}/emails`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: this.jsonHeaders(),
+      body: JSON.stringify({ subject: subject, body_html: this.toHtml(body) })
+    })
+    const data = await response.json().catch(() => ({}))
+    return { ok: response.ok, error: data.error || data.message }
+  }
+
+  // Pull a leading "Subject: ..." line out of an email draft; fall back to a
+  // neutral subject if the model didn't include one.
+  splitEmail(text) {
+    const match = text.match(/^\s*subject\s*:\s*(.+)$/im)
+    if (match) {
+      const subject = match[1].trim()
+      const body = text.replace(/^\s*subject\s*:.*(?:\r?\n)+/im, "").trim()
+      return { subject, body }
+    }
+    return { subject: "Following up", body: text.trim() }
+  }
+
+  markSent(bar, label) {
+    bar.innerHTML = ""
+    const note = document.createElement("span")
+    note.className = "inline-flex items-center gap-1 text-xs font-medium text-emerald-600 pl-1"
+    note.textContent = `${label} ✓`
+    bar.appendChild(note)
+  }
+
+  showActionError(bar, message) {
+    let err = bar.querySelector("[data-send-error]")
+    if (!err) {
+      err = document.createElement("span")
+      err.setAttribute("data-send-error", "1")
+      err.className = "text-xs text-red-600 pl-1 w-full"
+      bar.appendChild(err)
+    }
+    err.textContent = message
+  }
+
+  jsonHeaders() {
+    return {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+    }
+  }
+
+  toHtml(text) {
+    const div = document.createElement("div")
+    div.textContent = text
+    return div.innerHTML.replace(/\n/g, "<br>")
   }
 
   appendTyping() {
