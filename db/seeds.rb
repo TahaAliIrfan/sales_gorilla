@@ -14,3 +14,17 @@ BankAccount.find_or_create_by!(label: "United Kingdom (GBP)") do |ba|
   ba.active           = true
   ba.position         = 1
 end
+
+BankAccount.find_or_create_by!(label: "United States (USD)") do |ba|
+  ba.country          = "United States"
+  ba.currency         = "USD"
+  ba.bank_name        = "Citibank"
+  ba.bank_address     = "111 Wall Street New York, NY 10043 USA"
+  ba.routing_number   = "031100209"
+  ba.swift_bic        = "CITIUS33"
+  ba.account_number   = "70583220000970144"
+  ba.beneficiary_name = "Tecaudex Private Limited"
+  ba.additional_info  = "Account type: CHECKING"
+  ba.active           = true
+  ba.position         = 2
+end
