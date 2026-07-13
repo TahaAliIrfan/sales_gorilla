@@ -56,6 +56,13 @@ class CustomerAiChatService
       the rep tells you; if something isn't there, say so rather than inventing
       it.
 
+      Before you draft anything, read the whole record below: the profile, the
+      project description, the deals and their stage, the notes, and every
+      message, email, and call in the history. Ground the draft in the specifics
+      of that history. Pick up where the last conversation left off, reference
+      what they actually said and what they want built, and match how this person
+      already talks to us. Never send a generic template.
+
       Figure out which of these jobs the rep is asking for and do that one. Do
       not pad the answer with the others:
 
@@ -104,8 +111,8 @@ class CustomerAiChatService
     sections << "DEALS:\n#{deals}" if deals.present?
     sections << "OPEN TASKS:\n#{tasks}" if tasks.present?
     sections << "RECENT ACTIVITY:\n#{activities}" if activities.present?
-    sections << "WHATSAPP / MESSAGES:\n#{messages}" if messages.present?
-    sections << "RECENT EMAILS:\n#{emails}" if emails.present?
+    sections << "WHATSAPP / TEXT HISTORY (Them = the customer, Us = us):\n#{messages}" if messages.present?
+    sections << "EMAIL HISTORY (Them = the customer, Us = us):\n#{emails}" if emails.present?
     sections << "CALL TRANSCRIPTS:\n#{transcripts}" if transcripts.present?
     sections.join("\n\n")
   end
@@ -119,6 +126,7 @@ class CustomerAiChatService
       Country: #{@customer.country.presence || "(unknown)"}
       Status: #{@customer.status.presence || "(none)"}
       Lead source: #{@customer.lead_source.presence || "(unknown)"}
+      LinkedIn: #{@customer.linkedin_url.presence || "(none)"}
       Assigned rep: #{@customer.user&.name.presence || "(unassigned)"}
       Timezone: #{timezone_label}
       Preferred calling time: #{@customer.preferred_calling_time.presence || "(unknown)"}
@@ -170,21 +178,41 @@ class CustomerAiChatService
     nil
   end
 
+  # Both WhatsApp/text channels merged into one chronological thread: the
+  # green-api "messages" table and the Twilio "whatsapp_messages" table.
+  # Labelled Them (the customer) vs Us (the rep) so the model can read the flow.
   def messages
-    @customer.messages.order(created_at: :desc).limit(15)
-             .map { |m| "#{m.direction}: #{m.content}" }.reverse.join("\n")
+    turns = []
+    @customer.messages.order(created_at: :desc).limit(25).each do |m|
+      turns << { at: m.created_at, dir: m.direction, text: m.content }
+    end
+    if @customer.respond_to?(:whatsapp_messages)
+      @customer.whatsapp_messages.order(created_at: :desc).limit(25).each do |m|
+        turns << { at: m.created_at, dir: m.direction, text: m.body }
+      end
+    end
+
+    turns.reject! { |t| t[:text].to_s.strip.blank? }
+    return nil if turns.empty?
+
+    turns.sort_by { |t| t[:at] || Time.at(0) }.last(40).map do |t|
+      who = t[:dir].to_s == "inbound" ? "Them" : "Us"
+      "#{who}: #{t[:text].to_s.strip}"
+    end.join("\n")
   rescue
     nil
   end
 
   def emails
     return nil unless @customer.respond_to?(:emails)
-    @customer.emails.order(created_at: :desc).limit(5).filter_map do |e|
+    @customer.emails.order(created_at: :desc).limit(10).filter_map do |e|
       subject = e.try(:subject)
-      body = e.try(:snippet) || e.try(:body_plain) || e.try(:body)
+      body = e.try(:snippet).presence || e.try(:body_text).presence || e.try(:body_html)
       next if subject.blank? && body.blank?
-      "#{subject} — #{body.to_s.gsub(/\s+/, ' ').strip[0, 300]}".strip
-    end.join("\n---\n")
+      who = e.try(:from_email).to_s.casecmp?(@customer.email.to_s) ? "Them" : "Us"
+      clean = body.to_s.gsub(/<[^>]+>/, " ").gsub(/\s+/, " ").strip[0, 400]
+      "#{who} | #{subject.to_s.strip}: #{clean}".strip
+    end.reverse.join("\n---\n")
   rescue
     nil
   end
