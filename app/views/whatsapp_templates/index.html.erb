@@ -9,14 +9,23 @@
         <% end %>
       </p>
     </div>
-    <%= button_to sync_whatsapp_templates_path, method: :post,
-                  data: { turbo_confirm: "Pull the latest approved templates from Twilio?" },
-                  class: "inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-      </svg>
-      Sync from Twilio
-    <% end %>
+    <div class="flex items-center gap-2">
+      <%= link_to new_whatsapp_template_path,
+                  class: "inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        New template
+      <% end %>
+      <%= button_to sync_whatsapp_templates_path, method: :post,
+                    data: { turbo_confirm: "Pull the latest approved templates from Twilio?" },
+                    class: "inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm" do %>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Sync from Twilio
+      <% end %>
+    </div>
   </div>
 
   <div class="mt-4 flex gap-6 text-sm">
@@ -59,10 +68,20 @@
               </div>
               <div class="mt-0.5 text-[11px] text-gray-500 font-mono truncate"><%= t.content_sid %></div>
             </div>
-            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium flex-shrink-0
-                         <%= approved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
-              <%= t.approval_status.presence&.titleize || 'Unknown' %>
-            </span>
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium
+                           <%= approved ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' %>">
+                <%= t.approval_status.presence&.titleize || 'Unknown' %>
+              </span>
+              <%= button_to whatsapp_template_path(t), method: :delete,
+                    data: { turbo_confirm: "Delete '#{t.friendly_name.presence || t.content_sid}' from Twilio? This cannot be undone." },
+                    class: "inline-flex items-center justify-center h-6 w-6 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50",
+                    title: "Delete template" do %>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              <% end %>
+            </div>
           </div>
 
           <div class="px-4 py-3 space-y-3">

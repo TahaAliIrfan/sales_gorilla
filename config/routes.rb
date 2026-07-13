@@ -273,7 +273,7 @@ Rails.application.routes.draw do
   get  'wa/media/:signed_id', to: 'whatsapp_media#show', as: :wa_media
 
   # WhatsApp templates (admin)
-  resources :whatsapp_templates, only: [:index] do
+  resources :whatsapp_templates, only: [:index, :new, :create, :destroy] do
     collection do
       post :sync
     end

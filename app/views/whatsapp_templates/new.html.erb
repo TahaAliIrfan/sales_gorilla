@@ -1,0 +1,57 @@
+<div class="bg-white border-b border-gray-200 px-6 py-5">
+  <h1 class="text-2xl font-bold text-gray-900">New WhatsApp Template</h1>
+  <p class="text-sm text-gray-500 mt-1">
+    Create a text template on Twilio and submit it to Meta for approval. Approval is not instant.
+    Once Meta approves it, hit "Sync from Twilio" and it becomes available to campaigns.
+  </p>
+</div>
+
+<div class="p-6 max-w-2xl">
+  <% if flash.now[:alert] || flash[:alert] %>
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
+      <%= flash[:alert] %>
+    </div>
+  <% end %>
+
+  <%= form_with url: whatsapp_templates_path, method: :post, class: "space-y-5" do |f| %>
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Template name</label>
+      <%= text_field_tag :friendly_name, @friendly_name,
+            class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500",
+            placeholder: "e.g. Order update" %>
+      <p class="mt-1 text-xs text-gray-500">Meta requires a lowercase, underscored name. We derive it automatically (e.g. "Order update" becomes "order_update").</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+        <%= select_tag :category,
+              options_for_select(TwilioWhatsappTemplatesService::CATEGORIES.map { |c| [c.titleize, c] }, @category),
+              class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" %>
+        <p class="mt-1 text-xs text-gray-500">Use UTILITY for US/Canada. Marketing templates are blocked to +1 numbers.</p>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+        <%= text_field_tag :language, @language,
+              class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500",
+              placeholder: "en" %>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">Message body</label>
+      <%= text_area_tag :body, @body, rows: 6,
+            class: "block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 whitespace-pre-wrap",
+            placeholder: "Hi {{1}}, your project {{2}} is on track. Reply here with any questions." %>
+      <p class="mt-1 text-xs text-gray-500">
+        Use <code>{{1}}</code>, <code>{{2}}</code> for variables you fill in per campaign. They are submitted to Meta with sample values.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit "Create and submit for approval",
+            class: "inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-lg shadow-sm cursor-pointer" %>
+      <%= link_to "Cancel", whatsapp_templates_path, class: "text-sm text-gray-600 hover:text-gray-900" %>
+    </div>
+  <% end %>
+</div>
