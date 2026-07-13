@@ -122,19 +122,22 @@ module AdminAssistant
 
     # --- sales_summary -------------------------------------------------------
     define_function :sales_summary,
-      description: "Sales/pipeline rollups: deal counts and value by status (active/won/lost), open value by stage, and won value by rep. Optionally scoped to a period." do
-      property :period, type: "string", description: "one of: all, this_month, last_month, this_quarter, this_year (default all)", required: false
+      description: "Sales/pipeline rollups: deal counts and value by status (active/won/lost), open value by stage, and won value by rep. Scope with a named period OR an explicit date range." do
+      property :period, type: "string", description: "named period: all, today, this_week, this_month, last_month, this_quarter, last_quarter, this_year, last_year, ytd (default all)", required: false
+      property :start_date, type: "string", description: "start date YYYY-MM-DD for a custom range (overrides period)", required: false
+      property :end_date, type: "string", description: "end date YYYY-MM-DD for a custom range (defaults to today if only start_date given)", required: false
     end
 
-    def sales_summary(period: "all")
+    def sales_summary(period: "all", start_date: nil, end_date: nil)
       scope = Deal.all
-      range = period_range(period)
+      range = date_range(start_date, end_date) || period_range(period)
       scope = scope.where(created_at: range) if range
 
       by_status = scope.group(:status).count
       amt_by_status = scope.group(:status).sum(:amount)
       {
-        period: period,
+        period: (start_date.present? || end_date.present?) ? "custom" : period,
+        range: range ? { from: range.first.to_date.to_s, to: range.last.to_date.to_s } : "all time",
         totals: {
           deals: scope.count,
           active: { count: by_status["active"].to_i, value: amt_by_status["active"].to_i },
@@ -164,26 +167,51 @@ module AdminAssistant
       "…#{text[from, 200].to_s.strip}…"
     end
 
+    # No caps: the number of stages and reps is small and bounded, so return the
+    # full breakdown rather than hiding rows behind a top-N.
     def open_value_by_stage(scope)
       scope.where(status: "active").joins(:deal_stage).group("deal_stages.name").sum(:amount)
-           .transform_values(&:to_i).sort_by { |_s, v| -v }.first(12).to_h
+           .transform_values(&:to_i).sort_by { |_s, v| -v }.to_h
     rescue
       {}
     end
 
     def won_value_by_rep(scope)
       scope.where(status: "won").joins(:user).group("users.name").sum(:amount)
-           .transform_values(&:to_i).sort_by { |_r, v| -v }.first(12).to_h
+           .transform_values(&:to_i).sort_by { |_r, v| -v }.to_h
     rescue
       {}
     end
 
+    # Explicit date range (YYYY-MM-DD). If only a start is given, run through
+    # today; if only an end is given, treat it as everything up to that date.
+    def date_range(start_date, end_date)
+      return nil if start_date.blank? && end_date.blank?
+      from = parse_date(start_date) || Time.at(0).to_date
+      to   = parse_date(end_date) || Date.current
+      from.beginning_of_day..to.end_of_day
+    rescue
+      nil
+    end
+
+    def parse_date(value)
+      return nil if value.blank?
+      Date.parse(value.to_s)
+    rescue
+      nil
+    end
+
     def period_range(period)
       case period.to_s
+      when "today"        then Time.current.beginning_of_day..Time.current.end_of_day
+      when "this_week"    then Time.current.beginning_of_week..Time.current.end_of_week
       when "this_month"   then Time.current.beginning_of_month..Time.current.end_of_month
       when "last_month"   then 1.month.ago.beginning_of_month..1.month.ago.end_of_month
       when "this_quarter" then Time.current.beginning_of_quarter..Time.current.end_of_quarter
+      when "last_quarter" then 3.months.ago.beginning_of_quarter..3.months.ago.end_of_quarter
       when "this_year"    then Time.current.beginning_of_year..Time.current.end_of_year
+      when "last_year"    then 1.year.ago.beginning_of_year..1.year.ago.end_of_year
+      when "ytd"          then Time.current.beginning_of_year..Time.current.end_of_day
       end
     end
   end
