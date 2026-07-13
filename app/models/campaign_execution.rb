@@ -19,27 +19,27 @@ class CampaignExecution < ApplicationRecord
     update(status: 'processing')
 
     begin
-      # Check if customer has WhatsApp chat ID
-      if customer.whatsapp_chat_id.blank?
-        raise "Customer #{customer.name} does not have a WhatsApp chat ID"
+      # Twilio sends to the phone number, not a green-api chat id.
+      if customer.phone.blank?
+        raise "Customer #{customer.name} does not have a phone number"
       end
 
-      # Process template variables in message
-      personalized_message = process_template_variables(campaign.message)
+      template = campaign.template
+      raise "Campaign template is missing or no longer approved" if template.nil?
 
-      # Send WhatsApp message using WhatsappMessageService
-      service = WhatsappMessageService.new
-      result = service.send_message(
-        customer.whatsapp_chat_id,
-        personalized_message,
-        customer
+      # Resolve each template variable value per recipient, so a value like
+      # "{{customer_name}}" becomes this customer's name before Twilio substitutes it.
+      variables = resolve_content_variables
+
+      result = TwilioWhatsappService.new.send_template(
+        to_phone: customer.phone,
+        content_sid: template.content_sid,
+        content_variables: variables
       )
 
       if result[:success]
-        update(
-          status: 'completed',
-          executed_at: Time.current
-        )
+        persist_outbound(result[:sid], result[:status], template.render_body(variables))
+        update(status: 'completed', executed_at: Time.current)
       else
         raise result[:error] || 'Unknown error occurred'
       end
@@ -72,6 +72,36 @@ class CampaignExecution < ApplicationRecord
   end
 
   private
+
+  # Build the content_variables hash Twilio expects, resolving per-customer
+  # tokens ({{customer_name}} etc.) inside each variable value.
+  def resolve_content_variables
+    (campaign.content_variables || {}).each_with_object({}) do |(key, value), out|
+      out[key.to_s] = process_template_variables(value.to_s)
+    end
+  end
+
+  # Record the send in the Twilio whatsapp_messages channel so the status
+  # callback can update it and it shows in the customer's WhatsApp US thread.
+  def persist_outbound(sid, status, body)
+    customer.whatsapp_messages.create!(
+      message_id: sid,
+      remote_id:  customer.phone,
+      body:       body,
+      direction:  'outbound',
+      status:     status || 'queued',
+      timestamp:  Time.current,
+      metadata:   {
+        provider: 'twilio',
+        to: "whatsapp:#{customer.phone}",
+        from: TwilioWhatsappService::FROM,
+        campaign_id: campaign_id,
+        sent_by_user_id: campaign.user_id
+      }
+    )
+  rescue StandardError => e
+    Rails.logger.error("[CampaignExecution ##{id}] persist_outbound failed: #{e.message}")
+  end
 
   def process_template_variables(message)
     return message if message.blank?

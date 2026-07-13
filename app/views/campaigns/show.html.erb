@@ -59,9 +59,17 @@
 
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700">Message</label>
+          <label class="block text-sm font-medium text-gray-700">Template</label>
           <div class="mt-1 p-4 bg-gray-50 rounded border border-gray-200">
-            <%= simple_format(@campaign.message) %>
+            <% if @campaign.template %>
+              <p class="text-sm font-medium text-gray-900">
+                <%= @campaign.template.friendly_name %>
+                <span class="ml-1 text-xs font-normal text-gray-500">(<%= @campaign.template.category %>, <%= @campaign.template.language %>)</span>
+              </p>
+              <div class="mt-2 text-sm text-gray-700"><%= simple_format(@campaign.template.render_body(@campaign.content_variables || {})) %></div>
+            <% else %>
+              <p class="text-sm text-amber-700">Template not found or no longer approved. Edit the campaign to pick an approved template.</p>
+            <% end %>
           </div>
         </div>
 

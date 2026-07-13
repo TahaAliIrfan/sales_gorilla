@@ -12,6 +12,7 @@ class CampaignsController < ApplicationController
     @available_customers = get_accessible_customers.where.not(id: @customers.pluck(:id)).order(:name)
     @customer_groups = current_user.customer_groups
     @executions = @campaign.campaign_executions.includes(:customer).order(:scheduled_at)
+    @templates = approved_templates
   end
 
   def new
@@ -19,11 +20,28 @@ class CampaignsController < ApplicationController
     authorize @campaign
     @customers = get_accessible_customers
     @customer_groups = current_user.customer_groups
+    @templates = approved_templates
   end
 
   def edit
     authorize @campaign
     @customers = get_accessible_customers
+    @templates = approved_templates
+  end
+
+  # Pull the latest approved templates from Twilio/Meta into whatsapp_templates.
+  def sync_templates
+    unless current_user.admin?
+      redirect_back fallback_location: new_campaign_path, alert: 'Only admins can sync templates.' and return
+    end
+
+    begin
+      TwilioWhatsappTemplatesService.new.sync!
+      redirect_back fallback_location: new_campaign_path,
+                    notice: "#{WhatsappTemplate.approved.count} approved template(s) available."
+    rescue StandardError => e
+      redirect_back fallback_location: new_campaign_path, alert: "Template sync failed: #{e.message}"
+    end
   end
 
   def create
@@ -192,20 +210,25 @@ class CampaignsController < ApplicationController
   end
 
   def campaign_params
-    params.require(:campaign).permit(:name, :message, :scheduled_at)
+    params.require(:campaign).permit(:name, :scheduled_at, :content_sid, content_variables: {})
   end
 
+  def approved_templates
+    WhatsappTemplate.approved.ordered.reject(&:requires_media_upload?)
+  end
+
+  # Twilio sends to the phone number, so campaign recipients must have one.
   def get_accessible_customers
-    if current_user.admin?
-      # Admins can see all customers
-      Customer.all.order(:name)
-    elsif current_user.manager?
-      # Managers can see their own customers and their associates' customers
-      associate_ids = current_user.associates.pluck(:id)
-      Customer.where(user_id: [current_user.id] + associate_ids).order(:name)
-    else
-      # Associates can only see their own customers
-      current_user.customers.order(:name)
-    end
+    scope =
+      if current_user.admin?
+        Customer.all
+      elsif current_user.manager?
+        associate_ids = current_user.associates.pluck(:id)
+        Customer.where(user_id: [current_user.id] + associate_ids)
+      else
+        current_user.customers
+      end
+
+    scope.where.not(phone: [nil, '']).order(:name)
   end
 end

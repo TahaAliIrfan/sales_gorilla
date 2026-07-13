@@ -5,9 +5,18 @@ class Campaign < ApplicationRecord
   has_many :campaign_executions, dependent: :destroy
   has_many :customers, through: :campaign_executions
 
+  before_validation :sync_message_from_template
+
   validates :name, presence: true
-  validates :message, presence: true
+  validates :content_sid, presence: { message: "select an approved WhatsApp template" }
   validates :status, presence: true, inclusion: { in: STATUSES }
+
+  # The approved Twilio/Meta template this campaign sends. Looked up by
+  # content_sid rather than a FK, since templates are re-synced from Twilio.
+  def template
+    return nil if content_sid.blank?
+    @template ||= WhatsappTemplate.approved.find_by(content_sid: content_sid)
+  end
 
   scope :draft, -> { where(status: 'draft') }
   scope :scheduled, -> { where(status: 'scheduled') }
@@ -234,6 +243,13 @@ class Campaign < ApplicationRecord
   end
 
   private
+
+  # Keep `message` populated with the template body so the index/console views
+  # (which show a message preview) still have something to render.
+  def sync_message_from_template
+    @template = nil
+    self.message = template&.body if content_sid.present?
+  end
 
   def auto_schedule_if_ready
     # Only auto-schedule if:

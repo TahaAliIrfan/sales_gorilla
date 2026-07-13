@@ -66,6 +66,9 @@ Rails.application.routes.draw do
   end
 
   resources :campaigns do
+    collection do
+      post 'sync_templates'
+    end
     member do
       post 'send_now'
       post 'schedule'

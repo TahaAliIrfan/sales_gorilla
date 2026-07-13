@@ -15,6 +15,9 @@ application.register("calling", CallingController)
 import CampaignCustomerSelectorController from "./campaign_customer_selector_controller"
 application.register("campaign-customer-selector", CampaignCustomerSelectorController)
 
+import CampaignTemplateController from "./campaign_template_controller"
+application.register("campaign-template", CampaignTemplateController)
+
 import ChatController from "./chat_controller"
 application.register("chat", ChatController)
 
