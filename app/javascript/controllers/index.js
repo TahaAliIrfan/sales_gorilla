@@ -24,6 +24,9 @@ application.register("chat", ChatController)
 import AiChatController from "./ai_chat_controller"
 application.register("ai-chat", AiChatController)
 
+import AdminAssistantController from "./admin_assistant_controller"
+application.register("admin-assistant", AdminAssistantController)
+
 import WhatsappUsController from "./whatsapp_us_controller"
 application.register("whatsapp-us", WhatsappUsController)
 

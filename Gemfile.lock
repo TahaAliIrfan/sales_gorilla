@@ -99,6 +99,7 @@ GEM
       aws-sigv4 (~> 1.5)
     aws-sigv4 (1.11.0)
       aws-eventstream (~> 1, >= 1.0.2)
+    baran (0.1.12)
     base64 (0.2.0)
     benchmark (0.4.0)
     bigdecimal (3.1.9)
@@ -127,6 +128,7 @@ GEM
     crass (1.0.6)
     css_parser (1.21.1)
       addressable
+    csv (3.3.5)
     date (3.4.1)
     debug (1.10.0)
       irb (~> 1.10)
@@ -139,10 +141,13 @@ GEM
     erubi (1.13.1)
     et-orbi (1.2.11)
       tzinfo
+    event_stream_parser (1.0.0)
     faraday (2.12.2)
       faraday-net_http (>= 2.0, < 3.5)
       json
       logger
+    faraday-multipart (1.2.0)
+      multipart-post (~> 2.0)
     faraday-net_http (3.4.0)
       net-http (>= 0.5.0)
     ffi (1.17.3-aarch64-linux-gnu)
@@ -215,6 +220,9 @@ GEM
       activesupport (>= 5.0.0)
     jmespath (1.6.2)
     json (2.10.1)
+    json-schema (5.2.2)
+      addressable (~> 2.8)
+      bigdecimal (~> 3.1)
     jwt (2.10.1)
       base64
     kaminari (1.2.2)
@@ -229,6 +237,13 @@ GEM
       activerecord
       kaminari-core (= 1.2.2)
     kaminari-core (1.2.2)
+    langchainrb (0.19.5)
+      baran (~> 0.1.9)
+      csv
+      json-schema (>= 4, < 6)
+      matrix
+      pragmatic_segmenter (~> 0.3.0)
+      zeitwerk (~> 2.5)
     logger (1.6.6)
     loofah (2.24.0)
       crass (~> 1.0.2)
@@ -248,6 +263,7 @@ GEM
     multi_json (1.15.0)
     multi_xml (0.7.1)
       bigdecimal (~> 3.1)
+    multipart-post (2.4.1)
     mutex_m (0.3.0)
     net-http (0.6.0)
       uri
@@ -311,6 +327,7 @@ GEM
     phonelib (0.10.9)
     pp (0.6.2)
       prettyprint
+    pragmatic_segmenter (0.3.24)
     prawn (2.5.0)
       matrix (~> 0.4)
       pdf-core (~> 0.10.0)
@@ -390,6 +407,10 @@ GEM
       uber (< 0.2.0)
     retriable (3.1.2)
     rexml (3.4.0)
+    ruby-openai (7.4.0)
+      event_stream_parser (>= 0.3.0, < 2.0.0)
+      faraday (>= 1)
+      faraday-multipart (>= 1)
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
@@ -504,6 +525,7 @@ DEPENDENCIES
   jbuilder
   jwt
   kaminari
+  langchainrb (~> 0.19)
   mail
   omniauth
   omniauth-google-oauth2
@@ -518,6 +540,7 @@ DEPENDENCIES
   rack-cors
   rails (~> 7.1.5, >= 7.1.5.1)
   redis (>= 4.0.1)
+  ruby-openai (~> 7.3)
   sidekiq (~> 7.2)
   sidekiq-scheduler (~> 5.0)
   sprockets-rails

@@ -1,19 +1,19 @@
-require "net/http"
-require "json"
+require "openai"
 
 # Conversational AI assistant scoped to a single customer. The rep asks
 # questions ("what's the state of this lead?", "draft a follow-up email",
-# "what should I say on the next call?") and Claude answers with the full
+# "what should I say on the next call?") and the model answers with the full
 # CRM context for that customer stitched into a system prompt.
 #
-# Stateless: the browser holds the running conversation and posts the whole
-# history back each turn (see ai_chat_controller.js). We rebuild the customer
-# context fresh on every call so answers reflect the latest CRM state.
+# Backed by OpenAI's gpt-5.5. Stateless: the browser holds the running
+# conversation and posts the whole history back each turn (see
+# ai_chat_controller.js). We rebuild the customer context fresh on every call so
+# answers reflect the latest CRM state.
 class CustomerAiChatService
-  CLAUDE_API_URL    = "https://api.anthropic.com/v1/messages"
-  CLAUDE_MODEL      = "claude-sonnet-4-6"
-  ANTHROPIC_VERSION = "2023-06-01"
-  MAX_TOKENS        = 1024
+  OPENAI_MODEL          = "gpt-5.5"
+  # gpt-5.5 is a reasoning model: the completion budget covers hidden reasoning
+  # tokens too, so keep this generous or the visible answer can come back empty.
+  MAX_COMPLETION_TOKENS = 8000
 
   class MissingApiKey < StandardError; end
 
@@ -25,13 +25,13 @@ class CustomerAiChatService
   # history: array of { "role" => "user"|"assistant", "content" => String }.
   # Returns the assistant's reply text, or raises on transport/config errors.
   def reply(history)
-    api_key = ENV["ANTHROPIC_API_KEY"] || Rails.application.credentials.dig(:anthropic, :api_key)
-    raise MissingApiKey, "ANTHROPIC_API_KEY is not configured" if api_key.blank?
+    api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
+    raise MissingApiKey, "OPENAI_API_KEY is not configured" if api_key.blank?
 
     messages = sanitize(history)
     raise ArgumentError, "no messages" if messages.empty?
 
-    content = claude(messages, api_key)
+    content = openai(messages, api_key)
     content.presence || "Sorry, I couldn't generate a response just now. Please try again."
   end
 
@@ -225,29 +225,22 @@ class CustomerAiChatService
     nil
   end
 
-  def claude(messages, api_key)
-    uri = URI.parse(CLAUDE_API_URL)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = true
-    http.read_timeout = 60
+  def openai(messages, api_key)
+    client = OpenAI::Client.new(access_token: api_key, request_timeout: 120)
 
-    request = Net::HTTP::Post.new(uri.path)
-    request["content-type"]      = "application/json"
-    request["x-api-key"]         = api_key
-    request["anthropic-version"] = ANTHROPIC_VERSION
-    request.body = {
-      model: CLAUDE_MODEL,
-      max_tokens: MAX_TOKENS,
-      system: system_prompt,
-      messages: messages
-    }.to_json
+    # OpenAI takes the system prompt as the first message; the sanitized
+    # conversation follows. gpt-5.5 only accepts the default temperature.
+    full = [{ role: "system", content: system_prompt }] + messages
 
-    response = http.request(request)
-    if response.code == "200"
-      JSON.parse(response.body).dig("content", 0, "text")
-    else
-      Rails.logger.error("CustomerAiChatService Claude API error: #{response.code} - #{response.body}")
-      raise "Claude API error (#{response.code})"
-    end
+    response = client.chat(parameters: {
+      model: OPENAI_MODEL,
+      messages: full,
+      max_completion_tokens: MAX_COMPLETION_TOKENS
+    })
+    response.dig("choices", 0, "message", "content")
+  rescue Faraday::Error => e
+    body = e.respond_to?(:response) ? e.response&.dig(:body) : nil
+    Rails.logger.error("CustomerAiChatService OpenAI API error: #{e.message} - #{body}")
+    raise "OpenAI API error"
   end
 end

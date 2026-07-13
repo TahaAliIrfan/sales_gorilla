@@ -198,6 +198,13 @@ Rails.application.routes.draw do
     end
   end
 
+  # Admin CRM-wide AI assistant (langchainrb + Groq, read-only tools)
+  namespace :admin do
+    get  'assistant',       to: 'assistant#index'
+    post 'assistant/chat',  to: 'assistant#chat'
+    delete 'assistant/reset', to: 'assistant#reset'
+  end
+
   # Root path route ("/")
   root "home#index"
 

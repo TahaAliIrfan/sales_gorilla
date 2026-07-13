@@ -42,6 +42,16 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "admin_assistant_messages", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "role", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "created_at"], name: "index_admin_assistant_messages_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_admin_assistant_messages_on_user_id"
+  end
+
   create_table "ai_analyses", force: :cascade do |t|
     t.bigint "recording_id", null: false
     t.text "summary"
@@ -929,6 +939,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "admin_assistant_messages", "users"
   add_foreign_key "ai_analyses", "recordings"
   add_foreign_key "calls", "customers", on_delete: :cascade
   add_foreign_key "calls", "users", column: "caller_id"

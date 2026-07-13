@@ -105,6 +105,12 @@ gem 'grover', '~> 1.2'
 # .docx text extraction (used by OdooProposalDetectionService)
 gem 'docx', '~> 0.8'
 
+# Ruby LangChain — powers the admin AI assistant (Langchain::Assistant + tools).
+# ruby-openai is the underlying client; we point it at Groq's OpenAI-compatible
+# endpoint (see AdminAssistantService) to run Llama models for free/cheap.
+gem 'langchainrb', '~> 0.19'
+gem 'ruby-openai', '~> 7.3'
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ]
