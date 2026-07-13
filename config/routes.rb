@@ -94,6 +94,7 @@ Rails.application.routes.draw do
       patch 'update_communication_status'
       post 'analyze_phone'
       post 'calculate_lead_score'
+      post 'chat_ai'
       post 'assign_to_self'
       post 'upload_documents'
       post 'mark_lead_quality'

@@ -1,7 +1,7 @@
 class CustomersController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_customer, only: [:show, :preview, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :assign_to_self, :upload_documents, :mark_lead_quality]
+  before_action :set_customer, only: [:show, :preview, :edit, :update, :destroy, :update_status, :update_communication_status, :analyze_phone, :calculate_lead_score, :chat_ai, :assign_to_self, :upload_documents, :mark_lead_quality]
   after_action :verify_authorized, except: [:index, :export_csv]
   after_action :verify_policy_scoped, only: [:index, :export_csv]
 
@@ -611,6 +611,27 @@ class CustomersController < ApplicationController
         format.json { render json: { success: false, error: e.message }, status: :unprocessable_entity }
       end
     end
+  end
+
+  # Conversational AI assistant scoped to this customer. The browser holds the
+  # running conversation and posts the whole history back each turn; we answer
+  # with Claude, giving it the customer's full CRM context (see
+  # CustomerAiChatService). Stateless — nothing is persisted.
+  def chat_ai
+    authorize @customer, :show?
+
+    history = params[:messages]
+    history = history.map { |m| m.permit(:role, :content).to_h } if history.respond_to?(:map)
+
+    reply = CustomerAiChatService.new(@customer, user: current_user).reply(history)
+    render json: { success: true, reply: reply }
+  rescue CustomerAiChatService::MissingApiKey
+    render json: { success: false, error: 'AI assistant is not configured on this server.' }, status: :service_unavailable
+  rescue ArgumentError => e
+    render json: { success: false, error: e.message }, status: :unprocessable_entity
+  rescue => e
+    Rails.logger.error("Customer AI chat failed for customer #{@customer.id}: #{e.message}")
+    render json: { success: false, error: 'The AI assistant is unavailable right now. Please try again.' }, status: :bad_gateway
   end
 
   def assign_to_self
