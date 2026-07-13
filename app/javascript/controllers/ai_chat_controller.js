@@ -1,16 +1,25 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Conversational AI assistant scoped to one customer. The whole conversation
-// lives in the browser (this.history) and is posted back to the server each
-// turn (POST /customers/:id/chat_ai). The server rebuilds the customer context
-// and calls Claude, then returns the assistant's reply. Nothing is persisted.
+// Conversational AI assistant scoped to one customer. The conversation is
+// posted back to the server each turn (POST /customers/:id/chat_ai); the server
+// answers with Claude and persists the turn. The saved thread is handed to us
+// via the history value so it renders when the tab is (re)opened.
 export default class extends Controller {
   static targets = ["messages", "input", "sendButton", "empty", "form"]
-  static values = { customerId: Number }
+  static values = { customerId: Number, history: Array }
 
   connect() {
-    this.history = []
     this.pending = false
+    this.history = this.hasHistoryValue ? this.historyValue.slice() : []
+    this.renderHistory()
+  }
+
+  renderHistory() {
+    for (const message of this.history) {
+      if (message && message.role && message.content) {
+        this.appendMessage(message.role, message.content)
+      }
+    }
   }
 
   handleKeydown(event) {

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_07_13_000000) do
+ActiveRecord::Schema[7.1].define(version: 2026_07_13_200500) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -199,6 +199,18 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_13_000000) do
     t.index ["customer_id", "created_at"], name: "index_customer_activities_on_customer_id_and_created_at"
     t.index ["customer_id"], name: "index_customer_activities_on_customer_id"
     t.index ["user_id"], name: "index_customer_activities_on_user_id"
+  end
+
+  create_table "customer_ai_chat_messages", force: :cascade do |t|
+    t.bigint "customer_id", null: false
+    t.bigint "user_id"
+    t.string "role", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id", "created_at"], name: "index_customer_ai_chat_messages_on_customer_id_and_created_at"
+    t.index ["customer_id"], name: "index_customer_ai_chat_messages_on_customer_id"
+    t.index ["user_id"], name: "index_customer_ai_chat_messages_on_user_id"
   end
 
   create_table "customer_group_memberships", force: :cascade do |t|
@@ -929,6 +941,8 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_13_000000) do
   add_foreign_key "csv_uploads", "users"
   add_foreign_key "customer_activities", "customers"
   add_foreign_key "customer_activities", "users"
+  add_foreign_key "customer_ai_chat_messages", "customers"
+  add_foreign_key "customer_ai_chat_messages", "users"
   add_foreign_key "customer_group_memberships", "customer_groups"
   add_foreign_key "customer_group_memberships", "customers"
   add_foreign_key "customer_groups", "users"

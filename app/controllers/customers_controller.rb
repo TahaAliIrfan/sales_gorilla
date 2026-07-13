@@ -616,7 +616,8 @@ class CustomersController < ApplicationController
   # Conversational AI assistant scoped to this customer. The browser holds the
   # running conversation and posts the whole history back each turn; we answer
   # with Claude, giving it the customer's full CRM context (see
-  # CustomerAiChatService). Stateless — nothing is persisted.
+  # CustomerAiChatService). Each answered turn is persisted to the customer's
+  # ai_chat_messages thread so it survives reloads and other reps can pick it up.
   def chat_ai
     authorize @customer, :show?
 
@@ -624,6 +625,7 @@ class CustomersController < ApplicationController
     history = history.map { |m| m.permit(:role, :content).to_h } if history.respond_to?(:map)
 
     reply = CustomerAiChatService.new(@customer, user: current_user).reply(history)
+    persist_chat_turn(history, reply)
     render json: { success: true, reply: reply }
   rescue CustomerAiChatService::MissingApiKey
     render json: { success: false, error: 'AI assistant is not configured on this server.' }, status: :service_unavailable
@@ -720,6 +722,24 @@ class CustomersController < ApplicationController
   end
 
   private
+
+  # Save the just-answered turn (the newest user message + the assistant reply)
+  # to the customer's thread. Only the last user turn is new — earlier messages
+  # in the posted history are already stored. Never let a persistence failure
+  # break the chat response.
+  def persist_chat_turn(history, reply)
+    last = Array(history).last
+    return if last.blank?
+
+    role = last["role"] || last[:role]
+    content = (last["content"] || last[:content]).to_s.strip
+    return unless role == "user" && content.present?
+
+    @customer.ai_chat_messages.create!(user: current_user, role: "user", content: content)
+    @customer.ai_chat_messages.create!(user: current_user, role: "assistant", content: reply)
+  rescue => e
+    Rails.logger.error("Failed to persist AI chat for customer #{@customer.id}: #{e.message}")
+  end
 
   def set_customer
     @customer = Customer.find(params[:id])

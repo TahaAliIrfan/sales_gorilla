@@ -1,4 +1,7 @@
-<div data-controller="ai-chat" data-ai-chat-customer-id-value="<%= customer.id %>" class="flex flex-col h-[600px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+<div data-controller="ai-chat"
+     data-ai-chat-customer-id-value="<%= customer.id %>"
+     data-ai-chat-history-value="<%= customer.ai_chat_messages.chronological.pluck(:role, :content).map { |role, content| { role: role, content: content } }.to_json %>"
+     class="flex flex-col h-[600px] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
   <!-- Header -->
   <div class="flex items-center gap-3 px-5 py-3 bg-white border-b border-gray-200">
     <div class="flex items-center justify-center h-9 w-9 rounded-lg bg-emerald-100 text-emerald-600">
@@ -45,6 +48,6 @@
         </svg>
       </button>
     </form>
-    <p class="mt-1.5 text-[11px] text-gray-400">AI can make mistakes — review drafts before sending. Conversations aren't saved.</p>
+    <p class="mt-1.5 text-[11px] text-gray-400">AI can make mistakes — review drafts before sending. This conversation is saved to the customer.</p>
   </div>
 </div>

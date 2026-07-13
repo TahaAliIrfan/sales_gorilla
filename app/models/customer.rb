@@ -17,6 +17,7 @@ class Customer < ApplicationRecord
   has_many :milestones, dependent: :destroy
   has_many :invoices, dependent: :destroy
   has_many :meta_conversion_logs, dependent: :destroy
+  has_many :ai_chat_messages, class_name: "CustomerAiChatMessage", dependent: :destroy
   has_many_attached :documents
 
   # Campaign relationships
