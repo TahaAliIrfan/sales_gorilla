@@ -179,6 +179,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
     t.text "executive_summary"
     t.text "feature_prioritization"
     t.text "market_research"
+    t.string "proposal_state"
     t.index ["customer_id"], name: "index_cost_estimates_on_customer_id"
     t.index ["status"], name: "index_cost_estimates_on_status"
     t.index ["user_id"], name: "index_cost_estimates_on_user_id"

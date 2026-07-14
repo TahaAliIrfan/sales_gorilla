@@ -246,13 +246,16 @@ Rails.application.routes.draw do
     end
   end
 
-  # Cost Calculator routes
+  # Proposal Generator (formerly "Cost Calculator") routes
   resources :cost_estimates, only: [:index, :show, :create, :destroy] do
     collection do
       post 'analyze'
+      post 'chat'                # conversational scoping
+      post 'generate_from_chat'  # build the costed proposal PDF from the chat
     end
     member do
       get 'generate_proposal'
+      get 'proposal_status'      # poll async proposal build
       post 'resend'
     end
   end

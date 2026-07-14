@@ -105,6 +105,9 @@ gem 'grover', '~> 1.2'
 # .docx text extraction (used by OdooProposalDetectionService)
 gem 'docx', '~> 0.8'
 
+# PDF text extraction for uploaded requirement docs (Proposal Generator chat).
+gem 'pdf-reader', '~> 2.12'
+
 # Ruby LangChain — powers the admin AI assistant (Langchain::Assistant + tools).
 # ruby-openai is the underlying client; we point it at Groq's OpenAI-compatible
 # endpoint (see AdminAssistantService) to run Llama models for free/cheap.

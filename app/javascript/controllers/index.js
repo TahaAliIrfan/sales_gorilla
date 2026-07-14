@@ -27,6 +27,9 @@ application.register("ai-chat", AiChatController)
 import AdminAssistantController from "./admin_assistant_controller"
 application.register("admin-assistant", AdminAssistantController)
 
+import ProposalGeneratorController from "./proposal_generator_controller"
+application.register("proposal-generator", ProposalGeneratorController)
+
 import WhatsappUsController from "./whatsapp_us_controller"
 application.register("whatsapp-us", WhatsappUsController)
 

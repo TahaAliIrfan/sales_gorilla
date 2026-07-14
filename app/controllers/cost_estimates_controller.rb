@@ -3,11 +3,83 @@ class CostEstimatesController < ApplicationController
   before_action :require_login
   before_action :set_cost_estimate, only: [:show, :destroy, :generate_proposal]
   
+  DEFAULT_HOURLY_RATE = 25
+
+  # Proposal Generator landing = the chat, plus a list of recent proposals.
   def index
-    @cost_estimates = current_user.cost_estimates.order(created_at: :desc).page(params[:page])
+    @recent_estimates = current_user.cost_estimates.order(created_at: :desc).limit(15)
   end
-  
+
   def show
+  end
+
+  # Conversational scoping turn. Accepts the running history and an optional
+  # uploaded file, whose text we fold into the latest user message.
+  def chat
+    history = chat_history_param
+    if params[:file].present?
+      extracted = ProposalFileExtractor.extract(params[:file])
+      history = fold_file_into_last_user_turn(history, params[:file].original_filename, extracted)
+    end
+
+    reply = ProposalChatService.new(user: current_user).reply(history)
+    render json: { success: true, reply: reply }
+  rescue ProposalChatService::MissingApiKey
+    render json: { success: false, error: "The AI assistant is not configured on this server." }, status: :service_unavailable
+  rescue ArgumentError => e
+    render json: { success: false, error: e.message }, status: :unprocessable_entity
+  rescue => e
+    Rails.logger.error("Proposal chat failed for user #{current_user.id}: #{e.message}")
+    render json: { success: false, error: "The assistant is unavailable right now. Please try again." }, status: :bad_gateway
+  end
+
+  # Kick off the full proposal build from the conversation. Extraction is quick;
+  # the heavy estimate + narrative + PDF runs in a background worker (can take
+  # ~60-90s), so we return an id the chat polls via #proposal_status.
+  def generate_from_chat
+    history = chat_history_param
+    intake = ProposalIntakeService.new(user: current_user).extract(history)
+
+    if intake[:description].blank?
+      render json: { success: false, error: "I need a bit more about the project first. Describe what they want to build, then try again." }, status: :unprocessable_entity
+      return
+    end
+
+    # Created without total_hours yet (the worker fills it), so skip validation
+    # on this initial "generating" row. customer_name defaults so the record can
+    # still validate later.
+    estimate = current_user.cost_estimates.new(
+      app_type: intake[:app_type],
+      description: intake[:description],
+      scale: intake[:scale],
+      include_design: intake[:include_design],
+      hourly_rate: params[:hourly_rate].presence&.to_f || DEFAULT_HOURLY_RATE,
+      customer_name: intake[:customer_name].presence || "Prospect",
+      project_name: intake[:project_name].presence,
+      proposal_state: "generating"
+    )
+    estimate.save(validate: false)
+
+    GenerateProposalPdfWorker.perform_async(estimate.id)
+    render json: { success: true, estimate_id: estimate.id, status_url: proposal_status_cost_estimate_path(estimate) }
+  rescue => e
+    Rails.logger.error("generate_from_chat failed for user #{current_user.id}: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
+    render json: { success: false, error: "Something went wrong starting the proposal. Please try again." }, status: :internal_server_error
+  end
+
+  # Poll target for the async build.
+  def proposal_status
+    estimate = current_user.cost_estimates.find(params[:id])
+    ready = estimate.proposal_state == "ready" && estimate.pdf_file.attached?
+    render json: {
+      state: estimate.proposal_state,
+      ready: ready,
+      failed: estimate.proposal_state == "failed",
+      project_name: estimate.app_name.presence || estimate.project_name,
+      total_hours: estimate.total_hours,
+      total_cost: (estimate.formatted_total_cost if estimate.total_hours.present?),
+      download_url: (rails_blob_path(estimate.pdf_file, disposition: "attachment", only_path: true) if ready)
+    }
   end
   
   def create
@@ -132,7 +204,36 @@ class CostEstimatesController < ApplicationController
   end
   
   private
-  
+
+  # Accepts messages either as a JSON string (multipart form, so a file can ride
+  # along) or as a parsed array (JSON request body).
+  def chat_history_param
+    raw = params[:messages]
+    if raw.is_a?(String)
+      raw = (JSON.parse(raw) rescue [])
+    elsif raw.respond_to?(:map)
+      raw = raw.map { |m| m.respond_to?(:permit) ? m.permit(:role, :content).to_h : m }
+    end
+    Array(raw)
+  end
+
+  # Append the uploaded file's extracted text to the most recent user turn so the
+  # model reads it as part of what the rep is saying.
+  def fold_file_into_last_user_turn(history, filename, extracted)
+    note = if extracted.present?
+      "\n\n[Attached file: #{filename}]\n#{extracted}"
+    else
+      "\n\n[Attached file: #{filename} — couldn't read its text; ask me about it.]"
+    end
+    last = history.reverse.find { |m| (m["role"] || m[:role]) == "user" }
+    if last
+      last["content"] = "#{last["content"] || last[:content]}#{note}"
+    else
+      history << { "role" => "user", "content" => note.strip }
+    end
+    history
+  end
+
   def set_cost_estimate
     @cost_estimate = current_user.cost_estimates.find(params[:id])
   end

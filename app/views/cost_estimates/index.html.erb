@@ -1,108 +1,75 @@
-<div class="max-w-7xl mx-auto">
-  <div class="md:flex md:items-center md:justify-between mb-8">
-    <div class="flex-1 min-w-0">
-      <div class="cb-eyebrow mb-1.5">proposals // estimates</div>
-      <h2 class="text-[26px] font-semibold tracking-tight leading-7 text-[#0F172A] sm:truncate">
-        Cost Estimates
-      </h2>
-      <p class="mt-1.5 text-sm text-[#64748B]">
-        View and manage your project cost estimates
-      </p>
+<div class="max-w-4xl mx-auto px-4 py-6">
+  <div class="mb-4">
+    <h1 class="text-xl font-semibold text-gray-900">Proposal Generator</h1>
+    <p class="text-sm text-gray-500">Describe or upload the project, chat it through, and generate a full costed proposal.</p>
+  </div>
+
+  <div data-controller="proposal-generator"
+       class="flex flex-col h-[calc(100vh-13rem)] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
+
+    <!-- Messages -->
+    <div data-proposal-generator-target="messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+      <div data-proposal-generator-target="empty" class="h-full flex flex-col items-center justify-center text-center px-6">
+        <div class="flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 mb-3">
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <p class="text-sm font-medium text-gray-700">What are we proposing?</p>
+        <p class="text-xs text-gray-500 mt-1 max-w-md">Tell me what the client wants to build, or upload their requirements. I'll ask a couple of questions, then you can generate the proposal.</p>
+      </div>
     </div>
-    <div class="mt-4 flex md:mt-0 md:ml-4">
-      <button 
-        type="button" 
-        data-action="click->cost-calculator#openModal"
-        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-        <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        New Estimate
+
+    <!-- Generate bar (appears once there's a conversation) -->
+    <div data-proposal-generator-target="generateBar" class="hidden border-t border-gray-200 bg-emerald-50 px-4 py-2.5 flex items-center justify-between gap-3">
+      <div class="text-xs text-emerald-800 min-w-0 truncate" data-proposal-generator-target="result">Ready when you are, generate the full proposal PDF.</div>
+      <button type="button" data-action="proposal-generator#generate" data-proposal-generator-target="generateButton"
+              class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Generate proposal
       </button>
+    </div>
+
+    <!-- Composer -->
+    <div class="border-t border-gray-200 bg-white px-4 py-3">
+      <div data-proposal-generator-target="fileChip" class="hidden mb-2 inline-flex items-center gap-2 text-xs bg-gray-100 text-gray-700 rounded-full pl-3 pr-1.5 py-1">
+        <span data-proposal-generator-target="fileName"></span>
+        <button type="button" data-action="proposal-generator#clearFile" class="h-4 w-4 grid place-items-center rounded-full hover:bg-gray-200">&times;</button>
+      </div>
+      <form data-proposal-generator-target="form" data-action="submit->proposal-generator#send" class="flex items-end gap-2">
+        <label class="shrink-0 h-10 w-10 grid place-items-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 cursor-pointer" title="Attach requirements (PDF, Word, text)">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+          <input type="file" data-proposal-generator-target="file" data-action="proposal-generator#fileSelected" class="hidden" accept=".pdf,.doc,.docx,.txt,.md,.csv">
+        </label>
+        <textarea data-proposal-generator-target="input"
+                  data-action="keydown->proposal-generator#handleKeydown input->proposal-generator#autoGrow"
+                  rows="1"
+                  placeholder="Describe the project, or attach the requirements…"
+                  class="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 max-h-40"></textarea>
+        <button type="submit" data-proposal-generator-target="sendButton"
+                class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+        </button>
+      </form>
+      <p class="mt-1.5 text-[11px] text-gray-400">The proposal is AI-generated. Review the scope and numbers before sending it to a client.</p>
     </div>
   </div>
 
-  <div class="bg-white shadow overflow-hidden sm:rounded-md">
-    <% if @cost_estimates.any? %>
-      <ul role="list" class="divide-y divide-gray-200">
-        <% @cost_estimates.each do |estimate| %>
-          <li>
-            <div class="px-4 py-4 flex items-center justify-between">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <div class="h-10 w-10 rounded-lg bg-emerald-100 flex items-center justify-center">
-                    <svg class="h-6 w-6 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                </div>
-                <div class="ml-4">
-                  <div class="flex items-center">
-                    <p class="text-sm font-medium text-gray-900 truncate">
-                      <%= estimate.app_type_display %>
-                    </p>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                      <%= estimate.scale_display %>
-                    </span>
-                    <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <%= estimate.total_hours %> hours
-                    </span>
-                  </div>
-                  <p class="text-sm text-gray-500 max-w-xl truncate">
-                    <%= estimate.description %>
-                  </p>
-                  <p class="text-xs text-gray-400 mt-1">
-                    Created <%= time_ago_in_words(estimate.created_at) %> ago
-                  </p>
-                </div>
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="text-right">
-                  <p class="text-lg font-semibold text-gray-900">
-                    <%= estimate.formatted_total_cost %>
-                  </p>
-                  <p class="text-sm text-gray-500">
-                    $<%= estimate.hourly_rate %>/hour
-                  </p>
-                </div>
-                <div class="flex-shrink-0 flex items-center space-x-2">
-                  <%= link_to estimate, class: "text-emerald-600 hover:text-emerald-900 text-sm font-medium" do %>
-                    View
-                  <% end %>
-                  <%= link_to generate_proposal_cost_estimate_path(estimate), target: "_blank", 
-                      class: "text-purple-600 hover:text-purple-900 text-sm font-medium" do %>
-                    PDF
-                  <% end %>
-                  <%= link_to estimate, method: :delete, 
-                      confirm: "Are you sure you want to delete this estimate?",
-                      class: "text-red-600 hover:text-red-900 text-sm font-medium" do %>
-                    Delete
-                  <% end %>
-                </div>
-              </div>
+  <!-- Recent proposals -->
+  <% if @recent_estimates.present? %>
+    <div class="mt-6">
+      <h2 class="text-sm font-semibold text-gray-700 mb-2">Recent proposals</h2>
+      <div class="divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
+        <% @recent_estimates.each do |est| %>
+          <div class="flex items-center justify-between px-4 py-2.5">
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900 truncate"><%= est.app_name.presence || est.project_name.presence || est.app_type&.humanize || "Proposal ##{est.id}" %></p>
+              <p class="text-xs text-gray-500"><%= est.total_hours %>h · <%= est.formatted_total_cost %> · <%= est.created_at.strftime("%-d %b %Y") %></p>
             </div>
-          </li>
+            <%= link_to "Download PDF", generate_proposal_cost_estimate_path(est), class: "shrink-0 text-xs font-medium text-emerald-700 hover:text-emerald-800 border border-emerald-200 rounded-md px-2.5 py-1 hover:bg-emerald-50" %>
+          </div>
         <% end %>
-      </ul>
-    <% else %>
-      <div class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No cost estimates</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating your first project estimate.</p>
-        <div class="mt-6">
-          <button 
-            type="button" 
-            data-action="click->cost-calculator#openModal"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-            <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            Create Estimate
-          </button>
-        </div>
       </div>
-    <% end %>
-  </div>
+    </div>
+  <% end %>
 </div>
