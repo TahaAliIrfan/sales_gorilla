@@ -1,15 +1,21 @@
 require 'net/http'
 require 'json'
+require 'openai'
 
 class OdooProposalNarrativeService
   SECTIONS = %w[summary rationale module_justifications next_steps].freeze
+  OPENAI_MODEL = "gpt-5.5"
+  CLAUDE_MODEL = "claude-sonnet-4-6"
 
   attr_reader :proposal
 
   def initialize(proposal)
     @proposal = proposal
-    @api_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
-    @model = "claude-sonnet-4-6"
+    @openai_key = ENV['OPENAI_API_KEY'].presence || Rails.application.credentials.OPENAI_API_KEY
+    @claude_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
+    @model = CLAUDE_MODEL
+    # Guards below only need SOME provider available.
+    @api_key = @openai_key.presence || @claude_key
   end
 
   def generate_all
@@ -151,33 +157,46 @@ class OdooProposalNarrativeService
     PROMPT
   end
 
+  # OpenAI gpt-5.5 first, Claude fallback — same as the other proposal services.
   def call_claude(prompt, max_tokens:)
-    uri = URI('https://api.anthropic.com/v1/messages')
+    content = call_openai(prompt, max_tokens)
+    content = call_anthropic(prompt, max_tokens) if content.blank?
+    content
+  end
 
+  def call_openai(prompt, max_tokens)
+    return nil if @openai_key.blank?
+    client = OpenAI::Client.new(access_token: @openai_key, request_timeout: 120)
+    response = client.chat(parameters: {
+      model: OPENAI_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_completion_tokens: [max_tokens.to_i + 8000, 12000].max,
+      reasoning_effort: 'low'
+    })
+    response.dig('choices', 0, 'message', 'content').presence
+  rescue => e
+    Rails.logger.warn("OdooProposalNarrativeService: OpenAI failed, falling back to Claude: #{e.message}")
+    nil
+  end
+
+  def call_anthropic(prompt, max_tokens)
+    return nil if @claude_key.blank?
+    uri = URI('https://api.anthropic.com/v1/messages')
     request = Net::HTTP::Post.new(uri)
     request['Content-Type'] = 'application/json'
-    request['x-api-key'] = @api_key
+    request['x-api-key'] = @claude_key
     request['anthropic-version'] = '2023-06-01'
+    request.body = { model: CLAUDE_MODEL, max_tokens: max_tokens, messages: [{ role: 'user', content: prompt }] }.to_json
 
-    request.body = {
-      model: @model,
-      max_tokens: max_tokens,
-      messages: [{ role: 'user', content: prompt }]
-    }.to_json
-
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 90) do |http|
-      http.request(request)
-    end
-
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 90) { |http| http.request(request) }
     if response.code == '200'
-      JSON.parse(response.body).dig('content', 0, 'text')
+      JSON.parse(response.body).dig('content', 0, 'text').presence
     else
-      Rails.logger.error("Claude API error (#{response.code}): #{response.body}")
+      Rails.logger.error("Odoo narrative Claude API error (#{response.code}): #{response.body}")
       nil
     end
   rescue => e
-    Rails.logger.error("OdooProposalNarrativeService error: #{e.message}")
-    Rails.logger.error(e.backtrace.first(5).join("\n"))
+    Rails.logger.error("OdooProposalNarrativeService Claude error: #{e.message}")
     nil
   end
 

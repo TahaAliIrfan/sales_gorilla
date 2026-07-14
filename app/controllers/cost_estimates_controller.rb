@@ -6,8 +6,10 @@ class CostEstimatesController < ApplicationController
   DEFAULT_HOURLY_RATE = 25
 
   # Proposal Generator landing = the chat, plus a list of recent proposals.
+  # Admins see everyone's proposals; everyone else sees their own.
   def index
-    @recent_estimates = current_user.cost_estimates.order(created_at: :desc).limit(15)
+    scope = current_user.admin? ? CostEstimate.all : current_user.cost_estimates
+    @recent_estimates = scope.order(created_at: :desc).limit(current_user.admin? ? 50 : 15)
   end
 
   def show
@@ -235,7 +237,8 @@ class CostEstimatesController < ApplicationController
   end
 
   def set_cost_estimate
-    @cost_estimate = current_user.cost_estimates.find(params[:id])
+    scope = current_user.admin? ? CostEstimate.all : current_user.cost_estimates
+    @cost_estimate = scope.find(params[:id])
   end
   
   def cost_estimate_params

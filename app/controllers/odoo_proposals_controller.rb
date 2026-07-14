@@ -4,7 +4,9 @@ class OdooProposalsController < ApplicationController
   before_action :set_proposal, only: [:show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative]
 
   def index
-    @proposals = current_user.odoo_proposals.includes(:customer).order(created_at: :desc)
+    # Admins see every rep's proposals; everyone else sees their own.
+    scope = current_user.admin? ? OdooProposal.all : current_user.odoo_proposals
+    @proposals = scope.includes(:customer).order(created_at: :desc)
   end
 
   def new
@@ -200,7 +202,8 @@ class OdooProposalsController < ApplicationController
   end
 
   def set_proposal
-    @proposal = current_user.odoo_proposals.find(params[:id])
+    scope = current_user.admin? ? OdooProposal.all : current_user.odoo_proposals
+    @proposal = scope.find(params[:id])
   end
 
   def customers_for_select
