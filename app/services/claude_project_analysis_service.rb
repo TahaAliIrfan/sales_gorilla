@@ -1,13 +1,18 @@
+require "net/http"
+require "json"
 require "openai"
 
-# Builds the cost estimate (features + hours) from a project description.
-# Runs on OpenAI gpt-5.5. Class name kept for compatibility with callers.
+# Builds the cost estimate (features + hours) that drives the report.
+# Provider strategy: try OpenAI gpt-5.5 first; if it errors or comes back empty,
+# fall back to Claude (claude-sonnet-4-6). Class name kept for callers.
 class ClaudeProjectAnalysisService
-  OPENAI_MODEL = "gpt-5.5"
+  CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
+  CLAUDE_MODEL   = "claude-sonnet-4-6"
+  OPENAI_MODEL   = "gpt-5.5"
 
   def initialize
-    @api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
-    raise "OpenAI API key not configured" unless @api_key
+    @openai_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
+    @claude_key = Rails.application.credentials.dig(:anthropic, :api_key) || ENV["ANTHROPIC_API_KEY"]
   end
   
   def analyze_project(app_type:, description:, scale: 'moderate', include_design: false)
@@ -193,23 +198,53 @@ class ClaudeProjectAnalysisService
     end
   end
   
+  # OpenAI first, Claude as fallback.
   def make_api_request(prompt)
-    client = OpenAI::Client.new(access_token: @api_key, request_timeout: 180)
-    # reasoning_effort low + a large budget: without it gpt-5.5 spends the whole
-    # completion budget "reasoning" on this big structured prompt and returns an
-    # empty body (finish_reason: length).
+    content = openai_completion(prompt)
+    content = claude_completion(prompt) if content.blank?
+    content.present? ? { success: true, content: content } : { success: false, error: "AI providers unavailable" }
+  end
+
+  def openai_completion(prompt)
+    return nil if @openai_key.blank?
+    client = OpenAI::Client.new(access_token: @openai_key, request_timeout: 180)
+    # reasoning_effort low + large budget: otherwise gpt-5.5 spends the whole
+    # completion budget reasoning and returns an empty body on this big prompt.
     response = client.chat(parameters: {
       model: OPENAI_MODEL,
       messages: [{ role: "user", content: prompt }],
       max_completion_tokens: 16000,
       reasoning_effort: "low"
     })
-    content = response.dig("choices", 0, "message", "content")
-    { success: true, content: content }
-  rescue Faraday::Error => e
-    error_msg = (e.response&.dig(:body) rescue nil) || e.message
-    Rails.logger.error("OpenAI project-analysis error: #{error_msg}")
-    { success: false, error: "API request failed" }
+    response.dig("choices", 0, "message", "content").presence
+  rescue => e
+    Rails.logger.warn("ClaudeProjectAnalysisService: OpenAI failed, falling back to Claude: #{e.message}")
+    nil
+  end
+
+  def claude_completion(prompt)
+    return nil if @claude_key.blank?
+    uri = URI(CLAUDE_API_URL)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.read_timeout = 120
+
+    request = Net::HTTP::Post.new(uri)
+    request['Content-Type'] = 'application/json'
+    request['x-api-key'] = @claude_key
+    request['anthropic-version'] = '2023-06-01'
+    request.body = { model: CLAUDE_MODEL, max_tokens: 4000, messages: [{ role: "user", content: prompt }] }.to_json
+
+    response = http.request(request)
+    if response.code == '200'
+      JSON.parse(response.body).dig('content', 0, 'text').presence
+    else
+      Rails.logger.error("Claude estimate API error: #{response.code} - #{response.body}")
+      nil
+    end
+  rescue => e
+    Rails.logger.error("Claude estimate failed: #{e.message}")
+    nil
   end
   
   def parse_analysis_response(content)

@@ -1,16 +1,23 @@
-require 'openai'
+require 'net/http'
 require 'json'
+require 'openai'
 
+# Builds the proposal narrative (exec summary, phases, market research).
+# Provider strategy: OpenAI gpt-5.5 first, Claude (claude-sonnet-4-6) fallback.
 class CostEstimateAiService
   attr_reader :api_key, :model
 
-  def initialize
-    @api_key = ENV['OPENAI_API_KEY'].presence || Rails.application.credentials.OPENAI_API_KEY
-    @model = "gpt-5.5"
+  OPENAI_MODEL = "gpt-5.5"
+  CLAUDE_MODEL = "claude-sonnet-4-6"
 
-    if @api_key.blank?
-      Rails.logger.error("OpenAI API key is not configured")
-    end
+  def initialize
+    @openai_key = ENV['OPENAI_API_KEY'].presence || Rails.application.credentials.OPENAI_API_KEY
+    @claude_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || Rails.application.credentials.dig(:anthropic, :api_key) || ENV['ANTHROPIC_API_KEY']
+    @model = CLAUDE_MODEL
+    # @api_key gates the public methods: we can proceed if either provider exists.
+    @api_key = @openai_key.presence || @claude_key
+
+    Rails.logger.error("No AI provider key configured for CostEstimateAiService") if @api_key.blank?
   end
 
   def generate_project_analysis(cost_estimate)
@@ -171,27 +178,49 @@ class CostEstimateAiService
     PROMPT
   end
 
-  # Kept its name for the callers; now runs on OpenAI gpt-5.5. The token arg is
-  # padded because gpt-5.5's hidden reasoning tokens share the completion budget.
+  # Kept its name for callers. OpenAI gpt-5.5 first, Claude fallback.
   def analyze_with_claude(prompt, max_tokens = 2048)
-    return nil if @api_key.blank?
+    content = openai_completion(prompt, max_tokens)
+    content = claude_completion(prompt, max_tokens) if content.blank?
+    content
+  end
 
-    begin
-      client = OpenAI::Client.new(access_token: @api_key, request_timeout: 180)
-      # reasoning_effort low keeps gpt-5.5 from burning the whole budget on
-      # reasoning and returning an empty body on these large JSON prompts.
-      response = client.chat(parameters: {
-        model: @model,
-        messages: [{ role: 'user', content: prompt }],
-        max_completion_tokens: [max_tokens.to_i + 8000, 16000].max,
-        reasoning_effort: "low"
-      })
-      response.dig('choices', 0, 'message', 'content')
-    rescue => e
-      body = (e.response&.dig(:body) rescue nil)
-      Rails.logger.error("OpenAI narrative analysis error: #{e.message} - #{body}")
+  def openai_completion(prompt, max_tokens)
+    return nil if @openai_key.blank?
+    client = OpenAI::Client.new(access_token: @openai_key, request_timeout: 180)
+    # reasoning_effort low keeps gpt-5.5 from spending the whole budget reasoning
+    # and returning an empty body on these large JSON prompts.
+    response = client.chat(parameters: {
+      model: OPENAI_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_completion_tokens: [max_tokens.to_i + 8000, 16000].max,
+      reasoning_effort: "low"
+    })
+    response.dig('choices', 0, 'message', 'content').presence
+  rescue => e
+    Rails.logger.warn("CostEstimateAiService: OpenAI failed, falling back to Claude: #{e.message}")
+    nil
+  end
+
+  def claude_completion(prompt, max_tokens)
+    return nil if @claude_key.blank?
+    uri = URI('https://api.anthropic.com/v1/messages')
+    request = Net::HTTP::Post.new(uri)
+    request['Content-Type'] = 'application/json'
+    request['x-api-key'] = @claude_key
+    request['anthropic-version'] = '2023-06-01'
+    request.body = { model: CLAUDE_MODEL, max_tokens: max_tokens, messages: [{ role: 'user', content: prompt }] }.to_json
+
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true, read_timeout: 120) { |http| http.request(request) }
+    if response.code == '200'
+      JSON.parse(response.body).dig('content', 0, 'text').presence
+    else
+      Rails.logger.error("Claude narrative API error: #{response.code} - #{response.body}")
       nil
     end
+  rescue => e
+    Rails.logger.error("Claude narrative failed: #{e.message}")
+    nil
   end
 
   def parse_analysis_response(response)
