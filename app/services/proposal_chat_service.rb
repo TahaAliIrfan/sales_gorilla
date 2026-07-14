@@ -1,17 +1,14 @@
-require "openai"
-
 # Conversational front-end for the Proposal Generator. The rep describes (or
 # uploads) a project; this assistant talks it through like a normal AI, asks the
 # few things it needs to size the work, and tells the rep when there's enough to
 # generate the proposal. It does NOT build the proposal itself — that's a
 # separate step (ProposalIntakeService + the estimate/narrative/PDF pipeline).
 #
+# Backed by Claude Haiku (small + cheap) since this is a high-frequency chatbot.
 # Stateless: the browser holds the running conversation and posts it back each
-# turn (see proposal_chat_controller.js). Uploaded-file text is folded into the
-# user turn by the controller before it reaches here.
+# turn (see proposal_chat_controller.js).
 class ProposalChatService
-  OPENAI_MODEL          = "gpt-5.5"
-  MAX_COMPLETION_TOKENS = 3000
+  MAX_TOKENS = 1500
 
   class MissingApiKey < StandardError; end
 
@@ -21,25 +18,13 @@ class ProposalChatService
   end
 
   def reply(history)
-    api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
-    raise MissingApiKey, "OPENAI_API_KEY is not configured" if api_key.blank?
+    raise MissingApiKey, "No AI provider is configured" unless ClaudeClient.configured?
 
     messages = sanitize(history)
     raise ArgumentError, "no messages" if messages.empty?
 
-    client = OpenAI::Client.new(access_token: api_key, request_timeout: 90)
-    response = client.chat(parameters: {
-      model: OPENAI_MODEL,
-      messages: [{ role: "system", content: system_prompt }] + messages,
-      max_completion_tokens: MAX_COMPLETION_TOKENS,
-      reasoning_effort: "low"
-    })
-    content = response.dig("choices", 0, "message", "content")
+    content = ClaudeClient.chat(system: system_prompt, messages: messages, model: ClaudeClient::HAIKU, max_tokens: MAX_TOKENS)
     content.presence || "Sorry, I couldn't respond just now. Please try again."
-  rescue Faraday::Error => e
-    body = (e.response&.dig(:body) rescue nil)
-    Rails.logger.error("ProposalChatService OpenAI error: #{e.message} - #{body}")
-    raise "OpenAI API error"
   end
 
   private

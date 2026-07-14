@@ -1,19 +1,15 @@
-require "openai"
-
 # Conversational AI assistant scoped to a single customer. The rep asks
 # questions ("what's the state of this lead?", "draft a follow-up email",
 # "what should I say on the next call?") and the model answers with the full
 # CRM context for that customer stitched into a system prompt.
 #
-# Backed by OpenAI's gpt-5.5. Stateless: the browser holds the running
+# Backed by Claude Haiku (a small, cheap model) — this is a high-frequency
+# chatbot, so cost matters. Stateless: the browser holds the running
 # conversation and posts the whole history back each turn (see
 # ai_chat_controller.js). We rebuild the customer context fresh on every call so
 # answers reflect the latest CRM state.
 class CustomerAiChatService
-  OPENAI_MODEL          = "gpt-5.5"
-  # gpt-5.5 is a reasoning model: the completion budget covers hidden reasoning
-  # tokens too, so keep this generous or the visible answer can come back empty.
-  MAX_COMPLETION_TOKENS = 8000
+  MAX_TOKENS = 1500
 
   class MissingApiKey < StandardError; end
 
@@ -25,13 +21,12 @@ class CustomerAiChatService
   # history: array of { "role" => "user"|"assistant", "content" => String }.
   # Returns the assistant's reply text, or raises on transport/config errors.
   def reply(history)
-    api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
-    raise MissingApiKey, "OPENAI_API_KEY is not configured" if api_key.blank?
+    raise MissingApiKey, "No AI provider is configured" unless ClaudeClient.configured?
 
     messages = sanitize(history)
     raise ArgumentError, "no messages" if messages.empty?
 
-    content = openai(messages, api_key)
+    content = ClaudeClient.chat(system: system_prompt, messages: messages, model: ClaudeClient::HAIKU, max_tokens: MAX_TOKENS)
     content.presence || "Sorry, I couldn't generate a response just now. Please try again."
   end
 
@@ -223,24 +218,5 @@ class CustomerAiChatService
     end.join("\n---\n")
   rescue
     nil
-  end
-
-  def openai(messages, api_key)
-    client = OpenAI::Client.new(access_token: api_key, request_timeout: 120)
-
-    # OpenAI takes the system prompt as the first message; the sanitized
-    # conversation follows. gpt-5.5 only accepts the default temperature.
-    full = [{ role: "system", content: system_prompt }] + messages
-
-    response = client.chat(parameters: {
-      model: OPENAI_MODEL,
-      messages: full,
-      max_completion_tokens: MAX_COMPLETION_TOKENS
-    })
-    response.dig("choices", 0, "message", "content")
-  rescue Faraday::Error => e
-    body = e.respond_to?(:response) ? e.response&.dig(:body) : nil
-    Rails.logger.error("CustomerAiChatService OpenAI API error: #{e.message} - #{body}")
-    raise "OpenAI API error"
   end
 end

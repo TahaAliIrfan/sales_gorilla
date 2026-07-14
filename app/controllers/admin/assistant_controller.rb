@@ -23,8 +23,6 @@ module Admin
       render json: { success: true, reply: reply }
     rescue AdminAssistantService::MissingApiKey
       render json: { success: false, error: "The AI assistant is not configured on this server." }, status: :service_unavailable
-    rescue AdminAssistantService::RateLimited => e
-      render json: { success: false, error: e.message }, status: :too_many_requests
     rescue ArgumentError => e
       render json: { success: false, error: e.message }, status: :unprocessable_entity
     rescue Timeout::Error

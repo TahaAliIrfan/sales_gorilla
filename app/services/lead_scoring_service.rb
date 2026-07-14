@@ -1,21 +1,15 @@
-require "openai"
 require "json"
 
 # Lead scoring — a transparent 0-100 score combining deterministic CRM signals
 # (always available, updates as calls/deals progress) with an optional AI
 # quality read of the lead's own words (description + recent messages + call
-# transcripts). No name/ethnicity heuristics.
+# transcripts). The AI read runs on Claude (Sonnet). No name/ethnicity heuristics.
 #
 #   rules (0-70)  +  AI quality (0-30)  =  lead_score (0-100)
 #
 # Use `run_ai: false` for the cheap live recompute triggered by call/deal events;
 # `run_ai: true` (default) re-reads the qualitative signal and caches it.
 class LeadScoringService
-  OPENAI_MODEL          = "gpt-5.5"
-  # Reasoning tokens share this budget, so keep it well above the small JSON
-  # answer or the visible content comes back empty.
-  MAX_COMPLETION_TOKENS = 4000
-
   def initialize(customer)
     @customer = customer
   end
@@ -102,11 +96,9 @@ class LeadScoringService
   # ---- AI qualitative read (0-30) ----
 
   def ai_quality
-    api_key = ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
-    return nil if api_key.blank?
+    return nil unless ClaudeClient.configured?
 
-    prompt = build_prompt
-    content = openai(prompt, api_key)
+    content = ClaudeClient.chat(messages: [{ role: "user", content: build_prompt }], model: ClaudeClient::SONNET, max_tokens: 700)
     return nil unless content
 
     json = extract_json(content)
@@ -191,20 +183,6 @@ class LeadScoringService
       r.transcription if r.respond_to?(:transcription) && r.transcription.present?
     end.join("\n---\n")
   rescue
-    nil
-  end
-
-  def openai(prompt, api_key)
-    client = OpenAI::Client.new(access_token: api_key, request_timeout: 60)
-    response = client.chat(parameters: {
-      model: OPENAI_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      max_completion_tokens: MAX_COMPLETION_TOKENS
-    })
-    response.dig("choices", 0, "message", "content")
-  rescue Faraday::Error => e
-    body = e.respond_to?(:response) ? e.response&.dig(:body) : nil
-    Rails.logger.error("OpenAI lead-score API error: #{e.message} - #{body}")
     nil
   end
 

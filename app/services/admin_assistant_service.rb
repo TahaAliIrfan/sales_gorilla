@@ -1,21 +1,16 @@
-require "langchain"
-
 # CRM-wide conversational assistant for admins. Unlike CustomerAiChatService
 # (one customer stuffed into a prompt), this uses tool-calling: the model is
 # given read-only tools and decides which to call to answer questions across the
 # whole CRM ("which leads can I still reach out to?", "who mentioned budget on a
 # call?", "won value by rep this month").
 #
-# Backed by OpenAI's gpt-5.5 via langchainrb's Assistant. Read-only: no tool
-# writes to the database.
+# Backed by Claude Haiku (small + cheap) using native Claude tool-use, driven by
+# ClaudeClient. The tool schemas + implementations live in AdminAssistant::CrmTools.
+# Read-only: no tool writes to the database.
 class AdminAssistantService
-  MODEL       = "gpt-5.5"
-  MAX_SECONDS = 120
+  MAX_TOKENS = 1500
 
   class MissingApiKey < StandardError; end
-  # Surface rate limits distinctly so the UI can tell the admin to wait a moment
-  # rather than showing a generic error.
-  class RateLimited < StandardError; end
 
   def initialize(user)
     @user = user
@@ -24,80 +19,30 @@ class AdminAssistantService
   # history: array of { "role" => "user"|"assistant", "content" => String },
   # ending with the new user message. Returns the assistant's reply text.
   def reply(history)
-    api_key = openai_key
-    raise MissingApiKey, "OPENAI_API_KEY is not configured" if api_key.blank?
+    raise MissingApiKey, "No AI provider is configured" unless ClaudeClient.configured?
 
-    turns = sanitize(history)
-    raise ArgumentError, "no messages" if turns.empty?
+    messages = sanitize(history)
+    raise ArgumentError, "no messages" if messages.empty?
 
-    run_with_retry(turns)
+    crm = AdminAssistant::CrmTools.new
+    runner = ->(name, input) do
+      method = name.to_s.sub(/\Acrm__/, "")
+      args = (input || {}).transform_keys(&:to_sym)
+      crm.public_send(method, **args)
+    end
+
+    reply = ClaudeClient.chat_with_tools(
+      system:   system_prompt,
+      messages: messages,
+      model:    ClaudeClient::HAIKU,
+      tools:    AdminAssistant::CrmTools.function_schemas.to_anthropic_format,
+      runner:   runner,
+      max_tokens: MAX_TOKENS
+    )
+    reply.presence || "Sorry, I couldn't put together an answer just now. Please try again."
   end
 
   private
-
-  def openai_key
-    ENV["OPENAI_API_KEY"].presence || Rails.application.credentials.OPENAI_API_KEY
-  end
-
-  # One retry on a 429 rate limit, waiting the server-suggested delay. A fresh
-  # assistant is built each attempt so a partial run doesn't leak into the retry.
-  def run_with_retry(turns, attempts: 2)
-    tries = 0
-    begin
-      tries += 1
-      run_once(turns)
-    rescue => e
-      if rate_limited?(e)
-        raise RateLimited, "Rate limit reached. Please wait a few seconds and try again." if tries >= attempts
-        sleep(retry_after_seconds(e))
-        retry
-      end
-      raise
-    end
-  end
-
-  def run_once(turns)
-    assistant = build_assistant(openai_key)
-
-    # Seed the prior conversation, then run the newest user turn.
-    prior, latest = turns[0..-2], turns[-1]
-    prior.each { |t| assistant.add_message(role: t[:role], content: t[:content]) }
-
-    Timeout.timeout(MAX_SECONDS) do
-      assistant.add_message_and_run!(content: latest[:content])
-    end
-
-    reply = assistant.messages.reverse.find { |m| m.role == "assistant" && m.content.to_s.strip.present? }
-    reply&.content.presence || "Sorry, I couldn't put together an answer just now. Please try again."
-  end
-
-  def rate_limited?(error)
-    msg = error.message.to_s
-    msg.include?("rate_limit") || msg.include?("Rate limit") || msg.include?("429")
-  end
-
-  # Parse the API's "try again in 3.51s" hint; fall back to a small fixed wait,
-  # capped so we never block the request for long.
-  def retry_after_seconds(error)
-    seconds = error.message.to_s[/try again in ([\d.]+)s/, 1]&.to_f
-    [[seconds || 3.0, 1.0].max, 8.0].min
-  end
-
-  private
-
-  def build_assistant(api_key)
-    # gpt-5.5 only accepts the default temperature (1.0); other values 400.
-    llm = Langchain::LLM::OpenAI.new(
-      api_key: api_key,
-      default_options: { chat_model: MODEL, temperature: 1.0 }
-    )
-
-    Langchain::Assistant.new(
-      llm: llm,
-      instructions: system_prompt,
-      tools: [AdminAssistant::CrmTools.new]
-    )
-  end
 
   def sanitize(history)
     Array(history).filter_map do |m|
