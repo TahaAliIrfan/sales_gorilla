@@ -2,6 +2,7 @@ require 'net/http'
 require 'json'
 require 'base64'
 require 'grover'
+require 'openai'
 
 # Generates concept screens for a cost estimate and attaches them to the
 # estimate as `mockup_images`, so the proposal PDF can embed them in the
@@ -20,6 +21,7 @@ require 'grover'
 #
 # Idempotent — skips generation if images are already attached.
 class MockupGenerationService
+  OPENAI_MODEL   = 'gpt-5.5'.freeze
   CLAUDE_MODEL   = 'claude-sonnet-4-6'.freeze
   SCREEN_BREAK   = '<<<SCREEN_BREAK>>>'.freeze
   ANTHROPIC_URL  = 'https://api.anthropic.com/v1/messages'.freeze
@@ -45,6 +47,7 @@ class MockupGenerationService
 
   def initialize(cost_estimate)
     @cost_estimate = cost_estimate
+    @openai_key    = ENV['OPENAI_API_KEY'].presence || Rails.application.credentials.OPENAI_API_KEY
     @anthropic_key = Rails.application.credentials.dig(:ANTHROPIC_API_KEY) || ENV['ANTHROPIC_API_KEY']
     @api_key = Rails.application.credentials.dig(:GOOGLE_STUDIO_API_KEY) || ENV['GOOGLE_STUDIO_API_KEY']
   end
@@ -54,14 +57,25 @@ class MockupGenerationService
     return true if @cost_estimate.mockup_images.attached?
     raise 'cost estimate must be persisted to attach mockups' unless @cost_estimate.persisted?
 
-    screens = claude_screens
-    if screens.present?
-      attached = attach_screens(screens) { |html| render_screenshot(html) }
-      return true if attached.positive?
-      Rails.logger.warn('MockupGenerationService: Claude pipeline produced no renderable screens, falling back to image models')
-    end
+    pngs = generate_pngs
+    return false if pngs.blank?
+    attach_screens(pngs) { |png| png }.positive?
+  end
 
-    gemini_fallback
+  # Produce the mockup images WITHOUT touching the DB, so the proposal worker can
+  # run this in a thread (no connection checkout) and attach them on the main
+  # thread. Returns [[slug, png_bytes], ...] (possibly empty).
+  def generate_pngs
+    screens = authored_screens
+    if screens.present?
+      pngs = screens.filter_map do |slug, html|
+        png = render_screenshot(html)
+        [slug, png] if png.present?
+      end
+      return pngs if pngs.any?
+      Rails.logger.warn('MockupGenerationService: HTML pipeline produced no renderable screens, falling back to image models')
+    end
+    gemini_pngs
   end
 
   private
@@ -85,7 +99,9 @@ class MockupGenerationService
                   testing|\bqa\b|documentation|ci\/cd|migration|architecture|
                   sdk|webhook|scalab|monitoring|logging|caching|
                   responsive|web\ interface|ui\/ux|user\ interface|
-                  cross.?platform|native\ app|wireframe|prototype)\b/xi
+                  cross.?platform|native\ app|wireframe|prototype|
+                  design|figma|mockup|high.?fidelity|style\ guide|
+                  design\ system|branding|ui\ kit)\b/xi
 
   # Features that map to a real, user-facing screen (best candidates first).
   def user_facing_features
@@ -105,16 +121,18 @@ class MockupGenerationService
     mobile? ? MOBILE_VIEWPORT : WEB_VIEWPORT
   end
 
-  # ── Primary pipeline: Claude writes the UI, Chrome photographs it ──────
+  # ── Primary pipeline: an LLM writes the UI, Chrome photographs it ──────
+  # GPT (gpt-5.5) authors the screens first; Claude is the fallback author.
+  # Real HTML rendered by Chrome = pixel-crisp, Figma-grade screens.
 
   # Returns [[slug, html], [slug, html]] (home first) or nil on failure.
-  def claude_screens
-    if @anthropic_key.blank?
-      Rails.logger.warn('MockupGenerationService: ANTHROPIC_API_KEY not configured, skipping Claude pipeline')
-      return nil
+  def authored_screens
+    prompt = screens_prompt
+    raw = request_openai(prompt) if @openai_key.present?
+    if raw.blank? && @anthropic_key.present?
+      Rails.logger.info('MockupGenerationService: OpenAI author unavailable/empty, trying Claude')
+      raw = request_claude(prompt)
     end
-
-    raw = request_claude(screens_prompt)
     return nil if raw.blank?
 
     docs = raw.split(SCREEN_BREAK).map(&:strip).reject(&:blank?)
@@ -122,7 +140,7 @@ class MockupGenerationService
     docs = docs.select { |d| d.match?(/<html/i) && d.match?(/<\/html>/i) }
 
     unless docs.size == 2
-      Rails.logger.warn("MockupGenerationService: expected 2 HTML screens from Claude, got #{docs.size}")
+      Rails.logger.warn("MockupGenerationService: expected 2 HTML screens, got #{docs.size}")
       return nil
     end
 
@@ -130,6 +148,22 @@ class MockupGenerationService
       ['home-screen', docs[0]],
       [key_feature.parameterize.presence || 'key-feature', docs[1]]
     ]
+  end
+
+  def request_openai(prompt)
+    client = OpenAI::Client.new(access_token: @openai_key, request_timeout: 300)
+    # Two full standalone HTML screens are large; big budget + low reasoning so
+    # gpt-5.5 doesn't burn the budget reasoning and return an empty body.
+    response = client.chat(parameters: {
+      model: OPENAI_MODEL,
+      messages: [{ role: 'user', content: prompt }],
+      max_completion_tokens: 40_000,
+      reasoning_effort: 'low'
+    })
+    response.dig('choices', 0, 'message', 'content')
+  rescue => e
+    Rails.logger.warn("MockupGenerationService: OpenAI request failed: #{e.class} #{e.message}")
+    nil
   end
 
   def screens_prompt
@@ -145,7 +179,10 @@ class MockupGenerationService
       Key features: #{features.first(6).join(', ')}
 
       Pick a colour scheme that suits the app — it must use Material UI colours.
-      The screens should be so clean and polished that they look like a real Figma design.
+      These must look like a pixel-perfect, production-grade Figma design an agency
+      would hand a client: precise 8pt spacing, a clear type hierarchy, consistent
+      corner radii and soft shadows, aligned grids, real iconography, and generous
+      but purposeful whitespace. No rough edges, no placeholder-looking blocks.
 
       Both screens are real user-facing product screens — the kind an end user
       taps through. Screen 1 is the main Home / Dashboard screen. Screen 2 is the
@@ -251,10 +288,11 @@ class MockupGenerationService
 
   # ── Fallback pipeline: Gemini image models (Nano Banana) ───────────────
 
-  def gemini_fallback
+  # Returns [[slug, png], ...] from the Gemini image fallback (no DB writes).
+  def gemini_pngs
     if @api_key.blank?
       Rails.logger.warn('MockupGenerationService: GOOGLE_STUDIO_API_KEY not configured, skipping fallback mockups')
-      return false
+      return []
     end
 
     brief = design_brief
@@ -267,11 +305,10 @@ class MockupGenerationService
     feature_png = generate_image(feature_spec[:prompt])
     home_png    = generate_image(home_spec[:prompt], reference: feature_png)
 
-    screens = [
+    [
       [home_spec[:slug],    home_png],
       [feature_spec[:slug], feature_png]
-    ]
-    attach_screens(screens) { |png| png }.positive?
+    ].select { |_slug, png| png.present? }
   end
 
   # Asks a Gemini text model to act as a product designer and return a design

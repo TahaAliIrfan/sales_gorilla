@@ -143,7 +143,7 @@ export default class extends Controller {
       } catch (e) {
         // keep polling through transient errors
       }
-      if (tries > 60) { // ~3 min safety cap
+      if (tries > 120) { // ~6 min safety cap (quality mockups can be slow)
         this._result("This is taking longer than expected. Check 'Recent proposals' shortly.", "warn")
         this._resetGenerate()
         return

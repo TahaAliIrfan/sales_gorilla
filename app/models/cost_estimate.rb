@@ -193,7 +193,12 @@ class CostEstimate < ApplicationRecord
     # before that section existed pick it up on the next send/download.
     return if app_name.present? && market_research.present?
 
-    analysis = CostEstimateAiService.new.generate_project_analysis(self)
+    apply_proposal_content!(CostEstimateAiService.new.generate_project_analysis(self))
+  end
+
+  # Persist a narrative analysis hash (the generation half is separate so the
+  # proposal worker can run it in parallel with the mockups and only write here).
+  def apply_proposal_content!(analysis)
     if analysis
       update!(
         app_name: analysis['app_name'],

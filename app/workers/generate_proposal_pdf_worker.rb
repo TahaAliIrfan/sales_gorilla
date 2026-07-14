@@ -29,10 +29,34 @@ class GenerateProposalPdfWorker
     estimate.key_technology_areas = analysis[:key_technology_areas]
     estimate.save!
 
-    begin
-      estimate.ensure_proposal_content!
-    rescue => e
-      Rails.logger.error("Proposal narrative generation failed (#{e.message}) — continuing")
+    # The two slowest steps — the proposal narrative and the concept mockups —
+    # both only need the (now saved) estimate, so run them concurrently. Threads
+    # do pure network/CPU work and return data; all DB writes happen below on the
+    # main thread (keeps us off the small connection pool).
+    narrative = nil
+    mockup_pngs = nil
+    threads = []
+    threads << Thread.new do
+      narrative = begin
+        CostEstimateAiService.new.generate_project_analysis(estimate)
+      rescue => e
+        Rails.logger.error("Proposal narrative generation failed: #{e.message}"); nil
+      end
+    end
+    threads << Thread.new do
+      mockup_pngs = begin
+        MockupGenerationService.new(estimate).generate_pngs
+      rescue => e
+        Rails.logger.error("Proposal mockup generation failed: #{e.message}"); []
+      end
+    end
+    threads.each(&:join)
+
+    estimate.apply_proposal_content!(narrative)
+
+    Array(mockup_pngs).each_with_index do |(slug, png), i|
+      next if png.blank?
+      estimate.mockup_images.attach(io: StringIO.new(png), filename: format('%02d-%s.png', i + 1, slug), content_type: 'image/png')
     end
 
     pdf_binary = begin
