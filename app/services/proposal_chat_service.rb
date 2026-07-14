@@ -48,8 +48,9 @@ class ProposalChatService
       role = m["role"] || m[:role]
       text = (m["content"] || m[:content]).to_s.strip
       next unless %w[user assistant].include?(role) && text.present?
-      { role: role, content: text[0, 12000] }
-    end.last(30)
+      # Large cap so an imported customer dossier isn't truncated.
+      { role: role, content: text[0, 40_000] }
+    end.last(40)
   end
 
   def system_prompt

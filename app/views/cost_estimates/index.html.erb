@@ -1,57 +1,83 @@
-<div class="max-w-4xl mx-auto px-4 py-6">
+<div class="max-w-6xl mx-auto px-4 py-6" data-controller="proposal-generator">
   <div class="mb-4">
     <h1 class="text-xl font-semibold text-gray-900">Proposal Generator</h1>
-    <p class="text-sm text-gray-500">Describe or upload the project, chat it through, and generate a full costed proposal.</p>
+    <p class="text-sm text-gray-500">Chat through a project (or import a customer's whole history), then generate a full costed proposal.</p>
   </div>
 
-  <div data-controller="proposal-generator"
-       class="flex flex-col h-[calc(100vh-13rem)] bg-gray-50 rounded-xl border border-gray-200 overflow-hidden">
-
-    <!-- Messages -->
-    <div data-proposal-generator-target="messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-      <div data-proposal-generator-target="empty" class="h-full flex flex-col items-center justify-center text-center px-6">
-        <div class="flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 mb-3">
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-        </div>
-        <p class="text-sm font-medium text-gray-700">What are we proposing?</p>
-        <p class="text-xs text-gray-500 mt-1 max-w-md">Tell me what the client wants to build, or upload their requirements. I'll ask a couple of questions, then you can generate the proposal.</p>
-      </div>
-    </div>
-
-    <!-- Generate bar (appears once there's a conversation) -->
-    <div data-proposal-generator-target="generateBar" class="hidden border-t border-gray-200 bg-emerald-50 px-4 py-2.5 flex items-center justify-between gap-3">
-      <div class="text-xs text-emerald-800 min-w-0 truncate" data-proposal-generator-target="result">Ready when you are, generate the full proposal PDF.</div>
-      <button type="button" data-action="proposal-generator#generate" data-proposal-generator-target="generateButton"
-              class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+  <div class="flex gap-4 h-[calc(100vh-14rem)]">
+    <!-- Sidebar: chats -->
+    <aside class="w-60 shrink-0 flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden">
+      <button type="button" data-action="proposal-generator#newChat"
+              class="m-2 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-600 text-white text-sm font-medium hover:bg-emerald-700">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-        Generate proposal
+        New chat
       </button>
-    </div>
+      <div data-proposal-generator-target="chatList" class="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5"></div>
+    </aside>
 
-    <!-- Composer -->
-    <div class="border-t border-gray-200 bg-white px-4 py-3">
-      <div data-proposal-generator-target="fileChip" class="hidden mb-2 inline-flex items-center gap-2 text-xs bg-gray-100 text-gray-700 rounded-full pl-3 pr-1.5 py-1">
-        <span data-proposal-generator-target="fileName"></span>
-        <button type="button" data-action="proposal-generator#clearFile" class="h-4 w-4 grid place-items-center rounded-full hover:bg-gray-200">&times;</button>
+    <!-- Main: conversation -->
+    <div class="flex-1 flex flex-col bg-gray-50 border border-gray-200 rounded-xl overflow-hidden min-w-0">
+      <!-- Top bar: customer import -->
+      <div class="flex items-center justify-between gap-3 px-4 py-2 bg-white border-b border-gray-200">
+        <div data-proposal-generator-target="customerChip" class="text-xs text-gray-500 truncate min-w-0"></div>
+        <div class="relative shrink-0">
+          <button type="button" data-action="proposal-generator#toggleImport"
+                  class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 border border-emerald-200 rounded-md px-2.5 py-1.5 hover:bg-emerald-50">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m0 0l-4-4m4 4l4-4M4 20h16"/></svg>
+            Import customer data
+          </button>
+          <div data-proposal-generator-target="importPanel" class="hidden absolute right-0 mt-1 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-2">
+            <input type="text" data-proposal-generator-target="customerSearch" data-action="input->proposal-generator#searchCustomers"
+                   placeholder="Search customer by name, email, phone…"
+                   class="w-full rounded-md border border-gray-300 px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <div data-proposal-generator-target="customerResults" class="mt-1 max-h-56 overflow-y-auto"></div>
+          </div>
+        </div>
       </div>
-      <form data-proposal-generator-target="form" data-action="submit->proposal-generator#send" class="flex items-end gap-2">
-        <label class="shrink-0 h-10 w-10 grid place-items-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 cursor-pointer" title="Attach requirements (PDF, Word, text)">
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
-          <input type="file" data-proposal-generator-target="file" data-action="proposal-generator#fileSelected" class="hidden" accept=".pdf,.doc,.docx,.txt,.md,.csv">
-        </label>
-        <textarea data-proposal-generator-target="input"
-                  data-action="keydown->proposal-generator#handleKeydown input->proposal-generator#autoGrow"
-                  rows="1"
-                  placeholder="Describe the project, or attach the requirements…"
-                  class="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 max-h-40"></textarea>
-        <button type="submit" data-proposal-generator-target="sendButton"
-                class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+
+      <!-- Messages -->
+      <div data-proposal-generator-target="messages" class="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div data-proposal-generator-target="empty" class="h-full flex flex-col items-center justify-center text-center px-6">
+          <div class="flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 mb-3">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </div>
+          <p class="text-sm font-medium text-gray-700">What are we proposing?</p>
+          <p class="text-xs text-gray-500 mt-1 max-w-md">Describe the project, attach requirements, or import a customer to pull in all their calls, emails and messages. Then generate the proposal.</p>
+        </div>
+      </div>
+
+      <!-- Generate bar -->
+      <div data-proposal-generator-target="generateBar" class="hidden border-t border-gray-200 bg-emerald-50 px-4 py-2.5 flex items-center justify-between gap-3">
+        <div class="text-xs text-emerald-800 min-w-0 truncate" data-proposal-generator-target="result">Ready when you are, generate the full proposal PDF.</div>
+        <button type="button" data-action="proposal-generator#generate" data-proposal-generator-target="generateButton"
+                class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Generate proposal
         </button>
-      </form>
-      <p class="mt-1.5 text-[11px] text-gray-400">The proposal is AI-generated. Review the scope and numbers before sending it to a client.</p>
+      </div>
+
+      <!-- Composer -->
+      <div class="border-t border-gray-200 bg-white px-4 py-3">
+        <div data-proposal-generator-target="fileChip" class="hidden mb-2 inline-flex items-center gap-2 text-xs bg-gray-100 text-gray-700 rounded-full pl-3 pr-1.5 py-1">
+          <span data-proposal-generator-target="fileName"></span>
+          <button type="button" data-action="proposal-generator#clearFile" class="h-4 w-4 grid place-items-center rounded-full hover:bg-gray-200">&times;</button>
+        </div>
+        <form data-proposal-generator-target="form" data-action="submit->proposal-generator#send" class="flex items-end gap-2">
+          <label class="shrink-0 h-10 w-10 grid place-items-center rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 cursor-pointer" title="Attach requirements (PDF, Word, text)">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+            <input type="file" data-proposal-generator-target="file" data-action="proposal-generator#fileSelected" class="hidden" accept=".pdf,.doc,.docx,.txt,.md,.csv">
+          </label>
+          <textarea data-proposal-generator-target="input"
+                    data-action="keydown->proposal-generator#handleKeydown input->proposal-generator#autoGrow"
+                    rows="1" placeholder="Describe the project, or ask a question…"
+                    class="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 max-h-40"></textarea>
+          <button type="submit" data-proposal-generator-target="sendButton"
+                  class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </button>
+        </form>
+        <p class="mt-1.5 text-[11px] text-gray-400">AI-generated. Review the scope and numbers before sending anything to a client.</p>
+      </div>
     </div>
   </div>
 

@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :notifications, dependent: :destroy
   has_many :cost_estimates, dependent: :destroy
   has_many :admin_assistant_messages, dependent: :destroy
+  has_many :proposal_chats, dependent: :destroy
   has_many :odoo_proposals, dependent: :destroy
   has_many :user_kpi_records, dependent: :destroy
 

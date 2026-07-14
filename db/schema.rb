@@ -751,6 +751,27 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
     t.index ["name"], name: "index_pipelines_on_name", unique: true
   end
 
+  create_table "proposal_chat_messages", force: :cascade do |t|
+    t.bigint "proposal_chat_id", null: false
+    t.string "role", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["proposal_chat_id", "created_at"], name: "idx_on_proposal_chat_id_created_at_2bc4e6a1ed"
+    t.index ["proposal_chat_id"], name: "index_proposal_chat_messages_on_proposal_chat_id"
+  end
+
+  create_table "proposal_chats", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "customer_id"
+    t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["customer_id"], name: "index_proposal_chats_on_customer_id"
+    t.index ["user_id", "updated_at"], name: "index_proposal_chats_on_user_id_and_updated_at"
+    t.index ["user_id"], name: "index_proposal_chats_on_user_id"
+  end
+
   create_table "recordings", force: :cascade do |t|
     t.string "sid"
     t.integer "duration"
@@ -1000,6 +1021,9 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
   add_foreign_key "notifications", "users"
   add_foreign_key "odoo_proposals", "customers", on_delete: :cascade
   add_foreign_key "odoo_proposals", "users"
+  add_foreign_key "proposal_chat_messages", "proposal_chats"
+  add_foreign_key "proposal_chats", "customers"
+  add_foreign_key "proposal_chats", "users"
   add_foreign_key "recordings", "customers"
   add_foreign_key "recordings", "users"
   add_foreign_key "role_assignments", "roles"

@@ -260,6 +260,18 @@ Rails.application.routes.draw do
     end
   end
 
+  # Proposal Generator chats (multi-chat sidebar + customer import)
+  resources :proposal_chats, only: [:index, :create, :show, :destroy] do
+    member do
+      post :message
+      post :import_customer
+      post :generate
+    end
+    collection do
+      get :customer_search
+    end
+  end
+
   # Browser-based calling routes
   get 'calling', to: 'calling#index'
   get 'calling/token', to: 'calling#token'
