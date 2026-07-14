@@ -1,12 +1,26 @@
 class OdooProposalsController < ApplicationController
   layout 'dashboard'
   before_action :require_login
-  before_action :set_proposal, only: [:show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative]
+  before_action :set_proposal, only: [:show, :edit, :update, :destroy, :download_pdf, :generate_narrative, :regenerate_section, :update_narrative, :proposal_status]
 
   def index
     # Admins see every rep's proposals; everyone else sees their own.
     scope = current_user.admin? ? OdooProposal.all : current_user.odoo_proposals
     @proposals = scope.includes(:customer).order(created_at: :desc)
+  end
+
+  # Poll target for a chat-driven Odoo proposal build.
+  def proposal_status
+    ready = @proposal.proposal_state == "ready"
+    mods = @proposal.selected_modules.size + Array(@proposal.custom_modules).size
+    render json: {
+      state: @proposal.proposal_state,
+      ready: ready,
+      failed: @proposal.proposal_state == "failed",
+      project_name: @proposal.display_name,
+      summary: "#{mods} modules · PKR #{ActiveSupport::NumberHelper.number_to_delimited(@proposal.total_cost)}",
+      download_url: (ready ? download_pdf_odoo_proposal_path(@proposal) : nil)
+    }
   end
 
   def new

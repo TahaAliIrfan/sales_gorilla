@@ -737,6 +737,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
     t.text "claude_next_steps"
     t.datetime "narrative_generated_at"
     t.jsonb "custom_modules", default: []
+    t.string "proposal_state"
     t.index ["customer_id"], name: "index_odoo_proposals_on_customer_id"
     t.index ["user_id"], name: "index_odoo_proposals_on_user_id"
   end
@@ -767,6 +768,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_07_14_120000) do
     t.string "title"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "kind", default: "cost", null: false
     t.index ["customer_id"], name: "index_proposal_chats_on_customer_id"
     t.index ["user_id", "updated_at"], name: "index_proposal_chats_on_user_id_and_updated_at"
     t.index ["user_id"], name: "index_proposal_chats_on_user_id"

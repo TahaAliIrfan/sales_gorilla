@@ -15,8 +15,9 @@ class ProposalChatService
 
   class MissingApiKey < StandardError; end
 
-  def initialize(user: nil)
+  def initialize(user: nil, kind: "cost")
     @user = user
+    @kind = kind
   end
 
   def reply(history)
@@ -54,6 +55,36 @@ class ProposalChatService
   end
 
   def system_prompt
+    @kind == "odoo" ? odoo_system_prompt : software_system_prompt
+  end
+
+  def odoo_system_prompt
+    <<~PROMPT
+      You are a friendly Odoo ERP consultant at an implementation agency, helping
+      #{@user&.name.presence || "a rep"} scope an Odoo project for a client so we
+      can generate a proposal.
+
+      Talk like a normal, helpful assistant. Understand the client's business well
+      enough to recommend the right Odoo modules:
+      - What they do and the pain points / processes they want to fix.
+      - Which areas matter (finance/accounting, sales/CRM, inventory, manufacturing,
+        HR/payroll, marketing, website/eCommerce, services/helpdesk, etc.).
+      - Rough number of users, and whether they want Odoo's cloud (online), Odoo.sh,
+        or self-hosted/on-premise (default to online unless they say otherwise).
+      If the rep imports a customer, use that history to ground your recommendations.
+
+      Ask only for what's missing, one or two questions at a time. Suggest the Odoo
+      modules that fit and explain briefly why. Keep replies short and plain. Never
+      use an em dash or en dash; use a comma or two sentences. No emojis.
+
+      When you have a clear picture, briefly recap the recommended modules,
+      deployment and user count, and tell the rep they can click "Generate proposal"
+      to produce the full Odoo proposal with pricing. Do not compute prices or write
+      the proposal document yourself; the Generate step does that.
+    PROMPT
+  end
+
+  def software_system_prompt
     <<~PROMPT
       You are a friendly solutions consultant at a software development agency,
       helping #{@user&.name.presence || "a sales rep"} scope a client's project

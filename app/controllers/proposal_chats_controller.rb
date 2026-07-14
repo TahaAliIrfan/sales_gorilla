@@ -9,12 +9,12 @@ class ProposalChatsController < ApplicationController
 
   # Sidebar list.
   def index
-    chats = current_user.proposal_chats.recent.limit(100)
+    chats = current_user.proposal_chats.where(kind: chat_kind).recent.limit(100)
     render json: { chats: chats.map { |c| chat_summary(c) } }
   end
 
   def create
-    chat = current_user.proposal_chats.create!
+    chat = current_user.proposal_chats.create!(kind: chat_kind)
     render json: chat_summary(chat)
   end
 
@@ -46,7 +46,7 @@ class ProposalChatsController < ApplicationController
     @chat.messages.create!(role: "user", content: text)
     @chat.ensure_title_from!(params[:content])
 
-    reply = ProposalChatService.new(user: current_user).reply(@chat.reload.llm_history)
+    reply = ProposalChatService.new(user: current_user, kind: @chat.kind).reply(@chat.reload.llm_history)
     @chat.messages.create!(role: "assistant", content: reply)
     render json: { success: true, reply: reply, title: @chat.display_title }
   rescue ProposalChatService::MissingApiKey
@@ -81,6 +81,15 @@ class ProposalChatsController < ApplicationController
 
   # Build the costed proposal from this chat (async worker; poll proposal_status).
   def generate
+    @chat.kind == "odoo" ? generate_odoo : generate_cost
+  rescue => e
+    Rails.logger.error("Proposal chat generate failed (chat #{@chat.id}): #{e.message}")
+    render json: { success: false, error: "Something went wrong starting the proposal. Please try again." }, status: :internal_server_error
+  end
+
+  private
+
+  def generate_cost
     intake = ProposalIntakeService.new(user: current_user).extract(@chat.llm_history)
     if intake[:description].blank?
       render json: { success: false, error: "Tell me a bit more about the project first, then generate." }, status: :unprocessable_entity
@@ -97,12 +106,38 @@ class ProposalChatsController < ApplicationController
     estimate.save(validate: false)
     GenerateProposalPdfWorker.perform_async(estimate.id)
     render json: { success: true, estimate_id: estimate.id, status_url: proposal_status_cost_estimate_path(estimate) }
-  rescue => e
-    Rails.logger.error("Proposal chat generate failed (chat #{@chat.id}): #{e.message}")
-    render json: { success: false, error: "Something went wrong starting the proposal. Please try again." }, status: :internal_server_error
   end
 
-  private
+  def generate_odoo
+    spec = OdooProposalIntakeService.new(user: current_user).extract(@chat.llm_history)
+    if spec[:selected_modules].blank? && spec[:custom_modules].blank?
+      render json: { success: false, error: "Tell me which Odoo modules or needs to cover first, then generate." }, status: :unprocessable_entity
+      return
+    end
+
+    proposal = current_user.odoo_proposals.new(
+      deployment_type: spec[:deployment_type],
+      num_users: spec[:num_users],
+      selected_modules: spec[:selected_modules],
+      custom_modules: spec[:custom_modules].map { |c| { "label" => c["name"], "impl_cost" => c["cost"].to_i, "description" => "" } },
+      industry: spec[:industry].presence,
+      company_size: spec[:company_size].presence,
+      pain_points: spec[:pain_points].present? ? [spec[:pain_points]] : [],
+      customer_id: @chat.customer_id,
+      customer_name: (@chat.customer&.name.presence || spec[:customer_name].presence || "Prospect"),
+      proposal_state: "generating"
+    )
+    proposal.implementation_fee = proposal.calculate_implementation_fee
+    proposal.annual_hosting_cost = proposal.calculate_annual_hosting_cost
+    proposal.save!
+    GenerateOdooProposalWorker.perform_async(proposal.id)
+    render json: { success: true, estimate_id: proposal.id, status_url: proposal_status_odoo_proposal_path(proposal) }
+  end
+
+  # cost | odoo, from the page that owns the chat.
+  def chat_kind
+    %w[cost odoo].include?(params[:kind]) ? params[:kind] : "cost"
+  end
 
   def set_chat
     @chat = current_user.proposal_chats.find(params[:id])

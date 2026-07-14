@@ -8,6 +8,7 @@ export default class extends Controller {
   static targets = ["chatList", "messages", "empty", "input", "sendButton", "form",
                     "file", "fileChip", "fileName", "generateBar", "generateButton", "result",
                     "customerChip", "importPanel", "customerSearch", "customerResults"]
+  static values = { kind: { type: String, default: "cost" } }
 
   connect() {
     this.currentId = null
@@ -20,7 +21,7 @@ export default class extends Controller {
   // ---- chat list ----
 
   async loadChats(openFirst = false) {
-    const data = await this._get("/proposal_chats")
+    const data = await this._get(`/proposal_chats?kind=${encodeURIComponent(this.kindValue)}`)
     this.renderChatList(data.chats || [])
     if (openFirst) {
       if (data.chats && data.chats.length) this.openChat(data.chats[0].id)
@@ -51,7 +52,7 @@ export default class extends Controller {
   }
 
   async newChat() {
-    const chat = await this._post("/proposal_chats", {})
+    const chat = await this._post("/proposal_chats", { kind: this.kindValue })
     if (!chat || !chat.id) return
     this.currentId = chat.id
     await this.loadChats()
@@ -210,12 +211,13 @@ export default class extends Controller {
 
   _done(d) {
     const name = d.project_name || "Proposal"
+    const detail = d.summary ? ` (${d.summary})` : ""
     this.resultTarget.innerHTML = ""
     const span = document.createElement("span"); span.textContent = "Proposal ready. "
     const link = document.createElement("a")
     link.href = d.download_url; link.target = "_blank"; link.rel = "noopener"
     link.className = "font-semibold underline"
-    link.textContent = `Download ${name} (${d.total_hours}h · ${d.total_cost})`
+    link.textContent = `Download ${name}${detail}`
     this.resultTarget.append(span, link)
     this.resultTarget.dataset.state = "success"
     this._resetGenerate()

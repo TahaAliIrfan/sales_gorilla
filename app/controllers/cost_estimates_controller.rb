@@ -78,8 +78,7 @@ class CostEstimatesController < ApplicationController
       ready: ready,
       failed: estimate.proposal_state == "failed",
       project_name: estimate.app_name.presence || estimate.project_name,
-      total_hours: estimate.total_hours,
-      total_cost: (estimate.formatted_total_cost if estimate.total_hours.present?),
+      summary: ([("#{estimate.total_hours}h" if estimate.total_hours.present?), (estimate.formatted_total_cost if estimate.total_hours.present?)].compact.join(" · ")),
       download_url: (rails_blob_path(estimate.pdf_file, disposition: "attachment", only_path: true) if ready)
     }
   end

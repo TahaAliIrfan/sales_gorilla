@@ -236,6 +236,7 @@ Rails.application.routes.draw do
   resources :odoo_proposals, only: [:index, :new, :create, :show, :edit, :update, :destroy] do
     member do
       get  'download_pdf'
+      get  'proposal_status'
       post 'generate_narrative'
       post 'regenerate_section'
       patch 'update_narrative'
