@@ -1,0 +1,488 @@
+<%# Shared PDF report styles (extracted from the cost-estimate report so the
+   Odoo proposal PDF matches it exactly). %>
+<style>
+  /* Instrument Sans for reading, Geist Mono for labels & figures —
+     the same pairing as our report templates. */
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TOKENS — warm paper, hairline cards, quiet accents
+     ═══════════════════════════════════════════════════════════════════ */
+  :root {
+    --paper:      #F7F6F2;
+    --card:       #FFFFFF;
+    --line:       #E7E5DE;
+    --line-soft:  #EFEEE8;
+    --shade:      #F4F3EE;
+    --ink:        #191917;
+    --slate:      #45443F;
+    --mid:        #8B8A80;
+    --green:      #177A4C;
+    --green-tint: #EAF4EE;
+    --amber:      #8F6400;
+    --amber-tint: #FBF3DF;
+    --red:        #D6173A;
+    --red-tint:   #FCEDF0;
+  }
+
+  /* Vertical @page margins give every sheet a safe zone; the paper colour
+     paints edge-to-edge because the root background covers the page canvas. */
+  @page { size: A4; margin: 11mm 0 15mm; }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { background: var(--paper); }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Instrument Sans', -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    font-size: 9.5pt;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  p { margin: 0 0 0.6em 0; }
+  h1, h2, h3 { margin: 0; font-weight: 700; letter-spacing: -0.015em; color: var(--ink); }
+  table { width: 100%; border-collapse: collapse; }
+  td, th { vertical-align: top; }
+  strong { font-weight: 600; }
+  .muted { color: var(--mid); }
+
+  .mono {
+    font-family: 'Geist Mono', 'SF Mono', Menlo, monospace;
+    letter-spacing: 0.1em;
+  }
+  .num {
+    font-family: 'Geist Mono', 'SF Mono', Menlo, monospace;
+    letter-spacing: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .ic { vertical-align: -2pt; }
+
+  /* Sections size to content and flow across sheets when long —
+     no fixed heights, so no blank pages. */
+  .page {
+    width: 210mm;
+    padding: 7mm 18mm 10mm;
+    page-break-after: always;
+    break-after: page;
+  }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .page.cover { height: 266mm; display: flex; flex-direction: column; padding-bottom: 0; }
+
+  /* Pagination safety */
+  .card, .note, .stat, .refine, .step, .phase-card, .shot { page-break-inside: avoid; break-inside: avoid; }
+  .sec-head { page-break-after: avoid; break-after: avoid; page-break-inside: avoid; break-inside: avoid; }
+  table thead { display: table-header-group; }
+  table tfoot { display: table-row-group; }
+  table tr { page-break-inside: avoid; break-inside: avoid; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     SECTION HEADER — numbered chip + mono eyebrow + heading
+     ═══════════════════════════════════════════════════════════════════ */
+  .sec-head { margin-bottom: 7mm; }
+  .sec-head .kicker { display: flex; align-items: center; gap: 4mm; margin-bottom: 3.5mm; }
+  .sec-head .chip-no {
+    flex-shrink: 0;
+    padding: 1.5pt 7pt;
+    border: 1px solid var(--line);
+    border-radius: 5pt;
+    background: var(--card);
+    font-family: 'Geist Mono', monospace;
+    font-size: 7.5pt; font-weight: 600; letter-spacing: 0.12em;
+    color: var(--ink);
+  }
+  .sec-head .eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 7pt; font-weight: 500;
+    letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .sec-head h2 { font-size: 20pt; line-height: 1.15; letter-spacing: -0.02em; }
+  .sec-head .lead { margin: 3mm 0 0; font-size: 10pt; color: var(--slate); max-width: 158mm; }
+  .sec-head .lead strong { color: var(--ink); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     CARDS, NOTES, CHIPS
+     ═══════════════════════════════════════════════════════════════════ */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 9pt;
+    padding: 5.5mm 6.5mm;
+  }
+  .card-label {
+    display: flex; align-items: center; gap: 5pt;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; font-weight: 500;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid);
+    margin-bottom: 4mm;
+  }
+  .card-label .ic { color: var(--mid); }
+
+  .grid2 { display: flex; gap: 5mm; align-items: stretch; }
+  .grid2 > * { flex: 1; min-width: 0; }
+  .grid3 { display: flex; gap: 4mm; align-items: stretch; }
+  .grid3 > * { flex: 1; min-width: 0; }
+  .vgap { margin-top: 5mm; }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 4pt;
+    padding: 2pt 8pt; border-radius: 999pt;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6pt; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .chip::before { content: ''; width: 4pt; height: 4pt; border-radius: 50%; }
+  .chip.g { background: var(--green-tint); color: var(--green); }
+  .chip.g::before { background: var(--green); }
+  .chip.a { background: var(--amber-tint); color: var(--amber); }
+  .chip.a::before { background: var(--amber); }
+  .chip.n { background: var(--shade); color: var(--slate); }
+  .chip.n::before { background: var(--mid); }
+  .chip.plain::before { display: none; }
+
+  .note {
+    border-radius: 7pt;
+    padding: 4.5mm 6mm;
+    font-size: 9pt; line-height: 1.65; color: var(--slate);
+  }
+  .note strong { color: var(--ink); }
+  .note.green { background: var(--green-tint); border-left: 3pt solid var(--green); }
+  .note.amber { background: var(--amber-tint); border-left: 3pt solid var(--amber); }
+  .note.plain { background: var(--card); border: 1px solid var(--line); border-left: 3pt solid var(--ink); }
+  .note .note-title {
+    display: flex; align-items: center; gap: 5pt;
+    font-weight: 700; font-size: 9pt; color: var(--ink); margin-bottom: 1.5mm;
+  }
+  .note.green .note-title { color: var(--green); }
+  .note.amber .note-title { color: var(--amber); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     STAT CARDS
+     ═══════════════════════════════════════════════════════════════════ */
+  .stats { display: flex; gap: 4mm; }
+  .stat {
+    flex: 1; min-width: 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 9pt;
+    padding: 4.5mm 5mm;
+    position: relative;
+  }
+  .stat .ic { position: absolute; top: 4.5mm; right: 5mm; color: var(--mid); }
+  .stat .v {
+    font-family: 'Geist Mono', monospace;
+    font-size: 17pt; font-weight: 600; letter-spacing: -0.03em;
+    line-height: 1.1; color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .v .sm { font-size: 9pt; font-weight: 500; color: var(--mid); letter-spacing: 0; }
+  .stat .c { margin-top: 2mm; font-size: 7.5pt; line-height: 1.5; color: var(--mid); }
+  .stat .c strong { color: var(--slate); font-weight: 600; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     LIST ROWS (covers list, similar apps, signals, steps)
+     ═══════════════════════════════════════════════════════════════════ */
+  .row {
+    display: flex; gap: 4mm; align-items: baseline;
+    padding: 3mm 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .row:last-child { border-bottom: none; padding-bottom: 0; }
+  .row:first-of-type { padding-top: 0; }
+  .row .idx {
+    flex-shrink: 0; width: 7mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 7.5pt; font-weight: 500; color: var(--mid);
+  }
+  .row .body { flex: 1; min-width: 0; font-size: 9pt; line-height: 1.55; color: var(--slate); }
+  .row .body .t { font-weight: 600; color: var(--ink); }
+  .row .tail { flex-shrink: 0; }
+
+  .bullets { margin: 0; padding: 0; list-style: none; }
+  .bullets li {
+    position: relative;
+    padding: 0 0 2.5mm 5mm;
+    font-size: 9pt; line-height: 1.6; color: var(--slate);
+  }
+  .bullets li:last-child { padding-bottom: 0; }
+  .bullets li::before {
+    content: ''; position: absolute; left: 0; top: 5.5pt;
+    width: 3.5pt; height: 3.5pt; border-radius: 50%;
+    background: var(--mid); opacity: 0.55;
+  }
+  .bullets li strong { color: var(--ink); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TABLES
+     ═══════════════════════════════════════════════════════════════════ */
+  .tbl thead th {
+    text-align: left;
+    padding: 0 0 2.5mm;
+    border-bottom: 1px solid var(--line);
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .tbl thead th.r { text-align: right; }
+  .tbl tbody td {
+    padding: 2.6mm 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 9pt; color: var(--slate);
+    vertical-align: middle;
+  }
+  .tbl tbody tr:last-child td { border-bottom: none; }
+  .tbl tbody td.r {
+    text-align: right;
+    font-family: 'Geist Mono', monospace;
+    font-size: 8.5pt; letter-spacing: 0;
+    color: var(--ink); font-variant-numeric: tabular-nums;
+  }
+  .tbl tbody td .t { font-weight: 600; color: var(--ink); }
+  .tbl tbody td .d { font-size: 8pt; color: var(--mid); margin-top: 0.5mm; }
+  .tbl tbody tr.cat td {
+    padding: 3mm 0 2mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .tbl tbody td.feat { padding-left: 5mm; }
+  .tbl tr.total td {
+    padding: 3mm 2mm;
+    background: var(--shade);
+    border-bottom: none;
+    font-weight: 700; font-size: 9.5pt; color: var(--ink);
+  }
+  .tbl tr.total td:first-child { border-radius: 5pt 0 0 5pt; }
+  .tbl tr.total td:last-child { border-radius: 0 5pt 5pt 0; }
+  .tbl tr.total td.r { font-family: 'Geist Mono', monospace; font-size: 9.5pt; font-weight: 600; }
+
+/* Dense variant for the long scope table */
+.tbl.dense tbody td { padding-top: 1.7mm; padding-bottom: 1.7mm; font-size: 8.5pt; }
+.tbl.dense tbody tr.cat td { padding-top: 2.2mm; padding-bottom: 1.5mm; }
+.tbl.dense tr.total td { padding: 2.5mm 2mm; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     COVER
+     ═══════════════════════════════════════════════════════════════════ */
+  .cover .top {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4mm 0 5mm;
+  }
+  .cover .top .logo-row { display: flex; align-items: center; gap: 7pt; }
+  .cover .top .logo-row .mark { width: 8.5mm; height: 8.5mm; }
+  .cover .top .logo-row .name { font-size: 12pt; font-weight: 700; letter-spacing: 0.02em; }
+  .cover .top .meta {
+    text-align: right;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid); line-height: 1.9;
+  }
+  .cover .hero { margin-top: 52mm; }
+  .cover .hero .eyebrow {
+    font-family: 'Geist Mono', monospace;
+    font-size: 7pt; font-weight: 500;
+    letter-spacing: 0.24em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 5mm;
+  }
+  .cover .hero h1 {
+    font-size: 37pt; line-height: 1.04; font-weight: 700; letter-spacing: -0.025em;
+    max-width: 165mm; overflow-wrap: break-word;
+  }
+  .cover .hero .subname {
+    margin-top: 3mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .cover .hero .deck {
+    margin-top: 5mm; font-size: 11pt; line-height: 1.65;
+    color: var(--slate); max-width: 148mm;
+  }
+  .cover .meta-grid {
+    margin-top: 12mm;
+    padding-top: 6mm;
+    border-top: 1px solid var(--line);
+    display: flex; gap: 6mm;
+  }
+  .cover .meta-grid .cell { flex: 1; min-width: 0; }
+  .cover .meta-grid .k {
+    font-family: 'Geist Mono', monospace;
+    font-size: 6pt; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 1.5mm;
+  }
+  .cover .meta-grid .w { font-size: 10.5pt; font-weight: 600; color: var(--ink); }
+  .cover .band {
+    margin-top: auto;
+    background: var(--ink);
+    border-radius: 9pt 9pt 0 0;
+    padding: 6mm 8mm;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .cover .band .wordmark { color: #fff; font-size: 11pt; font-weight: 700; letter-spacing: 0.14em; }
+  .cover .band .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 6pt; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #9C9B93;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     MARKET RESEARCH — gauge + refinement rows
+     ═══════════════════════════════════════════════════════════════════ */
+  .research-top { display: flex; gap: 5mm; align-items: stretch; }
+  .research-top .gauge-card {
+    flex-shrink: 0; width: 62mm;
+    background: var(--card); border: 1px solid var(--line); border-radius: 9pt;
+    padding: 5mm 5mm 4mm; text-align: center;
+  }
+  .gauge-card svg.gauge { display: block; width: 46mm; height: auto; margin: 1mm auto 0; }
+  .gauge-card .score {
+    margin-top: 1mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 18pt; font-weight: 600; letter-spacing: -0.02em;
+    color: var(--ink); line-height: 1;
+  }
+  .gauge-card .score .sm { font-size: 9pt; color: var(--mid); font-weight: 500; }
+  .gauge-card .glabel {
+    margin-top: 2mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6pt; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid);
+  }
+  .research-top .verdict-card {
+    flex: 1; min-width: 0;
+    background: var(--card); border: 1px solid var(--line); border-radius: 9pt;
+    padding: 5.5mm 6.5mm;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .verdict-card p { margin: 3mm 0 0; font-size: 11pt; line-height: 1.55; font-weight: 500; color: var(--ink); }
+
+  .refine {
+    display: flex; gap: 5mm; align-items: center;
+    padding: 3.5mm 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .refine:last-child { border-bottom: none; padding-bottom: 0; }
+  .refine .col { flex: 1; min-width: 0; }
+  .refine .tag {
+    font-family: 'Geist Mono', monospace;
+    font-size: 6pt; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--mid); margin-bottom: 1mm;
+  }
+  .refine .col.dir .tag { color: var(--green); }
+  .refine .txt { font-size: 8.5pt; line-height: 1.55; color: var(--slate); }
+  .refine .col.dir .txt { color: var(--ink); font-weight: 500; }
+  .refine .arrow { flex-shrink: 0; color: var(--mid); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ROADMAP PHASES
+     ═══════════════════════════════════════════════════════════════════ */
+  .phase-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 9pt;
+    padding: 5mm 6.5mm;
+    margin-bottom: 4mm;
+  }
+  .phase-card:last-child { margin-bottom: 0; }
+  .phase-card .head { display: flex; align-items: center; gap: 4mm; margin-bottom: 2mm; }
+  .phase-card .head .ic { color: var(--mid); flex-shrink: 0; }
+  .phase-card .head .pk {
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--mid);
+  }
+  .phase-card .head .pt { font-size: 12pt; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
+  .phase-card .head .spacer { flex: 1; }
+  .phase-card .pd { font-size: 9pt; color: var(--slate); margin-bottom: 3mm; }
+  .phase-card .feats { display: flex; flex-wrap: wrap; }
+  .phase-card .feats .f {
+    width: 50%;
+    padding: 0.8mm 4mm 0.8mm 0;
+    font-size: 8.5pt; color: var(--slate);
+    display: flex; align-items: baseline; gap: 5pt;
+  }
+  .phase-card .feats .f::before {
+    content: ''; flex-shrink: 0;
+    width: 3.5pt; height: 3.5pt; border-radius: 50%;
+    background: var(--mid); opacity: 0.55;
+    position: relative; top: -1pt;
+  }
+  .phase-card.now { border-color: var(--ink); }
+  .phase-card.now .head .pk { color: var(--green); }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     DESIGN CONCEPTS
+     ═══════════════════════════════════════════════════════════════════ */
+  .shots { display: flex; gap: 5mm; justify-content: center; align-items: flex-start; }
+  .shots.wide { flex-direction: column; align-items: stretch; gap: 4mm; }
+  .shot {
+    flex: 1; max-width: 72mm;
+    background: var(--card); border: 1px solid var(--line); border-radius: 9pt;
+    padding: 4mm;
+  }
+  .shots.wide .shot { max-width: 148mm; margin: 0 auto; width: 100%; }
+  .shot .frame { border-radius: 5pt; overflow: hidden; border: 1px solid var(--line-soft); }
+  .shot .frame img { display: block; width: 100%; height: auto; }
+  .shot .cap {
+    margin-top: 3mm;
+    display: flex; align-items: baseline; gap: 5pt;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; letter-spacing: 0.16em; text-transform: uppercase;
+  }
+  .shot .cap .n { color: var(--mid); }
+  .shot .cap .t { color: var(--ink); font-weight: 600; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     NEXT STEPS + CTA
+     ═══════════════════════════════════════════════════════════════════ */
+  .step {
+    display: flex; gap: 4mm; align-items: baseline;
+    padding: 3.2mm 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
+  .step:first-child { padding-top: 0; }
+  .step .idx {
+    flex-shrink: 0; width: 7mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 7.5pt; color: var(--mid);
+  }
+  .step .body { flex: 1; min-width: 0; font-size: 9pt; color: var(--slate); }
+  .step .body .t { font-weight: 600; color: var(--ink); }
+  .step .tail { flex-shrink: 0; }
+
+  .cta-card {
+    margin-top: 5mm;
+    background: var(--ink);
+    border-radius: 9pt;
+    padding: 7mm 8mm;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .cta-card h3 { color: #fff; font-size: 14.5pt; letter-spacing: -0.015em; }
+  .cta-card p { margin: 2.5mm 0 0; font-size: 9pt; line-height: 1.6; color: #B9B8B0; max-width: 125mm; }
+  .cta-card .cta-btn {
+    display: inline-flex; align-items: center; gap: 6pt;
+    margin-top: 5mm;
+    padding: 7pt 15pt;
+    background: #fff; color: var(--ink);
+    border-radius: 999pt;
+    font-size: 10pt; font-weight: 700;
+    text-decoration: none;
+  }
+  .cta-card .cta-btn .ic { color: var(--ink); }
+  .cta-card .cta-btn .url {
+    font-family: 'Geist Mono', monospace;
+    font-size: 7pt; font-weight: 500; letter-spacing: 0.08em;
+    color: var(--mid); margin-left: 3pt;
+  }
+  .cta-card .contact {
+    margin-top: 5mm;
+    display: flex; gap: 8mm;
+    font-family: 'Geist Mono', monospace;
+    font-size: 6.5pt; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #9C9B93;
+  }
+  .cta-card .contact span { display: inline-flex; align-items: center; gap: 5pt; }
+</style>

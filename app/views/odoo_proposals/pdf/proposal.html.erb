@@ -2,459 +2,36 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Odoo ERP Proposal — <%= @proposal.display_name %></title>
-<style>
-  /* ═══════════════════════════════════════════════════════════════════
-     BRAND TOKENS  (Tecaudex: red / black / white only)
-     ═══════════════════════════════════════════════════════════════════ */
-  :root {
-    --red:        #ED1A3B;
-    --red-dark:   #B0142C;
-    --red-tint:   #FEECEF;
-    --ink:        #0A0A0A;
-    --charcoal:   #1F2937;
-    --slate:      #4B5563;
-    --mid:        #6B7280;
-    --line:       #E5E7EB;
-    --line-soft:  #F1F1F1;
-    --off:        #FAFAFA;
-    --white:      #FFFFFF;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     PAGE SETUP
-     ═══════════════════════════════════════════════════════════════════ */
-  @page { size: A4; margin: 0; }
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #fff; }
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                 Helvetica, Arial, sans-serif;
-    color: var(--ink);
-    font-size: 10pt;
-    line-height: 1.55;
-    -webkit-font-smoothing: antialiased;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    font-feature-settings: "ss01", "cv11";
-  }
-  p { margin: 0 0 0.6em 0; }
-  h1, h2, h3, h4 { margin: 0; color: var(--ink); font-weight: 700; letter-spacing: -0.015em; }
-  table { width: 100%; border-collapse: collapse; }
-  td, th { vertical-align: top; }
-  .muted { color: var(--mid); }
-  .ink   { color: var(--ink); }
-  .accent { color: var(--red); }
-  .num { font-variant-numeric: tabular-nums; }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     PAGE FRAME
-     ═══════════════════════════════════════════════════════════════════ */
-  .page {
-    width: 210mm;
-    min-height: 297mm;
-    padding: 16mm 20mm 16mm 20mm;
-    position: relative;
-    page-break-after: always;
-    break-after: page;
-  }
-  .page:last-child { page-break-after: auto; break-after: auto; }
-  /* Cover is the only section that uses flex (no overflow risk — fixed content) */
-  .page.cover { display: flex; flex-direction: column; }
-
-  /* ── Top brand bar ── */
-  .page-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 6mm;
-    margin-bottom: 10mm;
-    border-bottom: 1px solid var(--line);
-  }
-  .page-bar .logo-row { display: flex; align-items: center; gap: 8pt; }
-  .page-bar .logo-row .mark { width: 9mm; height: 9mm; flex-shrink: 0; }
-  .page-bar .logo-row .name {
-    font-size: 11pt; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
-  }
-  .page-bar .logo-row .partner {
-    font-size: 7.5pt; color: var(--mid);
-    letter-spacing: 0.12em; text-transform: uppercase;
-    font-weight: 600;
-  }
-  .page-bar .meta { font-size: 8pt; color: var(--mid); text-align: right; line-height: 1.55; }
-  .page-bar .meta strong { color: var(--ink); }
-
-  /* ── Section header ── */
-  .section-title { margin-bottom: 10mm; }
-  .section-title .eyebrow {
-    display: inline-flex; align-items: center; gap: 6pt;
-    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red);
-    margin-bottom: 8pt;
-  }
-  .section-title .eyebrow::before {
-    content: ''; display: inline-block;
-    width: 14pt; height: 1.5pt; background: var(--red);
-  }
-  .section-title h2 {
-    font-size: 28pt; line-height: 1.05; font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  .section-title .lead {
-    margin-top: 10pt; font-size: 11pt; color: var(--slate);
-    max-width: 150mm; line-height: 1.6;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     COVER
-     ═══════════════════════════════════════════════════════════════════ */
-  .cover {
-    padding: 16mm 22mm 14mm 22mm;
-    background: var(--white);
-  }
-  .cover .top {
-    display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 6mm;
-    border-bottom: 1px solid var(--line);
-  }
-  .cover .top .logo-row { display: flex; align-items: center; gap: 10pt; }
-  .cover .top .logo-row .mark { width: 12mm; height: 12mm; }
-  .cover .top .logo-row .text { line-height: 1.25; }
-  .cover .top .logo-row .text .name {
-    font-size: 14pt; font-weight: 800; color: var(--ink); letter-spacing: -0.01em;
-  }
-  .cover .top .logo-row .text .tag {
-    font-size: 7.5pt; font-weight: 700; color: var(--red);
-    letter-spacing: 0.14em; text-transform: uppercase;
-  }
-  .cover .top .meta { font-size: 8.5pt; color: var(--mid); text-align: right; line-height: 1.55; }
-
-  .cover .hero {
-    margin-top: 14mm;
-  }
-  .cover .hero .eyebrow {
-    font-size: 8.5pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red);
-    margin-bottom: 10pt;
-  }
-  .cover .hero h1 {
-    font-size: 52pt; line-height: 0.98; font-weight: 800;
-    letter-spacing: -0.035em;
-  }
-  .cover .hero h1 .light { color: var(--mid); font-weight: 700; }
-  .cover .hero .deck {
-    margin-top: 12pt; font-size: 12pt; color: var(--slate); max-width: 130mm;
-    line-height: 1.5;
-  }
-
-  .cover .prepared {
-    margin-top: 12mm;
-    border-top: 1px solid var(--line);
-    padding-top: 6mm;
-  }
-  .cover .prepared .label {
-    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--mid);
-    margin-bottom: 5pt;
-  }
-  .cover .prepared .client {
-    font-size: 22pt; font-weight: 800; color: var(--ink);
-    letter-spacing: -0.018em; line-height: 1.1;
-  }
-  .cover .prepared .client-meta {
-    margin-top: 5pt; font-size: 9.5pt; color: var(--mid);
-  }
-
-  .cover .stat-grid {
-    margin-top: 8mm;
-    display: flex; gap: 3mm;
-  }
-  .cover .stat-grid .stat {
-    flex: 1; padding: 4.5mm 5mm;
-    border: 1px solid var(--line);
-  }
-  .cover .stat-grid .stat .label {
-    font-size: 7pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--mid);
-  }
-  .cover .stat-grid .stat .value {
-    margin-top: 4pt; font-size: 15pt; font-weight: 800; color: var(--ink);
-    letter-spacing: -0.015em;
-  }
-
-  .cover .investment {
-    margin-top: 8mm;
-    padding: 7mm 9mm;
-    background: var(--ink);
-    color: var(--white);
-    border-left: 4pt solid var(--red);
-  }
-  .cover .investment .label {
-    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red);
-  }
-  .cover .investment .amount {
-    margin-top: 7pt; font-size: 34pt; font-weight: 800;
-    letter-spacing: -0.03em; line-height: 1;
-  }
-  .cover .investment .footnote {
-    margin-top: 8pt; font-size: 9pt; color: #BCBCC1; line-height: 1.55;
-  }
-
-  .cover .foot {
-    margin-top: auto;
-    padding-top: 6mm; border-top: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center;
-    font-size: 8.5pt; color: var(--mid);
-  }
-  .cover .foot .left strong { color: var(--ink); }
-  .cover .foot .right { text-align: right; line-height: 1.55; }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     EXECUTIVE SUMMARY
-     ═══════════════════════════════════════════════════════════════════ */
-  .summary-block { margin-bottom: 8mm; }
-  .summary-block .label {
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red);
-    margin-bottom: 6pt;
-    display: flex; align-items: center; gap: 6pt;
-  }
-  .summary-block .label::before {
-    content: ''; width: 12pt; height: 1.5pt; background: var(--red); display: inline-block;
-  }
-  .summary-block p {
-    font-size: 11pt; line-height: 1.7; color: var(--charcoal);
-    margin: 0;
-  }
-  .summary-block.alt .label { color: var(--ink); }
-  .summary-block.alt .label::before { background: var(--ink); }
-
-  .pain-grid {
-    margin-top: 12mm;
-    padding-top: 8mm;
-    border-top: 1px solid var(--line);
-  }
-  .pain-grid .heading {
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--mid);
-    margin-bottom: 8pt;
-  }
-  .pain-grid .chips { display: flex; flex-wrap: wrap; gap: 6pt; }
-  .pain-grid .chip {
-    padding: 5pt 11pt;
-    background: var(--red-tint);
-    color: var(--red-dark);
-    border-radius: 999pt;
-    font-size: 9pt; font-weight: 600;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     TABLE
-     ═══════════════════════════════════════════════════════════════════ */
-  .table {
-    border-top: 2pt solid var(--ink);
-    border-bottom: 2pt solid var(--ink);
-  }
-  .table thead th {
-    background: var(--white);
-    border-bottom: 1px solid var(--ink);
-    text-align: left; padding: 11pt 0;
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--ink);
-  }
-  .table thead th:first-child { padding-left: 2pt; }
-  .table thead th.r { text-align: right; padding-right: 2pt; }
-  .table tbody td {
-    padding: 11pt 0;
-    border-bottom: 1px solid var(--line);
-    font-size: 10pt; color: var(--charcoal);
-    vertical-align: middle;
-  }
-  .table tbody td:first-child { padding-left: 2pt; }
-  .table tbody td.r { text-align: right; padding-right: 2pt; font-variant-numeric: tabular-nums; font-weight: 600; }
-  .table tbody td.label-cell { font-weight: 600; color: var(--ink); }
-  .table tbody tr:last-child td { border-bottom: none; }
-  .table tfoot td {
-    padding: 13pt 2pt;
-    border-top: 2pt solid var(--ink);
-    font-size: 11pt; font-weight: 800; color: var(--ink);
-  }
-  .table tfoot td.r { text-align: right; font-variant-numeric: tabular-nums; }
-  .table tfoot td.accent { color: var(--red); }
-
-  /* Pills (Standard / Custom) — minimal */
-  .pill {
-    display: inline-block;
-    padding: 2pt 8pt;
-    font-size: 7.5pt; font-weight: 700; letter-spacing: 0.06em;
-    text-transform: uppercase;
-    border-radius: 2pt;
-  }
-  .pill.standard { background: #F1F1F1; color: var(--charcoal); }
-  .pill.custom   { background: var(--red-tint); color: var(--red-dark); }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     PROSE BLOCK (Why These Modules)
-     ═══════════════════════════════════════════════════════════════════ */
-  .prose {
-    margin-bottom: 9mm; padding-bottom: 9mm;
-    border-bottom: 1px solid var(--line);
-    /* Allow long prose blocks to break across pages naturally — only avoid splitting the heading. */
-  }
-  .prose:last-child { border-bottom: none; }
-  .prose .head {
-    display: flex; justify-content: space-between; align-items: baseline;
-    gap: 10mm; margin-bottom: 6pt;
-    page-break-after: avoid; break-after: avoid;
-    page-break-inside: avoid; break-inside: avoid;
-  }
-  .prose .title {
-    font-size: 14pt; font-weight: 700; color: var(--ink);
-    letter-spacing: -0.005em; line-height: 1.25;
-  }
-  .prose .meta {
-    flex-shrink: 0; font-size: 8.5pt; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.12em;
-    color: var(--mid);
-  }
-  .prose.custom .meta { color: var(--red); }
-  .prose .price {
-    font-size: 11pt; font-weight: 800; color: var(--ink);
-    font-variant-numeric: tabular-nums; margin-left: 8pt;
-  }
-  .prose p {
-    margin-top: 6pt;
-    font-size: 10.5pt; line-height: 1.7; color: var(--slate);
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     DEPLOYMENT
-     ═══════════════════════════════════════════════════════════════════ */
-  .deploy-card {
-    margin-bottom: 10mm;
-    padding: 8mm 10mm;
-    background: var(--off);
-    border-left: 4pt solid var(--red);
-    display: flex; align-items: center; gap: 10mm;
-  }
-  .deploy-card .left { flex: 1; }
-  .deploy-card .deploy-label {
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red); margin-bottom: 4pt;
-  }
-  .deploy-card .deploy-name {
-    font-size: 18pt; font-weight: 800; color: var(--ink); letter-spacing: -0.015em;
-  }
-  .deploy-card .deploy-desc { margin-top: 6pt; font-size: 10pt; color: var(--slate); line-height: 1.55; max-width: 110mm; }
-  .deploy-card .price { text-align: right; flex-shrink: 0; }
-  .deploy-card .price .annual {
-    font-size: 16pt; font-weight: 800; color: var(--red); letter-spacing: -0.015em;
-    font-variant-numeric: tabular-nums;
-  }
-  .deploy-card .price .annual .unit { font-size: 9pt; color: var(--mid); font-weight: 600; }
-  .deploy-card .price .monthly {
-    margin-top: 3pt; font-size: 9pt; color: var(--mid);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .compare .high {
-    background: var(--red-tint) !important;
-    color: var(--red-dark) !important;
-    font-weight: 700;
-  }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     INVESTMENT BREAKDOWN SECTIONS
-     ═══════════════════════════════════════════════════════════════════ */
-  .sub-heading {
-    margin-top: 0; margin-bottom: 4mm;
-    font-size: 8.5pt; font-weight: 800; letter-spacing: 0.18em;
-    text-transform: uppercase; color: var(--red);
-    display: flex; align-items: center; gap: 6pt;
-  }
-  .sub-heading::before {
-    content: ''; display: inline-block;
-    width: 14pt; height: 1.5pt; background: var(--red);
-  }
-  /* Keep each (heading + table) chunk together so a heading never orphans. */
-  .block {
-    margin-bottom: 10mm;
-    page-break-inside: avoid; break-inside: avoid;
-  }
-  .block:last-child { margin-bottom: 0; }
-
-  /* ═══════════════════════════════════════════════════════════════════
-     NEXT STEPS
-     ═══════════════════════════════════════════════════════════════════ */
-  .step {
-    display: flex; gap: 5mm; padding: 4mm 0;
-    border-bottom: 1px solid var(--line);
-    page-break-inside: avoid; break-inside: avoid;
-  }
-  .step:last-of-type { border-bottom: none; }
-  .step .num {
-    flex-shrink: 0; width: 11mm; height: 11mm;
-    background: var(--ink); color: var(--white);
-    border-left: 3pt solid var(--red);
-    font-size: 12pt; font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .step .body { flex: 1; }
-  .step .body .row {
-    display: flex; justify-content: space-between; align-items: baseline; gap: 5mm;
-  }
-  .step .body .title {
-    font-size: 12pt; font-weight: 700; color: var(--ink); letter-spacing: -0.005em;
-  }
-  .step .body .time {
-    flex-shrink: 0;
-    padding: 2pt 8pt;
-    border: 1px solid var(--line);
-    color: var(--red);
-    font-size: 8pt; font-weight: 700; letter-spacing: 0.08em;
-  }
-  .step .body .desc { margin-top: 3pt; font-size: 9.5pt; color: var(--slate); line-height: 1.55; }
-
-  .cta {
-    margin-top: 8mm;
-    padding: 7mm 9mm;
-    background: var(--ink); color: var(--white);
-    border-left: 4pt solid var(--red);
-    page-break-inside: avoid; break-inside: avoid;
-  }
-  .cta h3 {
-    font-size: 16pt; font-weight: 800; color: var(--white);
-    letter-spacing: -0.015em;
-  }
-  .cta p {
-    margin-top: 6pt;
-    font-size: 9.5pt; color: #BCBCC1; line-height: 1.6;
-    max-width: 120mm;
-  }
-  .cta .contact {
-    margin-top: 8pt; font-size: 9pt; color: var(--white); font-weight: 600;
-  }
-  .cta .contact span { color: var(--red); margin: 0 5pt; }
-
-  /* (Per-section page footer removed — branding lives in the page-bar header on every page) */
-</style>
+<title>Odoo Proposal — <%= @proposal.display_name %></title>
+<%= render "shared/pdf/report_styles" %>
 </head>
 <body>
 
 <%
-  proposal    = @proposal
-  name        = proposal.display_name
-  date        = Date.current.strftime('%d %B %Y')
-  year        = Date.current.year
-  sub_info    = proposal.odoo_subscription_info
-  tier_info   = proposal.current_tier_info
-  mods        = proposal.all_module_details
-  has_narr    = proposal.narrative_generated?
-  pain_points = proposal.pain_points_array
-  fmt         = ->(n) { ActiveSupport::NumberHelper.number_to_delimited(n.to_i) }
+  proposal   = @proposal
+  customer   = proposal.display_name
+  date       = Date.current.strftime('%d %B %Y')
+  year       = Date.current.year
+  fmt        = ->(n) { ActiveSupport::NumberHelper.number_to_delimited(n.to_i) }
+  pkr        = ->(n) { "PKR #{fmt.call(n)}" }
 
-  # Inline SVG logo (red/black/white only) — works in PDF render without external file IO
+  modules    = proposal.selected_module_details
+  customs    = (proposal.custom_module_details rescue [])
+  all_mods   = modules + customs
+  justifs    = proposal.claude_module_justifications.is_a?(Hash) ? proposal.claude_module_justifications : {}
+  justify    = ->(m) { justifs[m[:label]].presence || justifs[m[:key].to_s].presence || m[:description].presence }
+
+  summary    = proposal.claude_summary.presence
+  rationale  = proposal.claude_rationale.presence
+  next_steps = proposal.claude_next_steps.presence
+  pains      = Array(proposal.pain_points).reject(&:blank?)
+
+  tier       = proposal.current_tier_info
+  hosting    = proposal.annual_hosting_cost.to_i
+
+  booking_url     = 'https://cal.com/tecaudex/discovery-call?duration=30'
+  booking_display = 'cal.com/tecaudex/discovery-call'
+
   logo_svg = <<~SVG.html_safe
     <svg viewBox="0 0 301 300" xmlns="http://www.w3.org/2000/svg" class="mark">
       <rect x="0.236816" width="300" height="300" rx="150" fill="white"/>
@@ -463,328 +40,162 @@
       <path d="M84.7654 93.6182H215.509L199.82 120.784H163.696V182.802L150.369 206.382L136.524 182.892L136.53 120.784H100.654L84.7654 93.6182Z" fill="#ED1A3B"/>
     </svg>
   SVG
-
-  page_bar = ->{
-    capture do
-%>
-  <header class="page-bar">
-    <div class="logo-row">
-      <%= logo_svg %>
-      <div>
-        <div class="name">Tecaudex</div>
-        <div class="partner">Official Odoo Partner</div>
-      </div>
-    </div>
-    <div class="meta">
-      <div>Prepared for <strong><%= name %></strong></div>
-      <div><%= date %></div>
-    </div>
-  </header>
-<%
-    end
-  }
-
 %>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     COVER
-     ═══════════════════════════════════════════════════════════════════ -->
+<!-- COVER -->
 <section class="page cover">
   <div class="top">
-    <div class="logo-row">
-      <%= logo_svg %>
-      <div class="text">
-        <div class="name">Tecaudex</div>
-        <div class="tag">Official Odoo Partner</div>
-      </div>
-    </div>
-    <div class="meta">
-      <%= date %><br>
-      sales@tecaudex.com
-    </div>
+    <div class="logo-row"><%= logo_svg %><div class="name">Tecaudex</div></div>
+    <div class="meta">Confidential<br><%= date %></div>
   </div>
 
   <div class="hero">
-    <div class="eyebrow">Implementation Proposal</div>
-    <h1>Odoo&nbsp;ERP<br><span class="light">for your business.</span></h1>
-    <p class="deck">A tailored Odoo implementation, fully costed in PKR and ready to deploy — with FBR-compliant tax handling, data migration, and a fixed timeline.</p>
+    <div class="eyebrow">Odoo ERP Proposal &amp; Investment</div>
+    <h1><%= customer %></h1>
+    <div class="subname"><%= proposal.deployment_label %> · <%= proposal.num_users %> users</div>
+    <p class="deck">
+      A plain summary of the Odoo ERP we'd put in place for <%= customer %> —
+      the modules that fit how they work, why Odoo is the right platform, and
+      exactly what it costs to implement.
+    </p>
   </div>
 
-  <div class="prepared">
-    <div class="label">Prepared For</div>
-    <div class="client"><%= name %></div>
-    <div class="client-meta">
-      <%= [proposal.industry.presence, proposal.company_size.presence, "#{proposal.num_users} user#{proposal.num_users == 1 ? '' : 's'}"].compact.join('  ·  ') %>
-    </div>
+  <div class="meta-grid">
+    <div class="cell"><div class="k">Prepared by</div><div class="w">Tecaudex</div></div>
+    <div class="cell"><div class="k">Prepared for</div><div class="w"><%= customer %></div></div>
+    <div class="cell"><div class="k">Deployment</div><div class="w"><%= proposal.deployment_label %></div></div>
+    <div class="cell"><div class="k">Total investment</div><div class="w num"><%= pkr.call(proposal.total_cost) %></div></div>
   </div>
 
-  <div class="stat-grid">
-    <div class="stat">
-      <div class="label">Modules</div>
-      <div class="value"><%= mods.size %></div>
-    </div>
-    <div class="stat">
-      <div class="label">Users</div>
-      <div class="value"><%= proposal.num_users %></div>
-    </div>
-    <div class="stat">
-      <div class="label">Deployment</div>
-      <div class="value" style="font-size:14pt;"><%= proposal.deployment_label %></div>
-    </div>
-  </div>
-
-  <div class="investment">
-    <div class="label">Estimated Year 1 Investment</div>
-    <div class="amount">PKR <%= fmt.call(proposal.year_1_total) %></div>
-    <div class="footnote">One-time implementation &nbsp;+&nbsp; Year 1 Odoo subscription &nbsp;+&nbsp; Year 1 hosting</div>
-  </div>
-
-  <div class="foot">
-    <div class="left"><strong>Tecaudex</strong> · Pakistan</div>
-    <div class="right">
-      sales@tecaudex.com &nbsp;·&nbsp; www.tecaudex.com<br>
-      © <%= year %> Tecaudex. Confidential.
-    </div>
+  <div class="band">
+    <div class="wordmark">TECAUDEX</div>
+    <div class="tag">Odoo implementation for the modern enterprise</div>
   </div>
 </section>
 
-<%
-  # ── Dynamic section numbering ──
-  sec_idx = 0
-  next_section = ->{ sec_idx += 1; format('%02d', sec_idx) }
-%>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     EXECUTIVE SUMMARY (only if narrative present)
-     ═══════════════════════════════════════════════════════════════════ -->
-<% if has_narr && proposal.claude_summary.present? %>
+<!-- 00 · THE SHORT VERSION -->
 <section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= next_section.call %> · Executive Summary</div>
-    <h2>For <%= name %><% if proposal.industry.present? %>,<br>in <%= proposal.industry %>.<% end %></h2>
-    <p class="lead">A summary of what we're proposing and why.</p>
+  <div class="sec-head">
+    <div class="kicker"><span class="chip-no">00</span><span class="eyebrow">The short version</span></div>
+    <h2>Where things stand</h2>
+    <% if summary %><p class="lead"><%= summary %></p><% end %>
   </div>
 
-  <div class="summary-block">
-    <div class="label">Summary</div>
-    <p><%= proposal.claude_summary %></p>
-  </div>
-
-  <% if pain_points.any? %>
-    <div class="pain-grid">
-      <div class="heading">Pain Points We're Addressing</div>
-      <div class="chips">
-        <% pain_points.each do |p| %>
-          <span class="chip"><%= p %></span>
-        <% end %>
-      </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-label">The business</div>
+      <p style="margin:0;">
+        <% if proposal.industry.present? %><strong>Industry:</strong> <%= proposal.industry %><br><% end %>
+        <% if proposal.company_size.present? %><strong>Size:</strong> <%= proposal.company_size %><br><% end %>
+        <strong>Users:</strong> <%= proposal.num_users %> &nbsp;·&nbsp; <strong>Deployment:</strong> <%= proposal.deployment_label %>
+      </p>
     </div>
-  <% end %>
-
-</section>
-<% end %>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     SELECTED MODULES (with per-module implementation pricing)
-     ═══════════════════════════════════════════════════════════════════ -->
-<section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= next_section.call %> · Selected Modules</div>
-    <h2><%= mods.size %> module<%= mods.size == 1 ? '' : 's' %> in scope.</h2>
-    <p class="lead">Each item below is fully configured, integrated, and tested as part of the one-time implementation fee.</p>
-  </div>
-
-  <table class="table">
-    <thead>
-      <tr>
-        <th style="width:58%">Module / Component</th>
-        <th style="width:17%">Type</th>
-        <th class="r" style="width:25%">Implementation Fee</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% mods.each do |m| %>
-        <tr>
-          <td class="label-cell"><%= m[:label] %></td>
-          <td>
-            <span class="pill <%= m[:custom] ? 'custom' : 'standard' %>">
-              <%= m[:custom] ? 'Custom Dev' : 'Standard' %>
-            </span>
-          </td>
-          <td class="r">PKR <%= fmt.call(m[:impl_cost].to_i) %></td>
-        </tr>
+    <div class="card">
+      <div class="card-label">What we're solving</div>
+      <% if pains.any? %>
+        <ul class="bullets" style="margin:0; padding-left:14pt;"><% pains.first(5).each do |p| %><li><%= p %></li><% end %></ul>
+      <% else %>
+        <p class="muted" style="margin:0;">Streamlining core operations onto one connected system.</p>
       <% end %>
-    </tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">Total Implementation Fee (one-time)</td>
-        <td class="r accent">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
-      </tr>
-    </tfoot>
-  </table>
-
+    </div>
+  </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     WHY THESE MODULES (only if narrative + justifications)
-     ═══════════════════════════════════════════════════════════════════ -->
-<%
-  mods_with_just = mods.select { |m| proposal.module_justification_for(m[:key]).to_s.strip.present? }
-%>
-<% if has_narr && mods_with_just.any? %>
+<!-- 01 · WHY ODOO -->
+<% if rationale %>
 <section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= next_section.call %> · Why These Modules</div>
-    <h2>Tailored to your situation.</h2>
-    <p class="lead">Each module was selected for a specific reason in <strong><%= name %></strong>'s context. Here is the rationale, module by module.</p>
+  <div class="sec-head">
+    <div class="kicker"><span class="chip-no">01</span><span class="eyebrow">The case for it</span></div>
+    <h2>Why Odoo, and why now</h2>
   </div>
-
-  <% mods_with_just.each do |m| %>
-    <div class="prose <%= 'custom' if m[:custom] %>">
-      <div class="head">
-        <div class="title"><%= m[:label] %></div>
-        <div class="meta"><%= m[:custom] ? 'Custom Dev' : 'Standard Module' %></div>
-      </div>
-      <p><%= proposal.module_justification_for(m[:key]) %></p>
-    </div>
-  <% end %>
-
+  <div class="card"><p style="margin:0; white-space:pre-line;"><%= rationale %></p></div>
 </section>
 <% end %>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     INVESTMENT BREAKDOWN  (single page — Year 1 vs Year 2 detail)
-     ═══════════════════════════════════════════════════════════════════ -->
+<!-- 02 · MODULES -->
 <section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= next_section.call %> · Investment</div>
-    <h2>Year 1 &amp; Year 2 onwards.</h2>
-    <p class="lead">A single, transparent view of what you pay this year and what continues from Year 2.</p>
+  <div class="sec-head">
+    <div class="kicker"><span class="chip-no">02</span><span class="eyebrow">Scope</span></div>
+    <h2>The modules we'll implement</h2>
+    <p class="lead"><strong><%= all_mods.size %></strong> modules, chosen to fit how <%= customer %> actually works. Each is set up, configured and handed over ready to use.</p>
   </div>
 
-  <div class="block">
-    <table class="table">
-      <thead>
-        <tr>
-          <th style="width:40%">Cost Item</th>
-          <th class="r" style="width:30%">Year 1</th>
-          <th class="r" style="width:30%">Year 2 onwards</th>
-        </tr>
-      </thead>
+  <% all_mods.each do |m| %>
+    <div class="card vgap">
+      <table><tr>
+        <td>
+          <div style="font-weight:600; font-size:11pt;"><%= m[:label] %><% if m[:custom] %> <span class="chip">Custom</span><% end %></div>
+          <% if (j = justify.call(m)).present? %><p style="margin:1.5mm 0 0; color:var(--slate); font-size:9pt;"><%= j %></p><% end %>
+        </td>
+        <td class="r" style="width:26%; white-space:nowrap; vertical-align:middle;">
+          <span class="num" style="font-weight:600;"><%= pkr.call(m[:impl_cost]) %></span>
+        </td>
+      </tr></table>
+    </div>
+  <% end %>
+</section>
+
+<!-- 03 · PRICING -->
+<section class="page">
+  <div class="sec-head">
+    <div class="kicker"><span class="chip-no">03</span><span class="eyebrow">Investment</span></div>
+    <h2>One transparent number</h2>
+    <p class="lead">A one-time implementation fee to get <%= customer %> live on Odoo, plus any platform hosting. No surprises.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Implementation — paid to Tecaudex</div>
+    <table class="tbl">
+      <thead><tr><th style="width:60%">Item</th><th class="r" style="width:40%">Amount</th></tr></thead>
       <tbody>
-        <tr>
-          <td class="label-cell">Implementation Fee <span class="muted" style="font-weight:500">(one-time setup, config &amp; training)</span></td>
-          <td class="r">PKR <%= fmt.call(proposal.implementation_fee.to_i) %></td>
-          <td class="r">—</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Odoo Subscription <span class="muted" style="font-weight:500">(<%= proposal.num_users %> users × PKR <%= fmt.call(sub_info[:pkr_monthly]) %>/mo)</span></td>
-          <td class="r">PKR <%= fmt.call(proposal.subscription_yearly_total) %></td>
-          <td class="r">PKR <%= fmt.call(proposal.subscription_yearly_total) %></td>
-        </tr>
-        <% if proposal.hosting_yearly > 0 %>
-          <tr>
-            <td class="label-cell"><%= proposal.deployment_type == 'sh' ? 'Odoo.sh Platform' : 'Server Hosting' %> <span class="muted" style="font-weight:500">(<%= tier_info && tier_info[:label] %>)</span></td>
-            <td class="r">PKR <%= fmt.call(proposal.hosting_yearly) %></td>
-            <td class="r">PKR <%= fmt.call(proposal.hosting_yearly) %></td>
-          </tr>
+        <% all_mods.each do |m| %>
+          <tr><td><span class="t"><%= m[:label] %></span></td><td class="r"><%= pkr.call(m[:impl_cost]) %></td></tr>
         <% end %>
+        <tr class="total"><td>Total implementation, one-time</td><td class="r"><%= pkr.call(proposal.implementation_fee) %></td></tr>
       </tbody>
-      <tfoot>
-        <tr>
-          <td>Grand Total</td>
-          <td class="r accent">PKR <%= fmt.call(proposal.year_1_total) %></td>
-          <td class="r">PKR <%= fmt.call(proposal.year_2_recurring_yearly) %></td>
-        </tr>
-      </tfoot>
     </table>
   </div>
 
-  <p class="muted" style="margin-top:6mm; font-size:9pt;">
-    Odoo Subscription is billed directly by Odoo at $<%= sub_info[:usd_monthly] %>/user/month on the <%= sub_info[:plan] %> plan (annual billing).
-    Hosting cost is an estimate based on the recommended tier; actuals may vary slightly.
-  </p>
-
+  <div class="grid2 vgap">
+    <div class="card" style="background:var(--ink); border-color:var(--ink);">
+      <div class="card-label" style="color:#9C9B93;">You pay Tecaudex</div>
+      <div class="num" style="font-size:16pt; font-weight:600; color:#fff;"><%= pkr.call(proposal.implementation_fee) %> <span style="font-size:8pt; color:#9C9B93;">one-time</span></div>
+      <div style="margin-top:2mm; font-size:8pt; color:#B9B8B0;">Setup, configuration &amp; handover across all modules.</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Platform &amp; hosting</div>
+      <% if hosting > 0 %>
+        <div class="num" style="font-size:16pt; font-weight:600;"><%= pkr.call(hosting) %> <span style="font-size:8pt; color:var(--mid);">/ year</span></div>
+        <div style="margin-top:2mm; font-size:8pt; color:var(--mid);"><%= tier && tier[:label] ? tier[:label] : proposal.deployment_label %> hosting, billed yearly.</div>
+      <% else %>
+        <div class="num" style="font-size:16pt; font-weight:600;">Odoo Online</div>
+        <div style="margin-top:2mm; font-size:8pt; color:var(--mid);">Odoo's cloud subscription, billed per user by Odoo.</div>
+      <% end %>
+    </div>
+  </div>
 </section>
 
-<!-- ═══════════════════════════════════════════════════════════════════
-     NEXT STEPS
-     ═══════════════════════════════════════════════════════════════════ -->
+<!-- 04 · NEXT STEPS + CTA -->
 <section class="page">
-  <%= page_bar.call %>
-
-  <div class="section-title">
-    <div class="eyebrow"><%= next_section.call %> · Next Steps</div>
-    <h2>How we get to go-live.</h2>
-    <p class="lead">We're excited to partner with <strong><%= name %></strong> on this Odoo ERP implementation. Here is the recommended path forward.</p>
+  <div class="sec-head">
+    <div class="kicker"><span class="chip-no">04</span><span class="eyebrow">From here</span></div>
+    <h2>From idea to go-live</h2>
   </div>
 
-  <%
-    default_steps = [
-      ['01', 'Proposal Review',      'This week',   'Share this with your team. We are available to present in person or virtually at your convenience.'],
-      ['02', 'Discovery Workshop',   'Week 1–2',    'A structured session to finalise scope, map workflows, and agree on the implementation timeline.'],
-      ['03', 'Agreement & Kickoff',  'Week 2–3',    'Sign the service agreement and launch with a dedicated project manager assigned to your account.'],
-      ['04', 'Implementation',       'Weeks 4–10',  'Configuration, customisation, data migration, and integration work with weekly progress updates.'],
-      ['05', 'Training & Go-Live',   'Week 10–11',  'Hands-on training, UAT sign-off, and go-live on the mutually agreed date.'],
-      ['06', 'Post Go-Live Support', '2 weeks',     'Dedicated hypercare team to resolve any issues quickly after launch.']
-    ]
-
-    steps = if has_narr && proposal.claude_next_steps.present?
-      parsed = proposal.claude_next_steps.split(/\r?\n/).map(&:strip).reject(&:empty?)
-      parsed.each_with_index.map do |line, idx|
-        num = format('%02d', idx + 1)
-        stripped = line.sub(/^(?:step\s*)?\d+[\.\):]\s*/i, '').sub(/^[-•*]\s*/, '')
-        time = ''
-        if (m = stripped.match(/\(([^)]+)\)/))
-          time = m[1].strip
-          stripped = stripped.sub(/\s*\([^)]+\)/, '')
-        end
-        if stripped.include?(' - ') || stripped.include?(' — ') || stripped.include?(': ')
-          parts = stripped.split(/\s+[-—:]\s+/, 2)
-          title = parts[0].to_s.strip
-          desc  = parts[1].to_s.strip
-        else
-          title = stripped.split(/[.!?]/, 2).first.to_s.strip
-          desc  = stripped[title.length..-1].to_s.strip.sub(/^[.!?]\s*/, '')
-        end
-        title = title[0, 60]
-        time  = time.presence || "Step #{idx + 1}"
-        [num, title, time, desc]
-      end
-    else
-      default_steps
-    end
-  %>
-
-  <% steps.each do |num, title, time, desc| %>
-    <div class="step">
-      <div class="num"><%= num %></div>
-      <div class="body">
-        <div class="row">
-          <div class="title"><%= title %></div>
-          <div class="time"><%= time %></div>
-        </div>
-        <% if desc.present? %>
-          <div class="desc"><%= desc %></div>
-        <% end %>
-      </div>
-    </div>
+  <% if next_steps %>
+    <div class="card vgap"><p style="margin:0; white-space:pre-line;"><%= next_steps %></p></div>
   <% end %>
 
-  <div class="cta">
-    <h3>Ready to get started?</h3>
-    <p>Reach out and we'll set up a 30-minute call to walk through scope, timeline, and any open questions.</p>
-    <div class="contact">sales@tecaudex.com<span>·</span>www.tecaudex.pk<span>·</span>Tecaudex, Pakistan</div>
+  <div class="cta-card">
+    <h3>Ready to get <%= customer %> on Odoo?</h3>
+    <p>Pick a slot that suits you and we'll walk through the modules, timeline and any open questions in a free 30-minute call — no commitment needed.</p>
+    <a class="cta-btn" href="<%= booking_url %>">Schedule a call <span class="url"><%= booking_display %></span></a>
+    <div class="contact">
+      <span>sales@tecaudex.com</span>
+      <span>www.tecaudex.com</span>
+      <span>© <%= year %> Tecaudex · Confidential</span>
+    </div>
   </div>
-
 </section>
 
 </body>
