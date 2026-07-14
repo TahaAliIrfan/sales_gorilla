@@ -212,10 +212,26 @@ class CallingController < ApplicationController
     render json: { success: false, error: e.message }, status: :internal_server_error
   end
 
-  # Fetch available Twilio phone numbers
+  # Fetch available Twilio caller-ID numbers, with a "preferred" one marked for
+  # the given lead. Preference = local presence: a number sharing the lead's
+  # area code (US) or country dial code is far more likely to be answered.
   def available_numbers
-    twilio_numbers = twilio_service.fetch_available_numbers
-    render json: twilio_numbers
+    numbers  = twilio_service.fetch_available_numbers
+    customer = Customer.find_by(id: params[:customer_id]) if params[:customer_id].present?
+    preferred = preferred_caller_id(customer, numbers)
+
+    render json: {
+      numbers: numbers.map { |n|
+        {
+          phone_number: n[:phone_number],
+          label: number_label(n[:phone_number]),
+          preferred: preferred.present? && n[:phone_number] == preferred[:phone_number]
+        }
+      },
+      preferred: preferred&.dig(:phone_number),
+      preferred_note: preferred&.dig(:note),
+      default_caller_id: current_user&.default_caller_id
+    }
   end
 
   # Store customer ID in session for recording association
@@ -225,6 +241,52 @@ class CallingController < ApplicationController
   end
 
   private
+
+  # Pick the number the lead is most likely to answer (local-presence dialing).
+  # Deterministic on purpose: an exact area-code match beats anything an LLM
+  # could guess, and it's instant. Returns { phone_number:, note: } or nil.
+  def preferred_caller_id(customer, numbers)
+    return nil if numbers.blank?
+
+    phone = customer&.phone.to_s
+    us_numbers = numbers.select { |n| n[:phone_number].to_s.start_with?("+1") }
+
+    # US lead: match the lead's area code, else fall back to any US number.
+    if phone.start_with?("+1")
+      area = phone.gsub(/\D/, "")[1, 3]
+      area = customer.area_code.to_s[/\d{3}/] if area.blank? && customer&.area_code.present?
+      if area.present?
+        match = us_numbers.find { |n| n[:phone_number].to_s.gsub(/\D/, "")[1, 3] == area }
+        return { phone_number: match[:phone_number], note: "Local #{area} area code — most likely to be answered" } if match
+      end
+      return { phone_number: us_numbers.first[:phone_number], note: "US caller ID for a US lead" } if us_numbers.any?
+    end
+
+    # Non-US lead: match the lead's country dial code if we own such a number.
+    cc = customer&.phone_country_code.to_s.gsub(/\D/, "")
+    cc = phone.gsub(/\D/, "")[0, 2] if cc.blank? && phone.start_with?("+")
+    if cc.present?
+      match = numbers.find { |n| n[:phone_number].to_s.start_with?("+#{cc}") }
+      return { phone_number: match[:phone_number], note: "Local number for the lead's country" } if match
+    end
+
+    # Fallback: the rep's saved default if still owned, else the first number.
+    default = numbers.find { |n| n[:phone_number] == current_user&.default_caller_id }
+    return { phone_number: default[:phone_number], note: "Your default number" } if default
+
+    { phone_number: numbers.first[:phone_number], note: "Default number" }
+  end
+
+  # Short label for the picker, e.g. "US (656)", "UK", "Australia".
+  def number_label(phone)
+    digits = phone.to_s.gsub(/\D/, "")
+    case phone.to_s
+    when /\A\+1/  then "US (#{digits[1, 3]})"
+    when /\A\+44/ then "UK"
+    when /\A\+61/ then "Australia"
+    else "Intl"
+    end
+  end
 
   def twilio_service
     @twilio_service ||= TwilioService.new

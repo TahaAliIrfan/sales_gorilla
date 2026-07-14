@@ -12,7 +12,8 @@ const SDK_URL = "https://cdn.jsdelivr.net/npm/@twilio/voice-sdk@2.15.0/dist/twil
 const DEFAULT_CALLER_ID = "+447897021964"
 
 export default class extends Controller {
-  static targets = ["panel", "name", "number", "status", "timer", "muteBtn"]
+  static targets = ["panel", "name", "number", "status", "timer", "muteBtn",
+                    "chooser", "numbers", "preferredNote", "callBtn", "live"]
   static values = { defaultCallerId: String }
 
   connect() {
@@ -21,13 +22,15 @@ export default class extends Controller {
     this.deviceReady = false
     this.timerInterval = null
     this.seconds = 0
+    this.pending = null // { phone, customerId, name }
   }
 
   disconnect() {
     this._stopTimer()
   }
 
-  // Entry point — triggered by any Call button.
+  // Entry point — triggered by any Call button. Opens the picker; we dial only
+  // once the rep confirms a caller ID (see confirmCall).
   async call(event) {
     event.preventDefault()
     const el = event.currentTarget
@@ -37,7 +40,67 @@ export default class extends Controller {
     if (!phone) return
     if (this.currentCall) return // already on a call
 
+    this.pending = { phone, customerId, name }
     this._open(name, phone)
+    this._showChooser()
+    await this._loadNumbers(customerId)
+  }
+
+  // Fetch owned numbers for this lead and render them, preferred one preselected.
+  async _loadNumbers(customerId) {
+    this.numbersTarget.innerHTML = `<div class="cw-loading">Finding the best number…</div>`
+    this.callBtnTarget.disabled = true
+    if (this.hasPreferredNoteTarget) this.preferredNoteTarget.textContent = ""
+
+    try {
+      const url = customerId ? `/calling/available_numbers?customer_id=${encodeURIComponent(customerId)}` : "/calling/available_numbers"
+      const res = await fetch(url, { headers: { Accept: "application/json" } })
+      if (!res.ok) throw new Error(`numbers ${res.status}`)
+      const data = await res.json()
+      this._renderNumbers(data)
+    } catch (e) {
+      // Fall back to dialing with the saved default so calling still works.
+      this._renderNumbers({
+        numbers: [{ phone_number: this._callerId(), label: "Default", preferred: true }],
+        preferred: this._callerId(),
+        preferred_note: "",
+      })
+    }
+    this.callBtnTarget.disabled = false
+  }
+
+  _renderNumbers(data) {
+    const numbers = Array.isArray(data.numbers) ? data.numbers : []
+    const preferred = data.preferred
+    this.numbersTarget.innerHTML = ""
+
+    numbers.forEach((n) => {
+      const checked = n.phone_number === preferred
+      const row = document.createElement("label")
+      row.className = "cw-opt" + (checked ? " is-preferred" : "")
+      row.innerHTML = `
+        <input type="radio" name="cw-caller" value="${n.phone_number}" ${checked ? "checked" : ""}>
+        <span class="cw-opt-main">
+          <span class="cw-opt-label">${n.label || ""}</span>
+          <span class="cw-opt-num cb-mono">${n.phone_number}</span>
+        </span>
+        ${n.preferred ? '<span class="cw-badge">Recommended</span>' : ""}`
+      this.numbersTarget.appendChild(row)
+    })
+
+    if (this.hasPreferredNoteTarget) {
+      this.preferredNoteTarget.textContent = data.preferred_note || ""
+    }
+  }
+
+  // Step 2: dial with the caller ID the rep chose.
+  async confirmCall() {
+    if (!this.pending || this.currentCall) return
+    const chosen = this.numbersTarget.querySelector('input[name="cw-caller"]:checked')
+    const callerId = chosen ? chosen.value : this._callerId()
+    const { phone, customerId } = this.pending
+
+    this._showLive()
     this._status("Connecting…", "info")
 
     try {
@@ -57,7 +120,7 @@ export default class extends Controller {
 
     try {
       this.currentCall = await this.device.connect({
-        params: { To: phone, caller_id: this._callerId(), customer_id: customerId || "" },
+        params: { To: phone, caller_id: callerId, customer_id: customerId || "" },
       })
       this._bindCall()
       this._status("Ringing…", "info")
@@ -84,11 +147,22 @@ export default class extends Controller {
   close() {
     if (this.currentCall) return // never close mid-call
     clearTimeout(this._closeTimeout)
+    this.pending = null
     this.panelTarget.classList.remove("cw-visible")
     setTimeout(() => this.panelTarget.classList.add("hidden"), 200)
   }
 
   // ---- internals ----
+
+  _showChooser() {
+    if (this.hasChooserTarget) this.chooserTarget.classList.remove("hidden")
+    if (this.hasLiveTarget) this.liveTarget.classList.add("hidden")
+  }
+
+  _showLive() {
+    if (this.hasChooserTarget) this.chooserTarget.classList.add("hidden")
+    if (this.hasLiveTarget) this.liveTarget.classList.remove("hidden")
+  }
 
   async _ensureDevice() {
     if (this.device && this.deviceReady) return
