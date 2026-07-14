@@ -64,7 +64,7 @@
     <div class="cell"><div class="k">Prepared by</div><div class="w">Tecaudex</div></div>
     <div class="cell"><div class="k">Prepared for</div><div class="w"><%= customer %></div></div>
     <div class="cell"><div class="k">Deployment</div><div class="w"><%= proposal.deployment_label %></div></div>
-    <div class="cell"><div class="k">Total investment</div><div class="w num"><%= pkr.call(proposal.total_cost) %></div></div>
+    <div class="cell"><div class="k">First-year total</div><div class="w num"><%= pkr.call(proposal.year_1_total) %></div></div>
   </div>
 
   <div class="band">
@@ -156,21 +156,39 @@
     </table>
   </div>
 
+  <div class="card vgap">
+    <div class="card-label">Recurring — software &amp; hosting, per year</div>
+    <table class="tbl">
+      <thead><tr><th style="width:62%">Item</th><th class="r" style="width:38%">Per year</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>
+            <span class="t">Odoo subscription</span>
+            <div class="muted" style="font-size:8pt;"><%= proposal.num_users %> users × <%= pkr.call(proposal.subscription_monthly_per_user) %>/user/month, paid to Odoo</div>
+          </td>
+          <td class="r"><%= pkr.call(proposal.subscription_yearly_total) %></td>
+        </tr>
+        <% if hosting > 0 %>
+          <tr>
+            <td><span class="t">Hosting</span><div class="muted" style="font-size:8pt;"><%= tier && tier[:label] ? tier[:label] : proposal.deployment_label %></div></td>
+            <td class="r"><%= pkr.call(hosting) %></td>
+          </tr>
+        <% end %>
+        <tr class="total"><td>Recurring, per year</td><td class="r"><%= pkr.call(proposal.year_2_recurring_yearly) %></td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <div class="grid2 vgap">
     <div class="card" style="background:var(--ink); border-color:var(--ink);">
-      <div class="card-label" style="color:#9C9B93;">You pay Tecaudex</div>
-      <div class="num" style="font-size:16pt; font-weight:600; color:#fff;"><%= pkr.call(proposal.implementation_fee) %> <span style="font-size:8pt; color:#9C9B93;">one-time</span></div>
-      <div style="margin-top:2mm; font-size:8pt; color:#B9B8B0;">Setup, configuration &amp; handover across all modules.</div>
+      <div class="card-label" style="color:#9C9B93;">First year, all-in</div>
+      <div class="num" style="font-size:16pt; font-weight:600; color:#fff;"><%= pkr.call(proposal.year_1_total) %></div>
+      <div style="margin-top:2mm; font-size:8pt; color:#B9B8B0;">Implementation, plus the first year of Odoo subscription<%= hosting > 0 ? " and hosting" : "" %>.</div>
     </div>
     <div class="card">
-      <div class="card-label">Platform &amp; hosting</div>
-      <% if hosting > 0 %>
-        <div class="num" style="font-size:16pt; font-weight:600;"><%= pkr.call(hosting) %> <span style="font-size:8pt; color:var(--mid);">/ year</span></div>
-        <div style="margin-top:2mm; font-size:8pt; color:var(--mid);"><%= tier && tier[:label] ? tier[:label] : proposal.deployment_label %> hosting, billed yearly.</div>
-      <% else %>
-        <div class="num" style="font-size:16pt; font-weight:600;">Odoo Online</div>
-        <div style="margin-top:2mm; font-size:8pt; color:var(--mid);">Odoo's cloud subscription, billed per user by Odoo.</div>
-      <% end %>
+      <div class="card-label">From year two</div>
+      <div class="num" style="font-size:16pt; font-weight:600;"><%= pkr.call(proposal.year_2_recurring_yearly) %> <span style="font-size:8pt; color:var(--mid);">/ year</span></div>
+      <div style="margin-top:2mm; font-size:8pt; color:var(--mid);">Odoo subscription<%= hosting > 0 ? " and hosting" : "" %> only. The one-time implementation is done.</div>
     </div>
   </div>
 </section>
