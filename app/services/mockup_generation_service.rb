@@ -121,6 +121,60 @@ class MockupGenerationService
     mobile? ? MOBILE_VIEWPORT : WEB_VIEWPORT
   end
 
+  # A clean, universal fallback theme when category research is unavailable.
+  UNIVERSAL_THEME = {
+    'design_language' => 'Material Design 3',
+    'primary'         => '#2563EB',
+    'accent'          => '#F59E0B',
+    'neutral'         => 'near-black text (#0F172A) on white and soft neutral surfaces',
+    'font'            => 'Inter (headings + body) with a clear type scale',
+    'mood'            => 'clean, modern, trustworthy',
+    'reference_apps'  => []
+  }.freeze
+
+  # R&D the visual theme from what real apps in this category actually use, so
+  # the mockups feel native to the space. Falls back to a universal Material
+  # theme if research is unavailable. Memoised (used once per generation).
+  def theme_brief
+    return @theme_brief if defined?(@theme_brief)
+
+    raw = request_openai(theme_prompt, max_tokens: 3000) if @openai_key.present?
+    parsed = raw.present? ? (JSON.parse(raw[/\{.*\}/m].to_s) rescue {}) : {}
+    parsed = {} unless parsed.is_a?(Hash)
+    @theme_brief = UNIVERSAL_THEME.merge(parsed.slice(*UNIVERSAL_THEME.keys))
+  rescue => e
+    Rails.logger.warn("MockupGenerationService: theme research failed (#{e.message}), using universal theme")
+    @theme_brief = UNIVERSAL_THEME.dup
+  end
+
+  def theme_reference_note
+    apps = Array(theme_brief['reference_apps']).reject(&:blank?).first(3)
+    apps.any? ? " (like #{apps.join(', ')})" : ""
+  end
+
+  def theme_prompt
+    <<~PROMPT
+      You are a brand and product designer. Decide the visual theme for the app
+      below, grounded in what LEADING REAL APPS in this same category actually use
+      (their typical colour palettes, typography and overall design language). If
+      the category is unclear, use a clean, universal Material Design 3 theme.
+
+      App: "#{app_name}" — #{@cost_estimate.description.to_s.truncate(300)}
+      Key features: #{user_facing_features.first(6).join(', ')}
+
+      Return ONLY this JSON, no commentary:
+      {
+        "design_language": "e.g. Material Design 3 / iOS Human Interface / clean SaaS dashboard",
+        "primary": "#RRGGBB",
+        "accent": "#RRGGBB",
+        "neutral": "short description of text and surface neutrals",
+        "font": "a Google Font pairing to use",
+        "mood": "3-4 adjectives",
+        "reference_apps": ["2-3 real apps in this category whose look informs this theme"]
+      }
+    PROMPT
+  end
+
   # ── Primary pipeline: an LLM writes the UI, Chrome photographs it ──────
   # GPT (gpt-5.5) authors the screens first; Claude is the fallback author.
   # Real HTML rendered by Chrome = pixel-crisp, Figma-grade screens.
@@ -150,14 +204,14 @@ class MockupGenerationService
     ]
   end
 
-  def request_openai(prompt)
+  def request_openai(prompt, max_tokens: 40_000)
     client = OpenAI::Client.new(access_token: @openai_key, request_timeout: 300)
-    # Two full standalone HTML screens are large; big budget + low reasoning so
-    # gpt-5.5 doesn't burn the budget reasoning and return an empty body.
+    # Big budget + low reasoning so gpt-5.5 doesn't burn the whole budget
+    # reasoning and return an empty body (two full HTML screens are large).
     response = client.chat(parameters: {
       model: OPENAI_MODEL,
       messages: [{ role: 'user', content: prompt }],
-      max_completion_tokens: 40_000,
+      max_completion_tokens: max_tokens,
       reasoning_effort: 'low'
     })
     response.dig('choices', 0, 'message', 'content')
@@ -178,7 +232,15 @@ class MockupGenerationService
       "#{app_name}" — #{@cost_estimate.description.to_s.truncate(400)}
       Key features: #{features.first(6).join(', ')}
 
-      Pick a colour scheme that suits the app — it must use Material UI colours.
+      Use this visual theme, modelled on leading apps in this category#{theme_reference_note}:
+      - Design language: #{theme_brief['design_language']}
+      - Primary colour: #{theme_brief['primary']}
+      - Accent colour: #{theme_brief['accent']}
+      - Neutrals: #{theme_brief['neutral']}
+      - Typography: #{theme_brief['font']}
+      - Mood: #{theme_brief['mood']}
+      Apply this theme identically across both screens.
+
       These must look like a pixel-perfect, production-grade Figma design an agency
       would hand a client: precise 8pt spacing, a clear type hierarchy, consistent
       corner radii and soft shadows, aligned grids, real iconography, and generous
