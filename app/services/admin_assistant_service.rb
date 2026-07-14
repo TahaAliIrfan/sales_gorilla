@@ -130,6 +130,13 @@ class AdminAssistantService
       - sales_summary: pipeline and won/lost rollups, for any period
         (this/last month, quarter, year, ytd) or an explicit start/end date
         range. It can cover any timeframe, so never say a period is unsupported.
+      - rep_activity: per-rep call activity (total/successful call attempts,
+        connect rate, leads never called, won deals). Use for "call attempts by
+        rep" and rep performance.
+      - lead_stats: count leads grouped by any field (status, lead_source,
+        country, call/email/whatsapp status, lead_quality, customer_type,
+        project_type, or rep), with optional filters and period. Use for any
+        "how many leads by X" breakdown instead of eyeballing search results.
 
       When you surface leads, be specific and actionable: name them, give the one
       reason each is worth reaching out to (pulled from their record), and the

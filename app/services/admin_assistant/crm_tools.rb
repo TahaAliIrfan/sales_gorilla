@@ -15,6 +15,15 @@ module AdminAssistant
     # Statuses that mean "don't bother reaching out again".
     TERMINAL_STATUSES = ["Converted", "Not Interested", "Invalid", "Exhausted", "Exhausted_1"].freeze
 
+    # Whitelisted columns lead_stats can group leads by (friendly name -> column).
+    GROUP_COLUMNS = {
+      "status" => "status", "lead_source" => "lead_source", "source" => "lead_source",
+      "country" => "country", "call_status" => "call_status", "email_status" => "email_status",
+      "whatsapp_status" => "whatsapp_status", "linkedin_status" => "linkedin_status",
+      "lead_quality" => "lead_quality", "customer_type" => "customer_type",
+      "upwork_profile" => "upwork_profile", "project_type" => "project_type"
+    }.freeze
+
     # --- search_customers ----------------------------------------------------
     define_function :search_customers,
       description: "Search customers/leads by name, email, phone or company, with optional status/country/assigned-rep filters. Returns a compact list. Use get_customer for the full record." do
@@ -151,7 +160,90 @@ module AdminAssistant
       { error: e.message }
     end
 
+    # --- rep_activity --------------------------------------------------------
+    define_function :rep_activity,
+      description: "Per-rep call activity and coverage across all their leads: assigned leads, total and successful call attempts (lifetime), connect rate, leads never called, and won deals. Answers 'total call attempts by rep' and rep performance questions."
+
+    def rep_activity
+      assigned  = Customer.group(:user_id).count
+      attempts  = Customer.group(:user_id).sum(:total_call_attempts)
+      successes = Customer.group(:user_id).sum(:successful_call_attempts)
+      never     = Customer.where(last_call_attempt_at: nil).group(:user_id).count
+      won_count = Deal.where(status: "won").group(:user_id).count
+      won_value = Deal.where(status: "won").group(:user_id).sum(:amount)
+
+      ids   = (assigned.keys + won_count.keys).uniq
+      names = User.where(id: ids.compact).pluck(:id, :name).to_h
+
+      rows = ids.map do |uid|
+        ta = attempts[uid].to_i
+        sc = successes[uid].to_i
+        {
+          rep: uid ? (names[uid] || "User ##{uid}") : "(unassigned)",
+          assigned_leads: assigned[uid].to_i,
+          total_call_attempts: ta,
+          successful_calls: sc,
+          connect_rate: ta.positive? ? "#{((sc.to_f / ta) * 100).round(1)}%" : "n/a",
+          leads_never_called: never[uid].to_i,
+          won_deals: won_count[uid].to_i,
+          won_value: won_value[uid].to_i
+        }
+      end
+
+      { reps: rows.sort_by { |r| -r[:total_call_attempts] } }
+    rescue => e
+      { error: e.message }
+    end
+
+    # --- lead_stats ----------------------------------------------------------
+    define_function :lead_stats,
+      description: "Count leads grouped by a field, for any 'how many leads by X' breakdown. Group by status, lead_source, country, call_status, email_status, whatsapp_status, lead_quality, customer_type, project_type, or rep. Optional filters and created-date period." do
+      property :group_by, type: "string", description: "field to group by: status, lead_source, country, call_status, email_status, whatsapp_status, lead_quality, customer_type, project_type, or rep", required: true
+      property :status, type: "string", description: "filter to one status", required: false
+      property :lead_source, type: "string", description: "filter to one lead source", required: false
+      property :country, type: "string", description: "filter to one country", required: false
+      property :assigned_to, type: "string", description: "filter to one rep (name or email)", required: false
+      property :period, type: "string", description: "created-date period: all, this_month, last_month, this_quarter, this_year, last_year (default all)", required: false
+    end
+
+    def lead_stats(group_by:, status: nil, lead_source: nil, country: nil, assigned_to: nil, period: "all")
+      scope = Customer.all
+      scope = scope.where(status: status) if status.present?
+      scope = scope.where(lead_source: lead_source) if lead_source.present?
+      scope = scope.where("LOWER(country) = ?", country.downcase.strip) if country.present?
+      if assigned_to.present?
+        rep = find_rep(assigned_to)
+        scope = rep ? scope.where(user_id: rep.id) : scope.none
+      end
+      range = period_range(period)
+      scope = scope.where(created_at: range) if range
+
+      key = group_by.to_s.downcase.strip
+      if %w[rep user assigned_to assigned].include?(key)
+        counts = scope.group(:user_id).count
+        names  = User.where(id: counts.keys.compact).pluck(:id, :name).to_h
+        breakdown = counts.map { |uid, n| [uid ? (names[uid] || "User ##{uid}") : "(unassigned)", n] }
+      else
+        col = GROUP_COLUMNS[key]
+        return { error: "Can't group by '#{group_by}'. Options: #{(GROUP_COLUMNS.keys + ['rep']).uniq.join(', ')}" } unless col
+        breakdown = scope.group(col).count.map { |k, n| [k.presence || "(blank)", n] }
+      end
+
+      {
+        group_by: key,
+        total: scope.count,
+        period: range ? { from: range.first.to_date.to_s, to: range.last.to_date.to_s } : "all time",
+        breakdown: breakdown.sort_by { |_k, n| -n }.to_h
+      }
+    rescue => e
+      { error: e.message }
+    end
+
     private
+
+    def find_rep(term)
+      User.where("LOWER(name) LIKE :q OR LOWER(email) LIKE :q", q: "%#{term.downcase.strip}%").first
+    end
 
     def clamp(n, default, max)
       n = n.to_i
