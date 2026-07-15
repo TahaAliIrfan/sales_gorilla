@@ -17,7 +17,14 @@
             </svg>
             Edit
           <% end %>
-          
+
+          <%= link_to new_deal_path(customer_id: @customer.id), class: "inline-flex items-center px-4 py-2 bg-white border border-emerald-600 text-emerald-700 rounded-lg hover:bg-emerald-50 transition-colors font-medium text-sm shadow-sm" do %>
+            <svg class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            New Deal
+          <% end %>
+
           <% if @customer.phone.present? %>
             <button type="button" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-sm shadow-sm"
                     data-action="call-widget#call"

@@ -65,9 +65,25 @@
 
     <div class="space-y-6">
       <div>
-        <%= form.label :customer_id, class: "block text-sm font-medium text-gray-700" %>
-        <div class="flex items-center space-x-2">
-          <%= form.collection_select :customer_id, @customers, :id, :name, { prompt: "Select a customer", include_blank: "No customer" }, { class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500" } %>
+        <%= form.label :customer_id, "Customer", class: "block text-sm font-medium text-gray-700" %>
+        <% selected_customer = deal.customer %>
+        <div class="flex items-center space-x-2"
+             data-controller="customer-select"
+             data-customer-select-url-value="<%= search_customers_deals_path %>">
+          <div class="relative mt-1 flex-1">
+            <%= form.hidden_field :customer_id, data: { customer_select_target: "hidden" } %>
+            <input type="text"
+                   data-customer-select-target="input"
+                   data-action="input->customer-select#search focus->customer-select#search"
+                   value="<%= selected_customer&.name %>"
+                   placeholder="Search customer by name, email, phone…"
+                   autocomplete="off"
+                   class="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 pr-8">
+            <button type="button" data-customer-select-target="clear" data-action="customer-select#clear"
+                    class="hidden absolute inset-y-0 right-0 flex items-center px-2 text-gray-400 hover:text-gray-600" title="Clear">&times;</button>
+            <div data-customer-select-target="results"
+                 class="hidden absolute z-20 mt-1 w-full max-h-64 overflow-y-auto bg-white border border-gray-200 rounded-md shadow-lg"></div>
+          </div>
           <%= link_to new_customer_path, class: "mt-1 inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-emerald-700 bg-emerald-100 hover:bg-emerald-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500" do %>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />

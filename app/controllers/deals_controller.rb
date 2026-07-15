@@ -6,7 +6,7 @@ class DealsController < ApplicationController
   before_action :require_login
   before_action :set_deal, only: [:show, :edit, :update, :destroy, :update_stage, :mark_as_won, :mark_as_lost, :assign_user]
   skip_before_action :verify_authenticity_token, only: [:update_stage], if: -> { request.format.json? }
-  after_action :verify_authorized, except: [:index, :my_deals]
+  after_action :verify_authorized, except: [:index, :my_deals, :search_customers]
   after_action :verify_policy_scoped, only: [:index, :my_deals]
 
   def index
@@ -598,7 +598,28 @@ class DealsController < ApplicationController
     end
   end
 
+  # Typeahead for the deal form's customer picker. Scoped the same way as #new.
+  def search_customers
+    q = params[:q].to_s.strip
+    scope = deal_customer_scope
+    scope = scope.search(q) if q.present?
+    customers = scope.order(Arel.sql("lead_score DESC NULLS LAST"), :name).limit(15)
+    render json: { customers: customers.map { |c| { id: c.id, name: c.name, company: c.company, email: c.email } } }
+  end
+
   private
+
+  # Which customers this user may attach a deal to (admins: all; managers: self
+  # + associates; associates: own).
+  def deal_customer_scope
+    if current_user&.admin?
+      Customer.all
+    elsif current_user&.manager?
+      Customer.where(user_id: [current_user.id] + current_user.associates.pluck(:id))
+    else
+      Customer.where(user_id: current_user.id)
+    end
+  end
 
   def set_deal
     @deal = Deal.find(params[:id])

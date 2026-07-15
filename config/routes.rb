@@ -179,6 +179,7 @@ Rails.application.routes.draw do
   resources :deals do
     collection do
       get 'my_deals', to: 'deals#my_deals'
+      get 'search_customers'
     end
     member do
       patch 'update_stage'

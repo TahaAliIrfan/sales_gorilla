@@ -30,6 +30,9 @@ application.register("admin-assistant", AdminAssistantController)
 import ProposalGeneratorController from "./proposal_generator_controller"
 application.register("proposal-generator", ProposalGeneratorController)
 
+import CustomerSelectController from "./customer_select_controller"
+application.register("customer-select", CustomerSelectController)
+
 import WhatsappUsController from "./whatsapp_us_controller"
 application.register("whatsapp-us", WhatsappUsController)
 
