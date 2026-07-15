@@ -526,6 +526,15 @@ class Customer < ApplicationRecord
 
     return unless service.credentials_configured?
 
+    # CCR leads: Contact fired on create; push Lead only once the status is
+    # moved to 'Lead'. Nothing else fires for CCR.
+    if meta_ccr_eligible?
+      if status == 'Lead' && !MetaConversionLog.exists?(customer: self, event_name: 'Lead')
+        service.send_form_lead_event(self, 'Lead', nil, meta_action_source)
+      end
+      return
+    end
+
     if status == 'Contact Established' && !MetaConversionLog.find_by(customer: self, event_name: 'Contact').present?
       service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
     end
@@ -546,6 +555,15 @@ class Customer < ApplicationRecord
     service = MetaConversionsApiService.new
 
     return unless service.credentials_configured?
+
+    # CCR leads start with a Contact event. The Lead event is only pushed later,
+    # when the rep changes the status to 'Lead' (see track_meta_conversions_events).
+    if meta_ccr_eligible?
+      unless MetaConversionLog.exists?(customer: self, event_name: 'Contact')
+        service.send_form_lead_event(self, 'Contact', nil, meta_action_source)
+      end
+      return
+    end
 
     options = meta_wa_eligible? ? { messaging_channel: 'whatsapp' } : {}
     service.send_form_lead_event(self, 'Lead', nil, meta_action_source, options)
